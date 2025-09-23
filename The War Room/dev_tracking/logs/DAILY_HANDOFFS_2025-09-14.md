@@ -1,0 +1,21 @@
+# DAILY HANDOFFS — 2025-09-14 (Read-Only)
+
+- Date: 2025-09-14
+- Active Agent: POWER
+- Goals:
+  - Establish dev_tracking operational structure and templates
+  - Record core engine scope, toolkit, and fallback references
+  - Prepare cross-agent handshakes and initial TODOs
+- Changes planned:
+  - Standardize 12 core configs (duplicate blocks, emitter IDs, payload origins)
+  - Validate naming and section_id alignment using fallback references
+- Dependencies/Requests:
+  - NETWORK: Confirm any API key changes impacting geocoding/utilities
+  - DEESCALATION: Review recent error reports and confirm remaining risks
+- Risks:
+  - Config duplication causing route/parse ambiguity
+- Handoffs sent to:
+  - NETWORK (requests + changes handshake placed)
+  - DEESCALATION (review + changes handshake placed)
+- Confirmations received:
+  - Pending ACKs in Handshakes/

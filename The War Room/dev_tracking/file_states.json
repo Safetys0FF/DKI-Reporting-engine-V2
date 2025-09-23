@@ -1,0 +1,101 @@
+{
+  "files": {
+    "simple_pdf_engine.py": {
+      "size": 5608,
+      "modified": "2025-09-15T10:14:10.274898",
+      "status": "tracked",
+      "last_validated": "2025-09-15T11:57:51.023271"
+    },
+    "media_processing_engine.py": {
+      "size": 36967,
+      "modified": "2025-09-15T10:14:13.018636",
+      "status": "tracked",
+      "last_validated": "2025-09-15T11:57:51.023499"
+    },
+    "section_7_renderer.py": {
+      "size": 7887,
+      "modified": "2025-09-15T10:14:13.193109",
+      "status": "tracked",
+      "last_validated": "2025-09-15T11:57:51.023647"
+    },
+    "document_processor.py": {
+      "size": 31592,
+      "modified": "2025-09-15T10:14:13.324604",
+      "status": "tracked",
+      "last_validated": "2025-09-15T11:57:51.023778"
+    },
+    "gateway_controller.py": {
+      "size": 49577,
+      "modified": "2025-09-15T10:14:12.068000",
+      "status": "tracked",
+      "last_validated": "2025-09-15T11:57:51.023904"
+    },
+    "requirements.txt": {
+      "size": 3695,
+      "modified": "2025-09-15T10:14:13.354207",
+      "status": "tracked",
+      "last_validated": "2025-09-15T11:57:51.024028"
+    },
+    "3. Section 1=gateway controller.txt": {
+      "size": 26185,
+      "modified": "2025-09-15T11:55:13.045151",
+      "status": "tracked",
+      "last_validated": "2025-09-15T11:57:51.024155"
+    },
+    "1. Section CP.txt": {
+      "size": 17111,
+      "modified": "2025-09-15T10:14:12.026349",
+      "status": "tracked",
+      "last_validated": "2025-09-15T11:57:51.024279"
+    },
+    "2. Section TOC.txt": {
+      "size": 22520,
+      "modified": "2025-09-15T10:14:12.674576",
+      "status": "tracked",
+      "last_validated": "2025-09-15T11:57:51.024401"
+    },
+    "dev_tracking/path_bootstrap.py": {
+      "size": 1417,
+      "modified": "2025-09-18T11:10:57.863867",
+      "status": "tracked",
+      "last_validated": "2025-09-18T11:17:15.984124"
+    },
+    "dev_tracking/tools/ai_osint_readiness.py": {
+      "size": 1861,
+      "modified": "2025-09-18T11:09:04.307029",
+      "status": "tracked",
+      "last_validated": "2025-09-18T11:17:15.984124"
+    },
+    "dev_tracking/tools/e2e_smoke.py": {
+      "size": 3289,
+      "modified": "2025-09-18T11:08:40.694307",
+      "status": "tracked",
+      "last_validated": "2025-09-18T11:17:15.984124"
+    },
+    "dev_tracking/tools/import_keys_to_profile.py": {
+      "size": 6386,
+      "modified": "2025-09-18T11:09:21.297186",
+      "status": "tracked",
+      "last_validated": "2025-09-18T11:17:15.984124"
+    },
+    "dev_tracking/agent_1_POWER_CODING/smoke_harness.py": {
+      "size": 3690,
+      "modified": "2025-09-18T11:10:15.463229",
+      "status": "tracked",
+      "last_validated": "2025-09-18T11:17:15.984124"
+    },
+    "dev_tracking/agent_1_POWER_CODING/export_rtf_smoke.py": {
+      "size": 3300,
+      "modified": "2025-09-18T11:09:37.928607",
+      "status": "tracked",
+      "last_validated": "2025-09-18T11:17:15.984124"
+    },
+    "dev_tracking/agent_1_POWER_CODING/run_section_smoke_all.py": {
+      "size": 3414,
+      "modified": "2025-09-18T11:09:52.876528",
+      "status": "tracked",
+      "last_validated": "2025-09-18T11:17:15.984124"
+    }
+  },
+  "last_scan": "2025-09-18T11:17:15.984124"
+}

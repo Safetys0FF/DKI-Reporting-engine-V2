@@ -1,0 +1,45 @@
+self.ocr_config = {
+    "enabled_engines": [
+        # Core OCR Engines
+        "tesseract", "easyocr", "paddleocr", "azure", "unstructured", "whisper",
+
+        # PaddleOCR and PaddleX Variants
+        "pp_ocrv3_mobile", "pp_ocrv3_server",
+        "pp_ocrv4_mobile", "pp_ocrv4_server",
+        "pp_ocrv5_mobile", "pp_ocrv5_server",
+        "pp_formulanet_l", "pp_formulanet_s", "pp_formulanet_plus_l",
+        "pp_formulanet_plus_m", "pp_formulanet_plus_s",
+        "pp_doclayout_l", "pp_doclayout_m", "pp_doclayout_s", "pp_doclayout_plus_l",
+        "pp_docbee_2b", "pp_docbee_7b", "pp_docbee2_3b",
+        "pp_chart2table",
+        "pp_lcnet_textline_ori", "pp_lcnet_doc_ori",
+        "uvdoc_unwarp", "seal_detection",
+
+        # Layout/Table Detection Models
+        "slanet", "slanet_plus", "slanext_wired", "slanext_wireless",
+        "rt_detr_h_layout_17cls", "rt_detr_h_layout_3cls",
+        "rt_detr_l_wired_table_cell", "rt_detr_l_wireless_table_cell",
+        "picodet_layout_1x", "picodet_layout_1x_table",
+        "picodet_l_layout_17cls", "picodet_s_layout_3cls",
+
+        # Language-specific OCR Models
+        "ta_pp_ocrv3_mobile_rec", "te_pp_ocrv3_mobile_rec",
+
+        # Special Models
+        "chatocr_v3", "chatocr_v4", "latex_ocr_rec",
+        "repsvtr_ch", "svtrv2_ch",
+
+        # Advanced Pipelines
+        "doc_translation", "pp_structure_v3", "layout_parsing",
+        "face_recognition", "general_recognition",
+        "object_detection", "instance_segmentation",
+        "semantic_segmentation", "keypoint_detection",
+        "anomaly_detection", "attribute_recognition",
+        "bev_detection_3d", "open_vocab_detection",
+        "time_series_anomaly"
+    ],
+
+    "default_engine": "tesseract",
+    "min_confidence": 0.5,
+    "image_preprocessing": True
+}

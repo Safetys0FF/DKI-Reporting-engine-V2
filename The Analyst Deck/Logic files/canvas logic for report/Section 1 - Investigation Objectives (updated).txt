@@ -1,0 +1,555 @@
+**NEW REPORT LOGIC STRUCTURE — SECTION 1 FOCUS**
+
+
+**NEW REPORT LOGIC STRUCTURE — SECTION 1 FOCUS**
+
+---
+
+**1. Report Type Logic Switch (Section 1)**
+
+Section 1 is the primary filter for the report system. It establishes the core case identity and anchors logic decisions for the remainder of the report. It does **not** change structurally but controls how the rest of the report behaves.
+
+---
+
+### 📍 What Section 1 *Is*:
+
+* The **investigative objective statement** of the case
+* The **fixed form** that collects client information, subjects, goals, and objectives
+* A direct reflection of both the **client intake form** and the **signed contract**
+
+### 🔒 Structure:
+
+* This section's **headings, labels, and fillable fields** are static and must not be altered.
+* The report engine does not reformat or suppress this section under any condition.
+
+---
+
+### 🔁 Section 1 as a Logic Filter
+
+Section 1 drives all downstream decisions based on two core anchors:
+
+1. **Contract Type**
+2. **Client Intake Needs**
+
+From these, the system identifies:
+
+* The **type of investigation** (Investigative, Field, Hybrid)
+* The **report structure** required
+* The **billing model** to apply
+* Whether any modules should be suppressed or remain active
+
+---
+
+### 🧠 Logic Flow Mapping:
+
+| Logic Filter Element      | Source             | Triggers                                                          |
+| ------------------------- | ------------------ | ----------------------------------------------------------------- |
+| Contract Type             | Signed Contract    | Determines report mode: Investigative, Field, Hybrid              |
+| Case Objective            | Client Intake Form | Populates Section 1 and anchors context for billing and structure |
+| Type of Subject           | Intake + Contract  | Activates subject profile modules if needed                       |
+| Presence of Field Work    | Contract Clause    | Triggers Field or Hybrid reporting                                |
+| Prepaid Reporting Clauses | Contract           | Triggers or suppresses \$500 planning logic                       |
+
+---
+
+### 🧱 Filter Outcome — Report Mode Selection
+
+Based on data in Section 1, the system applies the following logic switch:
+
+* **If** contract is research-only and no field clause is present → **Investigative Report Mode**
+* **If** contract is surveillance-only and no investigative support is listed → **Field Report Mode**
+* **If** both clauses exist or case escalates mid-process → **Hybrid Report Mode**
+
+This selection determines:
+
+* Active sections and headings
+* Billing logic rules (hourly vs flat)
+* Suppressed modules
+* Export formatting and summaries
+
+---
+✅ Client Stack Logic — Clean Rule
+
+One client = One client block
+
+Even with multiple contracts, the client data (name, address, contact) is singular and static.
+
+🔒 Why This Matters
+
+Prevents duplication in report rendering
+
+Avoids conflicts in metadata mapping
+
+Ensures uniform address, phone, and signature fields across contracts
+
+Supports cleaner YAML, billing continuity, and logic switches
+
+🧠 System Behavior:
+
+If multiple contracts from the same case reference the same client (April Roberts, in this case), the system should:
+
+Use the first occurrence (or latest signed intake) to anchor the client data
+
+Ignore redundant client data in other contracts unless it conflicts, in which case it triggers a conflict resolution alert
+
+---
+
+Subject Stack Logic Rules
+✅ 1. Accept Multiple Subjects
+
+Support for Primary, Secondary, and Tertiary Subjects
+
+All subjects must be listed in Section 1
+
+🧠 2. Mapped to Shared Investigation Objective
+
+Each subject is connected to the same case goal
+
+System assumes the investigation is collective unless contracts specify isolated objectives
+
+📄 3. Output Behavior
+
+Section 1 lists all subjects
+
+Section 3 and 4 should organize findings by subject if possible (nested or labeled)
+
+Photos, logs, and evidence modules inherit subject context if field ops are involved
+
+---
+
+
+
+
+### ⛏️ Gold Miner Metaphor:
+
+Section 1 is the claim site — it tells you **where the gold is** and **what kind of tools** you’ll need to extract and report it. It doesn’t mine the data, but it ensures you know how to handle whatever comes out of the ground.
+
+It chooses:
+
+* The **type of tray (report structure)**
+* The **mesh size (granularity of detail)**
+* The **processing method (billing, documentation)**
+
+---
+
+**Section 1 never changes. It defines everything else.**
+
+
+---
+
+**1. Report Type Logic Switch (Section 1)**
+
+Section 1 operates as the primary control mechanism that determines the format and function of the report. It is a switch between distinct report modes based solely on the type of service sold and contractually defined. The selected report style controls how the rest of the report engine behaves.
+
+### Report Types:
+
+* **Investigative Report**
+
+  * Contains only investigative findings, background data, asset info, or research results.
+  * No surveillance or field operations.
+  * Used for static intelligence reports.
+
+* **Field Operations Report**
+
+  * Contains only surveillance details, timelines, mileage, and photography.
+  * No investigative analysis or documentation outside of field activities.
+
+* **Hybrid Report**
+
+  * Contains both investigative and field sections.
+  * Structures a narrative timeline integrating all available intelligence.
+  * Used when the case spans both research and surveillance.
+
+### Logic Control:
+
+* The switch is determined by reviewing all active contracts.
+* If no field operation contract is found, default to **Investigative**.
+* If only a surveillance or field contract is present, default to **Field**.
+* If both are found, trigger **Hybrid** mode.
+
+The rest of the report structure (sections, formatting, billing, photos) will adapt dynamically based on the report type selected here.
+
+---
+
+**2. Report Structure by Type**
+
+Once the report type is selected, the structure and headings of the document are dynamically adjusted to fit the mode. This ensures accuracy in presentation and avoids displaying irrelevant modules.
+
+### Investigative Report
+
+**For cases like Roberts with no field operations**
+
+**Headings:**
+
+1. Case Overview
+2. Client Objectives
+3. Investigative Findings
+4. Subject Background / Records
+5. Document Review Summary
+6. Conclusion & Recommendations
+7. Contract Billing Summary
+
+**Modules Disabled:**
+
+* Field Activity Timeline
+* Surveillance Media
+* Mileage / Travel Logs
+* Hourly Billing Sections
+
+### Field Operations Report
+
+**For cases involving only surveillance or field ops**
+
+**Headings:**
+
+1. Case Overview
+2. Surveillance Objectives
+3. Field Activity Timeline
+4. Photographic Evidence
+5. Surveillance Logs
+6. Hourly and Mileage Billing
+7. Contract Billing Summary
+
+**Modules Disabled:**
+
+* Research
+* Investigative Analysis
+* Background Checks
+
+### Hybrid Report
+
+**For cases involving both research and field ops**
+
+**Headings:**
+
+1. Case Overview
+2. Client Objectives
+3. Combined Investigative + Field Timeline
+4. Research & Records Summary
+5. Surveillance Log & Photos
+6. Conclusions & Case Summary
+7. Full Billing Summary
+
+---
+
+Only one report type is ever active per document. All structure, formatting, and billing behavior routes from this initial logic decision.
+
+**NEW REPORT LOGIC STRUCTURE — SECTION 1 FOCUS**
+
+---
+
+**1. Report Type Logic Switch (Section 1)**
+
+Section 1 operates as the primary control mechanism that determines the format and function of the report. It is a switch between distinct report modes based solely on the type of service sold and contractually defined. The selected report style controls how the rest of the report engine behaves.
+
+### Report Types:
+
+* **Investigative Report**
+
+  * Contains only investigative findings, background data, asset info, or research results.
+  * No surveillance or field operations.
+  * Used for static intelligence reports.
+
+* **Field Operations Report**
+
+  * Contains only surveillance details, timelines, mileage, and photography.
+  * No investigative analysis or documentation outside of field activities.
+
+* **Hybrid Report**
+
+  * Contains both investigative and field sections.
+  * Structures a narrative timeline integrating all available intelligence.
+  * Used when the case spans both research and surveillance.
+
+### Logic Control:
+
+* The switch is determined by reviewing all active contracts.
+* If no field operation contract is found, default to **Investigative**.
+* If only a surveillance or field contract is present, default to **Field**.
+* If both are found, trigger **Hybrid** mode.
+
+The rest of the report structure (sections, formatting, billing, photos) will adapt dynamically based on the report type selected here.
+
+---
+
+**2. Report Structure by Type**
+
+Once the report type is selected, the structure and headings of the document are dynamically adjusted to fit the mode. This ensures accuracy in presentation and avoids displaying irrelevant modules.
+
+### Investigative Report
+
+**For cases like Roberts with no field operations**
+
+**Headings:**
+
+1. Case Overview
+2. Client Objectives
+3. Investigative Findings
+4. Subject Background / Records
+5. Document Review Summary
+6. Conclusion & Recommendations
+7. Contract Billing Summary
+
+**Modules Disabled:**
+
+* Field Activity Timeline
+* Surveillance Media
+* Mileage / Travel Logs
+* Hourly Billing Sections
+
+**Triggered System Behavior:**
+
+* Activates investigative-only formatting and layout.
+* Suppresses all modules that rely on field data.
+* Auto-removes or hides any placeholder sections for surveillance or hourly metrics.
+* Billing engine limits calculations to flat-rate contracts only.
+* Photo, asset, and field-based templates are disabled.
+* Section navigation and export formats adapt to investigative-only structure.
+
+---
+
+**3. Pre-Investigative Summary Subsection Logic**
+
+### Section 2 Label:
+
+**PRE-INVESTIGATIVE SUMMARY**
+
+This section is included in all investigative reports but its **subsections render conditionally** based on the nature of the investigation and client contract.
+
+### Subsection Display Rules:
+
+| Subsection                                   | Display When...                                                                                                     | Suppress When...                                                                                       |
+| -------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| **A. Case Summary**                          | Always shown to introduce context and scope.                                                                        | *Never suppressed*                                                                                     |
+| **B. Subject Profile**                       | Shown when subject identification or location is key to the case (e.g., skip trace, missing person).                | Suppressed for fraud, financial, or corporate cases where subject profile is not central.              |
+| **C. Behavioral Patterns & Known Locations** | Displayed when routines, patterns, or movement history support the investigation.                                   | Suppressed for document-based or transactional investigations with no behavioral tracking.             |
+| **D. Surveillance Zones & Planning Maps**    | Rendered when there is geographical relevance to investigation (e.g., place-based searching, process serving prep). | Suppressed when case is fully digital, static, or internal (e.g., fraud/theft with no field planning). |
+| **E. Final Planning Statement**              | Always displayed. Provides legal, ethical, and procedural framing of the investigation.                             | *Subcontractor clauses are suppressed unless the case escalates to Hybrid Report mode.*                |
+
+This logic ensures that each investigative report maintains structure and professionalism while removing irrelevant or empty sections dynamically.
+
+---
+
+**4. Investigation Report Logic (Section 3 Redefined)**
+
+### Section Name:
+
+**INVESTIGATION DETAILS**
+
+This section replaces the daily log format with a **structured investigative narrative**. It is flexible, modular, and based on the actual tasks and services performed.
+
+### Use Cases:
+
+* Background checks
+* Asset tracing
+* Employment verification
+* Identity development
+* Public records retrieval
+* Document examination
+* Skip tracing logs
+* Surveillance prep intelligence
+
+### Functional Changes:
+
+* Removes date-stamped surveillance rows
+* Replaces bullet-style summaries with formal investigative findings
+* Can be structured by phases (e.g., Phase 1: Research, Phase 2: Verification)
+* Maintains format integrity with dynamic content mapping
+
+---
+
+**5. Supporting Evidence & Case Artifacts (Section 4)**
+
+### Section Name:
+
+**SUPPORTING EVIDENCE**
+
+This section replaces surveillance-based meta-data logs and instead focuses on **what was discovered**, **how it was verified**, and **the source of each item**.
+
+### Contents May Include:
+
+* Interview summaries
+* Call logs with timestamps
+* Court or legal documents
+* Police reports
+* Screenshots of background results
+* Public record screenshots
+* File references and internal memos
+
+### Format:
+
+Each entry includes:
+
+* **Evidence Type**
+* **Source**
+* **Date Acquired**
+* **Verification Method**
+* **Result or Outcome**
+
+The section is used to demonstrate the investigative depth and reinforce case validity in absence of surveillance logs.
+
+---
+
+**6. Billing Summary Adjustments (Section 6)**
+
+In Investigative Report mode, the billing summary will:
+
+* ✅ **Retain:**
+
+  * Flat-rate contract billing blocks
+  * Planning cost evaluation (including \$500 rule logic when applicable)
+  * Administrative and report generation costs
+  * Records retrieval charges
+  * Final total calculation engine
+
+* ❌ **Suppress:**
+
+  * All Surveillance Operation cost breakdowns
+  * Mileage logs
+  * Hourly field time billings
+  * Asset deployment entries
+
+This ensures billing aligns strictly with investigative-only services without triggering irrelevant surveillance billing structures.
+
+When Field Surveillance is the main contract:
+
+Pre-Surveillance Planning remains active and unchanged
+
+Billing logic follows default hourly/mileage structure
+
+Daily Logs and Session Reviews operate under standard surveillance reporting
+
+No suppression or alternate structures are applied
+
+This default flow ensures consistency across standard surveillance deployments.
+
+
+Hybrid Report Integration Logic
+
+The Hybrid Report merges both investigative and surveillance operations in a cohesive timeline.
+
+Section 2: Client Objectives
+
+Retains the original investigative structure from the investigative report model.
+
+Presents client needs, goals, and scope as originally outlined.
+
+No structural changes are applied.
+
+Section 3: Investigation Details
+
+Presents investigative results gathered prior to field work.
+
+Concludes with a declaration that based on case progression, in-field operations were required.
+
+Follows with surveillance logs and findings with no format changes.
+
+Section 4: Supporting Evidence
+
+Mirrors the flow of Section 3.
+
+Begins with evidence collected during investigative phase.
+
+Transitions into surveillance evidence.
+
+Maintains distinct source attribution to clarify origin.
+
+
+
+ADVANCED BILLING & STRUCTURE LOGIC SCRIPT
+
+1. Flat-Rate Contract Behavior (Initial Phase)
+
+When a client signs a flat-rate contract (e.g., Missing Person Investigation), the billing engine locks into FLAT_RATE_SERVICE mode.
+
+This contract covers all services listed in the agreement: reporting, planning, documentation, investigation.
+
+No hourly billing, time tracking, or additional charges are allowed.
+
+Section 6 of the report reflects a single flat rate service, follows the remaining final billing accounting logic.
+
+2. Evolution into Field Operations (Optional Add-On)
+
+If the case later requires field work, a new contract is issued (e.g., $2,500 for surveillance).
+
+The new contract stacks onto the original but does not overwrite it.
+
+The billing engine switches to HYBRID_MODE, separating:
+
+Original flat-rate contract
+
+Field operations contract (flat or hourly)
+
+Section 6 of the report shows line-by-line breakdown of each contract, runs a cumulative total listing each contract and cost.
+
+3. The $500 Rule (Planning Cost Reservation)
+
+This rule applies only when a surveillance-only contract is issued, with no prior investigative contracts.
+
+In such cases, the system reserves the first $500 of the surveillance contract as compensation for reporting, planning, and structuring the case.
+
+This reservation is shown in the billing output but does not add to the contract total—it extracts from it.
+
+This ensures the reporting workload is acknowledged in contracts that do not otherwise include structural labor.
+
+All other contract types are assumed to include reporting and structure inherently, and therefore do not trigger this rule.
+
+4. Multi-Contract Mode (Advanced Trigger)
+
+If three or more contracts are present, or if contracts span multiple phases (investigative, document, field ops), the system triggers MULTICONTRACT_MODE.
+
+This disables the $500 planning fee permanently for the case.
+
+All billing is then calculated through contract stacking only.
+
+5. Contract Chronology Enforcement
+
+All contracts are sorted by signature date.
+
+Billing logic processes contracts in chronological order.
+
+Surveillance contracts may not precede flat-rate investigative agreements without triggering a logic conflict.
+
+6. Runtime Triggers & Failsafes
+
+Logic can trigger at any point in the case lifecycle.
+
+If a new contract is added later in the case, the system reevaluates billing structure and may auto-disable planning logic.
+
+Manual overrides are logged and flagged.
+
+7. Section 6 Behavior
+
+If flat-rate only: one line for the prepaid service.
+
+If hybrid: each contract listed in order with its date and value.
+
+If field ops added: time logs and photo logic activated, billed separately.
+
+If MULTICONTRACT_MODE: no planning fee, billing reflects full case evolution.
+
+8. Surveillance Billing After Multi-Contract Pre-Structure
+
+If the case has multiple contracts already executed before surveillance begins (e.g., background checks, asset searches, document retrieval), the total cost of those contracts is compiled.
+
+These contracts are treated as full payment for all pre-surveillance planning and structure.
+
+When surveillance is sold later (e.g., $2,500), it is billed independently using standard hourly billing logic.
+
+The $500 rule is disabled because planning has already been paid.
+
+Section 6 itemizes all previous contracts first, followed by surveillance billing.
+
+All hourly billing rules (time, mileage, media) apply to the surveillance contract without interruption.
+
+The report clearly separates what was previously contracted from what was added later.
+
+System Enforcements
+
+No billing overwrites allowed
+
+Structure logic tied to contracts, not templates
+
+Chronology matters: all contracts processed by date
+
+Case structure reflects what was actually sold, not assumptions

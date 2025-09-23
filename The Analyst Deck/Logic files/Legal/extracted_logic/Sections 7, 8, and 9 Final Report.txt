@@ -1,0 +1,115 @@
+# Sections 7, 8, and 9: Final Report Logic Framework
+
+---
+
+## Section 7: CONCLUSION
+
+### Purpose
+
+To summarize the entire investigation clearly and legally while aligning the findings with the client’s original concerns and the field observations.
+
+### Input Sources
+
+* Section 2: Pre-Surveillance Strategy
+* Section 3: Daily Logs
+* Section 4: Surveillance Sessions
+* Section 5: Investigative Notes
+
+### Logic Guidelines
+
+* Focus primarily on verified field activity and surveillance documentation.
+* If surveillance was performed, tie the conclusion directly to observed subject behavior and time logs.
+* If **no surveillance** was performed, produce a **clear summary** of investigative findings.
+* Case status must fall under one of the following determinations:
+
+  * **Confirms client’s claims**
+  * **Denies client’s claims**
+  * **Inconclusive findings**
+
+### Tone & Presentation
+
+* Write as though presenting to a judge, lawyer, or insurance company
+* Avoid childish or overly complex language
+* Must be:
+
+  * Empathetic
+  * Legally aligned
+  * Factual and firm
+
+### Closing Instructions
+
+* Indicate whether further investigation is required
+* Close with a statement directly addressing the client
+
+---
+
+## Section 8: SURVEILLANCE PHOTO SECTION
+
+### Purpose
+
+Chronologically organize and display all photo and video surveillance evidence.
+
+### Formatting Rules
+
+* Each entry begins with:
+  **"DATE OF SURVEILLANCE: \[Insert Day, Month Date, Year]"**
+* Beneath each date:
+
+  * Insert all photos taken on that day
+  * Label photos sequentially:
+
+    * *Photo 1*
+    * *Photo 2*
+    * *Photo 3*, etc.
+
+### Logic Constraints
+
+* Do not use internal filenames or camera tags
+* Maintain the integrity of date/time grouping
+* Photos must correspond with:
+
+  * Section 3: Daily Logs
+  * Section 4: Surveillance Sessions
+* Exclude irrelevant or duplicate images
+
+---
+
+## Section 9: CERTIFICATION & DISCLAIMERS
+
+### Certification of Report Accuracy
+
+* This section includes the final investigator’s affirmation statement:
+
+> *"The above statements are true and honest to the best of my knowledge, to the best of my ability, available information, services, and by the trusted individuals I partner with. The statements made herein are recorded on \[insert day, month, date, year]."*
+
+* This statement:
+
+  * Is centered above the signature line
+  * Uses justified alignment
+  * Automatically populates the report finalization date
+
+### Signature & Branding Block
+
+* Includes:
+
+  * Digital signature (fixed)
+  * Company logo (centered)
+* No formatting changes allowed
+
+### Footer Disclosures
+
+* Contains legal disclaimers and liability statements
+* Cannot be edited or altered
+* Text covers:
+
+  * Data sensitivity
+  * Legal non-advice clause
+  * Subjectivity of recorded thoughts vs. legal facts
+* Strongly encourages the client to consult legal counsel
+
+### Lock Conditions
+
+* Once this section is completed:
+
+  * No further edits allowed to report body
+  * System enforces a report-wide lock

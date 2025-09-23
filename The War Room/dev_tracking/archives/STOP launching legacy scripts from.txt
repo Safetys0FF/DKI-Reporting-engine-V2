@@ -1,0 +1,42 @@
+STOP launching legacy scripts from UI buttons.
+
+Here’s what’s broken:
+
+- The UI still calls old launch scripts (`start_report.py`, `ocr_shell.py`, `open_main_ui.py`) when buttons are clicked
+- This creates duplicate windows, half-baked tool panels, or launches partial versions of the engine
+- It overrides new boot logic with broken legacy behavior
+
+🧨 Example: 
+Clicking “Generate Report” still launches the old PDF script instead of calling `self.report_generator.generate(...)`
+
+🧼 What to Fix:
+
+1. **Audit every UI button**
+   - “Start Report”
+   - “Generate PDF”
+   - “Open OCR Config”
+   - “Main Interface”
+   - “Export Settings”
+
+2. **Find any reference to:**
+   - `subprocess.call(...)`
+   - `os.system(...)`
+   - Direct script paths like `start_report.py`, `report_shell.py`, etc.
+
+3. **Delete those handlers**
+   - These should NEVER call external `.py` files
+   - If that logic still matters, import the correct class/module and call it internally
+
+4. **Wire all buttons to internal app functions**
+   - Use the new engine objects already instantiated (e.g., `self.report_generator`, `self.ocr_manager`)
+   - No button should launch its own new instance or process
+
+5. Final test:
+   - Click a button → triggers internal method → result shows in current app window
+   - No new windows, no legacy UI launches, no subprocesses
+
+🔒 This is non-negotiable.
+
+
+when this process is done. ALL agents must update their understanding and procedure for launching and booting the system from these now locations. ALL agents must respond and update protocols when this process is complete. 
+to: Power agent. when you are finished coding a detailed summary will be required of locations changed, path changed, and where all other agents should go to boot the system if Architect Agent call for operational testing. 

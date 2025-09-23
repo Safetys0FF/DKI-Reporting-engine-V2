@@ -1,0 +1,220 @@
+COCHRAN_THEORY:
+  purpose: "Prevent misattribution in identity/criminal records"
+  required_matches:
+    - full_name
+    - date_of_birth
+    - address_history
+  acceptance_rule: "All three must match 100%"
+  partial_match_policy: "Flag as PENDING_VERIFICATION and EXCLUDE from final report"
+  alias_handling:
+    cross_reference: true
+    near_match_tag: "POSSIBLE_MISNOMER"
+  evidence_priority:
+    - client_intake_form
+    - authoritative_background_reports
+    - court_records
+  operator_commands:
+    - LOG_AS_THEORY
+    - VERIFY_AGAINST_SOURCE
+    - FORCE_REMOVE
+  failsafes:
+    on_conflict: "HIGHLIGHT_MISMATCH and pause build"
+    audit_log: true
+  outputs:
+    - verified_identity_record
+    - exclusion_list
+
+
+
+COCHRAN_THEORY_FULL:
+  version: 1.2
+  owner: DKI Services LLC
+  purpose: "Eliminate identity/criminal record misattribution by enforcing strict tri-factor verification: Full Name + DOB + Address History."
+  scope:
+    applies_to: [background_reports, criminal_records, residence_links, vehicle_records]
+    exclusions: [social_media_only_hits, hearsay_notes, unverifiable_images]
+
+  acceptance_gate:
+    rule: "ACCEPT only if (NAME_MATCH && DOB_MATCH && ADDRESS_HISTORY_MATCH) == true"
+    explanation: "All three pillars must be TRUE. Any failure → EXCLUDE and mark PENDING_VERIFICATION."
+
+  inputs_schema:
+    subject_record:
+      required:
+        - legal_name: {first: str, middle: str|null, last: str, suffix: str|null}
+        - date_of_birth: {value: YYYY-MM-DD, source: str}
+        - address_history: [
+            {line1: str, city: str, state: str, postal: str|null, start: YYYY-MM-DD|null, end: YYYY-MM-DD|null, source: str}
+          ]
+      optional:
+        - aliases: [{first: str, middle: str|null, last: str, suffix: str|null, source: str, verified: bool}]
+        - gov_ids: [{type: {DL, STATE_ID}, number_masked: str, state: str, source: str}]
+        - phones: [str]
+        - emails: [str]
+        - ssn_masked: str
+
+  normalization:
+    name:
+      steps:
+        - unicode_normalize: NFC
+        - casefold: true
+        - trim_punct_whitespace: true
+        - collapse_multi_space: true
+        - map_nicknames: true   # e.g., "Beth"→"Elizabeth", requires alias verification before ACCEPT
+        - handle_hyphenation: join_and_split_variants   # "Anne-Marie" ↔ ["Anne", "Marie", "AnneMarie"]
+        - suffix_canonicalization: [JR, SR, II, III, IV]
+    dob:
+      steps:
+        - enforce_format: YYYY-MM-DD
+        - reject_partial: true   # XX/XX/1978 → NOT acceptable for ACCEPT; allowed for diagnostics only
+        - leap_day_guard: allow_02_29_only_if_year_leap: true
+    address:
+      steps:
+        - USPS_normalize: true
+        - expand_abbreviations: true
+        - casefold: true
+        - strip_unit_punct: true
+        - geocode_optional: true   # to detect same-location variants
+
+  match_logic:
+    NAME_MATCH:
+      rule: "legal_name.first == candidate.first && legal_name.last == candidate.last && (legal_name.middle == candidate.middle OR candidate.middle is null) && suffix_compatible"
+      notes:
+        - "Alias may satisfy NAME_MATCH only if aliases[].verified == true and is legally corroborated (license, court, deed)."
+    DOB_MATCH:
+      rule: "subject_record.date_of_birth == candidate.date_of_birth"
+      notes:
+        - "Partial DOB or month/day unknown → FAIL for ACCEPT; set status: DOB_PARTIAL."
+    ADDRESS_HISTORY_MATCH:
+      rule: "exists address A in subject_record.address_history AND address B in candidate.address_history such that normalized(A)==normalized(B) AND time_overlap(A,B) >= 60 days"
+      time_overlap:
+        definition: "Overlapping residency period in days"
+        min_days: 60
+      notes:
+        - "One‑day or transient hits do not qualify."
+        - "Mailing-only or PO Box does not qualify unless corroborated by lease/deed."
+
+  source_precedence:
+    rank_order: [government_records, court_dockets, state_DMV, credit_header_aggregators, client_intake, commercial_aggregators, open_web]
+    rules:
+      - "Criminal entries require court_dockets or government_records. Aggregators alone → PENDING_VERIFICATION."
+      - "Client Intake anchors Section 1 identity but does not by itself satisfy acceptance for criminal record inclusion."
+
+  scoring_engine:   # For diagnostics/triage only; ACCEPT uses hard gate above
+    weights: {name: 0.45, dob: 0.35, address: 0.20}
+    threshold:
+      accept: 1.0   # all booleans true
+      review: 0.85  # near-miss; requires operator review (cannot auto-accept)
+    output: match_score (0..1)
+
+  flags_and_codes:
+    flags:
+      - POSSIBLE_MISNOMER   # near-match name within same zip and period
+      - 1DAY_RESIDENCY      # address seen for <= 1 day
+      - PARTIAL_DOB         # month/day missing
+      - ALIAS_UNVERIFIED    # alias present without corroboration
+      - ADDRESS_MAIL_ONLY   # PO Box or mail drop
+      - CONFLICTING_SOURCES # authoritative sources disagree
+    error_codes:
+      - C01_NAME_MISMATCH
+      - C02_DOB_MISMATCH
+      - C03_ADDRESS_NO_OVERLAP
+      - C04_SOURCE_TOO_WEAK
+      - C05_PARTIAL_DOB_REJECT
+      - C06_ALIAS_NOT_VERIFIED
+      - C07_TRANSIENT_ADDRESS
+
+  outputs:
+    on_accept:
+      - verified_identity_record   # normalized, with source citations
+      - admissible_criminal_entry  # only if backed by court/gov sources
+    on_reject:
+      - exclusion_list_entry {reason_code, flags, sources}
+    on_review:
+      - operator_queue_ticket {issue: flag|code, suggested_next_step}
+
+  operator_commands:
+    - LOG_AS_THEORY               # store but exclude
+    - VERIFY_AGAINST_SOURCE:<id>  # prompt fetch/check of specific source
+    - FORCE_REMOVE:<item_id>
+    - REQUEST_DOCKET:<case_no|name_dob_state>
+    - SET_ALIAS_VERIFIED:<alias_id>:<evidence_ref>
+    - OVERRIDE_WITH_REASON:<ticket_id>:<free_text>
+
+  audit_and_chain:
+    log:
+      - inputs_snapshot
+      - normalization_steps_applied
+      - match_decision {NAME_MATCH,DOB_MATCH,ADDRESS_HISTORY_MATCH}
+      - source_matrix
+      - operator_actions
+    retention:
+      admissible_outputs: 7y
+      diagnostics_only: 18m
+    pii_controls:
+      redact_on_export: [ssn_masked, dl_number_masked]
+      disclose_scope: "Non‑FCRA; GLBA/DPPA limited use"
+
+  compliance:
+    fcra_notice: "This is NOT a consumer report. Do not use for employment/credit/insurance decisions."
+    glba_dppa_gating:
+      allowed_use_cases: [licensed_investigation, fraud_prevention, litigation_support]
+      deny_if:
+        - user_purpose_unverified
+        - missing_subscriber_agreement
+
+  edge_cases:
+    - "Hyphenated or dual last names — accept if either normalized variant matches and other pillars hold."
+    - "Jr/Sr/II/III suffix swapped or missing — treat as compatible if other pillars match and no conflicting same‑name relative."
+    - "Married/maiden name — requires alias verification or legal linkage."
+    - "DOB transposition (MM/DD vs DD/MM) — never auto-correct; operator review only."
+    - "Records with XX/XX/Year — cannot ACCEPT; keep as diagnostics."
+
+  pseudocode:
+    - |
+      function cochran_accept(subject, candidate):
+        n = name_match(subject, candidate)
+        d = dob_match(subject, candidate)
+        a = address_history_overlap(subject, candidate, min_days=60)
+        if n and d and a:
+          if candidate.source in {court_docket, government_record} or candidate.type != 'criminal':
+            return ACCEPT
+          else:
+            return REVIEW(code=C04_SOURCE_TOO_WEAK)
+        else:
+          return REJECT(code=first_false(n,d,a))
+
+  tests:
+    - id: T01_exact_all_three
+      input: {name: match, dob: exact, address_overlap_days: 180, sources: [court_docket]}
+      expect: ACCEPT
+    - id: T02_partial_dob
+      input: {name: match, dob: "XX/XX/1978", address_overlap_days: 365}
+      expect: REJECT code C05_PARTIAL_DOB_REJECT
+    - id: T03_transient_address
+      input: {name: match, dob: exact, address_overlap_days: 1}
+      expect: REJECT code C03_ADDRESS_NO_OVERLAP flag 1DAY_RESIDENCY
+    - id: T04_alias_unverified
+      input: {name: alias_unverified, dob: exact, address_overlap_days: 120}
+      expect: REJECT code C06_ALIAS_NOT_VERIFIED
+    - id: T05_aggregator_only_criminal
+      input: {name: match, dob: exact, address_overlap_days: 200, sources: [aggregator]}
+      expect: REVIEW code C04_SOURCE_TOO_WEAK
+    - id: T06_misnomer_same_zip
+      input: {name: near_match, dob: exact, address_overlap_days: 200}
+      expect: REJECT code C01_NAME_MISMATCH flag POSSIBLE_MISNOMER
+
+  ui_labels:
+    status_text:
+      ACCEPT: "Verified per Cochran Theory"
+      REJECT: "Excluded — fails tri‑factor gate"
+      REVIEW: "Operator review required (source strength)"
+
+  integration_points:
+    with_north_star_protocol:
+      require_dual_timestamps: true
+      record_field_time: true
+    with_tokenized_report_structure:
+      on_accept → eligible_for_section_2_and_5
+      on_reject → excluded_from_final_report; logged in discrepancies appendix
+

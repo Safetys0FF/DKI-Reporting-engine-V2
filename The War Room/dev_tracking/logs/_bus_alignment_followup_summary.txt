@@ -1,0 +1,46 @@
+﻿Central Command : Bus Alignment & ECC Bootstrap Updates
+=======================================================
+
+Timestamp: 2025-09-23 16:35:27
+Author: Codex Agent
+
+Highlights
+----------
+- Normalized the Evidence Locker logging so the module loads cleanly and emits readable, structured log messages.
+- Added ECC bootstrapping to the Narrative Assembler so required sections get registered/activated automatically before narrative generation.
+- Patched the Ecosystem Controller's registration routine and sanitized its logging, eliminating runtime NameErrors during section registration.
+- Verified the end-to-end runtime path (store evidence + narrative.generate) now completes successfully under the new contract.
+
+Change Details
+--------------
+1. Evidence Locker/evidence_locker_main.py
+   - Stripped all mojibake Unicode sequences from logger calls; replaced with ASCII tags like [EVIDENCE], [OCR], [HANDOFF].
+   - Ensures python -m py_compile evidence_locker_main.py passes and runtime logging is human-readable.
+
+2. Command Center/Mission Debrief/narrative_assembler.py
+   - Added _NarrativeSectionAdapter, _bootstrap_ecc_registration, _register_section_with_ecc, and _ensure_base_sections_ready helpers.
+   - During initialization (line 51) the assembler now registers its sections with ECC and auto-completes cover/table-of-contents dependencies.
+   - Narrative send_to_bus requests succeed once ECC confirms the section can run.
+
+3. The Warden/ecosystem_controller.py
+   - Fixed egister_ecosystem to assign ecosystem_data = self.ecosystems[ecosystem_id] before usage, resolving the NameError seen during assembly bootstrap.
+   - Cleaned non-ASCII logger strings to prevent syntax issues and keep logging readable.
+
+4. Runtime Verification (Command Center/Start Menu/Run Time/integration_smoke.py – temporary harness)
+   - Imported the GUI adapter, stored 	est_evidence.txt, and invoked 
+arrative.generate.
+   - Evidence ingestion now pushes through the bus without Unicode or NameError crashes, and 
+arrative.generate returns an OK status and summary.
+
+Impact
+------
+- Evidence ingestion pathway logs consistently and no longer crashes due to malformed strings.
+- Narrative generation is ECC-aware; sections auto-register and pass dependency checks, removing the previous “section not active” blocker.
+- Ecosystem Controller stability improved, unblocking all ECC-driven workflows that rely on runtime registration.
+- Bus integration validated end-to-end, providing confidence that the refactored contract works across Warden, Evidence Locker, Narrative Assembler, and Mission Debrief.
+
+Next Steps
+----------
+- Consider pruning the legacy simple_smoke_test.py dependency checks or update it to mirror the new ECC bootstrap.
+- Expand integration smoke coverage to include Mission Debrief signals if needed.
+

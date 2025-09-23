@@ -1,0 +1,37 @@
+# DKI Engine Repository - Git Ignore
+
+# Temporary files
+temp/
+*.tmp
+*.temp
+
+# Logs
+logs/*.log
+*.log
+
+# Sensitive case files (optional - uncomment if using git)
+# cases/*/uploads/
+# cases/*/processed/
+
+# Configuration with API keys
+config/secrets.json
+
+# Backups
+backups/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+
+# System files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~

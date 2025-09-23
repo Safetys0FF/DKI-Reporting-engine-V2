@@ -1,0 +1,1 @@
+EOD report in "F:\DKI-Report-Engine\Report Engine\dev_tracking\Handshakes"  full summary log needs to be created in the "F:\DKI-Report-Engine\Report Engine\Archives", and test plans saved in the "F:\DKI-Report-Engine\Report Engine\dev_tracking\logs"

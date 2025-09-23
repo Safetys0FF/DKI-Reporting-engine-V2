@@ -1,0 +1,229 @@
+{
+  "api_e2e": {
+    "db_path": "C:\\Users\\DTKra\\OneDrive\\Desktop\\DKI Engine\\logic\\DKI_Repository\\user_profiles.db",
+    "keys_count": 1,
+    "roundtrip_ok": true
+  },
+  "auto_detect": {
+    "investigative": "Investigative",
+    "field": "Surveillance",
+    "hybrid": "Hybrid",
+    "ambiguous": "Surveillance"
+  },
+  "sections": {
+    "signals": [
+      {
+        "type": "10-6",
+        "timestamp": "2025-09-15T08:55:34.162158",
+        "payload": {
+          "section_id": "section_cp",
+          "toolkit_results": {
+            "mileage_check": {
+              "error": "[WinError 3] The system cannot find the path specified: './artifacts/mileage'"
+            },
+            "northstar_analysis": {
+              "classified": [],
+              "deadfile_registry": []
+            },
+            "billing_validation": {
+              "error": "'BillingTool' object has no attribute 'subcontractor_total'"
+            },
+            "cochran_result": {
+              "error": "'str' object has no attribute 'get'"
+            },
+            "metadata": {
+              "error": "[Errno 2] No such file or directory: 'dummy_file'"
+            },
+            "continuity_check": [
+              false,
+              [
+                "Trigger activated: missing_transitional_anchor",
+                "Manual intervention required.",
+                "Trigger activated: missing_transitional_anchor",
+                "Manual intervention required.",
+                "Trigger activated: missing_transitional_anchor",
+                "Manual intervention required."
+              ]
+            ],
+            "osint_verification": {
+              "info": "OSINT not available - no user profile or API keys"
+            }
+          }
+        }
+      },
+      {
+        "type": "10-8",
+        "timestamp": "2025-09-15T08:55:34.162897",
+        "payload": {
+          "section_id": "section_cp",
+          "section_name": "Cover Page",
+          "status": "completed"
+        }
+      },
+      {
+        "type": "10-6",
+        "timestamp": "2025-09-15T08:55:34.162999",
+        "payload": {
+          "section_id": "section_toc",
+          "toolkit_results": {
+            "mileage_check": {
+              "error": "[WinError 3] The system cannot find the path specified: './artifacts/mileage'"
+            },
+            "northstar_analysis": {
+              "classified": [],
+              "deadfile_registry": []
+            },
+            "billing_validation": {
+              "error": "'BillingTool' object has no attribute 'subcontractor_total'"
+            },
+            "cochran_result": {
+              "error": "'str' object has no attribute 'get'"
+            },
+            "metadata": {
+              "error": "[Errno 2] No such file or directory: 'dummy_file'"
+            },
+            "continuity_check": [
+              false,
+              [
+                "Trigger activated: missing_transitional_anchor",
+                "Manual intervention required.",
+                "Trigger activated: missing_transitional_anchor",
+                "Manual intervention required.",
+                "Trigger activated: missing_transitional_anchor",
+                "Manual intervention required."
+              ]
+            ],
+            "osint_verification": {
+              "info": "OSINT not available - no user profile or API keys"
+            }
+          }
+        }
+      },
+      {
+        "type": "10-8",
+        "timestamp": "2025-09-15T08:55:34.163053",
+        "payload": {
+          "section_id": "section_toc",
+          "section_name": "Table of Contents",
+          "status": "completed"
+        }
+      },
+      {
+        "type": "10-6",
+        "timestamp": "2025-09-15T08:55:34.163130",
+        "payload": {
+          "section_id": "section_1",
+          "toolkit_results": {
+            "mileage_check": {
+              "error": "[WinError 3] The system cannot find the path specified: './artifacts/mileage'"
+            },
+            "northstar_analysis": {
+              "classified": [],
+              "deadfile_registry": []
+            },
+            "billing_validation": {
+              "error": "'BillingTool' object has no attribute 'subcontractor_total'"
+            },
+            "cochran_result": {
+              "error": "'str' object has no attribute 'get'"
+            },
+            "metadata": {
+              "error": "[Errno 2] No such file or directory: 'dummy_file'"
+            },
+            "continuity_check": [
+              false,
+              [
+                "Trigger activated: missing_transitional_anchor",
+                "Manual intervention required.",
+                "Trigger activated: missing_transitional_anchor",
+                "Manual intervention required.",
+                "Trigger activated: missing_transitional_anchor",
+                "Manual intervention required."
+              ]
+            ],
+            "osint_verification": {
+              "info": "OSINT not available - no user profile or API keys"
+            }
+          }
+        }
+      },
+      {
+        "type": "10-8",
+        "timestamp": "2025-09-15T08:55:34.163261",
+        "payload": {
+          "section_id": "section_1",
+          "section_name": "Investigation Objectives",
+          "status": "completed"
+        }
+      }
+    ],
+    "processing_log_count": 5,
+    "section_states": {
+      "section_cp": {
+        "section_name": "Cover Page",
+        "state": "completed",
+        "has_output": true
+      },
+      "section_toc": {
+        "section_name": "Table of Contents",
+        "state": "completed",
+        "has_output": true
+      },
+      "section_1": {
+        "section_name": "Investigation Objectives",
+        "state": "completed",
+        "has_output": true
+      },
+      "section_2": {
+        "section_name": "Investigation Requirements",
+        "state": "pending",
+        "has_output": false
+      },
+      "section_3": {
+        "section_name": "Investigation Details",
+        "state": "pending",
+        "has_output": false
+      },
+      "section_4": {
+        "section_name": "Review of Details",
+        "state": "pending",
+        "has_output": false
+      },
+      "section_5": {
+        "section_name": "Review of Supporting Documents",
+        "state": "pending",
+        "has_output": false
+      },
+      "section_6": {
+        "section_name": "Billing Summary",
+        "state": "pending",
+        "has_output": false
+      },
+      "section_7": {
+        "section_name": "Conclusion",
+        "state": "pending",
+        "has_output": false
+      },
+      "section_8": {
+        "section_name": "Investigation Evidence Review",
+        "state": "pending",
+        "has_output": false
+      },
+      "section_9": {
+        "section_name": "Certification & Disclaimers",
+        "state": "pending",
+        "has_output": false
+      },
+      "section_dp": {
+        "section_name": "Disclosure Page",
+        "state": "pending",
+        "has_output": false
+      },
+      "section_fr": {
+        "section_name": "Final Report Assembly",
+        "state": "pending",
+        "has_output": false
+      }
+    }
+  }
+}

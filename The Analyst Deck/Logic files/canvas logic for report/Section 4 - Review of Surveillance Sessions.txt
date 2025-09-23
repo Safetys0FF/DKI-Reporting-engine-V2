@@ -1,0 +1,119 @@
+**SECTION 4: REVIEW OF SURVEILLANCE SESSIONS - ENGLISH BASED LOGIC GUIDE**
+
+---
+
+**Purpose of Section 4**
+Section 4 is the official, factual record of the surveillance operations. This section explains what was seen, who was seen, when, where, and why it matters. It is not a casual recap. It is the courtroom-ready account that connects physical observation to investigative goals.
+
+---
+
+**SECTION 1 – REPORT TYPE LOGIC SWITCHES (ENGLISH LOGIC)**
+
+---
+
+**LOGIC SWITCH BEHAVIOR ONLY**
+
+Section 1 determines the `report_type` based on:
+
+1. Contract Type (name or metadata)
+2. Client Intake Goals
+3. Field Work Clauses present or absent
+4. Active contract count and type
+
+---
+
+**LOGIC CONDITIONS**
+
+* **IF report\_type = Investigative:**
+
+  * Change heading to "Investigation Findings"
+  * Enable Investigative mode, notate in summary format results of the findings in section 3; Investigative Details
+  * Billing model = Flat
+
+* **IF report\_type = Field:**
+
+  * Suppress all Investigative modules
+  * Enable Field-only modules (logs, visuals, time)
+  * Billing model = Hourly or Flat
+
+* **IF report\_type = Hybrid:**
+
+  * Enable both Investigative and Field modules
+  * Requires phase mapping:
+
+    * Phase 1 = Investigative
+    * Phase 2 = Field
+  * Billing model = Stacked or Tiered
+  * Require trigger link from Investigative result to Field deployment
+
+- Surveillance modules in Section 3 and 4 are only enabled once a verified investigative finding justifies in-field verification.
+
+---
+
+**FALLBACKS**
+
+* If no contract type is matched, default to Field
+* If 2+ contracts, most recent rules unless hybrid pattern confirmed
+
+---
+
+**LOGIC ENFORCEMENT**
+
+* All downstream behavior strictly follows the `report_type` set by Section 1
+* Section 1 logic cannot be overridden downstream
+* Billing, section visibility, and formatting obey this switch
+
+
+
+**Core Logic Rules:**
+
+1. **Only Record What Matters:**
+   If the event, person, or observation doesn't impact the investigation's objective, do not include it. This section is not a journal; it is an evidentiary narrative.
+
+2. **Subject-Driven Narrative:**
+   Everything written must tie back to the subject. We are not observing the world — we are observing the subject.
+
+3. **Client-Linked Relevance:**
+   If the client didn’t request it, reference it, or approve its use (in the case of apps or tools), it does not belong here.
+
+4. **All Observations Must Be Supported:**
+   If you mention an event, behavior, or quote — it must appear in the investigator’s log (Section 3). Section 4 pulls from Section 3, not the other way around.
+
+5. **Metadata Only to Support — Never to Explain:**
+   Metadata (e.g., timestamps, GPS pings) can be mentioned only if the investigator referenced them to explain a specific event. Never write about how the data was obtained.
+
+6. **No Assumptions, No Theories:**
+   Do not include hypothetical ideas or assumptions about why someone did something. Only state what happened and why it's relevant to the case.
+
+7. **Chain of Observational Trust:**
+   All tools, apps, and third-party data must follow the chain: Subject > Client > DKI > Field Operator. Never skip steps, and never imply that DKI obtained something on its own.
+
+8. **Court-Ready Tone:**
+   Every sentence must be written as if it will be read aloud in a courtroom. Use precise, objective language. Avoid casual, vague, or speculative terms.
+
+---
+
+**Structure Expectations:**
+
+* Date of Surveillance
+* Times and Locations of Surveillance
+* Visual Confirmation of Subject(s)
+* Observed Behavior (Relevant Only)
+* Subject Interactions (Names, Vehicles, Conversations)
+* Legal Observations (Photos, Identifiers, Ring, etc.)
+* Any deviations from prior behavior
+* End Time or Surveillance Transfer
+
+---
+
+**Example: Poor vs. Proper Entry**
+
+**Poor:** "The investigator waited in the car and drove around a bit. It was raining."
+**Proper:** "At 3:30 PM, the investigator arrived at the subject's known residence. No vehicles or persons were present."
+
+**Poor:** "Subject's phone pinged their location."
+**Proper:** "The subject's vehicle was observed at Taco Nice on West Broad Street, consistent with earlier visual confirmation."
+
+---
+
+Section 4 is the chapter that justifies the entire operation. Treat every word like it has weight — because in court, it will.

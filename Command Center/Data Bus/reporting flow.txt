@@ -1,0 +1,3 @@
+EvidenceLocker (identifies, tags, and labels) → ECC (approve transfer) → Gateway → ECC (approve transfer) → Section 6
+Section 6 → Gateway → ECC (approve transfer) → NarrativeController (review) → Y/N → if no, Gateway → Section 6
+Gateway → ECC (approve transfer) → NarrativeController (review) → Final Assembly

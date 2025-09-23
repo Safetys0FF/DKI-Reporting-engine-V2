@@ -1,0 +1,531 @@
+# DKI Visual Evidence Protocol: Metadata Extraction Logic v5.0
+
+process_logic:
+  description: "Defines the full forensic workflow for photo and video metadata extraction from archive files. This version captures the complete process captured from sections 1 and 2. Sections 1 and 2 are default fallbacks for known information values."
+
+north_star_protocol:
+  label: "Navigational and Operational Integrity Layer"
+  version: "1.0"
+
+  core_principles:
+    - directional_consistency: "All investigator movements and surveillance patterns must reflect logical pursuit strategy."
+    - proximity_logic: "Engagement with the subject must align with feasible route paths, distances, and timeframes."
+    - observational_follow-through: "Location shifts and decisions must be traceable to a surveillance objective or observed behavior."
+
+  validation_hooks:
+    - integrated_with:
+        - narrative_gap_analysis
+        - continuity_check
+        - context_inference_logic
+    - enforcement:
+        - if illogical_position_shift_detected:
+            flag: true
+            trigger: QnA
+            correction_required: true
+        - if event_time_unreachable_by_route:
+            alert: "North Star Violation"
+            suspend_finalization: true
+
+---
+
+cochran_theory:
+  label: "Factual and Observational Integrity Filter"
+  version: "2.0"
+
+  tenets:
+    - no_assumptions_without_evidence: true
+    - observations_must_be_time_bound: true
+    - facts_override_theories: true
+    - all_inferences_must_trace_back_to_observable_data: true
+    - speculation_requires_disclosure_and_justification: true
+
+  enforcement_mechanism:
+    - applied_to:
+        - field_narratives
+        - visual_inferences
+        - subject_tracking_claims
+        - cohabitation_or_relationship_summaries
+    - rule_checks:
+        - if statement_conflicts_with_photo:
+            trigger_qna: true
+            require_resolution: true
+        - if observation lacks timestamp:
+            apply_flag: "Cochran Violation: Time Required"
+        - if behavior is assumed but not validated:
+            mark_as: "Speculative – pending confirmation"
+
+  report_effects:
+    - speculative_tagging: enabled
+    - conflict_resolution_prior_to_finalization: required
+    - billing_impacts_logged: yes
+
+
+section_3:
+  label: "3. Surveillance Operational Log"
+  locked: true
+  margin: narrow
+
+narrative_construction:
+  description: "Surveillance event construction logic"
+  input_sources:
+    - type: "Photo Metadata"
+      includes: ["EXIF timestamp", "filename timestamp"]
+      source: "Images"
+    - type: "Investigator Notes"
+      includes: ["Written notes", "Voice memos", "GPS logs"]
+      source: "Field logs"
+    - type: "Client Intel"
+      includes: ["Intake form", "Pre-surveillance expectations"]
+      source: "Client documentation"
+  logic:
+    - rule: "Cross-validate all entries using at least two of the three sources"
+    - rule: "If only one source is available, trigger Q&A for verification"
+    - rule: "Do not rely on assumptions to fill time or activity gaps"
+
+section_3:
+  label_logic:
+    if: report_type == "Investigative"
+    then: "INVESTIGATION DETAILS"
+    elif: report_type == "Hybrid"
+    then: "INVESTIGATION DETAILS"
+    else: "SURVEILLANCE SUMMARY"
+
+  content_logic:
+    if: report_type == "Investigative"
+    then:
+      include:
+        - findings_timeline
+        - verified_confirmations
+        - document_notes
+      suppress:
+        - field_logs
+        - visuals
+        - billing_blocks
+
+    elif: report_type == "Hybrid"
+    then:
+      include:
+        - findings_list
+        - hybrid_special_note
+        - field_log_block
+      field_log_block:
+        label: "FIELD DEPLOYMENT (PHASE 2)"
+        visuals_mode: "Supplemental Verification"
+        billing_split:
+          investigative: [1, 2]
+          field: [3]
+      hybrid_special_note: "Due to the needs of both the client and the case filed, in-field surveillance was requested."
+
+    else:  # Field report
+      include:
+        - full_field_log
+        - billing_blocks
+        - visual_metadata_checks
+      enforce:
+        - continuity_checks
+        - timestamp_requirements
+
+  operational_flow:
+    - "All surveillance logs begin with metadata extraction from photos (EXIF, filename timestamp, overlay timestamp)"
+    - "First verifiable photo in the surveillance area marks the start of field operations"
+    - "First visual confirmation of the subject marks the beginning of surveillance contact"
+    - "Field time, drive time, and contact time are treated as distinct billing categories"
+    - "Metadata-anchored evidence supports all report entries and billing items"
+
+  formatting:
+    font: Times New Roman
+    size: 22pt
+    weight: bold
+    align: center
+
+  structure:
+    - header: "3a. Daily Field Entry Log"
+      layout: vertical
+      formatting:
+        header:
+          font: Times New Roman
+          size: 16pt
+          weight: bold
+          align: left
+        body:
+          font: Times New Roman
+          size: 12pt
+          weight: normal
+          align: left
+          line_spacing: single
+
+  entry_fields:
+    - field: "Date of Surveillance"
+      required: true
+      format: "Day, Month DD, YYYY"
+
+    - field: "Investigator Name"
+      required: true
+      source: "Field Report / Metadata Attribution / Subcontract Agreement"
+
+    - field: "Start Time"
+      required: true
+      format: 24hr
+      validation: "Photo Metadata / Time Anchor / First Field Entry"
+
+    - field: "Surveillance Type"
+      options: ["Fixed", "Mobile", "Hybrid"]
+      required: true
+
+    - field: "Location"
+      required: true
+      format: "City, State"
+      validation: "GPS Tag / Pre-Surveillance Report / Intake"
+
+     [DATE BLOCK HEADER] (e.g., Thursday May 22, 2025)
+     Surveillance Time: [start – end]
+     Objective: [Plain tactical goal for that day]
+     Observations:
+     - [timestamped event 1]
+     - [event 2]
+     - ...
+     Summary:
+     - 3 to 5 sentences summarizing logged evets
+
+    - field: "Narrative Summary"
+      rules:
+        - "No vague statements (e.g., 'early hours', 'later that night')"
+        - "All subject movements must be time-anchored"
+        - "All observed actions must be validated with photo or visual context"
+        - "Remove any mention of metadata tools"
+        - "Avoid assumptions; if unsure, Q&A is required"
+        - "Do not speculate on subject intent"
+        - "Do not include operational commentary or tool use"
+        - "If narrative conflicts with visual or metadata, trigger Q&A"
+        - "Reverse continuity logic must validate chain of events"
+
+narrative_gap_analysis:
+  module_label: "Narrative Continuity Validation"
+  type: "Gap Detection + Correction Protocol"
+  version: "1.0"
+
+  logic_enforcement:
+    purpose: "Ensure all surveillance transitions are narratively and evidentially anchored."
+
+    common_gap_types:
+      - transition_missing:
+          description: "Surveillance shift between locations not described."
+      - travel_action_unexplained:
+          description: "No timestamp or reason for investigator movement."
+      - event_jump:
+          description: "Immediate leap from one activity to another without connective narrative."
+      - cohabitation_assumption:
+          description: "Implied subject relationship without narrative or visual anchor."
+
+  resolution_steps:
+    - step: "insert_travel_anchor"
+      description: "Add explicit timestamp and directional movement narrative."
+      example_template: |
+        "At approximately {{time}}, surveillance transitioned from {{location_A}} to {{location_B}} in anticipation of subject activity based on earlier behavior."
+
+    - step: "apply_pattern_logic"
+      description: "Tie movement to previously observed subject behavior patterns."
+      example_template: |
+        "Earlier actions indicated subject would return to {{location}} at {{approx_time}}, warranting repositioning."
+
+    - step: "visual_support_verification"
+      description: "Ensure timestamped photographic confirmation exists for both departure and arrival."
+      enforcement:
+        - photo_match_required: true
+        - timestamp_consistency_required: true
+
+  integration:
+    linked_modules:
+      - reverse_continuity_test
+      - metadata_alignment_engine
+      - QnA_resolution_protocol
+
+  enforcement_flags:
+    missing_travel_transition: "Trigger narrative correction and timestamp inclusion."
+    unsupported_location_jump: "Flag for 1:1 Q&A and suspend finalization."
+    cohabitation_implied: "Highlight and verify with secondary evidence."
+
+  finalization_requirements:
+    - all transitions time-stamped
+    - visual evidence confirms movements
+    - no gap between observational blocks
+    - narrative aligns with metadata path
+
+
+narrative_evidence_conflict_resolution:
+  module_label: "Narrative-Evidence Conflict Resolution"
+  type: "Training Protocol + Validation Module"
+  version: "1.0"
+
+  principles:
+    - visual_overrides_text: true
+      description: "When discrepancies exist between narrative and visual/photo evidence, the visual record is treated as truth."
+
+    - timestamp_verification_required: true
+      description: "Photo timestamps (EXIF or filename) are used to confirm the authenticity of visual records."
+
+    - metadata_integrity_check:
+        enabled: true
+        fallback_sequence:
+          - exif_timestamp
+          - filename_timestamp
+          - overlay_timestamp
+
+    - narrative_alignment:
+        description: "Misalignment between photo and report is treated as narrative error, not photo error."
+        examples:
+          - conflict_type: "License Plate"
+            mismatch: "Narrative = '678 BCD'; Photo = 'BCD 678'"
+          - conflict_type: "Subject Description"
+            mismatch: "Narrative = 'Short white male'; Photo = 'Tall Black male'"
+
+  reverse_logic_check:
+    description: "Compares narrative elements against timestamped visual metadata."
+    enforcement:
+      required_fields:
+        - subject_description_match: true
+        - vehicle_identity_match: true
+        - time_anchor_alignment: true
+        - location_match_with_GPS: true
+    flag_on:
+      - missing_time_anchor
+      - subject_identity_conflict
+      - vehicle_plate_format_error
+
+  auto_qna_trigger:
+    enabled: true
+    on_discrepancy_detected: true
+    prompt_templates:
+      - "Please confirm plate format — narrative says '{{text}}' vs image '{{photo}}'."
+      - "Does the photo override the written description? Confirm subject ID."
+    required_resolution_before_finalization: true
+
+  enforcement_logic:
+    report_finalization_locked: true
+    unfreeze_conditions:
+      - all_qna_resolved: true
+      - metadata_verified: true
+      - visual-narrative alignment confirmed: true
+
+  audit_trail:
+    include_in_internal_log: true
+    show_correction_note: true
+    log_entry_format:
+      - timestamp
+      - nature_of_discrepancy
+      - investigator_response
+      - resolution_action_taken
+
+
+  internal_evidence_listing:
+    display: false
+    contents:
+      - timestamped_photos: "Count of verified, metadata-tagged photos"
+      - referenced_docs: ["Pre-Surveillance Report", "Intake Report", "Subcontractor Logs"]
+      - field_report_validation: true
+      - file_origin_validated: true
+      - GPS_cross_validation: true
+      - temporal_alignment_verified: true
+
+discrepancy_handling_protocol:
+  label: "Discrepancy Resolution Workflow"
+  version: 1.0
+  purpose: "To detect, flag, resolve, and document any mismatches between narrative entries and visual evidence."
+
+  detection:
+    trigger_points:
+      - plate_format_mismatch
+      - subject_description_conflict
+      - location_or_time_discrepancy
+    sources:
+      - narrative_entry
+      - photo_overlay
+      - metadata_timestamp
+      - filename_timestamp
+      - intake_report
+      - state_format_guidelines
+
+  resolution_steps:
+    - step: "detect_conflict"
+      description: "Compare narrative claims with visual and metadata evidence. Detect if plate or description does not align."
+      example: "Narrative says '678 BCD'; photo shows 'BCD 678'."
+
+    - step: "flag_for_qna"
+      description: "Highlight issue in draft and trigger Q&A session."
+      required_action: "Prompt user with clarification question."
+      prompt_template: "Please confirm correct plate format — does the visual evidence override the field notes?"
+
+    - step: "cross_reference"
+      description: "Cross-check plate format using visual zoom, plate structure (state-specific), or alternate photos."
+      tools:
+        - AI_image_enhancer
+        - metadata_viewer
+        - plate_structure_database
+
+    - step: "apply_resolution"
+      description: "Upon user validation, correct all entries to match verified information."
+      annotation_required: true
+      note_format: "Plate corrected to [validated version] per visual confirmation and user input."
+
+    - step: "final_documentation"
+      description: "Add resolution note to internal log for chain-of-custody tracking and report transparency."
+      compliance_note: "Required for legal integrity and audit readiness."
+
+  precedence_rules:
+    - "Photo evidence (metadata + overlay) overrides narrative when in conflict."
+    - "If conflict exists and no confirmation is possible, report is frozen for review."
+    - "Every discrepancy must be resolved or acknowledged before finalizing report."
+
+  validation:
+    reverse_continuity_required: true
+    qna_status_check: true
+    metadata_consistency_check: true
+    subject_visual_confirmation: true
+
+  finalization:
+    highlight_resolution_required: true
+    submission_lock_until_resolved: true
+    entry_unlocked_after_validation: true
+
+
+metadata_fallback_logic:
+  condition: "Missing or corrupted EXIF metadata"
+  fallback_sequence:
+    - step: "Use filename-embedded timestamp"
+      example: "20250519_202243.jpg → 20:22:43"
+    - step: "If filename unreliable, validate via visible timestamp overlay"
+    - step: "If both are available but conflict, trigger Q&A"
+    - step: "If neither are available, mark as 'visual timestamp only'"
+  annotation:
+    include_in_report: false
+    internal_flag: true
+    flag_term: "visual timestamp only"
+    purpose: "Maintain transparency without exposing tool or fallback chain"
+
+
+  internal_billing_anchors:
+    display: false
+    required_fields:
+      - Drive_to_Field: "Origin City to Surveillance City"
+      - Drive_from_Field: "Return Path Tracking"
+      - Mobile_Surveillance_Distance: "Captured via GPS + Metadata"
+      - Active_Surveillance_Hours: "Start to End Time in 24hr format"
+      - Total_Mileage: "Calculated or Estimated with start/end odometer references"
+      - Evidence_Timestamps_Anchor_Operational_Log: true
+      - Field_Op_Tags_Linked_To_Billing: true
+
+   mileage_handling:
+      - "Mileage is not displayed in final report."
+      - "Captured internally for taxation and billing summary only."
+      - "Pass-through logic controlled by billing module, not shown here."
+
+billing_summary_logic:
+  purpose: "To define and track time and mileage for billing purposes without surfacing client-facing details in the report."
+
+  categories:
+    - Drive_Time:
+        source: "Departure City to Field City"
+        start_point: "Manual entry or log approximation (e.g., 10:00 AM)"
+        end_point: "Timestamp of first Lawton photo (e.g., 20250425_142811 → 14:28)"
+        calculation_method: "End - Start"
+        round_trip: true
+        client_facing: false
+
+    - Field_Operational_Time:
+        start: "Timestamp of first site-based action (e.g., first photo in Lawton)"
+        end: "Final activity/photo of the night (e.g., area sweep)"
+        data_source: ["Photo log", "Field log"]
+        format: "24hr"
+        usage: "Used in operational logs and internal billing structure"
+        client_facing: true
+
+    - Surveillance_Engagement_Time:
+        trigger_start: "First confirmed visual or direct observation of subject"
+        trigger_end: "Last visual or noted subject contact"
+        validation: "Supported by image metadata, timestamped logs"
+        format: "24hr"
+        notes: "This subset is embedded in the field report but supports billing annotation"
+        client_facing: true
+
+    - Mileage:
+        base_calculation:
+          - method: "Tulsa to Lawton round trip mileage + Local driving route"
+          - if_gps_present: "Use GPS log directly"
+          - if_gps_absent: "Use estimated miles from known city distances + Google route"
+        documentation_required: true
+        placeholder: "[investigator input required]"
+        client_facing: false
+
+  integration_policy:
+    - "All billing values must align with photo or log evidence"
+    - "Any undocumented gaps must trigger Q&A before summary generation"
+    - "Do not include raw mileage or timestamps in client-facing final report unless requested"
+
+  continuity_check:
+    enabled: true
+    validation_points:
+      - timestamps_match_narrative: true
+      - subject_location_path_tracked: true
+      - visual_evidence_supports_log: true
+      - no_metadata_mentions: true
+      - vague_statements_flagged: true
+      - narrative_vs_photo_check: strict
+      - subject_identification_confirmation: image/log corroboration
+      - movement_segments_temporally_bound: true
+
+  qna_trigger:
+    rules:
+      - unsupported_or_ambiguous_statement: "Flag for 1:1 Q&A"
+      - contradictory_entry: "Q&A before approval"
+      - unmatched narrative vs. visual: "Q&A required"
+      - plate_discrepancy: "Trigger image check"
+      - subject_description_mismatch: "Trigger evidence review"
+      - missing time anchor: "Q&A resolution prior to report closure"
+    resolution:
+      - highlight_discrepant_entry: true
+      - freeze_submission_until_resolved: true
+      - defer to final review if internal resolution fails
+
+  entry_finalization:
+    procedure:
+      - all_highlighted_sections_resolved: true
+      - run_final_reverse_continuity_test: true
+      - validate_billing_anchor_integrity: true
+      - all_events_time_bound_and_verified: true
+      - unhighlight_all: true
+      - lock_entry_post-validation: true
+
+  # --- REVERSE CONTINUITY TEST ---
+  reverse_continuity_test:
+    active: true
+    trace_sources:
+      - Client Intake Form
+      - Client Contract
+    validate_fields:
+      - client_name
+      - client_address
+      - client_phone
+      - date_of_contract
+      - goals_of_investigation
+      - primary_subject
+      - subject_employer
+      - surveillance_hours_requested
+    test_methods:
+      anchor_validation:
+        method: "anchor_id_match + text proximity"
+        tolerance: "±1 line"
+      format_consistency_check:
+        method: "match font, size, and field label style"
+    report_behavior:
+      on_pass: "continue"
+      on_fail:
+        - "flag report for audit"
+        - "trigger Q&A clarification"
+    metadata_stamp:
+      include: true
+      visible_in_report: false
+      logs:
+        - field_name
+        - source_path
+        - anchor_id
+        - extraction_method

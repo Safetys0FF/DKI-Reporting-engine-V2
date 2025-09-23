@@ -1,0 +1,119 @@
+# DKI Visual Evidence Protocol: Metadata Extraction Logic v5.0
+
+process_logic:
+  description: "Defines the full forensic workflow for photo and video metadata extraction from archive files. This version captures the complete process we developed together."
+
+  workflow:
+    - step: "zip_ingestion"
+      details:
+        action: "Load and unpack provided ZIP archive"
+        result: "Extract all contained files into forensic buffer"
+
+    - step: "file_detection"
+      details:
+        action: "Check file extension and classify by type"
+        categories:
+          - JPEG/TIFF
+          - HEIC/HEIF
+          - RAW/DNG/CR2/NEF
+          - VIDEO/MP4/MOV
+          - Unsupported
+
+    - step: "routing"
+      details:
+        jpeg_tiff_chain: [Pillow, piexif, exifread, hachoir, filesystem, AI_inference]
+        heic_heif_chain: [ExifTool, pyheif, hachoir, filesystem, AI_inference]
+        raw_chain: [ExifTool, hachoir, filesystem, AI_inference]
+        video_chain: [ExifTool, hachoir, filesystem, AI_inference]
+
+    - step: "tool_execution"
+      details:
+        loop: "For each file, attempt each tool in sequence"
+        rules:
+          - If metadata found: mark SUCCESS, stop escalation
+          - If conflicting results: mark INTEGRITY_CONFLICT
+          - If all fail: mark UNRECOVERABLE
+
+    - step: "classification"
+      details:
+        SUCCESS: "Full EXIF metadata extracted"
+        FALLBACK: "Only filesystem metadata available"
+        UNRECOVERABLE: "No metadata available"
+        INTEGRITY_CONFLICT: "Conflicting metadata detected"
+
+    - step: "reporting"
+      details:
+        format: "Structured JSON + timeline report"
+        contents:
+          - filename
+          - hash (MD5, SHA256)
+          - attempted_tools
+          - used_tool
+          - metadata
+          - final_status
+        ordering: "Sort files by DateTimeOriginal or fallback timestamps"
+
+---
+
+# Protocol Set in YAML (Detailed Long Form)
+
+protocol_set:
+  version: "5.0"
+  description: "End-to-end forensic metadata extraction and reporting protocol"
+
+  chain_of_custody:
+    log_hashes: true
+    record_tool_attempts: true
+    record_final_status: true
+    maintain_timeline_order: true
+
+  tools:
+    - name: Pillow
+      type: "library"
+      function: "Fast EXIF extraction for JPEG/TIFF"
+    - name: piexif
+      type: "library"
+      function: "Deep TIFF/EXIF parsing for Apple/iPhone blocks"
+    - name: exifread
+      type: "library"
+      function: "Raw EXIF tag extraction for malformed files"
+    - name: hachoir
+      type: "binary parser"
+      function: "Recover metadata from corrupted or partial files"
+    - name: pyheif
+      type: "library"
+      function: "Decode HEIC container and extract EXIF/XMP"
+    - name: ExifTool
+      type: "external"
+      function: "Full metadata extraction for images, RAW, and video"
+    - name: filesystem
+      type: "os-level"
+      function: "Creation/Modification timestamps as fallback"
+    - name: AI_inference
+      type: "analysis"
+      function: "Scene/time/location inference from pixels"
+
+  file_types:
+    jpeg_tiff:
+      chain: [Pillow, piexif, exifread, hachoir, filesystem, AI_inference]
+    heic_heif:
+      chain: [ExifTool, pyheif, hachoir, filesystem, AI_inference]
+    raw:
+      chain: [ExifTool, hachoir, filesystem, AI_inference]
+    video:
+      chain: [ExifTool, hachoir, filesystem, AI_inference]
+
+  output:
+    format: "json+timeline"
+    fields:
+      - filename
+      - hash
+      - attempted_tools
+      - used_tool
+      - metadata
+      - final_status
+    statuses:
+      - SUCCESS
+      - FALLBACK
+      - UNRECOVERABLE
+      - INTEGRITY_CONFLICT

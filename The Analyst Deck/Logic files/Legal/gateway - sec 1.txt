@@ -1,0 +1,506 @@
+import re
+from typing import Dict, Any, List
+
+class InformationHandler:
+    def __init__(self):
+        # Extraction rules (non-case specific)
+        self.extract_rules = {
+            "client_name": {"source": "client_intake_form", "pattern": r"Client Name:\s*(.*)"},
+            "client_address": {"source": "client_intake_form", "pattern": r"Client Address:\s*(.*)"},
+            "client_phone": {"source": "client_intake_form", "pattern": r"Client Phone:\s*(.*)"},
+            "contract_date": {"source": "contract", "pattern": r"Date of Contract:\s*(.*)"},
+            "investigation_goals": {"source": "client_intake_form", "pattern": r"Goals of Investigation:\s*(.*)"},
+            "subject_primary": {"source": "client_intake_form", "pattern": r"Primary Subject:\s*(.*)"},
+            "subject_secondary": {"source": "client_intake_form", "pattern": r"Secondary Subject:\s*(.*)"},
+            "subject_tertiary": {"source": "client_intake_form", "pattern": r"Tertiary Subject:\s*(.*)"},
+            "subject_employers": {"source": "client_intake_form", "pattern": r"Subject Employer\(s\):\s*(.*)"},
+            "subject_employer_address": {"source": "client_intake_form", "pattern": r"Subject Employer Address:\s*(.*)"},
+            "billing_type": {"source": "contract", "pattern": r"Billing Type:\s*(.*)"},
+            "billing_amount": {"source": "contract", "pattern": r"Billing Amount:\s*(.*)"},
+            "services_included": {"source": "contract", "pattern": r"Services Included:\s*(.*)"},
+            "agency_name": {"source": "contract", "pattern": r"Agency Name:\s*(.*)"},
+            "agency_license": {"source": "contract", "pattern": r"Agency License:\s*(.*)"},
+            "assigned_investigator": {"source": "contract", "pattern": r"Assigned Investigator:\s*(.*)"},
+            "investigator_license": {"source": "contract", "pattern": r"Investigator License:\s*(.*)"}
+        }
+
+        self.anchors = {
+            "immutable": ["client_name", "client_address", "client_phone", "contract_date", "agency_name", "agency_license"],
+            "layered": ["subject_primary", "subject_secondary", "subject_tertiary",
+                        "investigation_goals", "subject_employers", "subject_employer_address", "assigned_investigator"]
+        }
+
+        self.classification = {
+            "client_name": "identity",
+            "client_address": "identity",
+            "client_phone": "identity",
+            "contract_date": "chronology",
+            "investigation_goals": "objective",
+            "subject_primary": "subject",
+            "subject_secondary": "subject",
+            "subject_tertiary": "subject",
+            "subject_employers": "context",
+            "subject_employer_address": "context",
+            "billing_type": "finance",
+            "billing_amount": "finance",
+            "services_included": "contract",
+            "agency_name": "agency",
+            "agency_license": "agency",
+            "assigned_investigator": "investigator",
+            "investigator_license": "investigator"
+        }
+
+        self.placement_rules = {
+            "section_1": ["client_name", "client_address", "client_phone", "contract_date",
+                          "investigation_goals", "subject_primary", "subject_secondary", "subject_tertiary",
+                          "agency_name", "agency_license", "assigned_investigator", "investigator_license"],
+            "section_2": ["investigation_goals"],
+            "section_3": ["observations", "investigation_details"],
+            "section_4": ["supporting_evidence"],
+            "section_6": ["billing_type", "billing_amount"],
+            "section_fr": ["case_summary", "legal_disclosure"]
+        }
+
+    def extract_field(self, pattern: str, text: str) -> str:
+        match = re.search(pattern, text)
+        return match.group(1).strip() if match else None
+
+    def enforce_immutable(self, value: Any, existing: Any) -> Any:
+        return existing if existing else value
+
+    def allow_layering(self, value: Any, existing: Any) -> List[Any]:
+        if not value:
+            return existing
+        if existing:
+            if isinstance(existing, list):
+                if value not in existing:
+                    existing.append(value)
+                return existing
+            else:
+                return [existing, value] if existing != value else [existing]
+        return [value]
+
+    def assign_case_type(self, contract_data: Dict[str, Any], conflict_detected: bool = False) -> str:
+        services = contract_data.get("services_included", "").lower() if contract_data else ""
+
+        has_investigative = "investigation" in services
+        has_field = "surveillance" in services or "field" in services
+
+        if conflict_detected:
+            return "Manual Review Required"
+        if has_investigative and not has_field:
+            return "Investigative"
+        elif has_field and not has_investigative:
+            return "Surveillance"
+        elif has_investigative and has_field:
+            return "Hybrid"
+        else:
+            return "Investigative"  # default fallback
+
+    def process(self, intake_text: str, contract_text: str, conflict_detected: bool = False) -> Dict[str, Any]:
+        parsed_data = {}
+
+        # Step 1: Extract fields
+        for key, rule in self.extract_rules.items():
+            source_text = intake_text if rule["source"] == "client_intake_form" else contract_text
+            parsed_data[key] = self.extract_field(rule["pattern"], source_text)
+
+        # Step 2: Apply anchors
+        anchored_data = {}
+        for field in self.anchors["immutable"]:
+            anchored_data[field] = self.enforce_immutable(parsed_data.get(field), anchored_data.get(field))
+
+        for field in self.anchors["layered"]:
+            anchored_data[field] = self.allow_layering(parsed_data.get(field), anchored_data.get(field))
+
+        for field, value in parsed_data.items():
+            if field not in anchored_data:
+                anchored_data[field] = value
+
+        # Step 3: Assign case type
+        case_type = self.assign_case_type(anchored_data, conflict_detected)
+
+        # Step 4: Structure output by classification
+        structured_output = {cat: {} for cat in set(self.classification.values())}
+        for key, value in anchored_data.items():
+            cat = self.classification.get(key)
+            if cat:
+                structured_output[cat][key] = value
+
+        # Step 5: Place into report sections
+        report_structure = {}
+        for section, fields in self.placement_rules.items():
+            report_structure[section] = {f: anchored_data.get(f) for f in fields if f in anchored_data}
+
+        return {
+            "report_type": case_type,
+            "structured_output": structured_output,
+            "report_structure": report_structure
+        }
+
+
+class OpsCompliance:
+    def __init__(self):
+        # Signal handling map
+        self.signals = {
+            "10-4": "Section approved, unlock next section",
+            "10-9": "Section flagged, reroute for revision",
+            "10-10": "Hard stop, freeze gateway, notify lead investigator",
+            "10-6": "Toolkit deployment, run tools and dispatch",
+            "10-8": "Section complete, store progress + log results"
+        }
+
+        # Compliance rules
+        self.formatting_enforced = True
+        self.failsafes = [
+            "no_placeholder_residue",
+            "no_unsupported_theories",
+            "media_requires_narrative_link"
+        ]
+
+        # Export conditions
+        self.export_conditions = {
+            "section_lifecycle_complete": True,
+            "final_review_approved": True
+        }
+
+        # Escalation rules
+        self.escalations = {
+            "on_timeout": "Escalate to QA admin + lead investigator",
+            "unexpected_input": "Trigger admin alert"
+        }
+
+    def validate_formatting(self, formatting_ok: bool) -> bool:
+        return formatting_ok if self.formatting_enforced else True
+
+    def check_export_ready(self, lifecycle_complete: bool, review_approved: bool) -> bool:
+        return lifecycle_complete and review_approved
+
+    def process_signal(self, signal: str) -> str:
+        return self.signals.get(signal, "Unknown signal, escalate to admin")
+
+
+class EvidenceHandler:
+    def __init__(self):
+        # Supported input types
+        self.input_types = ["form", "document", "scan", "photo", "video"]
+
+    def classify_input(self, input_type: str, metadata: Dict[str, Any]) -> Dict[str, Any]:
+        if input_type not in self.input_types:
+            return {"status": "rejected", "reason": "unsupported input type"}
+
+        # Apply transferability rules
+        if input_type in ["photo", "video"]:
+            if not metadata.get("narrative"):
+                return {"status": "blocked", "reason": "media requires narrative linkage"}
+        if not metadata.get("timestamp"):
+            return {"status": "blocked", "reason": "missing timestamp"}
+
+        return {"status": "accepted", "classification": metadata.get("classification", "evidence"), "metadata": metadata}
+
+    def transfer_to_data(self, input_type: str, content: Any, metadata: Dict[str, Any]) -> Dict[str, Any]:
+        classification_result = self.classify_input(input_type, metadata)
+        if classification_result["status"] != "accepted":
+            return classification_result
+
+        # Build evidence data block
+        return {
+            "status": "transferred",
+            "input_type": input_type,
+            "data": content,
+            "metadata": metadata
+        }
+
+class PlaceholderPolicy:
+    def __init__(self):
+        self.rules = {
+            "unknown": "Unknown",
+            "unconfirmed": "Unconfirmed at this time",
+            "suppressed": "Due to the nature of this case this portion was not performed or was not necessary"
+        }
+
+    def apply(self, value: Any, case_type: str, section: str, scope_included: bool) -> str:
+        # Case type suppression
+        if case_type == "Investigative" and section in ["surveillance", "field_ops"]:
+            return self.rules["suppressed"]
+        if case_type == "Surveillance" and section in ["investigative", "records"]:
+            return self.rules["suppressed"]
+
+        # Contract scope suppression
+        if not scope_included:
+            return self.rules["suppressed"]
+
+        # Missing or unconfirmed data
+        if value is None:
+            return self.rules["unknown"]
+        if isinstance(value, str) and value.lower() in ["pending", "tbd", "not verified"]:
+            return self.rules["unconfirmed"]
+
+        # Otherwise return actual value
+        return value
+
+class GroundingPolicy:
+    def __init__(self):
+        self.placeholders = {
+            "noise": "This information is outside of scope and currently considered noise until proven needed or useful in the investigation."
+        }
+
+    def evaluate(self, data_item: Dict[str, Any], anchors: Dict[str, Any]) -> str:
+        score = 0
+        if data_item.get("linked_to_intake"):  # Who
+            score += 1
+        if data_item.get("advances_goal"):  # Why
+            score += 1
+        if data_item.get("within_scope"):  # What
+            score += 1
+
+        if score >= 2:
+            return "usable"
+        elif score == 1:
+            return self.placeholders["noise"]
+        else:
+            return self.placeholders["noise"]
+
+
+# Example usage (pseudo)
+if __name__ == "__main__":
+    # Info handler
+    info_engine = InformationHandler()
+    intake_text = "Client Name: [REDACTED]\nClient Address: [REDACTED]"
+    contract_text = "Date of Contract: [REDACTED]\nServices Included: Investigation Only"
+    result = info_engine.process(intake_text, contract_text)
+    print(result)
+
+    # Ops compliance
+    compliance = OpsCompliance()
+    print(compliance.process_signal("10-4"))
+    print(compliance.check_export_ready(lifecycle_complete=True, review_approved=True))
+
+    # Evidence handler
+    evidence = EvidenceHandler()
+    photo_metadata = {"timestamp": "2025-09-12", "narrative": "Subject exiting building", "classification": "surveillance"}
+    print(evidence.transfer_to_data("photo", "photo_bytes_here", photo_metadata))
+
+
+# SECTION 1 RENDERER (Rendering phase only)
+# - Hard-coded structure & styles
+# - Drift guard (whitelist fields)
+# - Placeholder policy (italicized)
+# - Section-only artifact + manifest
+#
+# Notes:
+# - This module DOES NOT control flow or sequencing.
+# - It formats only Section 1; gateway handles review & drop-off.
+# - If python-docx is unavailable in your environment, keep the render_model() output
+#   and let your existing writer consume it.
+
+from typing import Dict, Any, Tuple, List, Optional
+
+try:
+    from docx import Document
+    from docx.shared import Pt
+    from docx.enum.text import WD_ALIGN_PARAGRAPH
+    HAVE_DOCX = True
+except Exception:
+    HAVE_DOCX = False
+
+
+class Section1Renderer:
+    """
+    Rendering-only engine for Section 1 – Investigation Objectives / Case Info.
+    - Fonts/Styles locked
+    - Whitelist (drift guard)
+    - Placeholder policy (italicized at output)
+    - Produces a section-only artifact + manifest
+    """
+
+    SECTION_KEY = "section_1"
+    TITLE = "SECTION 1 – INVESTIGATION OBJECTIVES / CASE INFO"
+
+    # DRIFT GUARD: only these fields render in Section 1
+    WHITELIST = [
+        "client_name", "client_address", "client_phone", "contract_date",
+        "investigation_goals",
+        "subject_primary", "subject_secondary", "subject_tertiary",
+        "subject_employers", "subject_employer_address",
+        "agency_name", "agency_license",
+        "assigned_investigator", "investigator_license",
+        "location_of_investigation",
+    ]
+
+    # Subheader groupings & labels
+    LAYOUT = [
+        ("CLIENT INFORMATION", [
+            ("Client Name", "client_name"),
+            ("Client Address", "client_address"),
+            ("Client Phone", "client_phone"),
+            ("Date of Contract", "contract_date"),
+        ]),
+        ("GOALS OF INVESTIGATION", [
+            ("Goals of Investigation", "investigation_goals"),
+        ]),
+        ("SUBJECTS OF INVESTIGATION", [
+            ("Primary Subject", "subject_primary"),
+            ("Secondary Subject", "subject_secondary"),
+            ("Tertiary Subject", "subject_tertiary"),
+            ("Employer(s)", "subject_employers"),
+            ("Employer Address", "subject_employer_address"),
+        ]),
+        ("AGENCY AND LICENSE", [
+            ("Agency Name", "agency_name"),
+            ("Agency License", "agency_license"),
+        ]),
+        ("ASSIGNED INVESTIGATOR", [
+            ("Investigator Name", "assigned_investigator"),
+            ("Investigator License", "investigator_license"),
+        ]),
+        ("LOCATION OF INVESTIGATION", [
+            ("Location", "location_of_investigation"),
+        ]),
+    ]
+
+    # Placeholder policy (render-time)
+    PLACEHOLDERS = {
+        "unknown": "Unknown",
+        "unconfirmed": "Unconfirmed at this time",
+        "suppressed": "Due to the nature of this case this portion was not performed or was not necessary",
+    }
+    BANNED_TOKENS = { "", " ", "N/A", "NA", "TBD", "[REDACTED]", "REDACTED" }
+
+    def __init__(self):
+        pass
+
+    # -------- sanitize helpers (render-time only) --------
+
+    def _normalize(self, v: Optional[Any]) -> Optional[str]:
+        if v is None:
+            return None
+        s = str(v).strip()
+        return s if s else None
+
+    def _placeholder_for(self, v: Optional[str]) -> Tuple[str, bool]:
+        """
+        Returns (text, is_placeholder)
+        - converts banned tokens or None to Unknown
+        - converts common pending markers to Unconfirmed
+        """
+        if v is None or (v.upper() in self.BANNED_TOKENS):
+            return (self.PLACEHOLDERS["unknown"], True)
+        lower = v.lower()
+        if lower in {"pending", "not verified"}:
+            return (self.PLACEHOLDERS["unconfirmed"], True)
+        return (v, False)
+
+    # -------- public API --------
+
+    def render_model(self, section_payload: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Build a style-agnostic render tree for Section 1.
+        This lets your existing writer output DOCX/PDF while honoring the same structure.
+        Returns a manifest with drift info for gateway review.
+        """
+        data: Dict[str, Any] = section_payload or {}
+        drift_bounced: Dict[str, Any] = {
+            k: v for k, v in data.items() if k not in self.WHITELIST
+        }
+
+        rendered_blocks: List[Dict[str, Any]] = []
+        placeholders_used: Dict[str, str] = {}
+
+        # Title (locked)
+        rendered_blocks.append({
+            "type": "title",
+            "text": self.TITLE,
+            "style": {"font": "Times New Roman", "size_pt": 16, "bold": True,
+                      "all_caps": True, "align": "center", "spacing": 1.15}
+        })
+
+        # Section groups
+        for subheader, fields in self.LAYOUT:
+            rendered_blocks.append({
+                "type": "header",
+                "text": subheader,
+                "style": {"font": "Times New Roman", "size_pt": 14, "bold": True,
+                          "underline": True, "all_caps": True, "align": "left", "spacing": 1.15,
+                          "space_before_lines": 2, "space_after_lines": 0}
+            })
+            for label, key in fields:
+                if key not in self.WHITELIST:
+                    # safety: keep drift out; already captured in drift_bounced
+                    continue
+                raw = self._normalize(data.get(key))
+                text, is_ph = self._placeholder_for(raw)
+                if is_ph:
+                    placeholders_used[key] = text
+                rendered_blocks.append({
+                    "type": "field",
+                    "label": label,
+                    "value": text,
+                    "style": {
+                        "font": "Times New Roman",
+                        "size_pt": 12,
+                        "label_bold": True,
+                        "value_italic": is_ph,
+                        "align": "left",
+                        "spacing": 1.15
+                    }
+                })
+
+        manifest = {
+            "section_key": self.SECTION_KEY,
+            "title": self.TITLE,
+            "fields_rendered": [k for _, grp in self.LAYOUT for _, k in grp],
+            "placeholders_used": placeholders_used,
+            "drift_bounced": drift_bounced
+        }
+
+        return {
+            "render_tree": rendered_blocks,
+            "manifest": manifest
+        }
+
+    def render_docx(self, section_payload: Dict[str, Any], out_path: str) -> Dict[str, Any]:
+        """
+        Optional DOCX writer (rendering only).
+        - If python-docx isn't available, returns the render_model for your own writer.
+        - Produces a SECTION-ONLY .docx file for gateway review & drop-off.
+        """
+        model = self.render_model(section_payload)
+        if not HAVE_DOCX:
+            return {"artifact": None, "note": "python-docx not available", **model}
+
+        doc = Document()
+
+        # Title
+        t = doc.add_paragraph()
+        tr = t.add_run(self.TITLE.upper())
+        tr.bold = True
+        tr.font.name = "Times New Roman"
+        tr.font.size = Pt(16)
+        t.alignment = WD_ALIGN_PARAGRAPH.CENTER
+
+        for block in model["render_tree"][1:]:  # skip title already written
+            if block["type"] == "header":
+                p = doc.add_paragraph()
+                r = p.add_run(block["text"].upper())
+                r.bold = True
+                r.underline = True
+                r.font.name = "Times New Roman"
+                r.font.size = Pt(14)
+                # approximate spacing by adding an empty paragraph before when needed
+                doc.add_paragraph()  # space before (2 lines simulated across headers overall)
+            elif block["type"] == "field":
+                p = doc.add_paragraph()
+                # label
+                r1 = p.add_run(f"{block['label']}: ")
+                r1.bold = True
+                r1.font.name = "Times New Roman"
+                r1.font.size = Pt(12)
+                # value
+                r2 = p.add_run(str(block["value"]))
+                r2.italic = block["style"]["value_italic"]
+                r2.font.name = "Times New Roman"
+                r2.font.size = Pt(12)
+
+        doc.save(out_path)
+        return {"artifact": out_path, **model}

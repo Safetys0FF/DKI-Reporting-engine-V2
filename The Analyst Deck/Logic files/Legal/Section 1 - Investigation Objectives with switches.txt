@@ -1,0 +1,494 @@
+section_6: BILLING SUMMARY
+  label: "SURVEILLANCE OPERATIONS BILLING LOGIC"
+  purpose: "Defines how surveillance-related billing is extracted, verified, and reported. Ensures transparent, court-defensible invoicing based on verified fieldwork."
+
+  # --- FORMATTING RULES ---
+  formatting:
+    default_font: Times New Roman
+    default_size: 11pt
+    header_size: 22pt
+    subheader_size: 16pt
+    label_weight: bold
+    paragraph_weight: normal
+    alignment: left
+
+  data_sources_and_anchors:
+    - section: "Section 3: Daily Logs"
+      details:
+        - "Logs actual hours in the field"
+        - "Records departure, contact, and return times"
+        - "Primary billing data source"
+    - section: "Section 4: Surveillance Sessions"
+      details:
+        - "Narrative justification for activities"
+        - "Supports time entries from Section 3"
+    - section: "Section 2: Pre-Surveillance Strategy"
+      details:
+        - "Defines surveillance goals"
+        - "Establishes maximum allowable fieldwork hours"
+    - section: "Pre-Investigation Costs"
+      details:
+        - "Confirms deductions from $500 planning budget"
+        - "Remaining amount affects field ops billing pool"
+
+  surveillance_fieldwork_budget:
+    formula: "Contracted_Total - 500"
+    note: "Any report costs exceeding $500 deducted from field ops budget"
+
+  billable_time:
+    hourly_rate: 100.00
+    categories:
+      - Pre_Surveillance_Travel: "30 minutes"
+      - Post_Surveillance_Travel: "30 minutes"
+      - In_Field: "As verified by logs, metadata, and narrative"
+      - Reconnaissance:
+          note: "Shown for transparency; not billed in main fieldwork hours"
+
+section_6:
+  label_logic:
+    if: report_type == "Investigative"
+    then: "BILLING SUMMARY – INVESTIGATIVE ONLY"
+    elif: report_type == "Field"
+    then: "BILLING SUMMARY – FIELD OPERATIONS"
+    elif: report_type == "Hybrid"
+    then: "BILLING SUMMARY – COMBINED SERVICES"
+
+  visibility_logic:
+    always: true
+
+  structure:
+    if: report_type == "Investigative"
+    then:
+      line_items:
+        - service: "Investigative Research"
+          type: flat
+        - service: "Document Delivery"
+          type: optional
+        - service: "Admin & Compliance Review"
+          type: optional
+    elif: report_type == "Field"
+    then:
+      line_items:
+        - service: "Surveillance Hours"
+          type: hourly
+        - service: "Mileage"
+          type: per_mile
+        - service: "Equipment / Data Fees"
+          type: optional
+        - service: "Report Generation"
+          type: per_session
+    elif: report_type == "Hybrid"
+    then:
+      line_items:
+        - service: "Investigative Services"
+          type: flat_or_per_doc
+        - service: "Surveillance Operations"
+          type: hourly
+        - service: "Mileage"
+          type: per_mile
+        - service: "Report Compilation"
+          type: flat
+        - service: "Document Recovery"
+          type: optional
+
+  contract_sequence:
+    surveillance_first:
+      apply_500_offset: true
+      note: "Investigative services are offset against the first $500 of field surveillance."
+    investigative_first:
+      apply_500_offset: false
+      note: null
+
+  required_fields_per_line:
+    - service_type
+    - date
+    - description
+    - rate
+    - contract_reference
+
+  enforcement:
+    - validate_against_section_1
+    - reconcile_with_section_2
+    - reconcile_with_section_3
+    - reconcile_with_section_4
+    - no_inferred_charges
+    - audit_ready: true
+
+
+  validation_and_audit:
+    requirements:
+      - "Time must appear in Section 3"
+      - "Must match GPS metadata if available"
+      - "Supported by Section 4 narrative or visuals"
+      - "Within contracted strategy window unless flagged as 'Recon'"
+    conflict_protocol:
+      - "Flag discrepancies"
+      - "Trigger internal Q&A"
+    no_surveillance_day:
+      - "Only travel and planning billed"
+
+  time_format_and_adjustment:
+    format: "24-hour clock"
+    benefits:
+      - "Reduces confusion"
+      - "Allows seamless travel billing"
+    authorized_edits:
+      - "Only section in report allowing retroactive edits"
+      - "Adjusts Section 3 and 4 for ±30 min billing rule"
+      - "All edits must be:
+          - Justified internally
+          - Authorized via billing adjustment parameters
+          - Synced between Sections 3 and 4
+          - Follow billing validation logic"
+    integrity_pass: "One-time adjustment post-final review"
+
+  surveillance_audit_protocol:
+    cross_reference:
+      - "Section 3 and 4 time entries"
+      - "Metadata timestamps"
+      - "Field anchor points"
+      - "Travel route verification"
+    billing_adjustment:
+      - "Adjust in/out times only"
+      - "Apply 30 min pre/post travel if validated"
+    example:
+      before: "3 Days, 18 Hours"
+      after_audit: "3 Days, 21 Hours"
+      note: "Changes silent to client; logged internally"
+
+  summary_statement_format:
+    - Subtotal_Fieldwork_Budget: "[Contract - $500 - report overages]"
+    - Actual_Billed_Hours: "[Verified hours from Sections 3 & 4, post-adjustment]"
+
+  mileage_handling:
+    public_statement: "Mileage was waived as a professional courtesy."
+    internal_validation:
+      - "Tracked via metadata"
+      - "Confirmed through routing logic"
+    subcontractor_charges:
+      - "Matched and passed without markup"
+      - "Inflated entries flagged and buffered"
+
+  result:
+    traits:
+      - "Court-defensible"
+      - "Cross-verified with four layers of data"
+      - "Allows single final edit pass"
+      - "Reflects true engagement and transparency"
+      - "Compliant with contracts and legal framework"
+
+
+[NODE::GATEWAY] – SECTION ONE CONTROL UNIT
+
+Function:
+All data entering the report engine must pass through this node for initial authorization.
+
+🔧 GATEWAY RULESET
+
+[GATEWAY::IDENTITY_CHECK]
+
+Inputs: Client Intake Form only
+
+Matches: Client Name, Subject Name(s), DOB, Address
+
+Cross-checks with: Contract + TLO (via [NODE::TLO_ANALYTICS])
+
+Failure = [REJECT::IDENTITY_MISMATCH]
+
+[GATEWAY::JURISDICTION_LOCK]
+
+Verifies: Investigative scope, legal territory, license active
+
+Data Source: Contract + Intake
+
+Failure = [REJECT::OUT_OF_SCOPE]
+
+[GATEWAY::TRIGGER_CHECK]
+
+Report flow begins only if Run Master Protocol(S) is issued
+
+All uploads prior to trigger = buffered, not processed
+
+[GATEWAY::VERSION_SYNC]
+
+Confirms that template matches FINAL_REPORT_TEMPLATE.docx
+
+If mismatch = [TRIGGER::DIAGNOSTIC_MODE]
+
+🔁 DATA FLOW
+
+Raw Inputs → [NODE::GATEWAY]
+
+Gateway validates or blocks
+
+If passed → Route to:
+
+[NODE::TLO_ANALYTICS]
+
+[NODE::PHOTO_CLASSIFIER]
+
+[NODE::REPORT_SECTION_HANDLER]
+
+All invalid, unverified, or mismatched data = routed to quarantine (DEADFILE INTEL LOG or PENDING INTAKE VERIFY).
+
+
+# Section 6: Surveillance Operations Billing Logic (English-Based Framework)
+
+## Purpose
+
+This logic governs how all surveillance-related billing is extracted, verified, and documented. It ensures transparent invoicing based on verified field work, while remaining compliant with client contracts and operational policies.
+
+---
+
+## Data Sources & Anchor Points
+
+Surveillance operations billing is drawn from four cross-referenced sections of the investigation report:
+
+1. **Section 3: Daily Logs**
+
+   * Logs actual hours in the field
+   * Records departure, contact, and return times
+   * All logs are considered primary billing data
+
+2. **Section 4: Surveillance Sessions**
+
+   * Provides narrative justification for all field activities
+   * Describes subject sightings, engagement, or inactivity
+   * Used to support the time entries in Section 3
+
+3. **Section 2: Pre-Surveillance Strategy**
+
+   * Defines contracted hours and surveillance goals
+   * Establishes the max allowable hours for fieldwork before overages
+
+4. **Pre-Investigation Costs Section**
+
+   * Confirms deductions from the \$500 planning budget
+   * Remaining funds affect the field operations billing pool
+
+---
+
+## Surveillance Fieldwork Budget
+
+* Calculated as:
+  **Contracted Total – \$500 (Planning Budget)**
+
+* All planning/report costs above \$500 (if any) are also subtracted from this total
+
+---
+
+## Billable Time Rules
+
+* **Hourly Rate**: \$100/hour
+
+* **Billable Time Categories**:
+
+  1. **Pre-Surveillance Travel**: Always 30 minutes
+  2. **Post-Surveillance Travel**: Always 30 minutes
+  3. **Time In Field**: Based on logs, metadata, and narrative
+
+* **Reconnaissance Time**:
+
+  * Time used to verify subject location or prepare area
+  * Listed separately and not included in main field hours billing
+  * Still shown for transparency, especially when contracted time is exceeded
+
+---
+
+## Validation & Audit Integrity
+
+* All time must:
+
+  * Be logged in Section 3
+  * Match GPS metadata, when available
+  * Be supported by visual/narrative evidence in Section 4
+  * Stay within strategy window unless separately noted as "Recon"
+
+* If conflict is detected (e.g., hours billed without evidence):
+
+  * Flag entry
+  * Trigger internal Q\&A protocol
+
+* If no surveillance occurred:
+
+  * Only travel and planning time are billed
+  * Fieldwork total may be zero
+
+---
+
+## 24-Hour Format & Strategic Retroactive Adjustment
+
+* **Time Format**: All time values in this section use a **24-hour clock** to:
+
+  * Reduce interpretive confusion
+  * Cleanly reflect full surveillance shifts
+  * Allow seamless addition of the pre/post travel billing time
+
+* **Authorized Edits (Only Section in Report)**:
+
+  * This section is the **only location** that permits retroactive edits
+  * Edits may adjust Section 3 and Section 4 logs to apply +/- 30 min billing rule
+  * All adjustments must be:
+
+    * Justified internally and authorized in accordance with defined billing adjustment parameters
+    * Adjusted in both Section 3 and 4 equivocally for congruent time stamps
+    * Synced with billing validation logic
+
+* This allows the report to undergo **a single integrity edit pass** post-final review
+
+---
+
+## Surveillance Audit Protocol
+
+* Compare reported time in Section 3 and Section 4 against:
+
+  * Metadata timestamps
+  * Field location anchors
+  * Travel patterns from the investigator business location
+
+* **Calculate Total Hours Claimed vs. Total Hours Verified**
+
+  * Use metadata and narrative validation
+  * Adjust only the in/out times to align with the standard billing model
+  * Apply +30 minutes pre, +30 minutes post rule if supported
+
+* **Example Correction**:
+
+  > Section 3 and Section 4 Report: 3 Days, 18 Hours
+  >
+  > Retroactive Audit: Edits only the time in and the time out in both sections, the exact same using 24-hour time format
+  > Audit Shows: Validated Metadata Supports 3 Days, 21 Hours
+  > Final Report Value: 21 Hours (Billing Adjusted)
+
+* Corrections are silent to the client but logged internally
+
+---
+
+## Summary Statement Format (for report)
+
+> **Subtotal – Surveillance Fieldwork Budget**: \[Contract - \$500 - report overages]
+> **Actual Billed Hours**: \[Verified hours from Sections 3 & 4, post-adjustment]
+
+---
+
+## Internal Mileage Handling (Hidden from Client)
+
+* Mileage is always tracked
+* Public-facing statement remains:
+
+> *"Mileage was waived as a professional courtesy."*
+
+Mileage is validated using:
+
+* Photo/Video metadata (location/time)
+* Route logic from investigator's base to surveillance area
+
+If subcontractor charges mileage:
+
+* DKI verifies and passes actual cost to client, without markup
+* Internal buffer used if cost appears inflated
+
+---
+
+## Result
+
+A clean, court-defensible, client-facing billing section:
+
+* Validated against 4 layers of evidence
+* Reflects true operational engagement
+* Remains fair, compliant, and transparent
+* Strategically permits a one-time final edit for billing continuity and legal resilience
+
+**Post-Retroactive Edit Lock and Validation Protocol (English Logic)**
+
+Once retroactive billing edits have been performed within the Surveillance Operations section, the system enters a locked state to prevent any further automated or manual changes to billable time entries or their timestamps. This lock is permanent unless explicitly overridden by an authorized administrator with logged justification.
+
+**System Lock Activation Criteria:**
+
+* All edits applied to Section 3 and Section 4 timestamps must be:
+
+  * Matched across both sections (start and end times)
+  * Reflected in 24-hour format
+  * Justified based on travel rules (+/- 30 minutes)
+  * Supported by metadata and visual evidence
+* Once these edits are finalized, the system automatically:
+
+  * Disables future adjustments to those fields
+  * Stores a timestamped audit log of the changes
+  * Flags the entry as "Post-Audit Locked"
+
+**Reverse Continuity Test (Triggered Upon Lock):**
+Immediately following the lock, a reverse continuity validation sequence is triggered. This test ensures all surveillance time entries are logically and chronologically consistent across:
+
+* Section 2: Pre-Surveillance Strategy (contracted hours and goals)
+* Section 3: Daily Logs (field times)
+* Section 4: Surveillance Sessions (narrative match to time claims)
+* Section 6: Final Billing Summary (time and value congruence)
+
+**Continuity Test Requirements:**
+
+* Anchor points must align (start/end, GPS, metadata)
+* All billed hours must be traceable to both narrative and logs
+* Calculations in billing summary must match confirmed field times
+* Any discrepancy results in a flagged audit for internal review
+
+This sequence ensures the integrity of the report, prevents billing manipulation, and maintains legal defensibility across the finalized surveillance billing process.
+
+Internal Mileage Handling 
+
+Mileage is always tracked
+
+Public-facing statement remains:
+
+"Mileage was waived as a professional courtesy."
+
+Mileage is validated using:
+
+Photo/Video metadata (location/time)
+
+Route logic from investigator's base to surveillance area
+
+If subcontractor charges mileage:
+
+DKI verifies and passes actual cost to client, without markup
+
+Internal buffer used if cost appears inflated
+
+RETAINER SUMMARY (Final Value Calculation Table)
+
+This is the last section in the billing summary and functions as the final aggregation and calculation point for all preceding financial data.
+
+Retainer Logic
+
+Contracted Amount Due: Pulled from client intake form and signed contract
+
+Total Retainer Applied: Cross-checked with Section 1
+
+Remaining Balance After Planning
+
+Contracted total minus $500 planning
+
+If no surveillance was performed, return $0.00
+
+Deductions
+
+$500 for surveillance planning (if used)
+
+Documentation flat fee ($100.00)
+
+Pre-investigation costs (actual total from planning deductions)
+
+Total Cost of Investigation
+
+Sum of all billing subsections (pre-investigation, surveillance, documentation)
+
+Remaining Retainer Balance
+
+Contracted amount minus investigation total
+
+Final Statement
+
+Total Remaining Balance Owed (if any) or declare "Zero if nothing is owed"
+
+All fields are auto-populated and validated through prior sections. If conflict is detected (e.g., costs exceed contract but billing doesn’t reflect this), the entry is flagged and sent to internal review.
+

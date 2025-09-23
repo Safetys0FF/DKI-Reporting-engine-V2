@@ -1,0 +1,187 @@
+Section5Formatting:
+  section_heading:
+    title: "5. REVIEW OF SUPPORTING DOCUMENTS"
+    style:
+      font_size: 14pt
+      font_weight: bold
+      text_transform: uppercase
+      underline: true
+      spacing_before: 24pt
+
+  record_structure:
+    sorting_order:
+      - Identity Records
+      - Supporting Government Records
+      - County & Court Filings
+      - Delivery Confirmations
+      - Case Administration
+    display_format:
+      - heading: "[Jurisdiction or Source – e.g., Tulsa County Sheriff’s Office Records]"
+        records:
+          repeatable: true
+          fields:
+            - description: "[Record Type – e.g., Sheriff Report, Court Docket, FOIA Response]"
+            - subject_name: "[Last Name, First Name]"
+            - date_reference: "[Applicable Date or Filing Date]"
+            - additional_notes: "[Optional – e.g., Case ID, Tracking ID]"
+
+  inclusivity_policy:
+    include_all_documents: true
+    photo_exclusion: true
+    computer_filenames_omitted: true
+    client_rights:
+      full_record_delivery: true
+      post-investigation_archive: required
+
+  layout:
+    alignment: Left
+    font_family: "Times New Roman"
+    font_size: 12pt
+    font_weight: bold
+    bullet_style: none
+    indentation:
+      heading_indent: 0in
+      record_indent: 0.5in
+
+Section5Logic:
+  description: "Standard logic for processing and formatting supporting documents in private investigation case reports."
+  core_rules:
+    - All submitted documents must be included in the report unless legally restricted.
+    - Photos or image files are not listed in this section unless officially classified as records (e.g., government-archived satellite maps).
+    - Documents must be grouped under generalized but legally sound categories.
+    - Document categories must be jurisdiction-neutral and repeatable across reports.
+    - Documents must be described by record type and jurisdiction, not by original file name.
+    - All records must be attributed to a named subject in Last name, First name format.
+    - Intake forms and contracts must always appear as the final category in this section.
+    - Document lists must maintain clean left-aligned formatting with consistent indentation.
+    - Final report is client-facing and must contain a complete listing of obtained material for legal transparency and discovery standards.
+  enforcement:
+    - Records without names or dates trigger Q&A resolution.
+    - Redundant file names are stripped.
+    - All jurisdiction labels must follow this format: "[County/State/Department] Records"
+    - Supporting documentation chain is validated through intake trace and document timestamp.
+    - If a document proves irrelevant, erroneous, or mismatched (e.g., wrong subject), it must be:
+        - flagged for review,
+        - submitted to admin for removal consideration,
+        - removed only upon documented approval with justification.
+
+
+north_star_protocol:
+  label: "Navigational and Operational Integrity Layer"
+  version: "1.0"
+
+  core_principles:
+    - directional_consistency: "All investigator movements and surveillance patterns must reflect logical pursuit strategy."
+    - proximity_logic: "Engagement with the subject must align with feasible route paths, distances, and timeframes."
+    - observational_follow-through: "Location shifts and decisions must be traceable to a surveillance objective or observed behavior."
+
+  validation_hooks:
+    - integrated_with:
+        - narrative_gap_analysis
+        - continuity_check
+        - context_inference_logic
+    - enforcement:
+        - if illogical_position_shift_detected:
+            flag: true
+            trigger: QnA
+            correction_required: true
+        - if event_time_unreachable_by_route:
+            alert: "North Star Violation"
+            suspend_finalization: true
+
+cochran_theory:
+  label: "Factual and Observational Integrity Filter"
+  version: "2.0"
+
+  tenets:
+    - no_assumptions_without_evidence: true
+    - observations_must_be_time_bound: true
+    - facts_override_theories: true
+    - all_inferences_must_trace_back_to_observable_data: true
+    - speculation_requires_disclosure_and_justification: true
+
+  enforcement_mechanism:
+    - applied_to:
+        - field_narratives
+        - visual_inferences
+        - subject_tracking_claims
+        - cohabitation_or_relationship_summaries
+    - rule_checks:
+        - if statement_conflicts_with_photo:
+            trigger_qna: true
+            require_resolution: true
+        - if observation lacks timestamp:
+            apply_flag: "Cochran Violation: Time Required"
+        - if behavior is assumed but not validated:
+            mark_as: "Speculative – pending confirmation"
+
+  report_effects:
+    - speculative_tagging: enabled
+    - conflict_resolution_prior_to_finalization: required
+    - billing_impacts_logged: yes
+
+  reverse_continuity_validation:
+    anchor_points:
+      - intake_form
+      - client_contract
+      - source_record_date
+    requirements:
+      - field_consistency_check: true
+      - subject_name_trace: true
+      - record_type_match: true
+    conflict_resolution:
+      - flag_if_mismatch: true
+      - trigger_qna_review: true
+      - resolution_required_before_lock: true
+
+  logic_check:
+    cross_field_comparison: true
+    source_vs_claim_validation: true
+    enforce_date_chronology: true
+    require_subject_alignment: true
+
+  qna_resolution:
+    initiate_on:
+      - missing_date
+      - unnamed_record
+      - ambiguous_jurisdiction
+    prompt_template:
+      - "Please verify subject name for: [Record Description]"
+      - "Confirm jurisdiction source for: [Document Title]"
+      - "Add applicable date for: [Record or Filing]"
+    lock_until_resolved: true
+
+  # --- REVERSE CONTINUITY TEST ---
+  reverse_continuity_test:
+    active: true
+    trace_sources:
+      - Client Intake Form
+      - Client Contract
+    validate_fields:
+      - client_name
+      - client_address
+      - client_phone
+      - date_of_contract
+      - goals_of_investigation
+      - primary_subject
+      - subject_employer
+      - surveillance_hours_requested
+    test_methods:
+      anchor_validation:
+        method: "anchor_id_match + text proximity"
+        tolerance: "±1 line"
+      format_consistency_check:
+        method: "match font, size, and field label style"
+    report_behavior:
+      on_pass: "continue"
+      on_fail:
+        - "flag report for audit"
+        - "trigger Q&A clarification"
+    metadata_stamp:
+      include: true
+      visible_in_report: false
+      logs:
+        - field_name
+        - source_path
+        - anchor_id
+        - extraction_method

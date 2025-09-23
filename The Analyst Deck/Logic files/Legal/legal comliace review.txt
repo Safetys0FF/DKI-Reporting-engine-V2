@@ -1,0 +1,73 @@
+### DKI Compliance Threshold Logic – Written in Plain English
+
+**1. Operating Jurisdiction:**
+
+* All cases are conducted under Oklahoma jurisdiction.
+* CLEET (Council on Law Enforcement Education and Training) sets the operating rules.
+* DKI is legally accountable to those rules in every case.
+
+**2. Subcontractor Boundaries:**
+
+* Any subcontractor must hold their own license.
+* They contract TO DKI, not FROM DKI.
+* DKI must retain proof of:
+
+  * Their license
+  * Contractual relationship
+  * Work scope
+
+**3. Silent Compliance Monitor (SCM):**
+
+* SCM operates in the background of every case.
+* If something is found that is illegal (like wiretap, phone record access, or unauthorized tracking):
+
+  * It is automatically flagged internally.
+  * That data is blocked from inclusion in any output.
+  * Report will still show as complete but will NOT contain illegal content or be verified by client sourcing (verified evidence must be supplied as supporting documentation)
+* SCM leaves an internal log entry, not visible to clients.
+
+**4. Evidence From Client:**
+
+* Any evidence provided by the client:
+
+  * Must be labeled as CLIENT-PROVIDED.
+  * Will be allowed only if there is support:
+
+    * Either metadata
+    * Or case documentation
+    * Or photo/video context
+* DKI is NOT liable for how the client obtained that evidence.
+
+**5. Legal Matching:**
+
+* The system uses keyword similarity (like how lawyers search law databases) to match any questionable phrases.
+* It compares those to a list of banned or restricted activities.
+* If any match is found, it:
+
+  * Flags it
+  * Logs it
+  * Blocks it from appearing in the final report
+
+**6. Reporting Label:**
+
+* If the report passes all compliance checks:
+
+  * A final tag is added: “COMPLIANT / CLEET VALIDATED.”
+  * This is for internal archiving only.
+
+**7. Future Ability (Optional):**
+
+* If connected to a live law source (like Oklahoma statutes), the system could one day:
+
+  * Cross-check every action with the law
+  * Reject anything out of bounds in real time
+  * Act as a legal buffer for PI liability
+
+---
+
+8. All sorcing must be pulled from all available open source available search criteria (google, yahoo, reddit, ect) 
+
+   * all sources oare to be verified as usable information but not a source of legal admisability 
+   * we are not lawyers, attorneys, or officers of the legal court system and therefor it is required that you check with a registered officer of the court for final decesion and legal authority compliance.
+
+Use this document to expand, modify, or write new rules in plain English. I’ll handle the YAML or code translations from here.

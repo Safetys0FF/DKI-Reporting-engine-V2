@@ -1,0 +1,367 @@
+Section4Formatting:
+style:
+font_family: "Times New Roman"
+font_size: 12pt
+line_spacing: 1.5
+paragraph_spacing:
+before: 6pt
+after: 6pt
+alignment: Justified
+indentation:
+first_line: 0.5in
+font_weight: normal
+
+
+structure:
+header:
+format: "Bold Uppercase"
+font_size: 14pt
+underline: true
+sub_headers:
+format: "Bold"
+font_size: 12pt
+spacing_above: 12pt
+entry_layout:
+- Surveillance Date
+- Time & Location Summary
+- Visual Confirmation
+- Subject Actions
+- Investigator Notes
+- Conclusion or Transition
+
+section_4:
+label_logic:
+if: report_type == "Investigative"
+then: "INVESTIGATION FINDINGS"
+elif: report_type == "Hybrid"
+then: "INVESTIGATIVE-FIELD REVIEW SUMMARY"
+else: "REVIEW OF SURVEILLANCE SESSIONS"
+
+
+visibility_logic:
+if: report_type == "Investigative"
+then: suppress
+elif: report_type == "Field" or report_type == "Hybrid"
+then: enable
+
+
+structure:
+if: report_type == "Field"
+then:
+include:
+- date
+- subject
+- objective
+- visual_confirmation
+- deviation_or_pattern
+- behavioral_analysis
+- metadata_tieback
+elif: report_type == "Hybrid"
+then:
+include:
+- part_a: investigative_findings_summary
+- part_b: field_review_analytics
+- visual_tagging: "Supplemental Verification"
+- required_callout: "This summary reflects combined findings from investigative review and in-field verification."
+- section_3_linkage: true
+else:
+include: []
+
+
+enforcement:
+- enforce_metadata_alignment: true
+- disallow_speculation: true
+- require_timestamp_traceback: true
+- validate_objective_anchor: true
+- flag_inconsistencies: true
+
+
+special_conditions:
+- no_visual_contact: "Surveillance efforts did not result in visual confirmation of the subject during this operational window."
+- beyond_scope_note: "Events occurred outside the billing or authorization scope and were not pursued further under this report."
+subcontractor_disclosure:
+  text: "This summary includes data gathered by verified subcontractor parties."
+  logic_flag:
+    if: subcontractor_present == true
+    then: include
+    else: suppress
+
+compliance:
+frameworks:
+- North_Star_Protocol
+- Cochran_Theory
+
+report_layout:
+section_heading:
+title: "4. REVIEW OF SURVEILLANCE SESSIONS"
+style:
+font_size: 14pt
+font_weight: bold
+text_transform: uppercase
+underline: true
+spacing_before: 24pt
+subsection_label:
+- field: "SURVEILLANCE DATES – (LIST THE COVERED SURVEILLANCE; CONFIRM WITH SECTION 3)"
+format:
+font_weight: bold
+font_size: 12pt
+line_spacing: 1.5
+session_format:
+goal_outcome_statement_logic:
+  if: report_type == "Field" or report_type == "Hybrid"
+  then: include
+  else: suppress
+- daily_entries:
+repeatable: true
+fields:
+- date_header: "[Insert date: Day, Month, Date, Year]"
+- investigator: "• Investigator: [Insert field investigator name]"
+- observation: "• Observation: [Insert brief notable field observation]"
+- context: "• Additional Context: [Insert field note explanation]"
+- side_notes: "• [Insert major side notes per daily log]"
+- time_logged: "• [Insert start – end time: total hours logged]"
+summary:
+total_hours: "Total Surveillance Hours: [Insert from above and confirm with Section 3]"
+validation_rule: "All days must be accounted for and confirmed by Section 3 logs."
+
+
+anchor_points:
+- subject_identity
+- vehicle_identification
+- confirmed_location
+- behavioral_change
+- visual_contact_loss
+- investigator_handoff
+
+
+reverse_anchor_flow:
+description: "Logical validation trail used to ensure Section 4 aligns with origin data"
+fallback_chain:
+- Section4 → must be traceable to Section3 logs
+- Section3 logs → must match with Section2 summaries
+- Section2 summaries → must reflect supporting intel
+- Supporting intel → must originate from Client Intake Form
+enforcement:
+- reverse_flow_enabled: true
+- each_section_must_anchor_previous: true
+- missing_link_triggers_flag: true
+metadata_checks:
+- validate_timestamp_match
+- verify_subject_consistency
+- verify_surveillance_goal_alignment
+
+
+scrapper_strategies:
+metadata_usage:
+- use_visible_timestamp_only: true
+- never_reference_extraction_methods: true
+- only_include_if_logged_by_investigator: true
+data_chain:
+- subject_to_client_verified: true
+- client_to_DKI_logged: true
+- DKI_to_FieldOperator_instructional: true
+
+
+inference_rules:
+allow:
+- behavioral_pattern_shift: if consistent with subject history
+- timeline_gap_explanation: if backed by surveillance log
+deny:
+- speculative_motive
+- emotional language
+- unverified witness quotes
+
+
+compliance_checks:
+enforce_case_relevance_only: true
+red_flag_trigger:
+- unlogged_metadata
+- non-subject-related activity
+- overexplained tech/tool usage
+
+
+output_template:
+use_master_template: true
+match_section3_timestamps: true
+prohibit_placeholder_text: true
+
+north_star_protocol:
+  label: "Navigational and Operational Integrity Layer"
+  version: "1.0"
+  core_principles:
+    - directional_consistency: "All investigator movements and surveillance patterns must reflect logical pursuit strategy."
+    - proximity_logic: "Engagement with the subject must align with feasible route paths, distances, and timeframes."
+    - observational_follow-through: "Location shifts and decisions must be traceable to a surveillance objective or observed behavior."
+  validation_hooks:
+    - integrated_with:
+        - narrative_gap_analysis
+        - continuity_check
+        - context_inference_logic
+    - enforcement:
+        - if illogical_position_shift_detected:
+            flag: true
+            trigger: QnA
+            correction_required: true
+        - if event_time_unreachable_by_route:
+            alert: "North Star Violation"
+            suspend_finalization: true
+
+cochran_theory:
+  label: "Factual and Observational Integrity Filter"
+  version: "2.0"
+  tenets:
+    - no_assumptions_without_evidence: true
+    - observations_must_be_time_bound: true
+    - facts_override_theories: true
+    - all_inferences_must_trace_back_to_observable_data: true
+    - speculation_requires_disclosure_and_justification: true
+  enforcement_mechanism:
+    - applied_to:
+        - field_narratives
+        - visual_inferences
+        - subject_tracking_claims
+        - cohabitation_or_relationship_summaries
+    - rule_checks:
+        - if statement_conflicts_with_photo:
+            trigger_qna: true
+            require_resolution: true
+        - if observation lacks timestamp:
+            apply_flag: "Cochran Violation: Time Required"
+        - if behavior is assumed but not validated:
+            mark_as: "Speculative – pending confirmation"
+  report_effects:
+    - speculative_tagging: enabled
+    - conflict_resolution_prior_to_finalization: required
+    - billing_impacts_logged: yes
+
+narrative_construction:
+  description: "Surveillance event construction logic"
+  input_sources:
+    - type: "Photo Metadata"
+      includes: ["EXIF timestamp", "filename timestamp"]
+      source: "Images"
+    - type: "Investigator Notes"
+      includes: ["Written notes", "Voice memos", "GPS logs"]
+      source: "Field logs"
+    - type: "Client Intel"
+      includes: ["Intake form", "Pre-surveillance expectations"]
+      source: "Client documentation"
+  logic:
+    - rule: "Cross-validate all entries using at least two of the three sources"
+    - rule: "If only one source is available, trigger Q&A for verification"
+    - rule: "Do not rely on assumptions to fill time or activity gaps"
+
+operational_flow:
+  - "All surveillance logs begin with metadata extraction from photos (EXIF, filename timestamp, overlay timestamp)"
+  - "First verifiable photo in the surveillance area marks the start of field operations"
+  - "First visual confirmation of the subject marks the beginning of surveillance contact"
+  - "Field time, drive time, and contact time are treated as distinct billing categories"
+  - "Metadata-anchored evidence supports all report entries and billing items"
+
+discrepancy_handling_protocol:
+  label: "Discrepancy Resolution Workflow"
+  version: 1.0
+  purpose: "To detect, flag, resolve, and document any mismatches between narrative entries and visual evidence."
+  detection:
+    trigger_points:
+      - plate_format_mismatch
+      - subject_description_conflict
+      - location_or_time_discrepancy
+    sources:
+      - narrative_entry
+      - photo_overlay
+      - metadata_timestamp
+      - filename_timestamp
+      - intake_report
+      - state_format_guidelines
+  resolution_steps:
+    - step: "detect_conflict"
+      description: "Compare narrative claims with visual and metadata evidence. Detect if plate or description does not align."
+      example: "Narrative says '678 BCD'; photo shows 'BCD 678'."
+    - step: "flag_for_qna"
+      description: "Highlight issue in draft and trigger Q&A session."
+      required_action: "Prompt user with clarification question."
+      prompt_template: "Please confirm correct plate format — does the visual evidence override the field notes?"
+    - step: "cross_reference"
+      description: "Cross-check plate format using visual zoom, plate structure (state-specific), or alternate photos."
+      tools:
+        - AI_image_enhancer
+        - metadata_viewer
+        - plate_structure_database
+    - step: "apply_resolution"
+      description: "Upon user validation, correct all entries to match verified information."
+      annotation_required: true
+      note_format: "Plate corrected to [validated version] per visual confirmation and user input."
+    - step: "final_documentation"
+      description: "Add resolution note to internal log for chain-of-custody tracking and report transparency."
+      compliance_note: "Required for legal integrity and audit readiness."
+  precedence_rules:
+    - "Photo evidence (metadata + overlay) overrides narrative when in conflict."
+    - "If conflict exists and no confirmation is possible, report is frozen for review."
+    - "Every discrepancy must be resolved or acknowledged before finalizing report."
+  validation:
+    reverse_continuity_required: true
+    qna_status_check: true
+    metadata_consistency_check: true
+    subject_visual_confirmation: true
+  finalization:
+    highlight_resolution_required: true
+    submission_lock_until_resolved: true
+    entry_unlocked_after_validation: true
+
+metadata_fallback_logic:
+  condition: "Missing or corrupted EXIF metadata"
+  fallback_sequence:
+    - step: "Use filename-embedded timestamp"
+      example: "20250519_202243.jpg → 20:22:43"
+    - step: "If filename unreliable, validate via visible timestamp overlay"
+    - step: "If both are available but conflict, trigger Q&A"
+    - step: "If neither are available, mark as 'visual timestamp only'"
+  annotation:
+    include_in_report: false
+    internal_flag: true
+    flag_term: "visual timestamp only"
+    purpose: "Maintain transparency without exposing tool or fallback chain"
+
+entry_finalization:
+  procedure:
+    - all_highlighted_sections_resolved: true
+    - run_final_reverse_continuity_test: true
+    - validate_billing_anchor_integrity: true
+    - all_events_time_bound_and_verified: true
+    - unhighlight_all: true
+    - lock_entry_post-validation: true
+
+reverse_continuity_test:
+  active: true
+  trace_sources:
+    - Client Intake Form
+    - Client Contract
+  validate_fields:
+    - client_name
+    - client_address
+    - client_phone
+    - date_of_contract
+    - goals_of_investigation
+    - primary_subject
+    - subject_employer
+    - surveillance_hours_requested
+  test_methods:
+    anchor_validation:
+      method: "anchor_id_match + text proximity"
+      tolerance: "±1 line"
+    format_consistency_check:
+      method: "match font, size, and field label style"
+  report_behavior:
+    on_pass: "continue"
+    on_fail:
+      - "flag report for audit"
+      - "trigger Q&A clarification"
+  metadata_stamp:
+    include: true
+    visible_in_report: false
+    logs:
+      - field_name
+      - source_path
+      - anchor_id
+      - extraction_method

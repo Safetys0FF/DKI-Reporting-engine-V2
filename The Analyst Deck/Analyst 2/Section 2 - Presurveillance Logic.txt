@@ -1,0 +1,261 @@
+# === SECTION 2 LOGIC (ENGLISH FORMAT) ===
+
+## Title: PRE-SURVEILLANCE PLANNING
+
+
+**ENGLISH REPORT LOGIC SWITCH SCRIPT**
+
+---
+
+**SECTION 1: Anchor Role**
+
+* Section 1 defines the type of report and governs all downstream behavior.
+* The contract type and client’s stated objective in Section 1 will determine whether the report behaves as Investigative, Field, or Hybrid.
+* Section 1 itself does not change, but it tells the system what should and should not appear in later sections.
+
+---
+
+**LOGIC SWITCHES**
+
+**IF the report is Investigative:**
+
+* Section 2 becomes “INVESTIGATIVE REQUIREMENTS”
+* Content focuses on: background checks, legal tracing, employment verification, etc.
+* Surveillance Logs, Route Planning, Vehicle Tracking, and Mileage Tracking are suppressed.
+* The billing model is flat-rate.
+
+**IF the report is Field-based:**
+
+* Section 2 becomes “PRE-SURVEILLANCE SUMMARY”
+* Content focuses on: recon, vehicle identifiers, surveillance strategy, location planning
+* Enables modules like: Surveillance Logs, Photographic Evidence, Time Logs
+* Suppresses Investigative Analysis or court research blocks
+* The billing model can be hourly or flat depending on the contract
+
+**IF the report is Hybrid:**
+
+* Section 2 becomes “HYBRID PREPARATION SUMMARY”
+* Mixes elements from both Investigative and Field reports
+* Enables all modules
+* Billing model becomes Hybrid, either stacked or tiered depending on case flow
+
+---
+
+**BILLING TRIGGERS**
+
+* If there are 2 or more contracts: trigger MULTICONTRACT MODE
+
+  * Suppresses duplicate planning charges
+  * Treats prep work as already paid
+
+* If this is the first Field Contract:
+
+  * A \$500 Planning Fee is assumed unless explicitly waived
+
+---
+
+**OUTPUT CONTROLS**
+
+* Style rules (font, spacing, headers) are always enforced
+* Headers and section formatting change based on report type
+* Narrative content dynamically adapts
+* “Field Time > Received Time” is the default logic (North Star)
+* All sections must trace back to an approved intake or contract (Reverse Continuity)
+
+---
+
+**USE CASE METAPHOR**
+
+* Section 1 is the **Gold Miner’s Map** — defining where and what kind of digging will happen
+* Section 2 is **the Setup Camp** — how the tools are prepared based on what was discovered in Section 1
+* All later sections follow the logic defined here
+
+🛑 Acknowledged and fully implemented.
+
+From now on, I will not:
+
+Recommend surveillance tools, positioning methods, or tactical staging
+
+Suggest vehicle use, camera types, routes, or timing
+
+Describe gear or deployment in operational terms
+
+All field strategy decisions remain entirely within the authority and licensure of the licensed investigator or field team.
+
+Only structure logic, reporting format, or narrative consistency will be addressed unless otherwise legally verified and explicitly requested.
+
+---
+
+### 2A. CASE SUMMARY
+
+**Purpose**: Provide a concise explanation of the client’s reason for hiring DKI Services, outline the case’s origin, scope, and goals. This summary must:
+
+* Be no more than 5 sentences.
+* Avoid interpreting or agreeing with client allegations.
+* Be grounded in the objective facts presented in the client intake form and contract.
+Section 2 – Adaptive Heading Logic
+
+Surveillance path (when at least one surveillance contract is active):
+
+Heading: “Pre-Surveillance Summary”
+
+Content: route planning, vehicle IDs, target location photos, maps, equipment prep.
+
+Assumes field operations will occur.
+
+Non-surveillance / investigative path (no surveillance contracts present):
+
+Heading: “Investigative Requirements”
+
+Content:
+
+Client-supplied documents.
+
+Data sources to be queried (records, background checks, employer history, etc.).
+
+Resource requirements (databases, court pulls, FOIA requests).
+
+Timeline expectations for investigative findings.
+
+Layout mirrors Pre-Surveillance Summary (a checklist-style info prep section), but no field operations or route planning are included.
+
+Anchor & Flow Impact
+
+Source anchoring stays the same: pulls intake form, contract terms, background docs.
+
+Scraping logic adjusts labels only: instead of looking for “surveillance planning,” it looks for “investigative prep” or “requirements.”
+
+Continuity remains: if Section 1 tags the case as “non-surveillance,” Section 2 automatically renames and reformats.
+
+Example
+
+Surveillance Case (Default):
+
+SECTION 2 – PRE-SURVEILLANCE SUMMARY  
+- Reconnaissance: target address confirmed.  
+- Route Planning: entry/exit paths logged.  
+- Vehicle Identification: 2012 Honda CRV noted.  
+
+
+Investigative Case (Altered):
+
+SECTION 2 – INVESTIGATIVE REQUIREMENTS  
+- Records: State court criminal history pull.  
+- Background: Employer verification needed.  
+- Documents: Divorce filings to be obtained.  
+
+
+✅ Result:
+Section 2 dynamically adapts its heading and content expectations based on the case_type outcome from Section 1. The skeleton (layout, anchors, fields) remains intact, but the theme shifts from field prep to investigative prep.
+
+**Disclaimer (placed at end of 2A)**:
+
+> The investigative work and research used to prepare the pre-surveillance report is based solely on the information provided by the client. All findings, references, and assessments contained therein were intended exclusively for operational planning purposes. No claims made by the client were independently tested, verified, or contested prior to field deployment. The following section outlines the objectives, scope, and preliminary findings conducted by DKI Services LLC before initiating field surveillance. This includes verification of subject information, locations of interest, behavioral patterns, and logistics planning to ensure legal and operational efficiency. All intelligence information was obtained before live observation and cross-referenced against client observations and suspicions disclosed during the intake process. This section is not intended to confirm or dispute the client's concerns or allegations, but to prepare for legal and operational investigation.
+
+**Fallback Clause**: If no surveillance planning is required due to case type, insert:
+
+> "Due to the nature of this case no surveillance or surveillance planning was performed."
+
+---
+
+### 2B. VERIFIED SUBJECTS & DATA POINTS
+
+**Purpose**: Detail all known data for primary and secondary subjects as confirmed against open-source reports (e.g., TLO), client intake, and contract.
+
+**For each subject include:**
+
+* Full Name
+* Date of Birth
+* Confirmed or last known address (with fallback: "Unknown at this time")
+* Employment (with fallback: "Unknown at this time")
+* Vehicles (Year, Make, Model, Color, Tag)
+* Phone numbers or email addresses if relevant
+* Notes and discrepancies between client data and TLO/Open-source data
+
+**Organize by individual** — don’t intermix subject details. Use single spacing, left-align content for future photo inserts.
+
+**Fallback Clause**: If no surveillance planning is required due to case type, insert:
+
+> "Due to the nature of this case no surveillance or surveillance planning was performed."
+
+---
+
+### 2C. SUBJECT HABITS, PATTERNS, AND POI’s
+
+**Purpose**: Map and describe:
+
+* Known behaviors, travel patterns, work schedule
+* POI = Places of Interest: bars, gyms, eateries, stores they frequent
+* Anchored by Client Intake, then validated or extended using TLO or manual research
+
+**Travel-based cases**:
+
+* Predict logical POIs based on stated preferences and travel demographics
+* Must be 15–20 miles or under for realistic access
+* Consider profession, reason for travel, family, and personality type
+
+**All POI research** must:
+
+* Be anchored to client intake first
+* Use map validation (via GPS, map apps, or address logic)
+* Use phrase: "suspected POIs based on available data"
+
+**Fallback Clause**: If no surveillance planning is required due to case type, insert:
+
+> "Due to the nature of this case no surveillance or surveillance planning was performed."
+
+---
+
+### 2D. SUPPORTING VISUALS / INTEL
+
+**Purpose**:
+
+* Include known photos of subjects (headshots, social media)
+* Include photos of vehicles
+* Include screen-captured maps or imagery of known locations
+
+**Use metadata and timestamps where possible** to verify and cross-check investigator data.
+
+**Don’t include placeholders.** If images aren’t available, simply omit.
+
+**Fallback Clause**: If no surveillance planning is required due to case type, insert:
+
+> "Due to the nature of this case no surveillance or surveillance planning was performed."
+
+---
+
+### 2E. FINAL PLANNING STATEMENT
+
+**Purpose**: Conclude the pre-surveillance section with:
+
+* A short synopsis of findings from 2A–2D
+* The surveillance time allotted
+* Ethics and licensing statement
+
+**Three logic options** for field responsibility:
+
+* **Option A** (Finalized, subcontractor, general):
+
+> "This case utilized subcontracted field agents operating under their respective state licensing requirements and within their legal limitations, and in agreement with DKI Services."
+
+* **Option B** (Pre-surveillance, subcontractor):
+
+> "This case utilized subcontracted field agents operating under their respective state licensing requirements and within their legal limitations, and in agreement with DKI Services. This case is allotted \_\_\_ hours of surveillance, subject to change based on the client’s authorization and investigative need."
+
+* **Option C** (Owner/Operator, DKI direct):
+
+> "This case is prepared and conducted by DKI Services and is allotted \_\_\_ hours of surveillance, subject to change based on the client’s authorization and investigative need."
+
+**Report Mode Decision Points**:
+
+* PRE = Before report is finalized
+* FINAL = Report complete
+* HOLD = Awaiting more details before delivery
+
+**Fallback Clause**: If no surveillance planning is required due to case type, insert:
+
+> "Due to the nature of this case no surveillance or surveillance planning was performed."
+
+---
+
+✅ END OF SECTION 2 LOGIC

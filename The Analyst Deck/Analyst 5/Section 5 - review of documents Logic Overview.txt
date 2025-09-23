@@ -1,0 +1,69 @@
+# Section 5 Logic Overview (English-Based)
+
+This section defines how supporting documents are handled, formatted, and validated for integrity and admissibility within the investigative report. The logic is based on legal best practices, operational transparency, and traceable continuity.
+
+## NORTH STAR PROTOCOL
+
+**Purpose:** Ensure surveillance logic (movement, timing, placement) reflects reality.
+
+* If an investigator appears somewhere they couldn’t logically reach, flag it.
+* If timestamps show impossible travel time, halt finalization.
+
+## COCHRAN THEORY
+
+**Purpose:** Guarantee observations are factual, time-bound, and not speculative.
+
+* Everything must trace to visual or written proof.
+* If an inference is made without timestamp or visual confirmation, it’s marked speculative.
+* Anything conflicting with photo evidence gets flagged for Q\&A.
+
+## SECTION 5 FORMATTING RULES
+
+* Font: Times New Roman, 12pt, bold
+* Alignment: Left
+* No bullet icons
+* Indented record listings
+
+## DOCUMENT HANDLING POLICY
+
+* All documents obtained are listed.
+* No photos included in this section.
+* Records are grouped into generalized, jurisdiction-neutral categories.
+* No original file names — use record type and jurisdiction (e.g., Sheriff Report – Tulsa County).
+* Subject names must be formatted as Last, First.
+* Client intake form and signed contract always appear last.
+* Final output is client-facing — all material must be transparent and verifiable.
+
+## LOGIC CHECKS AND DISCREPANCY HANDLING
+
+* Records without names, dates, or clear jurisdictions are flagged.
+* Erroneous documents (wrong person, proves nothing) are reviewed before removal.
+* Nothing can be deleted without admin approval and justification.
+
+## Q\&A RESOLUTION
+
+* Missing or questionable fields trigger prompts to validate:
+
+  * “Please verify subject name for: \[Record]”
+  * “Confirm jurisdiction source for: \[Document]”
+  * “Add applicable date for: \[Record]”
+* Report finalization is locked until all issues are resolved.
+
+## REVERSE CONTINUITY TEST
+
+**Purpose:** Ensure all records match contract and intake data.
+
+* Fields validated:
+
+  * Client name/address/phone
+  * Contract date
+  * Primary subject
+  * Employer
+  * Hours requested
+* If any field mismatches:
+
+  * Report flagged for audit
+  * Q\&A clarification triggered
+* Metadata stamp tracks source, anchor ID, and validation method internally
+
+**End Result:** All Section 5 entries are verified, legally sound, and fully accountable to the investigation’s origin documentation and fieldwork trail.

@@ -1,0 +1,44 @@
+﻿Central Command : New Bus Alignment & Module Wiring
+====================================================
+
+Timestamp: 2025-09-23 15:49:50
+Author: Codex Agent
+
+Overview
+--------
+Unified the internal messaging contract so the Central Command bus and its adapters operate with a consistent request/response and signal model without altering the wider architecture.
+
+Key Changes
+-----------
+1. Bus Core (Command Center/Data Bus/Bus Core Design/bus_core.py)
+   - Added thread-safe locking, event history, and helper APIs (subscribe, send, log_event, get_event_log).
+   - send now aggregates handler responses for synchronous request flows while existing emit broadcasting remains untouched.
+   - Status reporting now includes event log depth for runtime diagnostics.
+
+2. GUI Adapter (Command Center/UI/central_plugin.py)
+   - Uses the expanded bus helpers, unwraps aggregated responses, and allows callers to specify narrative sections.
+   - Keeps the Warden/Evidence/Narrative/Mission modules bootstrapped as before, maintaining overall architecture.
+
+3. Narrative Assembler (Command Center/Mission Debrief/narrative_assembler.py)
+   - Bus handler accepts either processed_data or raw data, honors optional section_id, and logs outcomes through the bus.
+   - Generated narratives are cached per case for downstream retrieval without changing template logic.
+
+4. Mission Debrief Manager (Command Center/Mission Debrief/mission_debrief_manager.py)
+   - Establishes an instance logger, tracks case summaries, and guards each professional tool call when optional subsystems are missing.
+   - Exposes a get_summary helper so UI/runtime components can ask for case status safely.
+
+5. Evidence Locker (Evidence Locker/evidence_locker_main.py)
+   - Introduced a store entry point that validates metadata, reuses the existing scan/index flow, and emits an evidence.stored signal for downstream consumers.
+
+Current Communication Flow
+--------------------------
+- UI / Runtime -> CentralPluginAdapter.send_to_bus() -> DKIReportBus.send() -> registered handlers return dict responses.
+- File intake -> EvidenceLocker.store() -> scan_file + index_evidence -> emits evidence.stored signal for other modules.
+- Narrative requests -> topic 'narrative.generate' -> NarrativeAssembler.handle_generate() -> assemble(section_id, data) -> response cached and returned.
+- Mission processing -> topics beginning with 'mission_debrief.' -> guarded handlers call optional tooling, emit completion messages, and update case_summaries for UI queries.
+
+Outstanding Work
+----------------
+- Evidence Locker/evidence_locker_main.py still contains legacy non-ASCII log strings (outside the new store flow) that need cleanup before the module compiles without warnings.
+- End-to-end validation (GUI or runtime) should follow to confirm the new interfaces behave under real workloads.
+

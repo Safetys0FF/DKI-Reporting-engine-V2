@@ -1,0 +1,466 @@
+# Billing Logic Chain (English-Based Overview)
+
+---
+
+section_6:
+  label: "BILLING SUMMARY"
+  layout:
+    font_family: "Times New Roman"
+    font_size: 12
+    font_weight: "normal"
+    text_align: "left"
+    header_format: "UPPERCASE"
+    subsection_indent: 2
+    bullet_style: "standard"
+    spacing:
+      before_section: 1.5em
+      after_section: 1em
+
+**SECTION 6 – BILLING SUMMARY LOGIC (ENGLISH)**
+
+---
+
+**ROLE OF SECTION 6**
+
+* Section 6 provides a comprehensive, itemized billing breakdown.
+* It directly reflects the contract structure, report type, and sequence of services rendered.
+* This section is legally binding and must reflect the investigative and field operations precisely.
+
+---
+
+**LOGIC SWITCHES**
+
+**IF report\_type = Investigative:**
+
+* Billing model: Flat rate
+* Output:
+
+  * Investigative Research Fee (flat rate)
+  * Documentation Delivery Fee (if applicable)
+  * Admin & Compliance Review (optional)
+* Surveillance, mileage, and field ops are suppressed
+
+**IF report\_type = Field:**
+
+* Billing model: Hourly / Per-mile / Flat (as per contract)
+* Output:
+
+  * Field Surveillance Hours (per shift or date)
+  * Mileage Total
+  * Equipment / Data Fees (if applicable)
+  * Report Generation Fee (per session)
+* No investigative fees appear
+
+**IF report\_type = Hybrid:**
+
+* Billing model: Tiered / Stacked
+* Output:
+
+  * Investigative Services Fee (Flat or per-document)
+  * Surveillance Operations (per hour/day)
+  * Mileage and Travel
+  * Combined Report Compilation Fee
+  * Additional Document Recovery (if applicable)
+* **Structure Adapts Based on Contract Order:**
+
+  * If Surveillance was first:
+
+    * Investigative tasks billed as deductions from Field funds (up to \$500 offset)
+  * If Investigative was first:
+
+    * Full rates apply to both investigative and surveillance services (no deduction)
+
+---
+
+**CONTRACT SEQUENCE EFFECTS**
+
+* Contract timestamps determine billing grouping and offset eligibility
+* If multiple contracts exist:
+
+  * Most recent governs label display
+  * All appear as separate lines unless otherwise merged by contract language
+* Additional contracts always produce **supplemental billing**, not suppression
+
+---
+
+**REQUIRED LABELS & LEGAL STRUCTURE**
+
+* Each billed line must include:
+
+  * Service Type
+  * Date/Time of Delivery
+  * Description
+  * Rate or Flat Fee
+  * Billing Source (Contract Reference)
+* North Star and Cochran compliance enforced:
+
+  * No inferred billing
+  * All items must tie to a report section or operational record
+
+---
+
+**NOTES AND DISCLOSURES**
+
+* Insert planning offset note only if \$500 deduction is valid:
+
+  > “Investigative services provided under this contract are offset against the first \$500 of field surveillance as agreed.”
+* Add notation for any document-based investigative request billed separately
+* Subcontractor tasks billed under subcontractor rate table, if applicable
+
+---
+
+**BILLING ENFORCEMENT**
+
+* Logic is non-negotiable
+* Tampering or override flags the report
+* Final summary must reconcile with:
+
+  * Section 1 declared structure
+  * Section 2 investigative outputs
+  * Section 3 field logs
+  * Section 4 evidentiary validation
+
+
+  pre_investigation_costs:
+    total_budget: 500.00
+    itemized_deductions:
+      - label: "Client Background Report"
+        cost: 150.00
+      - label: "Additional Subject Background Report"
+        cost: 150.00
+      - label: "Vehicle, Address, or Document Reports"
+        cost_per: 75.00
+        grouping_logic: "All reports from one agency billed as one group"
+    note: "Final cost of all reports is deducted from the $500 pre-surveillance budget. Excess costs are deducted from field budget."
+    planning_balance_allocation:
+      - label: "Strategic Planning, Address Verification, and Recon"
+        calculation: "$500 - sum(all report deductions)"
+    display_section:
+      heading: "PRE-INVESTIGATION COSTS"
+      format:
+        - intro_line: "Total Fee: $500.00"
+        - bullets_from: itemized_deductions
+        - note_line: "Final cost of Reports: [auto-calculated] to be billed from the $500 planning budget."
+        - remainder_line: "Strategic Planning...: [auto-calc remaining]"
+        - summary_line: "Total cost of all reports: [auto-calc total deductions]"
+
+  surveillance_operations:
+    display_section:
+      heading: "SURVEILLANCE OPERATIONS"
+    field_budget:
+      calculation: "contract_amount - 500 - excess_report_cost"
+      actual_hours_billed:
+        source: "section_3_logs + metadata_validation"
+    recon_time:
+      note: "Not reflected in budget"
+      breakdown:
+        - label: "First Day of Surveillance"
+        - label: "Second Day"
+        - label: "Third Day"
+
+  documentation_compilation:
+    display_section:
+      heading: "FINAL DOCUMENTATION & REPORT COMPILATION"
+    charge:
+      amount: 100.00
+      description: "Documentation review, formatting, and delivery (1 hour @ $100/hour)"
+
+  retainer_summary:
+    display_section:
+      heading: "RETAINER SUMMARY"
+    items:
+      - contracted_amount_due: "[pull from contract]"
+      - total_retainer_applied: "[pull from contract]"
+      - remaining_after_planning: "contract - 500"
+      - deductions:
+          - surveillance_planning: 500
+          - documentation: 100
+          - pre_investigation: "[from section above]"
+      - total_cost_of_investigation: "[sum of all sections above]"
+      - remaining_retainer_balance: "[contract - total_cost]"
+      - total_remaining_owed: "[if positive, show balance; if zero, show 'Zero | nothing is owed']"
+
+  special_rules:
+    mileage:
+      display_text: "Mileage was waived as a professional courtesy."
+      internal_tracking: true
+      metadata_anchor_points:
+        - investigator_origin
+        - subject_location
+        - photo_metadata_location
+        - field_log_location
+      validation: "Compare subcontractor mileage to metadata distance. If matched, approve. If exceeded, flag for review."
+      overcharge_failsafe:
+        logic: "Double internal cost of mileage for records, only pass actual to client"
+
+    hourly_rate:
+      value: 100.00
+      applies_to:
+        - documentation
+        - analysis
+        - pre-planning
+        - reporting
+        - travel_time (at reduced rate)
+
+    travel_time:
+      structure:
+        - pre_surveillance: "30 mins"
+        - post_surveillance: "30 mins"
+      billed: true
+      rate: "discounted"
+
+  validation_rules:
+    metadata_required_for_all_entries: true
+    recon_hours_not_deducted_from_field_budget: true
+    mileage_must_be_internally_validated: true
+    reverse_continuity_test:
+      active: true
+      trace_sources:
+        - Client Intake Form
+        - Client Contract
+      validate_fields:
+        - client_name
+        - client_address
+        - client_phone
+        - date_of_contract
+        - goals_of_investigation
+        - primary_subject
+        - subject_employer
+        - surveillance_hours_requested
+      test_methods:
+        anchor_validation:
+          method: "anchor_id_match + text proximity"
+          tolerance: "±1 line"
+        format_consistency_check:
+          method: "match font, size, and field label style"
+      report_behavior:
+        on_pass: "continue"
+        on_fail:
+          - "flag report for audit"
+          - "trigger Q&A clarification"
+      metadata_stamp:
+        include: true
+        visible_in_report: false
+        logs:
+          - field_name
+          - source_path
+          - anchor_id
+          - extraction_method
+
+  label: "SURVEILLANCE OPERATIONS BILLING LOGIC"
+  purpose: "Defines how surveillance-related billing is extracted, verified, and reported. Ensures transparent, court-defensible invoicing based on verified fieldwork."
+
+  data_sources_and_anchors:
+    - section: "Section 3: Daily Logs"
+      details:
+        - "Logs actual hours in the field"
+        - "Records departure, contact, and return times"
+        - "Primary billing data source"
+    - section: "Section 4: Surveillance Sessions"
+      details:
+        - "Narrative justification for activities"
+        - "Supports time entries from Section 3"
+    - section: "Section 2: Pre-Surveillance Strategy"
+      details:
+        - "Defines surveillance goals"
+        - "Establishes maximum allowable fieldwork hours"
+    - section: "Pre-Investigation Costs"
+      details:
+        - "Confirms deductions from $500 planning budget"
+        - "Remaining amount affects field ops billing pool"
+
+  surveillance_fieldwork_budget:
+    formula: "Contracted_Total - 500"
+    note: "Any report costs exceeding $500 deducted from field ops budget"
+
+  billable_time:
+    hourly_rate: 100.00
+    categories:
+      - Pre_Surveillance_Travel: "30 minutes"
+      - Post_Surveillance_Travel: "30 minutes"
+      - In_Field: "As verified by logs, metadata, and narrative"
+      - Reconnaissance:
+          note: "Shown for transparency; not billed in main fieldwork hours"
+
+  validation_and_audit:
+    requirements:
+      - "Time must appear in Section 3"
+      - "Must match GPS metadata if available"
+      - "Supported by Section 4 narrative or visuals"
+      - "Within contracted strategy window unless flagged as 'Recon'"
+    conflict_protocol:
+      - "Flag discrepancies"
+      - "Trigger internal Q&A"
+    no_surveillance_day:
+      - "Only travel and planning billed"
+
+  time_format_and_adjustment:
+    format: "24-hour clock"
+    benefits:
+      - "Reduces confusion"
+      - "Allows seamless travel billing"
+    authorized_edits:
+      - "Only section in report allowing retroactive edits"
+      - "Adjusts Section 3 and 4 for ±30 min billing rule"
+      - "All edits must be:
+          - Justified internally
+          - Authorized via billing adjustment parameters
+          - Synced between Sections 3 and 4
+          - Follow billing validation logic"
+    integrity_pass: "One-time adjustment post-final review"
+
+  surveillance_audit_protocol:
+    cross_reference:
+      - "Section 3 and 4 time entries"
+      - "Metadata timestamps"
+      - "Field anchor points"
+      - "Travel route verification"
+    billing_adjustment:
+      - "Adjust in/out times only"
+      - "Apply 30 min pre/post travel if validated"
+    example:
+      before: "3 Days, 18 Hours"
+      after_audit: "3 Days, 21 Hours"
+      note: "Changes silent to client; logged internally"
+
+- service: "Reconnaissance (Pre-Surveillance Strategy Prep)"
+  type: non_billable
+  display: true
+  show_rate: false
+
+  summary_statement_format:
+    - Subtotal_Fieldwork_Budget: "[Contract - $500 - report overages]"
+    - Actual_Billed_Hours: "[Verified hours from Sections 3 & 4, post-adjustment]"
+
+  mileage_handling:
+    public_statement: "Mileage was waived as a professional courtesy."
+    internal_validation:
+      - "Tracked via metadata"
+      - "Confirmed through routing logic"
+    subcontractor_charges:
+      - "Matched and passed without markup"
+      - "Inflated entries flagged and buffered"
+
+ internal_mileage_handling:
+  tracking: true
+  public_statement: "Mileage was waived as a professional courtesy."
+  validation_sources:
+    - photo_video_metadata
+    - route_logic_from_investigator_base
+  subcontractor_charges:
+    verification: "DKI verifies and passes actual cost to client, without markup"
+    buffer_policy: "Internal buffer used if cost appears inflated"
+
+system_lock_protocol:
+  edit_lock_status: "ENABLED"
+  effect: "No further automated or manual adjustments permitted to any billing fields after this lock is engaged."
+  trigger_point: "Upon completion of audit and summary generation."
+  override_condition: "Manual admin override required with full justification and metadata logging."
+
+audit_rules:
+
+- id: time_tolerance_match
+  name: "±30-Minute Field Log Alignment"
+  applies_to:
+    - section_3
+    - section_4
+  rule:
+    description: "Billable hours must align with field log in/out times within a ±30-minute window."
+    logic:
+      compare: billed_time vs. field_log_time
+      tolerance: "+/-30 minutes"
+      if_within_tolerance: pass
+      if_exceeds: flag_for_review
+  enforcement:
+    auto_adjustment_allowed: false
+    manual_override: requires_admin_signature
+  failure_behavior:
+    action: flag
+    label: "Billing time variance beyond ±30 min"
+
+
+  failure_behavior:
+    - action: "Report flagged for internal review"
+    - restriction: "No report can be finalized or billed without resolution"
+    - override: "Admin must authorize override or provide corrective explanation"
+
+documentation_and_delivery:
+  section_title: "FINAL DOCUMENTATION & REPORT COMPILATION"
+  description: "Documentation review, report formatting, and delivery"
+  billing:
+    hours: 1
+    hourly_rate: 100.00
+    total_fee: "$100.00"
+  policy:
+    fixed_cost: true
+    editable: false
+
+retainer_summary:
+  section_title: "RETAINER SUMMARY"
+  layout:
+    font_family: "Times New Roman"
+    font_size: 12pt
+    alignment: left
+    spacing:
+      before: 1em
+      after: 1em
+  fields:
+    - label: "Contracted Amount Due"
+      value_source: "client_contract.contract_total"
+    - label: "Total Retainer Applied"
+      value_source: "section_1.retainers_applied"
+    - label: "Remaining Balance After Planning"
+      calculation:
+        formula: "contract_total - 500"
+        condition:
+          if_no_surveillance: "return 0"
+    - label: "Deductions"
+      items:
+        - label: "Surveillance Planning"
+          value: 500
+          condition: "if surveillance performed, else 0"
+        - label: "Documentation"
+          value: 100
+        - label: "Pre-Investigation Costs"
+          value_source: "pre_investigation.total_cost"
+    - label: "Total Cost of Investigation"
+      calculation: "sum(pre_investigation_costs + surveillance_ops_cost + documentation_fee)"
+    - label: "Remaining Retainer Balance"
+      calculation: "contract_total - total_cost_of_investigation"
+    - label: "Total Remaining Balance Owed"
+      calculation: "contract_total - total_billed"
+      display_logic:
+        if_zero: "Display as 'Zero if nothing is owed'"
+  validation:
+    conflict_check:
+      rule: "If investigation costs exceed contract amount and billing is not adjusted"
+      trigger: "Flag report for internal audit protocol"
+
+- id: billing_math_reconciliation
+  name: "Billing Total Verification Across Report"
+  applies_to:
+    - section_1
+    - section_2
+    - section_3
+    - section_4
+  rule:
+    description: "All billed services must reconcile with recorded activity and declared report type."
+    logic:
+      each_line_item:
+        must_match:
+          - report_type_structure
+          - actual_service_rendered
+          - visual_or_log_evidence
+          - section_metadata_reference
+      all_totals:
+        must_reconcile_with: final_invoice_total
+  enforcement:
+    error_on_discrepancy: true
+    flag_unverified_charges: true
+    override_conditions:
+      requires: two_admin_approvals
+      note_required: yes
+  failure_behavior:
+    action: reject
+    label: "Invoice mismatch with operational data"
+

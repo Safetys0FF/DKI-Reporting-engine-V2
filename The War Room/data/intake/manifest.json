@@ -1,0 +1,27 @@
+{
+  "generated_at": "2025-09-18T21:07:07.078654",
+  "items": [
+    {
+      "path": "C:\\Users\\DTKra\\OneDrive\\Desktop\\DKI Engine\\logic\\test_ocr_image.png",
+      "name": "test_ocr_image.png",
+      "type": "image",
+      "uploaded": "2025-09-18T21:06:54.543036",
+      "size": 39289,
+      "hashes": {
+        "md5": "bb9f134a1c2791c05562073f9f6d541c",
+        "sha256": "966fc194c9faba7b9f8334c901fe81aa53de33d00e0c040a5384e56cb53bfbf5"
+      }
+    },
+    {
+      "path": "C:\\Users\\DTKra\\OneDrive\\Desktop\\DKI Engine\\logic\\AGENT_HANDOFF.md",
+      "name": "AGENT_HANDOFF.md",
+      "type": "document",
+      "uploaded": "2025-09-18T21:06:54.543244",
+      "size": 15550,
+      "hashes": {
+        "md5": "105627ac874810e382b1c51a981e1363",
+        "sha256": "5410d5b6352368d02ef9c1143895dcc2f378d9c03afd63cc054bf3f68d36b64a"
+      }
+    }
+  ]
+}

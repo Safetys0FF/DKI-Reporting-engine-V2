@@ -1,0 +1,218 @@
+{
+  "simple_route": {
+    "section_cp": {
+      "status": "failed",
+      "error": "name 'payload' is not defined"
+    },
+    "section_toc": {
+      "status": "failed",
+      "error": "Gateway is frozen - cannot process sections"
+    },
+    "section_1": {
+      "status": "failed",
+      "error": "Gateway is frozen - cannot process sections"
+    },
+    "section_2": {
+      "status": "failed",
+      "error": "Gateway is frozen - cannot process sections"
+    },
+    "section_3": {
+      "status": "failed",
+      "error": "Gateway is frozen - cannot process sections"
+    },
+    "section_4": {
+      "status": "failed",
+      "error": "Gateway is frozen - cannot process sections"
+    },
+    "section_5": {
+      "status": "failed",
+      "error": "Gateway is frozen - cannot process sections"
+    },
+    "section_6": {
+      "status": "failed",
+      "error": "Gateway is frozen - cannot process sections"
+    },
+    "section_7": {
+      "status": "failed",
+      "error": "Gateway is frozen - cannot process sections"
+    },
+    "section_8": {
+      "status": "failed",
+      "error": "Gateway is frozen - cannot process sections"
+    },
+    "section_9": {
+      "status": "failed",
+      "error": "Gateway is frozen - cannot process sections"
+    },
+    "section_dp": {
+      "status": "failed",
+      "error": "Gateway is frozen - cannot process sections"
+    },
+    "section_fr": {
+      "status": "failed",
+      "error": "Gateway is frozen - cannot process sections"
+    }
+  },
+  "renters_focus": {
+    "section_cp": {
+      "status": "failed",
+      "error": "name 'payload' is not defined"
+    },
+    "section_toc": {
+      "status": "failed",
+      "error": "Gateway is frozen - cannot process sections"
+    },
+    "section_1": {
+      "status": "failed",
+      "error": "Gateway is frozen - cannot process sections"
+    },
+    "section_2": {
+      "status": "failed",
+      "error": "Gateway is frozen - cannot process sections"
+    },
+    "section_3": {
+      "status": "failed",
+      "error": "Gateway is frozen - cannot process sections"
+    },
+    "section_4": {
+      "status": "failed",
+      "error": "Gateway is frozen - cannot process sections"
+    },
+    "section_5": {
+      "status": "failed",
+      "error": "Gateway is frozen - cannot process sections"
+    },
+    "section_6": {
+      "status": "failed",
+      "error": "Gateway is frozen - cannot process sections"
+    },
+    "section_7": {
+      "status": "failed",
+      "error": "Gateway is frozen - cannot process sections"
+    },
+    "section_8": {
+      "status": "failed",
+      "error": "Gateway is frozen - cannot process sections"
+    },
+    "section_9": {
+      "status": "failed",
+      "error": "Gateway is frozen - cannot process sections"
+    },
+    "section_dp": {
+      "status": "failed",
+      "error": "Gateway is frozen - cannot process sections"
+    },
+    "section_fr": {
+      "status": "failed",
+      "error": "Gateway is frozen - cannot process sections"
+    }
+  },
+  "surveillance_only": {
+    "section_cp": {
+      "status": "failed",
+      "error": "name 'payload' is not defined"
+    },
+    "section_toc": {
+      "status": "failed",
+      "error": "Gateway is frozen - cannot process sections"
+    },
+    "section_1": {
+      "status": "failed",
+      "error": "Gateway is frozen - cannot process sections"
+    },
+    "section_2": {
+      "status": "failed",
+      "error": "Gateway is frozen - cannot process sections"
+    },
+    "section_3": {
+      "status": "failed",
+      "error": "Gateway is frozen - cannot process sections"
+    },
+    "section_4": {
+      "status": "failed",
+      "error": "Gateway is frozen - cannot process sections"
+    },
+    "section_5": {
+      "status": "failed",
+      "error": "Gateway is frozen - cannot process sections"
+    },
+    "section_6": {
+      "status": "failed",
+      "error": "Gateway is frozen - cannot process sections"
+    },
+    "section_7": {
+      "status": "failed",
+      "error": "Gateway is frozen - cannot process sections"
+    },
+    "section_8": {
+      "status": "failed",
+      "error": "Gateway is frozen - cannot process sections"
+    },
+    "section_9": {
+      "status": "failed",
+      "error": "Gateway is frozen - cannot process sections"
+    },
+    "section_dp": {
+      "status": "failed",
+      "error": "Gateway is frozen - cannot process sections"
+    },
+    "section_fr": {
+      "status": "failed",
+      "error": "Gateway is frozen - cannot process sections"
+    }
+  },
+  "intake_review": {
+    "section_cp": {
+      "status": "failed",
+      "error": "name 'payload' is not defined"
+    },
+    "section_toc": {
+      "status": "failed",
+      "error": "Gateway is frozen - cannot process sections"
+    },
+    "section_1": {
+      "status": "failed",
+      "error": "Gateway is frozen - cannot process sections"
+    },
+    "section_2": {
+      "status": "failed",
+      "error": "Gateway is frozen - cannot process sections"
+    },
+    "section_3": {
+      "status": "failed",
+      "error": "Gateway is frozen - cannot process sections"
+    },
+    "section_4": {
+      "status": "failed",
+      "error": "Gateway is frozen - cannot process sections"
+    },
+    "section_5": {
+      "status": "failed",
+      "error": "Gateway is frozen - cannot process sections"
+    },
+    "section_6": {
+      "status": "failed",
+      "error": "Gateway is frozen - cannot process sections"
+    },
+    "section_7": {
+      "status": "failed",
+      "error": "Gateway is frozen - cannot process sections"
+    },
+    "section_8": {
+      "status": "failed",
+      "error": "Gateway is frozen - cannot process sections"
+    },
+    "section_9": {
+      "status": "failed",
+      "error": "Gateway is frozen - cannot process sections"
+    },
+    "section_dp": {
+      "status": "failed",
+      "error": "Gateway is frozen - cannot process sections"
+    },
+    "section_fr": {
+      "status": "failed",
+      "error": "Gateway is frozen - cannot process sections"
+    }
+  }
+}

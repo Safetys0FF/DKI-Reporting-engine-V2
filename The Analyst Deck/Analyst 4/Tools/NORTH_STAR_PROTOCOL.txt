@@ -1,0 +1,197 @@
+NORTH_STAR_PROTOCOL:
+  purpose: "Anchor all assets to FIELD_TIME; RECEIVED_TIME for audit only"
+  contract_date: "2025-05-12"
+  field_ops_start: "2025-05-21T15:30:00-05:00"
+  dual_timestamp_required: [FIELD_TIME, RECEIVED_TIME]
+  precedence: FIELD_TIME
+  classification_tiers:
+    PRE_INVESTIGATIVE:
+      criteria: "field_time < contract_date"
+      tag_format: "PRE-INVESTIGATIVE: [date] – [event]"
+    PRE_SURVEILLANCE:
+      criteria: "contract_date <= field_time < field_ops_start"
+      tag_format: "PRE-SURVEILLANCE: [date] – [intel]"
+    SURVEILLANCE_RETURN:
+      criteria: "field_time >= field_ops_start"
+      tag_format: "SURVEILLANCE RETURN: [date/time] – [event]"
+  engine:
+    parse_metadata: true
+    sort_by: FIELD_TIME
+    reject_if_no_date: true
+    reject_tag: "DATE REVIEW REQUIRED"
+  failsafes:
+    discrepancy_action: "OPERATOR_AUDIT"
+    ambiguous_default: PRE_INVESTIGATIVE
+  outputs:
+    - timeline_index
+    - audit_discrepancy_log
+
+
+
+NORTH_STAR_PROTOCOL_FULL:
+  version: 1.4
+  owner: DKI Services LLC
+  purpose: "Classify and order all evidence by FIELD_TIME (when the event occurred), never by delivery order; enforce admissibility, auditability, and timeline integrity."
+
+  anchors:
+    contract_date: "2025-05-12"            # Case anchor date
+    field_ops_start: null                    # e.g., "2025-05-21T15:30:00"
+    timezone_hint: "Confirm case TZ (docs reference 'Eastern'); store canonical IANA, e.g., US/Eastern"
+
+  core_principles:
+    field_time_dominant: true                # FIELD_TIME outranks RECEIVED_TIME
+    received_time_audit_only: true           # Used for chain-of-custody, not ordering
+    classification_before_inclusion: true    # Nothing enters report until tiered
+    no_format_priority: true                 # Emails, screenshots, PDFs treated equally
+
+  definitions:
+    FIELD_TIME: "The actual date/time the underlying event occurred (from metadata, content, or sworn statement)."
+    RECEIVED_TIME: "When the asset arrived at DKI (upload/email/import)."
+    DEADFILE_INTEL_LOG: "A separate store for accurate, timestamped intel that is not used in the active narrative yet."
+
+  evidence_classification_tiers:
+    PRE_INVESTIGATIVE:
+      criteria: "field_time < contract_date"
+      tag_format: "PRE-INVESTIGATIVE: [YYYY-MM-DD] – [event summary]"
+      purpose: "Foundation of suspicion and history-of-events prior to engagement."
+      examples: ["pre-contract photos/screenshots", "receipts", "client statements", "GPS/message captures"]
+      failsafe: "If field_time unclear but context is pre-contract → classify PRE-INVESTIGATIVE and log 'operator verification pending'."
+
+    PRE_SURVEILLANCE:
+      criteria: "contract_date <= field_time < field_ops_start"
+      tag_format: "PRE-SURVEILLANCE: [YYYY-MM-DD] – [intel summary]"
+      purpose: "Verified intel for planning after contract but before field deployment."
+      examples: ["app data", "initial address checks", "confirmed aliases/patterns"]
+      failsafe: "Conflicting identity/address data → require Cochran verification + operator confirmation before field ops."
+
+    SURVEILLANCE_RETURN:
+      criteria: "field_time >= field_ops_start"
+      tag_format: "SURVEILLANCE RETURN: [YYYY-MM-DDTHH:MM] – [event summary]"
+      purpose: "Field-observed, timestamped returns (photos/video/behavior logs)."
+      start_rule: "Populate 'field_ops_start' when ops begin; lock after first return."
+      failsafe: "Missing exact time → mark 'Unverified Surveillance' until clarified."
+
+  dual_timestamp_protocol:
+    required_fields: [FIELD_TIME, RECEIVED_TIME]
+    precedence: FIELD_TIME
+    discrepancy_action: "Create audit entry; prompt operator for confirm/override; do not reorder on RECEIVED_TIME."
+
+  auto_sorting_engine:
+    metadata_parse: true                     # Extract EXIF, PDF meta, chat timestamps
+    parse_layers: [embedded_metadata, filename_tokens, in-document_text, sworn_statement]
+    sort_by: FIELD_TIME
+    reject_if_no_date: true
+    reject_tag: "DATE REVIEW REQUIRED"
+    manual_override_required_for_rejects: true
+
+  classification_fallback:
+    ambiguous_field_time_default: PRE_INVESTIGATIVE
+    operator_review_required: true
+    narrative_note: "Add brief uncertainty note to discrepancies appendix if used."
+
+  deadfile_logic:
+    store_unused_but_verified: true
+    tag: "UNUSED BUT VERIFIED"
+    recall_policy: "May be reintroduced if the narrative or theory changes; maintain original FIELD_TIME slot."
+    exclusion_rule: "Deadfile items are excluded from active report until linked to a case question or observation."
+
+  continuity_tests:
+    forward_test: "Intake → Planning → Field → Report must flow without contradiction."
+    reverse_test: "Field → Back-check against Intake/Planning; if no anchor, mark UNANCHORED_INTEL and keep out of Pre‑Surv."
+
+  integration_points:
+    with_cochran_theory:
+      gate: "Identity/record items entering tiers must pass 100% match (Name+DOB+Address overlap)."
+      action_on_fail: "Exclude from report; queue for verification."
+    with_tokenized_report_structure:
+      eligible_sections:
+        PRE_INVESTIGATIVE: ["Section 2: Pre‑Surveillance Summary (history only)"]
+        PRE_SURVEILLANCE: ["Section 2"]
+        SURVEILLANCE_RETURN: ["Sections 3–5", "Photo Section"]
+      placeholders_rule: "Use 'Not confirmed at this time' only for truly unknowns; remove photo placeholders if no real media."
+
+  address_and_identifier_catalog:   # Do not overwrite anchors; layer findings
+    anchor_addresses_immutable: true
+    new_addresses_behavior: "Append as FIELD_OBSERVED with date_verified; never replace Intake Anchor."
+    partial_location_rule: "Ballparks stay in 'Intel – Unverified Location' until full address is verified."
+
+  operator_commands:
+    - SET_CONTRACT_DATE:<YYYY-MM-DD>
+    - SET_FIELD_OPS_START:<ISO8601 or 'YYYY-MM-DDTHH:MM'>
+    - FORCE_CLASSIFY:<asset_id>:<tier>
+    - FLAG_DATE_REVIEW:<asset_id>
+    - MOVE_TO_DEADFILE:<asset_id>
+    - RESTORE_FROM_DEADFILE:<asset_id>
+
+  audit_chain:
+    log:
+      - inputs_snapshot
+      - time_extraction_method
+      - classification_decision
+      - discrepancy_events
+      - operator_actions
+    retention:
+      active_case_materials_years: 7
+      deadfile_materials_months: 18
+
+  compliance:
+    fcra_notice: "Not a consumer report; not for employment/credit/insurance decisions."
+    glba_dppa_allowed_use: [licensed_investigation, fraud_prevention, litigation_support]
+    export_redactions: [ssn_masked, dl_number_masked, private_emails]
+
+  ui_labels:
+    status_text:
+      PRE_INVESTIGATIVE: "Anchored before contract"
+      PRE_SURVEILLANCE: "Planning intel"
+      SURVEILLANCE_RETURN: "Field return"
+      DATE_REVIEW_REQUIRED: "Date missing — operator review"
+      UNANCHORED_INTEL: "Observed but not linked to intake/planning"
+
+  pseudocode:
+    - |
+      function classify_asset(asset, contract_date, field_ops_start):
+        ft = extract_field_time(asset)     # EXIF, text, sworn statement
+        rt = asset.received_time
+        if not ft:
+          return REJECT(tag='DATE_REVIEW_REQUIRED')
+        if ft < contract_date:
+          return PRE_INVESTIGATIVE
+        if field_ops_start and ft >= field_ops_start:
+          return SURVEILLANCE_RETURN
+        return PRE_SURVEILLANCE
+
+    - |
+      function on_discrepancy(field_time, received_time):
+        log_audit(field_time, received_time)
+        prompt_operator('Confirm/override date ordering?')
+        # Never reorder by received_time
+
+  tests:
+    - id: NS01_pre_investigative_photo
+      input: {field_time: "2025-05-01", received_time: "2025-06-01"}
+      expect: PRE_INVESTIGATIVE
+    - id: NS02_pre_surv_app_log
+      input: {field_time: "2025-05-15", received_time: "2025-05-16"}
+      expect: PRE_SURVEILLANCE
+    - id: NS03_surv_return_video
+      input: {field_time: "2025-05-21T16:10:00", received_time: "2025-05-21T22:00:00", field_ops_start: "2025-05-21T15:30:00"}
+      expect: SURVEILLANCE_RETURN
+    - id: NS04_missing_date
+      input: {field_time: null, received_time: "2025-05-22"}
+      expect: REJECT tag DATE_REVIEW_REQUIRED
+    - id: NS05_deadfile_storage
+      scenario: "Verified but unused intel"
+      expect: "Move to DEADFILE_INTEL_LOG with tag 'UNUSED BUT VERIFIED'"
+
+  edge_cases:
+    - "Timezone conflicts across sources → normalize to case IANA TZ, retain raw in audit."
+    - "Screenshots without EXIF but with in-text dates → allow with sworn statement or corroborating logs."
+    - "Third-party chat exports → prefer server timestamps over device time when available."
+    - "Edited media → require original file or sworn context to accept FIELD_TIME."
+
+  outputs:
+    - timeline_index
+    - discrepancies_appendix
+    - deadfile_registry
+
+  status: ACTIVE

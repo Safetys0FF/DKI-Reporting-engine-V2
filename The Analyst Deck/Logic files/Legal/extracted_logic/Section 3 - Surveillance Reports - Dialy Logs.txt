@@ -1,0 +1,364 @@
+**DKI Surveillance Integrity and Billing Logic (Live Field Version)**
+
+---
+
+**SECTION 3 – SURVEILLANCE SUMMARY: LOGIC SCRIPT (ENGLISH)**
+
+---
+
+**SECTION ROLE**
+
+* Section 3 logs all field surveillance activity or investigative findings, depending on report type.
+* It is suppressed, relabeled, or activated based on the contract type and field deployment flags.
+* This section reflects only verified events captured by licensed investigators or subcontractors.
+
+---
+
+**LOGIC SWITCHES**
+
+**IF report\_type = Investigative:**
+
+* Section 3 relabels as: “INVESTIGATION DETAILS”
+* Suppress all field surveillance elements
+* Populate with:
+
+  * Timeline of investigative findings
+  * Key confirmations (employment, location, behavior)
+  * Notes from document retrieval or interviews (where applicable)
+* Suppress billing blocks tied to field time, drive time, or visual evidence
+
+**IF report\_type = Field:**
+
+* Section 3 label remains: “SURVEILLANCE SUMMARY”
+* Populate daily logs by date and time
+* Enable full billing breakdown:
+
+  * Drive-To
+  * Field Operation Time
+  * Surveillance Engagement
+  * Mobile Drive
+  * Drive-From
+* Activate metadata checks on:
+
+  * Visual evidence timestamps
+  * Narrative continuity
+  * Subcontractor field ID verification
+* All narrative content must trace to evidence or field log
+
+**IF report\_type = Hybrid:**
+
+* Section 3 relabels as: “INVESTIGATION DETAILS”
+* Populate with:
+
+  * Consolidated list of investigative findings
+  * Confirmed elements from background, legal, or surveillance review
+* Add Special Notation:
+
+  > “Due to the needs of both the client and the case filed, investigation was requested.”
+* Then, append surveillance logs as done in field reports:
+
+  * Label block as: “FIELD DEPLOYMENT (PHASE 2)”
+  * Populate with full surveillance logs (same format as Field)
+  * Tag visuals as “Supplemental Verification” if used to confirm findings
+* Billing logic:
+
+  * Investigative tasks billed in Sections 1 & 2
+  * Field time billed under Section 3
+
+---
+
+**STRUCTURE AND CONTENT FORMAT**
+
+* Each entry begins with:
+
+  * Date
+  * Investigator name
+  * Surveillance or Investigation type
+  * Objective
+  * Location (if applicable)
+* Followed by timestamped narrative entries:
+
+  * Time of observation or discovery
+  * Subject behavior, action, or investigative finding
+  * Transition events or travel (Field only)
+* End-of-day or session summary concludes each block
+
+---
+
+**ENFORCEMENT RULES**
+
+* No unsupported entries permitted (must link to visual or field data if field-based, or traceable evidence if investigative)
+* Passive or speculative language is prohibited
+* All subcontractor participation must be logged and declared
+* Billing blocks are non-editable if locked by contract
+* All field times must override timestamps received from client unless manually reversed
+
+---
+
+**SPECIAL CONDITIONS**
+
+* If subcontractor report is included, label as “EXTERNAL FIELD ATTACHMENT”
+* If subject is not observed (Field): “No visual contact was made during the logged window.”
+* If subject activity exceeds contract time block: “Subject remained active past authorized tracking window.”
+
+---
+
+**COMPLIANCE CONTROLS**
+
+* Section 3 narrative follows Section 2 formatting unless overridden
+* All logs must clear metadata enforcement before release
+* Reverse continuity checks active by default
+
+
+
+**1. Operational Flow and Reporting Structure**
+
+* All surveillance logs begin with metadata extraction from photos (EXIF, filename timestamp, overlay timestamp)
+* First verifiable photo in the surveillance area marks the start of **field operations**
+* First visual confirmation of the subject marks the beginning of **surveillance contact**
+* Field time, drive time, and contact time are treated as distinct billing categories
+* Metadata-anchored evidence supports all report entries and billing items
+
+---
+
+**2. Billing Categories and Required Anchors**
+
+| Category                  | Evidence Required                                          | Billing Basis           |
+| ------------------------- | ---------------------------------------------------------- | ----------------------- |
+| Drive-To (Deployment)     | First timestamped arrival photo, distance from base        | Time + mileage          |
+| Field Operation           | Photo/log showing arrival and area sweep conclusion        | Total active hours      |
+| Surveillance Engagement   | Timestamped photo or observation log confirming subject    | Time under direct watch |
+| Mobile Surveillance Drive | Location photos, known venue routes, pursuit documentation | Mileage + time          |
+| Drive-From (Return)       | Final field activity + timestamp, route to home base       | Time + mileage          |
+
+---
+
+**3. Validation and Data Consistency**
+
+* Use the client intake, pre-surveillance reports, and routine profiles to define known subject activity
+* Cross-reference photos with venue intelligence and timestamps
+* Validate image content with known locations using public records and maps
+* Compare observed subject behavior with expected behavior to detect routine breaks
+* Identify inconsistencies between field logs, metadata, and narrative for clarification
+* Unverified or unsupported entries must be **flagged for 1:1 Q\&A** — never deleted
+
+---
+
+**4. Reporting and Testimony Accountability**
+
+* Each report entry must include:
+
+  * Timestamp or filename-derived time of action
+  * File references (image or log ID)
+  * Investigator observations, not assumptions
+  * Logic path to conclusion
+
+* **Data handling in reporting:**
+
+  * Use metadata to structure event timelines
+  * Use known locations to justify travel/mileage
+  * Align subject activity with location-based evidence
+  * Ensure all narrative content is rooted in verifiable data
+
+* **Reverse Logic Validation** (Mandatory)
+
+  * Confirm narrative timestamps match metadata
+  * Cross-check story against pre-surveillance intel
+  * Validate that names, places, and event descriptions match known facts
+  * Visual evidence **always overrides** written narrative when conflicting
+  * If conflict arises (e.g., misidentified plate, wrong subject description):
+
+    * **Trigger 1:1 Q\&A** with investigator
+    * Confirm metadata, image content, and intended report context
+    * Log and annotate the resolution prior to finalizing
+
+* **No Section Advances Without Reverse Check**
+
+  * Each section of the report is frozen until all narrative-evidence discrepancies are resolved and approved
+
+---
+
+2. Internal Evidence Control (Not for Report Inclusion)
+
+Evidence Listing (Internal Only):
+
+Total count of timestamped photos for that date
+
+Reference to any matching pre-surveillance or intake report
+
+Confirmation of visual validation for subject movements
+
+No references to toolchain, software, or internal methodologies
+
+Billing Anchor Fields (Internal Only):
+
+Drive-to origin and destination (city-to-city)
+
+Total field time recorded (first image to last image)
+
+Active surveillance hours listed in 24hr format
+
+Drive-from time recorded internally
+
+Total mileage must be estimated from logs, GPS traces, or confirmed odometer entries
+
+---
+
+Continuity and Accuracy Enforcement
+
+Continuity Check Requirements:
+
+Every photo must align with its narrative placement.
+
+Events cannot skip time without visual or field-logged justification.
+
+Each subject movement must be traceable to:
+
+Timestamped photo
+
+Confirmed vehicle placement
+
+Investigator log
+
+Locations or claims not supported visually must be flagged and notated internally.
+
+Reverse Validation Logic:
+
+The narrative is double-checked against the photos.
+
+Any visual evidence that contradicts the written statement overrides the field entry.
+
+If the plate number or time doesn’t match, the error is flagged.
+
+Q&A Trigger Points: Any of the following triggers a mandatory internal Q&A review:
+
+Vague or unspecified times (“around noon”)
+
+Unsupported transitions (e.g., “went to girlfriend’s house” without a photo or log)
+
+Inconsistent license plate descriptions (e.g., written “678 BCD” but photo shows “BCD 678”)
+
+Description of a subject that does not match the image
+
+Missing locations
+
+Surveillance claim without anchor
+
+Resolution:
+
+Every Q&A-triggered issue must be resolved through direct clarification from field logs, visual evidence, or the lead investigator’s review.
+
+If no resolution is possible, the issue is either removed or labeled as an unresolved conflict and escalated.
+
+---
+
+4. Tone, Delivery, and Presentation Style
+
+Use plain, factual, professional English.
+
+Avoid passive voice, opinions, and qualifiers.
+
+Present tense is preferred; past tense acceptable for closed actions.
+
+No “storytelling.” This is a factual log, not a novel.
+
+Limit each day’s entry to factual field performance only. Section 4 will house narrative summaries.
+
+---
+
+5. Integrity Controls and Investigator Authority
+
+The lead investigator holds final review rights.
+
+Subcontractor data is reviewed and validated before use.
+
+No entry is destroyed — all anomalies are resolved, not deleted.
+
+Each detail must withstand a legal or billing audit.
+
+Any attempt to obscure, skip, or reframe timeline for simplicity is disallowed.
+
+Surveillance is an integrity-based discipline. The evidence speaks — our job is to document it.
+
+---
+
+**5. Structure and Reporting Format**
+
+Event Entry Header:
+
+Format: Event Entry: [Day], [Month] [Date], [Year]
+
+Date format is mandatory and must be consistent across all entries.
+
+Investigator Line:
+
+Full legal name of the investigator must be listed.
+
+Attribution must be confirmed via:
+
+Metadata (origin of photo, file creation info)
+
+Field log entries (including arrival or contact times)
+
+Subcontractor field reports or signed logs
+
+If the investigator is not the primary, attribution must be traceable.
+
+Start Time:
+
+Based on the first visual evidence timestamp showing the investigator on location (e.g., first photo from Lawton after leaving Tulsa).
+
+Reported in 24-hour military time.
+
+Surveillance Type Classification:
+
+Fixed Surveillance: Investigator is stationary (e.g., parked outside a residence).
+
+Mobile Surveillance: Investigator is actively following or attempting to follow the subject.
+
+Area Sweep: Investigator canvasses locations to locate the subject.
+
+Static Surveillance: Unmoving observation at a known hotspot.
+
+Mixed: Combines any of the above.
+
+Narrative Logic:
+
+Must begin with physical arrival and operational start (not just first subject contact).
+
+Each movement must be time-anchored and matched to:
+
+A photo with a timestamp
+
+A known visual sequence
+
+A location-specific field report
+
+Transitions must be explained (e.g., “surveillance was lost in traffic, investigator proceeded to next known location”).
+
+Business names or known addresses must be fully stated (e.g., “Dallas Renal Group, 3201 W Gore Blvd, Lawton, OK 73505”).
+
+Never state investigative logic, tools, or strategy.
+
+Do NOT mention how locations or hours were discovered (e.g., public maps or open-source research).
+
+Do NOT include pattern recognition — we report facts only, not behavior interpretations.
+
+---
+
+
+
+**5. Q\&A Loop and Case Control**
+
+* When data gaps or contradictions are present, the system pauses for direct investigator clarification
+* No assumption or estimation is used without investigator confirmation
+* **All actions, logs, and entries must be accounted for**
+* Investigator (You) hold **final authority** on all report decisions and record validity
+
+---
+
+**6. Integrity Mandate**
+
+> Every billable action must be supported by timestamped, verifiable evidence whenever possible. Unsupported, ambiguous, or unclear entries are **flagged for resolution**, not discarded. Final reporting must meet standards of legal testimony, client trust, and internal accountability — with the lead investigator retaining full authority over report certification.
+
+---

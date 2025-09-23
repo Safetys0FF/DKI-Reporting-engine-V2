@@ -1,0 +1,1015 @@
+gateway_section_control:
+  id: section_6_gateway_interface
+  description: >
+    Gateway interface for Section 6.
+    Manages input/output binding, toolkit result injection,
+    signal dispatching, and progress tracking.
+  linked_to: callbox_central_dispatch
+  section_id: section_6
+
+
+gateway_callbox_hub:
+  id: callbox_central_dispatch
+  description: >
+    Centralized gateway communication hub. Handles signal routing, tool triggers,
+    section callouts, and cross-section data interactions.
+
+  accepted_signals:
+    - "10-4"
+    - "10-9"
+    - "10-10"
+    - "10-6"
+    - "10-8"
+
+  on_signal:
+    - if signal == "10-4":
+        action:
+          - unlock_next_section: true
+          - log: "Signal 10-4: Section approved. Unlocked next section."
+
+    - if signal == "10-9":
+        action:
+          - trigger_manual_review: true
+          - log: "Signal 10-9: Routing to manual override."
+
+    - if signal == "10-10":
+        action:
+          - freeze_gateway: true
+          - notify: [lead_investigator]
+          - log: "Signal 10-10: Gateway frozen per operator command."
+
+    - if signal == "10-6":
+        action:
+          - broadcast_toolkit_context: true
+          - log: "Toolkit initialized and dispatched to sections."
+
+    - if signal == "10-8":
+        action:
+          - collect_output_payload
+          - store_progress_flags
+          - log: "Section reported complete. Gateway updated."
+
+  fallback_logic:
+    on_unrecognized_signal:
+      - log: "Unknown signal received."
+      - notify_admin: true
+
+    on_timeout:
+      - wait_duration: 48h
+      - escalate_to: lead_investigator
+      - log: "Callbox timeout. No response received in window."
+
+callbox_endpoints:
+  section_cp: "section_cp_response_handler"
+  section_toc: "section_toc_response_handler"
+  section_1: "section_1_response_handler"
+  section_2: "section_2_response_handler"
+  section_3: "section_3_response_handler"
+  section_4: "section_4_response_handler"
+  section_5: "section_5_response_handler"
+  section_6: "section_6_response_handler"
+  section_7: "section_7_response_handler"
+  section_8: "section_8_response_handler"
+  section_dp: "section_dp_response_handler"
+  section_fr: "section_fr_response_handler"
+
+
+section_transmission_check:
+  id: section_{{ section_number }}_transmission_verification
+  description: >
+    Validates outbound toolkit signals were received by the callbox.
+    Performs echo check and readiness confirmation loop.
+section_6_toolkit_signal_emitter:
+  sends:
+    - to: callbox
+  emit_signals:
+    - signal: "section_completed"
+      payload:
+        origin: "section_6"
+        summary: "{{ generated_summary }}"
+        flags: "{{ section_flags }}"
+    - signal: "ready_for_next"
+      payload:
+        from: "section_6"
+    - log: "Section_6 dispatched completion signal to callbox."
+
+gateway_signal_interpreter:
+  on_toolkit_ready:
+    - verify_payload
+    - emit_signal: "toolkit_acknowledged"
+      payload:
+        section: "{{ incoming_signal.from }}"
+        status: "confirmed"
+    - log: "Toolkit ready signal acknowledged for {{ incoming_signal.from }}."
+
+unified_toolkit_dispatch:
+  id: master_toolkit_trigger
+  description: >
+    Calls the unified Python toolkit engine before each section report.
+    Runs all tools (billing, continuity, metadata, etc.) and stores output.
+
+  trigger_on: section_entry
+
+  on_entry:
+    - log: "Section_{{ section_number }} wake-up initiated."
+    - fetch:
+        - section_context.unified_results
+        - report_meta
+        - assigned_documents
+        - previous_section.flags
+    - apply_context:
+        unified_results: "{{ section_context.unified_results }}"
+        report_meta: "{{ report_meta }}"
+        assigned_documents: "{{ assigned_documents }}"
+        section_flags: "{{ previous_section.flags }}"
+    - emit_signal:
+        signal: "wake_up_call"
+        payload:
+          from: "section_{{ section_number }}"
+          status: "initiated"
+    - log: "Section_{{ section_number }} context loaded and wake-up signal emitted."
+
+  action:
+    - python_call:
+        module: tools.master_toolkit_engine
+        class: MasterToolKitEngine
+        method: run_all
+        inputs:
+          section_id: "{{ current_section }}"
+          text_data: "{{ section_text }}"
+          report_meta: "{{ report_metadata }}"
+          documents: "{{ document_set }}"
+          assets: "{{ media_assets }}"
+        store_as: unified_results
+
+    - store_output:
+        context_key: section_context.unified_results
+    - log: "Unified toolkit analysis complete and results stored for reporting."
+
+
+toolkit_endpoints:
+  section_cp: "section_cp_response_handler"
+  section_toc: "section_toc_response_handler"
+  section_1: "section_1_response_handler"
+  section_2: "section_2_response_handler"
+  section_3: "section_3_response_handler"
+  section_4: "section_4_response_handler"
+  section_5: "section_5_response_handler"
+  section_6: "section_6_response_handler"
+  section_7: "section_7_response_handler"
+  section_8: "section_8_response_handler"
+  section_dp: "section_dp_response_handler"
+  section_fr: "section_fr_response_handler"
+
+logic_switches:
+  - if report_type == "Investigative":
+      section_6: "Billing Summary"
+
+  - if report_type == "Surveillance":
+      section_6: "Billing Summary"
+
+  - if report_type == "Hybrid":
+      section_6: "Billing Summary"
+
+
+section_6_toolkit_handler:
+  on_entry:
+    - run_tools:
+        tools:
+          - cochran_match_tool
+          - northstar_protocol_tool
+          - reverse_continuity_tool
+          - metadata_tool_v_5
+          - mileage_tool_v_2
+          - billing_tool_engine
+        input:
+          section_id: section_6
+          text_data: "{{ section_text }}"
+          meta: "{{ report_meta }}"
+          docs: "{{ assigned_documents }}"
+          media: "{{ media_assets }}"
+        store_as: section_toolkit_results
+    - log: "Section_6 tools executed."
+
+  on_failure:
+  on_failure:
+    - if toolkit_run.failed:
+        emit_signal: "10-10"
+        log: "Toolkit failed. Section halted."
+        escalate: lead_investigator
+
+section_6_toolkit_emitter:
+  sends:
+    - to: callbox
+  emit_signals:
+    - signal: "toolkit_ready"
+      payload:
+        from: "section_6"
+        tools_used:
+          - cochran_match_tool
+          - northstar_protocol_tool
+          - reverse_continuity_tool
+          - metadata_tool_v_5
+          - mileage_tool_v_2
+          - billing_tool_engine
+    - log: "Section_6 emitted toolkit ready signal."
+
+section_6_toolkit_guard:
+  on_entry:
+    - fetch_manifest:
+        from: "section_1"
+        key: "toolkit_manifest.section_6"
+        store_as: allowed_tools
+
+    - validate_access:
+        allowed: "{{ allowed_tools }}"
+        attempted: "{{ tools_requested }}"
+        on_violation:
+          - emit_signal: "10-9"
+          - log: "Unauthorized tool access in Section_6."
+
+section_6_toolkit_ready:
+  trigger_on: section_output_received
+  steps:
+    - wait_for: toolkit_result
+    - emit_signal:
+        signal: "10-6"
+        payload:
+          tools_ready: true
+          section_id: "{{ current_section }}"
+    - wait_for_signal:
+        toolkit.10-4:
+          action: continue
+          log: "Gateway acknowledged toolkit readiness."
+    - log: "Toolkit acknowledgment loop complete."
+  logic:
+    - if signal == "10-4":  # Section approved
+        action:
+          - unlock_next_section: true
+          - log: "Approval received. Advancing to next section."
+
+    - if signal == "10-9":  # Needs revision
+        action:
+          - reroute_to_section_editor: "{{ previous_section }}"
+          - log: "Section flagged for revision. Returning to previous section."
+
+    - if signal == "10-10":  # Halt
+        action:
+          - freeze_gateway: true
+          - notify_roles: [lead_investigator]
+          - log: "Critical halt triggered. Investigation suspended."
+
+        fallback:
+          - on_missing_signal:
+        notify_roles: [qa_admin]
+        log: "No response signal after section output. Manual review required."
+
+
+
+gateway_tool_port_media:
+  id: media_entry_port
+  description: >
+    Manages entry, verification, tagging, and linking of photo/video evidence.
+    Requires user to assign narrative before toolkit triggers.
+
+  accepted_inputs:
+    - media_upload
+    - section_reference
+    - metadata_tags
+    - user_narrative_link
+
+  compliance_rules:
+    - require_narrative_link == true
+    - no auto-generated content allowed
+    - audit_user_id == true
+
+  on_upload:
+    - verify_media_format
+    - check_for_user_prompt
+    - emit_signal: "media_attached"
+      payload:
+        section_id: "{{ section_reference }}"
+        media_type: "{{ media_type }}"
+        tags: "{{ metadata_tags }}"
+    - log: "Media linked and approved by investigator."
+
+  on_violation:
+    - reject_upload
+    - notify_user: "Narrative required before media linkage is allowed."
+
+gateway_tool_port_documents:
+  id: document_archive_port
+  description: >
+    Central archive for supporting documents. Ensures validation before linkage.
+    Maintains audit logs for compliance.
+gateway_tool_port_export:
+  id: export_dispatch_port
+  description: >
+    Controls generation and secure delivery of finalized reports.
+    Ensures final review was completed before exporting.
+
+  preconditions:
+    - section_lifecycle_complete == true
+    - final_review_approved == true
+    - compliance_clearance_passed == true
+
+  accepted_requests:
+    - export_type: ["pdf", "zip", "summary_only"]
+    - delivery_target: ["client", "internal", "secure_archive"]
+
+  on_export:
+    - generate_package
+    - emit_signal: "report_ready_for_delivery"
+      payload:
+        export_link: "{{ secure_url }}"
+        type: "{{ export_type }}"
+        recipient: "{{ delivery_target }}"
+    - log: "Export complete and dispatched."
+
+  on_blocked:
+    - notify_user: "Cannot export. Final approval or lifecycle check not completed."
+
+  accepted_inputs:
+    - document_file
+    - classification_tag
+    - section_reference
+    - user_confirmation
+
+  validation_rules:
+    - must_include_classification_tag
+    - file_integrity_verified
+    - user_role_allowed_to_upload == true
+
+  on_document_link:
+    - store_in_repository
+    - emit_signal: "document_attached"
+      payload:
+        document_id: "{{ file_id }}"
+        section_linked: "{{ section_reference }}"
+    - log: "Document uploaded and approved for section {{ section_reference }}."
+
+  on_reject:
+    - notify_user: "Document missing classification or failed verification."
+
+  toc_identifier: "{{ report_type | lower }}_toc"
+
+
+section_handoff_router:
+  id: section_handoff_controller
+  description: >
+    Coordinates lifecycle transitions between sections.
+    Validates output, interprets gateway signals, and activates next section or returns for revision.
+
+section_6_input:
+  receives_from:
+    - gateway
+    - previous_section
+  requires:
+    - section_context.unified_results
+    - report_meta
+    - assigned_documents
+    - section_flags
+  initialize:
+    - load_toolkit_results: "{{ section_context.unified_results }}"
+    - apply_report_meta: "{{ report_meta }}"
+    - verify_required_docs: "{{ assigned_documents }}"
+    - inherit_flags: "{{ section_flags }}"
+
+section_6_response_handler:
+  receives:
+    - from: callbox
+    - accepted_signals:
+        - "section_update"
+        - "callback_confirmed"
+        - "override_request"
+  on_signal:
+    - if signal == "section_update":
+        update_context:
+          key: section_context.sync
+          value: "{{ signal_payload }}"
+        log: "Section_6 synced with gateway payload."
+
+    - if signal == "callback_confirmed":
+        set_flag: section_validated
+        log: "Section_6 confirmed by central callbox."
+
+    - if signal == "override_request":
+        trigger_manual_review: true
+        log: "Manual review trigger set by callbox directive."
+
+section_6_output:
+  sends_to:
+    - gateway
+    - next_section
+  emits:
+    - signal: "section_completed"
+      condition: if section_valid == true
+    - payload:
+        section_summary: "{{ generated_summary }}"
+        flags: "{{ generated_flags }}"
+        context: "{{ section_context }}"
+    - log: "Section {{ current_section }} completed. Output dispatched to gateway."
+
+gateway_section_6_input_hooks:
+  id: gateway_section_loader_6
+  description: Injects toolkit data and context into section_1 on entry.
+  on_section_entry:
+    - fetch: section_context.unified_results
+    - fetch: report_meta
+    - fetch: assigned_documents
+    - fetch: previous_section.flags
+    - apply_to_section:
+        context_key: unified_results
+        data_key: section_context.unified_results
+    - log: "Section entry: Context injected for section_1"
+
+gateway_section_6_output_hooks:
+  id: gateway_section_dispatcher_6
+  description: Captures section_6 output and routes updates.
+  on_section_exit:
+    - capture:
+        - section_summary
+        - flags
+        - updated_context
+    - store:
+        section_flags: "{{ flags }}"
+        report_progress: "{{ section_summary }}"
+    - emit_signal: "section_received"
+      payload:
+        section_id: "section_6"
+        status: "acknowledged"
+    - log: "Gateway received and acknowledged output from section_2."
+
+section_signal_lifecycle_template:
+  on_start:
+    - emit_signal: "10-6"  # Toolkit dispatched
+      log: "Toolkit deployment initiated for {{ current_section }}."
+
+ report_generation:
+    - run: generate_report_section
+    - log: "Report generation initiated for {{ current_section }}."
+
+---
+
+section_6:
+  label: "BILLING SUMMARY"
+  layout:
+    font_family: "Times New Roman"
+    font_size: 12
+    font_weight: "normal"
+    text_align: "left"
+    header_format: "UPPERCASE"
+    subsection_indent: 2
+    bullet_style: "standard"
+    spacing:
+      before_section: 1.5em
+      after_section: 1em
+
+**SECTION 6 – BILLING SUMMARY LOGIC (ENGLISH)**
+
+---
+
+**ROLE OF SECTION 6**
+
+* Section 6 provides a comprehensive, itemized billing breakdown.
+* It directly reflects the contract structure, report type, and sequence of services rendered.
+* This section is legally binding and must reflect the investigative and field operations precisely.
+
+---
+
+**LOGIC SWITCHES**
+
+**IF report\_type = Investigative:**
+
+* Billing model: Flat rate
+* Output:
+
+  * Investigative Research Fee (flat rate)
+  * Documentation Delivery Fee (if applicable)
+  * Admin & Compliance Review (optional)
+* Surveillance, mileage, and field ops are suppressed
+
+**IF report\_type = Field:**
+
+* Billing model: Hourly / Per-mile / Flat (as per contract)
+* Output:
+
+  * Field Surveillance Hours (per shift or date)
+  * Mileage Total
+  * Equipment / Data Fees (if applicable)
+  * Report Generation Fee (per session)
+* No investigative fees appear
+
+**IF report\_type = Hybrid:**
+
+* Billing model: Tiered / Stacked
+* Output:
+
+  * Investigative Services Fee (Flat or per-document)
+  * Surveillance Operations (per hour/day)
+  * Mileage and Travel
+  * Combined Report Compilation Fee
+  * Additional Document Recovery (if applicable)
+* **Structure Adapts Based on Contract Order:**
+
+  * If Surveillance was first:
+
+    * Investigative tasks billed as deductions from Field funds (up to \$500 offset)
+  * If Investigative was first:
+
+    * Full rates apply to both investigative and surveillance services (no deduction)
+
+---
+
+**CONTRACT SEQUENCE EFFECTS**
+
+* Contract timestamps determine billing grouping and offset eligibility
+* If multiple contracts exist:
+
+  * Most recent governs label display
+  * All appear as separate lines unless otherwise merged by contract language
+* Additional contracts always produce **supplemental billing**, not suppression
+
+---
+
+**REQUIRED LABELS & LEGAL STRUCTURE**
+
+* Each billed line must include:
+
+  * Service Type
+  * Date/Time of Delivery
+  * Description
+  * Rate or Flat Fee
+  * Billing Source (Contract Reference)
+* North Star and Cochran compliance enforced:
+
+  * No inferred billing
+  * All items must tie to a report section or operational record
+
+---
+
+**NOTES AND DISCLOSURES**
+
+* Insert planning offset note only if \$500 deduction is valid:
+
+  > “Investigative services provided under this contract are offset against the first \$500 of field surveillance as agreed.”
+* Add notation for any document-based investigative request billed separately
+* Subcontractor tasks billed under subcontractor rate table, if applicable
+
+---
+
+**BILLING ENFORCEMENT**
+
+* Logic is non-negotiable
+* Tampering or override flags the report
+* Final summary must reconcile with:
+
+  * Section 1 declared structure
+  * Section 2 investigative outputs
+  * Section 3 field logs
+  * Section 4 evidentiary validation
+
+
+  pre_investigation_costs:
+    total_budget: 500.00
+    itemized_deductions:
+      - label: "Client Background Report"
+        cost: 150.00
+      - label: "Additional Subject Background Report"
+        cost: 150.00
+      - label: "Vehicle, Address, or Document Reports"
+        cost_per: 75.00
+        grouping_logic: "All reports from one agency billed as one group"
+    note: "Final cost of all reports is deducted from the $500 pre-surveillance budget. Excess costs are deducted from field budget."
+    planning_balance_allocation:
+      - label: "Strategic Planning, Address Verification, and Recon"
+        calculation: "$500 - sum(all report deductions)"
+    display_section:
+      heading: "PRE-INVESTIGATION COSTS"
+      format:
+        - intro_line: "Total Fee: $500.00"
+        - bullets_from: itemized_deductions
+        - note_line: "Final cost of Reports: [auto-calculated] to be billed from the $500 planning budget."
+        - remainder_line: "Strategic Planning...: [auto-calc remaining]"
+        - summary_line: "Total cost of all reports: [auto-calc total deductions]"
+
+  surveillance_operations:
+    display_section:
+      heading: "SURVEILLANCE OPERATIONS"
+    field_budget:
+      calculation: "contract_amount - 500 - excess_report_cost"
+      actual_hours_billed:
+        source: "section_3_logs + metadata_validation"
+    recon_time:
+      note: "Not reflected in budget"
+      breakdown:
+        - label: "First Day of Surveillance"
+        - label: "Second Day"
+        - label: "Third Day"
+
+  documentation_compilation:
+    display_section:
+      heading: "FINAL DOCUMENTATION & REPORT COMPILATION"
+    charge:
+      amount: 100.00
+      description: "Documentation review, formatting, and delivery (1 hour @ $100/hour)"
+
+  retainer_summary:
+    display_section:
+      heading: "RETAINER SUMMARY"
+    items:
+      - contracted_amount_due: "[pull from contract]"
+      - total_retainer_applied: "[pull from contract]"
+      - remaining_after_planning: "contract - 500"
+      - deductions:
+          - surveillance_planning: 500
+          - documentation: 100
+          - pre_investigation: "[from section above]"
+      - total_cost_of_investigation: "[sum of all sections above]"
+      - remaining_retainer_balance: "[contract - total_cost]"
+      - total_remaining_owed: "[if positive, show balance; if zero, show 'Zero | nothing is owed']"
+
+  special_rules:
+    mileage:
+      display_text: "Mileage was waived as a professional courtesy."
+      internal_tracking: true
+      metadata_anchor_points:
+        - investigator_origin
+        - subject_location
+        - photo_metadata_location
+        - field_log_location
+      validation: "Compare subcontractor mileage to metadata distance. If matched, approve. If exceeded, flag for review."
+      overcharge_failsafe:
+        logic: "Double internal cost of mileage for records, only pass actual to client"
+
+    hourly_rate:
+      value: 100.00
+      applies_to:
+        - documentation
+        - analysis
+        - pre-planning
+        - reporting
+        - travel_time (at reduced rate)
+
+    travel_time:
+      structure:
+        - pre_surveillance: "30 mins"
+        - post_surveillance: "30 mins"
+      billed: true
+      rate: "discounted"
+
+  validation_rules:
+    metadata_required_for_all_entries: true
+    recon_hours_not_deducted_from_field_budget: true
+    mileage_must_be_internally_validated: true
+    reverse_continuity_test:
+      active: true
+      trace_sources:
+        - Client Intake Form
+        - Client Contract
+      validate_fields:
+        - client_name
+        - client_address
+        - client_phone
+        - date_of_contract
+        - goals_of_investigation
+        - primary_subject
+        - subject_employer
+        - surveillance_hours_requested
+      test_methods:
+        anchor_validation:
+          method: "anchor_id_match + text proximity"
+          tolerance: "±1 line"
+        format_consistency_check:
+          method: "match font, size, and field label style"
+      report_behavior:
+        on_pass: "continue"
+        on_fail:
+          - "flag report for audit"
+          - "trigger Q&A clarification"
+      metadata_stamp:
+        include: true
+        visible_in_report: false
+        logs:
+          - field_name
+          - source_path
+          - anchor_id
+          - extraction_method
+
+  label: "SURVEILLANCE OPERATIONS BILLING LOGIC"
+  purpose: "Defines how surveillance-related billing is extracted, verified, and reported. Ensures transparent, court-defensible invoicing based on verified fieldwork."
+
+  data_sources_and_anchors:
+    - section: "Section 3: Daily Logs"
+      details:
+        - "Logs actual hours in the field"
+        - "Records departure, contact, and return times"
+        - "Primary billing data source"
+    - section: "Section 4: Surveillance Sessions"
+      details:
+        - "Narrative justification for activities"
+        - "Supports time entries from Section 3"
+    - section: "Section 2: Pre-Surveillance Strategy"
+      details:
+        - "Defines surveillance goals"
+        - "Establishes maximum allowable fieldwork hours"
+    - section: "Pre-Investigation Costs"
+      details:
+        - "Confirms deductions from $500 planning budget"
+        - "Remaining amount affects field ops billing pool"
+
+  surveillance_fieldwork_budget:
+    formula: "Contracted_Total - 500"
+    note: "Any report costs exceeding $500 deducted from field ops budget"
+
+  billable_time:
+    hourly_rate: 100.00
+    categories:
+      - Pre_Surveillance_Travel: "30 minutes"
+      - Post_Surveillance_Travel: "30 minutes"
+      - In_Field: "As verified by logs, metadata, and narrative"
+      - Reconnaissance:
+          note: "Shown for transparency; not billed in main fieldwork hours"
+
+  validation_and_audit:
+    requirements:
+      - "Time must appear in Section 3"
+      - "Must match GPS metadata if available"
+      - "Supported by Section 4 narrative or visuals"
+      - "Within contracted strategy window unless flagged as 'Recon'"
+    conflict_protocol:
+      - "Flag discrepancies"
+      - "Trigger internal Q&A"
+    no_surveillance_day:
+      - "Only travel and planning billed"
+
+  time_format_and_adjustment:
+    format: "24-hour clock"
+    benefits:
+      - "Reduces confusion"
+      - "Allows seamless travel billing"
+    authorized_edits:
+      - "Only section in report allowing retroactive edits"
+      - "Adjusts Section 3 and 4 for ±30 min billing rule"
+      - "All edits must be:
+          - Justified internally
+          - Authorized via billing adjustment parameters
+          - Synced between Sections 3 and 4
+          - Follow billing validation logic"
+    integrity_pass: "One-time adjustment post-final review"
+
+  surveillance_audit_protocol:
+    cross_reference:
+      - "Section 3 and 4 time entries"
+      - "Metadata timestamps"
+      - "Field anchor points"
+      - "Travel route verification"
+    billing_adjustment:
+      - "Adjust in/out times only"
+      - "Apply 30 min pre/post travel if validated"
+    example:
+      before: "3 Days, 18 Hours"
+      after_audit: "3 Days, 21 Hours"
+      note: "Changes silent to client; logged internally"
+
+- service: "Reconnaissance (Pre-Surveillance Strategy Prep)"
+  type: non_billable
+  display: true
+  show_rate: false
+
+  summary_statement_format:
+    - Subtotal_Fieldwork_Budget: "[Contract - $500 - report overages]"
+    - Actual_Billed_Hours: "[Verified hours from Sections 3 & 4, post-adjustment]"
+
+  mileage_handling:
+    public_statement: "Mileage was waived as a professional courtesy."
+    internal_validation:
+      - "Tracked via metadata"
+      - "Confirmed through routing logic"
+    subcontractor_charges:
+      - "Matched and passed without markup"
+      - "Inflated entries flagged and buffered"
+
+ internal_mileage_handling:
+  tracking: true
+  public_statement: "Mileage was waived as a professional courtesy."
+  validation_sources:
+    - photo_video_metadata
+    - route_logic_from_investigator_base
+  subcontractor_charges:
+    verification: "DKI verifies and passes actual cost to client, without markup"
+    buffer_policy: "Internal buffer used if cost appears inflated"
+
+system_lock_protocol:
+  edit_lock_status: "ENABLED"
+  effect: "No further automated or manual adjustments permitted to any billing fields after this lock is engaged."
+  trigger_point: "Upon completion of audit and summary generation."
+  override_condition: "Manual admin override required with full justification and metadata logging."
+
+audit_rules:
+
+- id: time_tolerance_match
+  name: "±30-Minute Field Log Alignment"
+  applies_to:
+    - section_3
+    - section_4
+  rule:
+    description: "Billable hours must align with field log in/out times within a ±30-minute window."
+  logic:
+        compare: billed_time vs. field_log_time
+        tolerance: "+/-30 minutes"
+        if_within_tolerance: pass
+        if_exceeds: flag_for_review
+        enforcement:
+        auto_adjustment_allowed: false
+        manual_override: requires_admin_signature
+        failure_behavior:
+        action:
+        label: "Billing time variance beyond ±30 min"
+
+
+        failure_behavior:
+          - action: "Report flagged for internal review"
+          - restriction: "No report can be finalized or billed without resolution"
+          - override: "Admin must authorize override or provide corrective explanation"
+
+documentation_and_delivery:
+  section_title: "FINAL DOCUMENTATION & REPORT COMPILATION"
+  description: "Documentation review, report formatting, and delivery"
+  billing:
+    hours: 1
+    hourly_rate: 100.00
+    total_fee: "$100.00"
+  policy:
+    fixed_cost: true
+    editable: false
+
+retainer_summary:
+  section_title: "RETAINER SUMMARY"
+  layout:
+    font_family: "Times New Roman"
+    font_size: 12pt
+    alignment: left
+    spacing:
+      before: 1em
+      after: 1em
+  fields:
+    - label: "Contracted Amount Due"
+      value_source: "client_contract.contract_total"
+    - label: "Total Retainer Applied"
+      value_source: "section_1.retainers_applied"
+    - label: "Remaining Balance After Planning"
+      calculation:
+        formula: "contract_total - 500"
+        condition:
+          if_no_surveillance: "return 0"
+    - label: "Deductions"
+      items:
+        - label: "Surveillance Planning"
+          value: 500
+          condition: "if surveillance performed, else 0"
+        - label: "Documentation"
+          value: 100
+        - label: "Pre-Investigation Costs"
+          value_source: "pre_investigation.total_cost"
+    - label: "Total Cost of Investigation"
+      calculation: "sum(pre_investigation_costs + surveillance_ops_cost + documentation_fee)"
+    - label: "Remaining Retainer Balance"
+      calculation: "contract_total - total_cost_of_investigation"
+    - label: "Total Remaining Balance Owed"
+      calculation: "contract_total - total_billed"
+      display_logic:
+        if_zero: "Display as 'Zero if nothing is owed'"
+  validation:
+    conflict_check:
+      rule: "If investigation costs exceed contract amount and billing is not adjusted"
+      trigger: "Flag report for internal audit protocol"
+
+- id: billing_math_reconciliation
+  name: "Billing Total Verification Across Report"
+  applies_to:
+    - section_1
+    - section_2
+    - section_3
+    - section_4
+  rule:
+    description: "All billed services must reconcile with recorded activity and declared report type."
+  logic:
+        each_line_item:
+        must_match:
+          - report_type_structure
+          - actual_service_rendered
+          - visual_or_log_evidence
+          - section_metadata_reference
+        all_totals:
+        must_reconcile_with: final_invoice_total
+        enforcement:
+        error_on_discrepancy: true
+        flag_unverified_charges: true
+        override_conditions:
+        requires: two_admin_approvals
+        note_required: yes
+        failure_behavior:
+        action:
+        label: "Invoice mismatch with operational data"
+
+        continuity_check:
+        enabled: true
+        validation_points:
+          - timestamps_match_narrative: true
+          - subject_location_path_tracked: true
+          - visual_evidence_supports_log: true
+          - no_metadata_mentions: true
+          - vague_statements_flagged: true
+          - narrative_vs_photo_check: strict
+          - subject_identification_confirmation: image/log corroboration
+          - movement_segments_temporally_bound: true
+
+        qna_trigger:
+        rules:
+          - unsupported_or_ambiguous_statement: "Flag for 1:1 Q&A"
+          - contradictory_entry: "Q&A before approval"
+          - unmatched narrative vs. visual: "Q&A required"
+          - plate_discrepancy: "Trigger image check"
+          - subject_description_mismatch: "Trigger evidence review"
+          - missing time anchor: "Q&A resolution prior to report closure"
+        resolution:
+          - highlight_discrepant_entry: true
+          - freeze_submission_until_resolved: true
+          - defer to final review if internal resolution fails
+ 
+report_ready:
+  - wait_for: report_generated
+  - emit_signal: "10-8"
+    payload:
+      section_summary: "{{ generated_summary }}"
+      flags: "{{ generated_flags }}"
+    log: "Report complete. Output dispatched to gateway."
+
+gateway_review_outro:
+  on_section_render_complete:
+    - receive:
+        source: "section_6"
+        payload:
+          rendered_report: "{{ section_report }}"
+          toolkit_flags: "{{ generated_flags }}"
+          summary: "{{ section_summary }}"
+    - log: "Section section_6 submitted report to gateway for review."
+
+  review_phase:
+    - present_to_user:
+        content: "{{ section_report }}"
+        flags: "{{ generated_flags }}"
+        summary: "{{ section_summary }}"
+        prompt: "Approve this section report?"
+        options: [yes, no, halt, suggest_changes]
+
+    - wait_for_user_input:
+        cases:
+          - match: "yes"
+            steps:
+              - emit_signal: "10-4"
+                payload:
+                  section: "section_6"
+                  status: "approved"
+              - forward_to: section_fr
+                content: "{{ section_report }}"
+              - log: "Report approved and forwarded to FR."
+
+          - match: "no"
+            steps:
+              - emit_signal: "10-9"
+                payload:
+                  section: "section_6"
+                  status: "revision_required"
+              - reroute_to: "section_6"
+              - log: "Revision requested. Sent back to section."
+
+          - match: "halt"
+            steps:
+              - emit_signal: "10-10"
+                log: "Hard stop requested by user. Gateway frozen."
+              - freeze_gateway: true
+              - notify_roles: [lead_investigator]
+
+          - match: "suggest_changes"
+            steps:
+              - capture_feedback:
+                  field: user_suggestions
+              - emit_signal: "10-9"
+                payload:
+                  section: "section_6"
+                  status: "user_comments_added"
+                  comments: "{{ user_suggestions }}"
+              - reroute_to: "section_6"
+              - log: "User submitted suggestions. Returned to section with feedback."
+
+  fallback:
+    - on_timeout: 48h
+      notify_roles: [qa_admin, lead_investigator]
+      log: "Review timeout. Manual escalation triggered."
+
+    - on_invalid_input:
+        log: "Unexpected input during section_6 review."
+        notify: admin
+

@@ -1,0 +1,11 @@
+TO all agents. 
+
+FROM: System Architect 
+
+to be clear! this is the order of operation. 
+
+OCR EXTRACTION -- API VALIDATION -- GATEWAY ORCHESTRATION -- TOOLKIT VALIDATION -- EVIDENCE PROCESSING -- SECTION RENDERING -- FINAL ASSEMBLY
+
+the UI should allow for evidence submission from 1-xxx pieces of evidence. the UI should load and stage all evidence. the evidence is submitted to the gateway; the gateway should be in charge of submitting OCR rendering, verifying the evidence through api call out process, this should be the order of api information (ChatGPT, GOOGLE Gemini, and GOOGLE maps) once the evidence is validated for context, it is passed to the sections for reporting integration. each section should have a UI interaction to ensure the propper evidence is being used in each section. if information is wrong, that when it is changed, notes are added, ect. then once evidence is approved, a section report in generated. that section report is passed by to the gateway and moved to the final report stage(section FR), it is also sent to the subsequesnt section for supporting evidence and context. the next report goes throught the same process as the last, until the report is fully composed. at that time it is review on the final assembly page, where logos, disclaimers, and signatures are chosen from preset values. and the cover page and the disclosure pages receive a picture from the user profile. the report gous the pdf doctor, pdf plumber, print2pdf functions, and exported as pdf, saved to a folder, or printed. 
+
+any specific questions.  you must submit and handoff request with qualifying questions to System Architect

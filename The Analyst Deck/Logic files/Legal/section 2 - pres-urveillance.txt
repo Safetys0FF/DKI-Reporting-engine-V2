@@ -1,0 +1,890 @@
+section_2:
+  label: "2. Pre-Surveillance Summary"
+  locked: true
+  margin: narrow
+  formatting:
+    font: Times New Roman
+    size: 22pt
+    weight: bold
+    align: center
+  fallback_clause:
+    enabled: true
+    trigger_condition: "no_surveillance_required"
+    text: "Due to the nature of this case, no surveillance or surveillance planning was performed."
+
+report_logic:
+  section_1:
+    role:
+      - Section 1 defines the report type and governs downstream behavior.
+      - Contract type and client objective dictate whether report is Investigative, Surveillance, or Hybrid.
+      - Section 1 itself is static but determines logic for subsequent sections.
+
+unified_toolkit_dispatch:
+  id: master_toolkit_trigger
+  description: >
+    Calls the unified Python toolkit engine before each section report.
+    Runs all tools (billing, continuity, metadata, etc.) and stores output.
+
+  trigger_on: section_entry
+
+  apply_to_sections:
+    - section_1
+    - section_2
+    - section_3
+    - section_4
+    - section_5
+    - section_6
+    - section_7
+    - section_8
+
+  action:
+    - python_call:
+        module: tools.master_toolkit_engine
+        class: MasterToolKitEngine
+        method: run_all
+        inputs:
+          section_id: "{{ current_section }}"
+          text_data: "{{ section_text }}"
+          report_meta: "{{ report_metadata }}"
+          documents: "{{ document_set }}"
+          assets: "{{ media_assets }}"
+        store_as: unified_results
+
+    - store_output:
+        context_key: section_context.unified_results
+
+    - log: "Unified toolkit analysis complete and results stored for reporting."
+
+section_input:
+  receives_from:
+    - gateway
+    - previous_section
+  requires:
+    - section_context.unified_results
+    - report_meta
+    - assigned_documents
+    - section_flags
+  initialize:
+    - load_toolkit_results: "{{ section_context.unified_results }}"
+    - apply_report_meta: "{{ report_meta }}"
+    - verify_required_docs: "{{ assigned_documents }}"
+    - inherit_flags: "{{ section_flags }}"
+
+section_output:
+  sends_to:
+    - gateway
+    - next_section
+  emits:
+    - signal: "section_completed"
+      condition: if section_valid == true
+    - payload:
+        section_summary: "{{ generated_summary }}"
+        flags: "{{ generated_flags }}"
+        context: "{{ section_context }}"
+    - log: "Section {{ current_section }} completed. Output dispatched to gateway."
+
+gateway_input_hooks:
+  id: gateway_section_loader
+  description: Injects toolkit data and context into sections on entry.
+
+  on_section_entry:
+    - fetch: section_context.unified_results
+    - fetch: report_meta
+    - fetch: assigned_documents
+    - fetch: previous_section.flags
+    - apply_to_section:
+        - context_key: unified_results
+        - data_key: section_context.unified_results
+    - log: "Section entry: Context injected for {{ current_section }}"
+
+gateway_output_hooks:
+  id: gateway_section_dispatcher
+  description: Captures section output and routes updates.
+
+  on_section_exit:
+    - capture:
+        - section_summary
+        - flags
+        - updated_context
+    - store:
+        section_flags: "{{ flags }}"
+        report_progress: "{{ section_summary }}"
+    - log: "Gateway received output from {{ current_section }} and updated flow state."
+
+
+  logic_switches:
+    - if: report_type == "Investigative"
+      then:
+        section_2:
+          label: "INVESTIGATIVE REQUIREMENTS"
+          focus:
+            - background checks
+            - legal tracing
+            - employment verification
+        suppress_modules:
+          - Surveillance Logs
+          - Route Planning
+          - Vehicle Tracking
+          - Mileage Tracking
+        billing_model: "Flat Rate"
+
+    - if: report_type == "Field"
+      then:
+        section_2:
+          label: "PRE-SURVEILLANCE SUMMARY"
+          focus:
+            - recon
+            - vehicle identifiers
+            - surveillance strategy
+            - location planning
+        enable_modules:
+          - Surveillance Logs
+          - Photographic Evidence
+          - Time Logs
+        suppress_modules:
+          - Investigative Analysis
+          - Court Research Blocks
+        billing_model: "Hourly or Flat"
+
+    - if: report_type == "Hybrid"
+      then:
+        section_2:
+          label: "HYBRID PREPARATION SUMMARY"
+          focus:
+            - investigative analysis
+            - field readiness
+        enable_modules:
+          - All Modules
+        billing_model: "Hybrid (stacked or tiered)"
+
+  billing_triggers:
+    - if: contract_count >= 2
+      then:
+        mode: "MULTICONTRACT"
+        effects:
+          - suppress_duplicate_planning_charges: true
+          - prep_work_covered: true
+
+    - if: is_first_field_contract
+      then:
+        planning_fee:
+          amount: 500
+          waive_condition: "explicit waiver"
+
+  output_controls:
+    style_enforced: true
+    headers_dynamic_by_type: true
+    narrative_adaptive: true
+    time_priority: "Field Time > Received Time"
+    continuity_check: "Approved Intake or Contract Required"
+
+  metaphor:
+    section_1: "Gold Miner’s Map"
+    section_2: "Setup Camp"
+    logic_flow: "All later sections follow what Section 1 defines"
+
+
+section_2a:
+  label: "2a. Case Summary"
+  layout: vertical
+  locked: true
+  margin: narrow
+
+  formatting:
+    header:
+      text: "CASE SUMMARY"
+      font: Times New Roman
+      size: 16pt
+      weight: bold
+      align: left
+    body:
+      font: Times New Roman
+      size: 12pt
+      weight: normal
+      line_spacing: single
+      align: left
+
+  content_blocks:
+    - type: paragraph
+      label: "Client Objective Recap"
+      required: true
+      source_anchor:
+        source: "Client Intake Form"
+        field_path: "Objective / Reason for Request"
+      max_sentences: 5
+      fallback: "Unknown at this time. Pending client clarification."
+      logic:
+        notes: >
+          This paragraph restates why the client hired DKI Services,
+          describes the chain of events leading up to the assignment,
+          and defines the intent of the investigation. This sets the 'North Star'
+          for our reporting — based on factual need, not emotional persuasion.
+
+    - type: disclaimer
+      label: "Summary Disclaimer"
+      placement: after_text
+      text: |
+        The investigative work and research used to prepare the pre-surveillance report is based solely on the information provided by the client. All findings, references, and assessments contained therein were intended exclusively for operational planning purposes. No claims made by the client were independently tested, verified, or contested prior to field deployment. The following section outlines the objectives, scope, and preliminary findings conducted by DKI Services LLC before initiating field surveillance. This includes verification of subject information, locations of interest, behavioral patterns, and logistics planning to ensure legal and operational efficiency. All intelligence information was obtained before live observation and cross-referenced against client observations and suspicions disclosed during the intake process. This section is not intended to confirm or dispute the client's concerns or allegations, but to prepare for legal and operational investigation.
+
+  fallback_logic:
+    trigger: "no_surveillance_required"
+    text: "Due to the nature of this case, no surveillance or surveillance planning was performed."
+
+  validation:
+    - must_include: ["Client Objective Recap"]
+    - max_length: 5_sentences
+    - fallback_if_blank: true
+
+# --- REVERSE CONTINUITY TEST ---
+  reverse_continuity_test:
+    active: true
+    trace_sources:
+      - Client Intake Form
+      - Client Contract
+    validate_fields:
+      - client_name
+      - client_address
+      - client_phone
+      - date_of_contract
+      - goals_of_investigation
+      - primary_subject
+      - subject_employer
+      - surveillance_hours_requested
+    test_methods:
+      anchor_validation:
+        method: "anchor_id_match + text proximity"
+        tolerance: "±1 line"
+      format_consistency_check:
+        method: "match font, size, and field label style"
+    report_behavior:
+      on_pass: "continue"
+      on_fail:
+        - "flag report for audit"
+        - "trigger Q&A clarification"
+    metadata_stamp:
+      include: true
+      visible_in_report: false
+      logs:
+        - field_name
+        - source_path
+        - anchor_id
+        - extraction_method
+
+  # --- CONFLICT HANDLING ---
+  conflict_handling:
+    allow_blanks: false
+    mismatch_resolution:
+      subject_name_vs_intake:
+        action: "flag for manual review"
+      hours_vs_contract:
+        action: "warn + require manual override"
+    duplicates:
+      fields: [client_name, subject_employer]
+      action: "retain first, suppress others"
+
+
+section_2b:
+  label: "2b. Subject Information"
+  layout: vertical
+  locked: true
+  margin: narrow
+
+  formatting:
+    header:
+      text: "SUBJECT INFORMATION"
+      font: Times New Roman
+      size: 16pt
+      weight: bold
+      align: left
+    body:
+      font: Times New Roman
+      size: 12pt
+      weight: normal
+      align: left
+      line_spacing: single
+
+  organization_logic:
+    group_by: "Subject Entity"
+    display_fields_in_order:
+      - Full Name
+      - Date of Birth
+      - Home Address
+      - Employment
+      - Vehicle(s)
+      - Places of Interest
+
+  content_blocks:
+
+    - type: subject_block
+      subject_role: "Primary"
+      data_sources:
+        full_name:
+          source: "Client Intake Form"
+          path: "Subject Table > Row 1 > Full Name"
+          fallback: "Unknown at this time"
+        dob:
+          source: "Client Intake Form"
+          path: "Subject Table > Row 1 > DOB"
+          fallback: "Unknown at this time"
+        home_address:
+          source: "TLO Report"
+          path: "Primary Residence"
+          confirm_with: "Client Intake Form"
+          fallback: "Unknown at this time"
+        employment:
+          source: "Client Intake Form"
+          path: "Employment Block"
+          fallback: "Unknown at this time"
+        vehicles:
+          source: "TLO Report"
+          path: "Registered Vehicles"
+          fallback: "Unknown at this time"
+        places_of_interest:
+          source: "Client Intake Form"
+          path: "Known Hangouts"
+          validate_against: "Maps Radius (15 miles)"
+          recommendations: true
+          fallback: "Unknown at this time"
+
+    - type: subject_block
+      subject_role: "Secondary"
+      condition: "If client intake identifies additional subject"
+      data_sources:
+        full_name:
+          source: "Client Intake Form"
+          path: "Subject Table > Row 2 > Full Name"
+          fallback: "Unknown at this time"
+        dob:
+          source: "Client Intake Form"
+          path: "Subject Table > Row 2 > DOB"
+          fallback: "Unknown at this time"
+        home_address:
+          source: "TLO Report"
+          path: "Secondary Residence"
+          confirm_with: "Client Intake Form"
+          fallback: "Unknown at this time"
+        employment:
+          source: "Client Intake Form"
+          path: "Employment Block"
+          fallback: "Unknown at this time"
+        vehicles:
+          source: "TLO Report"
+          path: "Registered Vehicles"
+          fallback: "Unknown at this time"
+        places_of_interest:
+          source: "Client Intake Form"
+          path: "Known Hangouts"
+          validate_against: "Maps Radius (15 miles)"
+          recommendations: true
+          fallback: "Unknown at this time"
+
+  fallback_logic:
+    trigger: "no_surveillance_required"
+    text: "Due to the nature of this case, no surveillance or surveillance planning was performed."
+
+  validation:
+    - allow_blank_fields: false
+    - omit_lines_if_subject_unknown: false
+    - use_fallbacks_if_blank: true
+
+  notes:
+    - Do not fabricate missing entries.
+    - Display only subjects relevant to the investigation.
+    - Reconfirm all data with reports before client presentation.
+
+
+  # --- REVERSE CONTINUITY TEST ---
+  reverse_continuity_test:
+    active: true
+    trace_sources:
+      - Client Intake Form
+      - Client Contract
+    validate_fields:
+      - client_name
+      - client_address
+      - client_phone
+      - date_of_contract
+      - goals_of_investigation
+      - primary_subject
+      - subject_employer
+      - surveillance_hours_requested
+    test_methods:
+      anchor_validation:
+        method: "anchor_id_match + text proximity"
+        tolerance: "±1 line"
+      format_consistency_check:
+        method: "match font, size, and field label style"
+    report_behavior:
+      on_pass: "continue"
+      on_fail:
+        - "flag report for audit"
+        - "trigger Q&A clarification"
+    metadata_stamp:
+      include: true
+      visible_in_report: false
+      logs:
+        - field_name
+        - source_path
+        - anchor_id
+        - extraction_method
+
+
+  # --- CONFLICT HANDLING ---
+  conflict_handling:
+    allow_blanks: false
+    mismatch_resolution:
+      subject_name_vs_intake:
+        action: "flag for manual review"
+      hours_vs_contract:
+        action: "warn + require manual override"
+    duplicates:
+      fields: [client_name, subject_employer]
+      action: "retain first, suppress others"
+
+
+section_2c:
+  label: "2c. Habits, Patterns, and POIs"
+  layout: vertical
+  locked: true
+  margin: narrow
+
+  formatting:
+    header:
+      text: "SUBJECT HABITS, PATTERNS, AND PLACES OF INTEREST"
+      font: Times New Roman
+      size: 16pt
+      weight: bold
+      align: left
+    body:
+      font: Times New Roman
+      size: 12pt
+      weight: normal
+      align: left
+      line_spacing: single
+
+  organization_logic:
+    group_by: "Subject Entity"
+    presentation_format: "Far-left alignment for operator photo insertion"
+    label_order:
+      - General Habits
+      - Daily Routines
+      - Travel Patterns
+      - Dining or Social Preferences
+      - POI: Confirmed
+      - POI: Suspected
+      - POI: Recommended (Dynamic)
+
+  content_blocks:
+
+    - type: subject_block
+      subject_role: "Primary"
+      anchors:
+        habits:
+          source: "Client Intake Form"
+          path: "Subject Habits"
+          fallback: "Unknown at this time"
+        routines:
+          source: "Client Intake Form"
+          path: "Daily Patterns"
+          fallback: "Unknown at this time"
+        travel_behavior:
+          source: "Client Intake Form"
+          path: "Travel History"
+          confirm_with: "Map Data + Mileage Range"
+          fallback: "Unknown at this time"
+        dining_preferences:
+          source: "Client Intake Form"
+          path: "Known Eateries"
+          fallback: "Unknown at this time"
+        confirmed_POIs:
+          source: "Client Intake Form"
+          path: "Verified Locations"
+          fallback: "Unknown at this time"
+        suspected_POIs:
+          source: "Client Intake Form"
+          path: "Suggested Hangouts"
+          fallback: "Unknown at this time"
+        recommended_POIs:
+          logic_engine:
+            input_anchors:
+              - subject_lodging
+              - worksite_address
+              - favorite_brands_or_types
+            conditions:
+              - "Within 15-20 minute drive time"
+              - "Similar to client-indicated behaviors"
+              - "Located in commercial or social zones"
+            map_overlay_check: true
+            output: "Top 2 recommended POIs"
+          fallback: "Unable to recommend based on available data"
+
+    - type: subject_block
+      subject_role: "Secondary"
+      condition: "If subject exists and relevant to client investigation"
+      anchors:
+        habits:
+          source: "Client Intake Form"
+          path: "Secondary Subject Habits"
+          fallback: "Unknown at this time"
+        routines:
+          source: "Client Intake Form"
+          path: "Secondary Daily Patterns"
+          fallback: "Unknown at this time"
+        travel_behavior:
+          source: "Client Intake Form"
+          path: "Secondary Travel History"
+          fallback: "Unknown at this time"
+        dining_preferences:
+          source: "Client Intake Form"
+          path: "Secondary Known Eateries"
+          fallback: "Unknown at this time"
+        confirmed_POIs:
+          source: "Client Intake Form"
+          path: "Verified Locations"
+          fallback: "Unknown at this time"
+        suspected_POIs:
+          source: "Client Intake Form"
+          path: "Suggested Hangouts"
+          fallback: "Unknown at this time"
+        recommended_POIs:
+          logic_engine:
+            input_anchors:
+              - lodging
+              - social_tendencies
+              - map_radius
+            conditions:
+              - "Subject-typical area patterns"
+              - "Travel behavior overlap with intake form"
+            map_overlay_check: true
+            output: "Top 2 recommended POIs"
+          fallback: "Unable to recommend based on available data"
+
+  validation:
+    - do_not_omit_blank_fields: true
+    - fallback_text_if_blank: "Unknown at this time"
+    - recommendations must pass proximity and behavioral checks
+
+  notes:
+    - This section builds the operational groundwork for field operators.
+    - Helps estimate surveillance radius and expected difficulty.
+    - Used to validate subject behavior inconsistencies post-fieldwork.
+
+  # --- REVERSE CONTINUITY TEST ---
+  reverse_continuity_test:
+    active: true
+    trace_sources:
+      - Client Intake Form
+      - Client Contract
+    validate_fields:
+      - client_name
+      - client_address
+      - client_phone
+      - date_of_contract
+      - goals_of_investigation
+      - primary_subject
+      - subject_employer
+      - surveillance_hours_requested
+    test_methods:
+      anchor_validation:
+        method: "anchor_id_match + text proximity"
+        tolerance: "±1 line"
+      format_consistency_check:
+        method: "match font, size, and field label style"
+    report_behavior:
+      on_pass: "continue"
+      on_fail:
+        - "flag report for audit"
+        - "trigger Q&A clarification"
+    metadata_stamp:
+      include: true
+      visible_in_report: false
+      logs:
+        - field_name
+        - source_path
+        - anchor_id
+        - extraction_method
+
+
+  # --- CONFLICT HANDLING ---
+  conflict_handling:
+    allow_blanks: false
+    mismatch_resolution:
+      subject_name_vs_intake:
+        action: "flag for manual review"
+      hours_vs_contract:
+        action: "warn + require manual override"
+    duplicates:
+      fields: [client_name, subject_employer]
+      action: "retain first, suppress others"
+
+
+section_2d:
+  label: "2d. Maps and Visual Reference Assets"
+  layout: vertical
+  locked: true
+  margin: narrow
+
+  formatting:
+    header:
+      text: "MAPS AND VISUAL REFERENCE ASSETS"
+      font: Times New Roman
+      size: 16pt
+      weight: bold
+      align: left
+    body:
+      font: Times New Roman
+      size: 12pt
+      weight: normal
+      align: left
+      line_spacing: single
+
+  content_elements:
+    - type: visual_reference
+      label: "Known Subjects"
+      description: "Include all known and confirmed subject photographs."
+      source_anchor:
+        - source: "Client Intake Form"
+          field_path: "Subject Photos"
+        - source: "Previous Surveillance (if available)"
+          field_path: "Photo Logs"
+      fallback_behavior: "Leave placeholder space; mark as 'Pending Photo Confirmation'"
+
+    - type: visual_reference
+      label: "Known Vehicles"
+      description: "Photographs and identifiers of subject vehicles."
+      source_anchor:
+        - source: "Client Intake Form"
+          field_path: "Vehicle Descriptions"
+        - source: "Photo Metadata Verification"
+          field_path: "License Plates, GPS Tags"
+      fallback_behavior: "Insert vehicle description only if photo not available."
+
+    - type: map_visual
+      label: "Known Locations / POIs"
+      description: "Drop pins of confirmed subject locations, known POIs, workplaces, or residences."
+      map_source_logic:
+        - use_client_intake_location: true
+        - confirm_with_TLO_and_map_overlay: true
+        - ensure_within_operational_range: 15-20 miles
+      fallback_behavior: "Omit map if no locations available"
+
+  metadata_crosscheck:
+    enable: true
+    conditions:
+      - "Match photo timestamps with known surveillance window"
+      - "Check GPS coordinates of uploaded images"
+      - "Flag mismatch between report location and metadata"
+
+  placement:
+    - align: far_left
+    - reserved_photo_space: true
+    - max_images_per_row: 2
+    - maintain consistent spacing for easy insertion
+
+  notes:
+    - This section should visually confirm investigative targets.
+    - Assists in operator readiness and GPS-linked verification.
+    - Used in quality control and fraud detection post-fieldwork.
+
+  # --- REVERSE CONTINUITY TEST ---
+  reverse_continuity_test:
+    active: true
+    trace_sources:
+      - Client Intake Form
+      - Client Contract
+    validate_fields:
+      - client_name
+      - client_address
+      - client_phone
+      - date_of_contract
+      - goals_of_investigation
+      - primary_subject
+      - subject_employer
+      - surveillance_hours_requested
+    test_methods:
+      anchor_validation:
+        method: "anchor_id_match + text proximity"
+        tolerance: "±1 line"
+      format_consistency_check:
+        method: "match font, size, and field label style"
+    report_behavior:
+      on_pass: "continue"
+      on_fail:
+        - "flag report for audit"
+        - "trigger Q&A clarification"
+    metadata_stamp:
+      include: true
+      visible_in_report: false
+      logs:
+        - field_name
+        - source_path
+        - anchor_id
+        - extraction_method
+
+
+  # --- CONFLICT HANDLING ---
+  conflict_handling:
+    allow_blanks: false
+    mismatch_resolution:
+      subject_name_vs_intake:
+        action: "flag for manual review"
+      hours_vs_contract:
+        action: "warn + require manual override"
+    duplicates:
+      fields: [client_name, subject_employer]
+      action: "retain first, suppress others"
+
+
+
+section_2e:
+  title: "Final Planning Statement"
+  font: Times New Roman
+  size: 22pt
+  weight: bold
+  align: left
+  vertical_spacing: single
+
+  layout:
+    - label: "Final Planning Statement"
+      content_type: paragraph
+      font: Times New Roman
+      size: 12pt
+      weight: normal
+      align: left
+      text: >
+        This final planning section summarizes all validated intelligence from sections A through D.
+        It outlines the investigative needs, operational readiness, and the overall scope of the assignment.
+        All data collected is proprietary to DKI Services and may not be redistributed or duplicated without written permission.
+        Field personnel are expected to operate in full accordance with their licensing laws and professional standards.
+
+    - label: "Ethics Declaration"
+      content_type: paragraph
+      font: Times New Roman
+      size: 12pt
+      weight: normal
+      align: left
+      text: >
+        DKI Services upholds ethical compliance in all investigative assignments. All field operations are to be executed within
+        the legal limits of the jurisdiction and the investigator’s licensing authority. No activity will be performed outside the
+        contracted scope without client reauthorization.
+
+    - label: "Surveillance Clause"
+      content_type: logic_block
+      switch_logic:
+        condition_set:
+          - condition: subcontractor_assigned == true
+            sub_condition: report_mode == "pre"
+            output: >
+              This case utilized subcontracted investigator(s) operating under their state licensing requirements and within
+              their legal limitations, in agreement with DKI Services. This case is allotted {{ allocated_hours }} hours of surveillance,
+              subject to change based on the client’s authorization and investigative need.
+          - condition: subcontractor_assigned == true
+            sub_condition: report_mode == "final"
+            output: >
+              This case utilized subcontracted investigator(s) operating under their state licensing requirements and within
+              their legal limitations, in agreement with DKI Services.
+          - condition: subcontractor_assigned == false
+            output: >
+              This case is prepared and conducted by DKI Services and is allotted {{ allocated_hours }} hours of surveillance,
+              subject to change based on the client’s authorization and investigative need.
+        variables:
+          allocated_hours:
+            source: "Client Contract"
+            field: "Authorized Surveillance Hours"
+            fallback: "surveillance hours were allocated per client authorization"
+          report_mode:
+            value_type: string
+            values: ["pre", "final"]
+          subcontractor_assigned:
+            value_type: boolean
+            source: "Case Assignment Log"
+
+    - label: "Planning Lock Confirmation"
+      content_type: static_text
+      font: Times New Roman
+      size: 12pt
+      weight: normal
+      align: left
+      text: >
+        This investigation is locked and prepared for execution. All further changes or deviations must be documented and approved by the client.
+
+    - label: "Fallback Statement"
+      trigger_if: all_sections_incomplete == true
+      font: Times New Roman
+      size: 12pt
+      align: left
+      text: >
+        Due to the nature of this case, no surveillance planning was performed as it is a non-essential case requirement.
+
+  validation:
+    required_fields:
+      - allocated_hours
+      - subcontractor_assigned
+    fallback_trigger: missing_data
+    fallback_response: trigger_clauses > "Due to the nature of this case..."
+
+multi_subject_fallbacks:
+  if: subject_count > 1
+  then:
+    sections:
+      - section_2b: "Formatted for multiple subjects"
+      - section_2c: "Profiles are evaluated independently"
+  fallback:
+    global_note: "Subject count does not exceed one; standard formatting applied."
+
+section_2b:
+  title: "Subject Patterning (2B)"
+  uses_fallback: multi_subject_fallbacks
+
+section_2c:
+  title: "Behavioral Expectations (2C)"
+  uses_fallback: multi_subject_fallbacks
+
+
+  # --- REVERSE CONTINUITY TEST ---
+  reverse_continuity_test:
+    active: true
+    trace_sources:
+      - Client Intake Form
+      - Client Contract
+    validate_fields:
+      - client_name
+      - client_address
+      - client_phone
+      - date_of_contract
+      - goals_of_investigation
+      - primary_subject
+      - subject_employer
+      - surveillance_hours_requested
+    test_methods:
+      anchor_validation:
+        method: "anchor_id_match + text proximity"
+        tolerance: "±1 line"
+      format_consistency_check:
+        method: "match font, size, and field label style"
+    report_behavior:
+      on_pass: "continue"
+      on_fail:
+        - "flag report for audit"
+        - "trigger Q&A clarification"
+    metadata_stamp:
+      include: true
+      visible_in_report: false
+      logs:
+        - field_name
+        - source_path
+        - anchor_id
+        - extraction_method
+
+
+  # --- CONFLICT HANDLING ---
+  conflict_handling:
+    allow_blanks: false
+    mismatch_resolution:
+      subject_name_vs_intake:
+        action: "flag for manual review"
+      hours_vs_contract:
+        action: "warn + require manual override"
+    duplicates:
+      fields: [client_name, subject_employer]
+      action: "retain first, suppress others"

@@ -1,0 +1,74 @@
+{
+  "test_date": "2025-09-19",
+  "test_type": "DEESCALATION_SOD_REGRESSION_SWEEP",
+  "test_status": "COMPLETED_WITH_FAILURES",
+  "critical_failures": 4,
+  "total_tests": 13,
+  "passing_tests": 9,
+  "failing_tests": 4,
+  "test_results": {
+    "smoke_test_execution": {
+      "status": "PASSED",
+      "sections_generated": 13,
+      "generation_failures": 0,
+      "toolkit_errors": 4
+    },
+    "path_reconfiguration": {
+      "status": "PASSED",
+      "f_drive_references": "ELIMINATED",
+      "bootstrap_paths": "UPDATED"
+    },
+    "toolkit_validation": {
+      "mileage_tool": {
+        "status": "FAILED",
+        "error": "[WinError 3] The system cannot find the path specified: './artifacts/mileage'",
+        "severity": "CRITICAL"
+      },
+      "billing_tool": {
+        "status": "FAILED", 
+        "error": "'BillingTool' object has no attribute 'subcontractor_total'",
+        "severity": "CRITICAL"
+      },
+      "cochran_match": {
+        "status": "FAILED",
+        "error": "'str' object has no attribute 'get'",
+        "severity": "HIGH"
+      },
+      "metadata_processing": {
+        "status": "FAILED",
+        "error": "[Errno 2] No such file or directory: 'dummy_file'",
+        "severity": "MEDIUM"
+      },
+      "continuity_check": {
+        "status": "PASSED",
+        "result": "No continuity issues found"
+      },
+      "northstar_analysis": {
+        "status": "PASSED",
+        "classified": [],
+        "deadfile_registry": []
+      },
+      "osint_verification": {
+        "status": "PASSED",
+        "result": "No subject data available for verification"
+      }
+    }
+  },
+  "recommendations": [
+    "Fix billing tool initialization in __init__ method",
+    "Update mileage tool path resolution to use absolute paths",
+    "Add type checking to cochran match tool",
+    "Resolve metadata processing dummy file path issue",
+    "Re-run regression suite after repairs"
+  ],
+  "next_steps": [
+    "Handoff to POWER agent for toolkit repairs",
+    "Monitor repair progress and validate fixes",
+    "Execute full regression suite post-repair"
+  ]
+}
+
+
+
+
+

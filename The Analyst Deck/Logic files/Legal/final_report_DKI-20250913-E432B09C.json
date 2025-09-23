@@ -1,0 +1,24 @@
+{
+  "case_id": "DKI-20250913-E432B09C",
+  "client_name": "John Doe",
+  "report_type": "hybrid",
+  "generated_date": "2025-09-13T14:16:39.807004",
+  "compliance_status": "compliant",
+  "sections": {
+    "1": {
+      "content": "Section 1 content"
+    },
+    "2": {
+      "content": "Section 2 content"
+    },
+    "3": {
+      "content": "Section 3 content"
+    }
+  },
+  "billing_summary": {
+    "case_id": "DKI-20250913-E432B09C",
+    "total_cost": 0.0,
+    "line_items": [],
+    "audit_trail": []
+  }
+}

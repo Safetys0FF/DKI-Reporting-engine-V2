@@ -1,0 +1,303 @@
+Mileage_Rules_Quick_Read:
+  policy:
+    listed_in_contract: true
+    waive_by_default: true         # Mileage always waived to client unless pass-through approved
+    record_for_tax: true           # Always record internally for tax
+  verification:
+    sources:
+      - gps_routes
+      - address_crosscheck
+      - named_location_crosscheck
+    tolerances:
+      timestamp_minutes: 5
+      distance_percent: 10
+      min_absolute_miles: 0.5
+  billing:
+    default_state: "waived"
+    pass_through_conditions:
+      - subcontractor_billed: true
+      - contract_allows: true
+      - case_manager_approved: true
+    invoice_rules:
+      waived: "Client invoice mileage = $0"
+      pass_through: "Bill only if all conditions met"
+      absorbed: "Subcontractor billed but no approval → DKI absorbs"
+  reporting:
+    placement: "After Cost of Investigation Summary"
+    format:
+      - "Day 1: X miles"
+      - "Day 2: X miles"
+      - "..."
+      - "Total Miles Driven: Y miles"
+    client_display:
+      waived: "Show $0 with note 'waived, recorded for tax only'"
+      pass_through: "Show billed amount with approvals"
+      absorbed: "Show $0 with note 'absorbed by DKI'"
+  continuity:
+    per_section:
+      passes: [forward, reverse]
+      crosschecks:
+        - "Verify daily miles vs GPS/routes"
+        - "Check start/end addresses vs field reports"
+        - "Confirm named locations match logs"
+    full_report:
+      passes: [forward, reverse]
+      checks:
+        - "Recompute total miles"
+        - "Confirm invoice matches billing rules"
+        - "Mileage Summary correctly placed"
+  fail_conditions:
+    MEDIUM:
+      - "Missing daily mileage entry"
+      - "Logged miles outside tolerance"
+    HIGH:
+      - "Client billed mileage without subcontractor charge + approval"
+      - "Mileage Summary not placed correctly"
+
+
+
+DKI_Mileage_Rules_Module:
+  version: "2.0"
+  updated: "2025-08-23"
+  owner: "DKI Services LLC"
+  dependencies:
+    - Reverse_Continuity_Test_Directive >= 1.4
+    - Continuity_Execution >= 1.0
+  purpose: >
+    Establish intake-first, verification-backed mileage policy and reporting flow:
+    mileage is listed in contract but waived by default; always recorded for tax;
+    only billed to the client if a subcontracting investigator charges mileage
+    AND pass-through is both contract-allowed and case-manager approved. Ensures
+    daily verification (GPS/routes, addresses, named locations) and places a
+    day-by-day Mileage Summary after the Cost of Investigation Summary with a
+    final total miles line.
+
+  scope:
+    applies_to:
+      - surveillance_reports
+      - missing_person_reports
+    sections_involved: [1,2,3,4,5,6,7,8]   # continuity hooks use these IDs
+
+  policy:
+    listed_in_contract: true              # Mileage is a listed billable line item
+    waive_by_default: true                # Default: $0 to client
+    record_for_tax: true                  # Always record internally
+    pass_through_conditions:
+      requires_subcontractor_billed: true
+      requires_contract_allowance: true
+      requires_case_manager_approval: true
+    approvals:
+      case_manager_name: null
+      approval_timestamp: null
+    rounding:
+      miles_precision: 0.1                # Round/record to nearest tenth mile
+    labels:
+      waived_display: "Mileage waived (recorded for tax only)"
+      pass_through_display: "Mileage pass-through approved"
+      absorbed_display: "Mileage absorbed by DKI (no client billing)"
+
+  inputs:
+    # Flags/values supplied by case file assembly or billing engine
+    subcontractor_billed: false           # True if investigator invoices mileage to DKI
+    pass_through_allowed_by_contract: true
+    pass_through_approved_by_case_manager: false
+    subcontractor_invoice_id: null
+    client_invoice_id: null
+    contract_mileage_rate_per_mile: null  # Optional, if contract sets a rate
+    subcontractor_rate_per_mile: null     # Optional, else use contract rate
+    currency: "USD"
+
+  data_model:
+    daily_log_schema:
+      date: "YYYY-MM-DD"
+      day_index: "int >= 1"              # Day 1, Day 2, ...
+      start_time: "HH:MM"
+      end_time: "HH:MM"
+      start_location:
+        address: "string"
+        lat: "float|null"
+        lon: "float|null"
+      end_location:
+        address: "string"
+        lat: "float|null"
+        lon: "float|null"
+      miles_logged: "float"               # rounded per policy.rounding
+      route_reference: "string|null"      # e.g., maps link or tracker trip id
+      vehicle_id: "string|null"
+      odometer_start: "float|null"
+      odometer_end: "float|null"
+      investigator_id: "string"
+      notes: "string|null"
+      sources:
+        - "intake"                        # target locations from NEW CLIENT INTAKE
+        - "field_report"                  # investigator narrative/logs
+        - "gps_tracker|maps"              # route verification
+    storage:
+      file_paths:
+        mileage_log_csv: "./artifacts/mileage/mileage_log.csv"
+        route_audit_md: "./artifacts/mileage/mileage_route_audit.md"
+        invoice_snapshot_json: "./artifacts/mileage/invoice_mileage_snapshot.json"
+
+  verification:
+    sources:
+      - name: gps_routes
+        description: "Rough-verify miles via Google Maps or GPS tracker against start/end points and time window."
+      - name: address_crosscheck
+        description: "Verify start/end addresses appear in field investigator reports and/or intake target locations."
+      - name: named_location_crosscheck
+        description: "Ensure logged miles align with named locations in daily surveillance logs."
+    tolerances:
+      timestamp_tolerance_minutes: 5
+      distance_tolerance_percent: 10      # Accept ±10% variance vs. computed route distance
+      minimum_absolute_tolerance_miles: 0.5
+    rules:
+      - id: require_daily_entry
+        text: "Each surveillance day must have a mileage entry with start/end, miles, and route_reference."
+      - id: gps_or_maps_required
+        text: "Each day’s entry references a GPS track or reproducible maps route."
+      - id: addresses_must_match_records
+        text: "Start/end addresses appear in field reports or intake target lists; otherwise add variance note."
+      - id: distance_within_tolerance
+        text: "Logged miles within max(distance_tolerance_percent, minimum_absolute_tolerance_miles) vs. route compute."
+      - id: odometer_optional_but_consistency_checked
+        text: "If odometer provided, (odometer_end - odometer_start) roughly matches miles_logged."
+
+  billing_logic:
+    default_state: "waived"
+    decision_tree: |
+      if waive_by_default:
+        if subcontractor_billed AND pass_through_allowed_by_contract AND pass_through_approved_by_case_manager:
+          state = "pass_through"
+        else:
+          state = "waived"
+      else:
+        # (rare) if waive_by_default = false, then check normal contract billing rules
+        if pass_through_allowed_by_contract:
+          state = "billable"
+        else:
+          state = "waived"
+    computation:
+      rate_selection: |
+        rate = subcontractor_rate_per_mile if present else contract_mileage_rate_per_mile
+        if rate is null and state in {"pass_through","billable"} → EXCEPTION[MEDIUM]; require explicit rate before invoice.
+      line_amount_formula: "sum(miles_logged) * rate"
+    invoice_expectations:
+      waived:
+        client_invoice_mileage_amount: 0
+        display_note: "@labels.waived_display"
+      pass_through:
+        client_invoice_mileage_amount: "line_amount_formula"
+        requires:
+          - subcontractor_invoice_id != null
+          - approvals.case_manager_name != null
+          - approvals.approval_timestamp != null
+        display_note: "@labels.pass_through_display"
+      absorbed:
+        description: "Subcontractor billed but pass-through not approved; DKI absorbs cost."
+        client_invoice_mileage_amount: 0
+        requires:
+          - subcontractor_invoice_id != null
+        display_note: "@labels.absorbed_display"
+
+  reporting:
+    placement:
+      after_section: "Cost of Investigation Summary"
+      section_title: "Mileage Summary"
+      rationale: "Client-facing location immediately after costs; shows daily miles and total. Amount typically $0."
+    format:
+      day_lines: "Day {day_index}: {miles_logged} miles"
+      total_line: "Total Miles Driven: {total_miles} miles"
+      client_display_rule: |
+        If state == "waived" or "absorbed" → show $0 line item with explanatory note.
+        If state == "pass_through" → show computed line with approvals reference.
+    data_bindings:
+      source_csv: "./artifacts/mileage/mileage_log.csv"
+      computed_total: "sum of miles_logged across included days"
+
+  continuity_hooks:
+    per_section:
+      passes: [forward, reverse]          # top→bottom then bottom→top
+      crosschecks:
+        - "Verify daily mileage vs. GPS/maps routes (tolerance rules apply)."
+        - "Cross-check start/end addresses against field report entries or intake targets."
+        - "Ensure named locations in logs are consistent with route path."
+      gating:
+        - "Missing day entry → EXCEPTION[MEDIUM] for that section/day."
+        - "Distance beyond tolerance without note → EXCEPTION[MEDIUM]."
+        - "Pattern of unresolved MEDIUM exceptions across ≥3 days → escalate to HIGH."
+    full_report:
+      prerequisite: "All sections passed both directions"
+      passes: [forward, reverse]
+      crosschecks:
+        - "Recompute total miles; match cumulative routes and any odometer aggregates."
+        - "Confirm invoice state aligns with policy decision_tree and approvals."
+        - "Ensure Mileage Summary appears after Cost of Investigation Summary with Day 1..N lines + total."
+      gating:
+        - "Client billed mileage without subcontractor invoice and/or approvals → EXCEPTION[HIGH] (block)."
+        - "Invoice shows mileage charge while waive_by_default == true and approvals unmet → EXCEPTION[HIGH] (block)."
+
+  severities:
+    weights: {LOW: 1, MEDIUM: 3, HIGH: 7}
+    taxonomy:
+      LOW:
+        - "Minor formatting gap in Mileage Summary"
+        - "Missing optional odometer values where routes substantiate miles"
+      MEDIUM:
+        - "Logged miles not reproducible within tolerance via routes/timestamps"
+        - "Rate missing when state would require billing (pass-through intended)"
+        - "Missing daily entry for an active surveillance day"
+      HIGH:
+        - "Client billed mileage without subcontractor charge and/or without case-manager approval"
+        - "Client billed mileage contrary to waive_by_default when approvals unmet"
+        - "Placement of Mileage Summary not after Cost of Investigation Summary"
+    gate_logic: |
+      If any HIGH → FAIL.
+      Else if sum(weights) >= 9 or ≥3 MEDIUM → FAIL.
+      Else PASS.
+
+  outputs:
+    artifacts:
+      - "./artifacts/mileage/mileage_log.csv"
+      - "./artifacts/mileage/mileage_route_audit.md"
+      - "./artifacts/mileage/invoice_mileage_snapshot.json"
+    invoice_snapshot_fields:
+      - state
+      - total_miles
+      - rate_applied
+      - client_invoice_mileage_amount
+      - subcontractor_invoice_id
+      - approvals.case_manager_name
+      - approvals.approval_timestamp
+    logging:
+      include_hashes_for:
+        - "mileage_log.csv"
+        - "invoice_mileage_snapshot.json"
+
+  validators:
+    - name: tolerance_check
+      logic: >
+        For each day: computed_route_miles = route_calc(start_location, end_location, time_window).
+        allowed_delta = max(distance_tolerance_percent% of computed_route_miles, minimum_absolute_tolerance_miles).
+        abs(miles_logged - computed_route_miles) <= allowed_delta → OK else EXCEPTION[MEDIUM].
+    - name: billing_guard
+      logic: >
+        If client_invoice_mileage_amount > 0 then (subcontractor_billed AND
+        pass_through_allowed_by_contract AND pass_through_approved_by_case_manager AND
+        subcontractor_invoice_id != null) must be TRUE; else EXCEPTION[HIGH].
+    - name: placement_guard
+      logic: >
+        Ensure Mileage Summary section exists and is placed immediately after
+        the Cost of Investigation Summary; else EXCEPTION[HIGH].
+
+  api_contracts:  # optional integration points
+    route_calc:
+      inputs: [start_address_or_coords, end_address_or_coords, optional_time_window]
+      output: {miles: "float"}
+    invoice_post:
+      inputs: [client_invoice_id, line_item, amount, note]
+      output: {status: "posted|error", error: "string|null"}
+
+  notes:
+    - "Address lists should reference NEW CLIENT INTAKE and field reports as primary sources."
+    - "When multiple legs occur in a single day, aggregate legs into the day’s miles_logged with leg-level notes retained."
+    - "If tracker gaps exist, attach narrative justification in route_audit_md and tag the day entry."

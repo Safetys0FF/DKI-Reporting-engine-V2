@@ -1,0 +1,476 @@
+Reverse_Continuity_Test_Directive:
+  purpose: >
+    Ensure no report is finalized until all identities, dates, media, and templates
+    align with zero contradictions.
+  checks:
+    - Identity_Alignment:
+        rules:
+          - Names, DOB, addresses must match across intake/TLO/field
+          - No conflicts or contradictions
+    - License_Verification:
+        rules:
+          - Assigned investigator + license number mandatory
+          - Case manager never listed as field
+    - Contract_and_Intake:
+        rules:
+          - Signed contract and intake required before fieldwork
+          - Investigation Objective must mirror client intake wording
+    - Timeline_Integrity:
+        rules:
+          - Logs in chronological order
+          - No invented or missing days
+          - Media timestamps (EXIF/overlay/logs) within ±5 min
+    - Geography_Consistency:
+        rules:
+          - Locations consistent across intake/TLO/field
+          - Travel arcs explained in logs
+    - Media_Integrity:
+        rules:
+          - Pre-surveillance visuals only in Pre-Surveillance Summary
+          - Surveillance media only in Surveillance Photo Section
+          - All surveillance photos require timestamp overlay or EXIF
+    - Section_Placement:
+        rules:
+          - Logs only in Investigation Details
+          - Photos only in Surveillance Photo Section
+          - Pre-surv visuals only in Pre-Surveillance Summary
+          - Conclusion evidence-based only
+          - Disclosures italicized, last page only
+    - Template_Constraints:
+        rules:
+          - Cover page locked (case number only editable)
+          - Last page locked (official disclosures/logo file)
+          - No stitched or merged DOCX files
+    - Mileage_Rules:
+        rules:
+          - Mileage always recorded at the end of billing summary
+    - Continuity_Matrix:
+        rules:
+          - Parties vs. documents: all subjects appear consistently
+          - Timeline vs. media: every media item tied to a log entry
+          - Locations vs. logs: logs reference known/verified locations
+          - No cross-template contamination
+  stop_conditions:
+    - Any HIGH severity issue => HARD FAIL
+    - Three or more MEDIUM issues => FAIL until corrected
+  outputs:
+    - Gate_Decision: PASS | FAIL
+    - Exception_Register: detailed list of breaks
+    - Remediation_Plan: fixes required before finalization
+
+
+
+DKI_Continuity_Rules_Module:
+  version: "3.0"
+  updated: "2025-08-23"
+  owner: "DKI Services LLC"
+  module_id: "Continuity_Protocol_Master"
+  description: >
+    End-to-end continuity governance for DKI reports. Enforces intake-first authority, dual-direction
+    (forward & reverse) checks at the section level (1–8) and again at full-report level, validates
+    identities, licenses, contracts, timeline, geography, media, section placement, template locks,
+    mileage hooks, and cross-contamination across report types. Produces a gate decision (PASS/FAIL),
+    exception register, and remediation plan.
+
+  # --- Dependencies & External Modules ---
+  dependencies:
+    - "Reverse_Continuity_Test_Directive >= 1.4"
+    - "Mileage_Continuity_Protocol >= 2.0"     # mileage handled in a separate module, referenced here
+    - "Template_Assets: DKI_Cover_Page_Final_Backdrop.docx; DKI_Final_Report_Last_Page_Official.docx"
+
+  # --- Source of Truth & Precedence ---
+  sources_of_truth:
+    primary: "NEW_CLIENT_INTAKE"   # signed + timestamped; verbatim objective language
+    precedence_order:
+      - "NEW_CLIENT_INTAKE"        # PRIMARY
+      - "Field_Confirmation"
+      - "Third_Party_Reports (TLO/OSINT/etc.)"
+  field_relay:
+    artifact: "Field_Brief.pdf"    # 1-page intake-derived digest to operators
+    ack_required: true
+    ack_fields: [operator_name, operator_id, ack_timestamp, intake_version_id, brief_hash]
+
+  # --- Scope ---
+  scope:
+    report_types: ["surveillance", "missing_person"]
+    sections_enforced: [1,2,3,4,5,6,7,8] # top-level numbered sections
+    templates_locked:
+      cover_page: "DKI_Cover_Page_Final_Backdrop.docx"   # only case number editable
+      last_page: "DKI_Final_Report_Last_Page_Official.docx" # disclosures page (8pt italics + small logo)
+
+  # --- Inputs (to be provided by the case file assembly pipeline) ---
+  inputs:
+    case_identifiers:
+      case_number: ""
+      matter_type: "surveillance|missing_person"
+      intake_version_id: ""
+    parties:
+      client:
+        name: ""
+        email: ""
+        phone: ""
+      subjects:
+        - name: ""
+          dob: ""
+          address_records:
+            - source: "NEW_CLIENT_INTAKE"
+              address: ""
+              as_of: ""
+            - source: "TLO"
+              address: ""
+              as_of: ""
+            - source: "Field_Confirmation"
+              address: ""
+              as_of: ""
+    investigators:
+      assigned_investigator_name: ""
+      assigned_investigator_license: ""
+      case_manager_listed_in_fieldwork: false
+    artifacts:
+      contracts:
+        - path: ""
+          signed_date: ""
+      intake:
+        - path: ""
+          signed_date: ""
+          version_id: ""
+      presurveillance_materials:
+        - type: "map|location_photo|vehicle_photo|route_plan"
+          path: ""
+          captured_on: ""
+      background_reports:
+        - path: ""
+          provider: "TLO|other"
+          report_date: ""
+      surveillance_logs:
+        - date: "YYYY-MM-DD"
+          entries:
+            - time: "HH:MM"
+              observation: ""
+              media_refs: ["media_id"]
+      media:
+        - id: "media_id"
+          type: "photo|video"
+          path: ""
+          captured_on: "YYYY-MM-DD HH:MM:SS"
+          exif_datetime: "YYYY-MM-DD HH:MM:SS|null"
+          overlay_timestamp: "YYYY-MM-DD HH:MM|null"
+          location_hint: "address|coords|null"
+          section: "pre_surveillance|surveillance"
+    geography:
+      primary_locations:
+        - name: ""
+          address: ""
+          county: ""
+          state: ""
+          verified_by: ["Field_Confirmation","TLO","NEW_CLIENT_INTAKE"]
+
+  # --- Check Families (Authoritative Rules) ---
+  checks:
+    - id: intake_authority
+      description: "NEW CLIENT INTAKE is the primary information set; objectives mirror intake."
+      rules:
+        - "Signed intake exists before any fieldwork"
+        - "Investigation Objective mirrors intake wording (verbatim where feasible)"
+        - "Field_Brief generated and acknowledged by operator (ack_required = true)"
+        - "Conflicts resolved by precedence: Intake > Field_Confirmation > Third_Party"
+      fail_levels:
+        HIGH:
+          - "Missing signed intake"
+          - "Objective deviates from intake without documented update"
+          - "Missing Field_Brief or operator acknowledgement"
+
+    - id: license_verification
+      description: "Assigned investigator/licensing check and role separation."
+      rules:
+        - "Assigned investigator explicitly named"
+        - "License number present and valid"
+        - "Case manager never listed as field investigator"
+        - "Use locked license numbers where required (agency, investigator)"
+      fail_levels:
+        HIGH:
+          - "Missing investigator"
+          - "Missing/invalid license"
+          - "Case manager shown in field role"
+
+    - id: contract_alignment
+      description: "Contract and intake precede field activity; scope/objectives match intake."
+      rules:
+        - "Signed contract before fieldwork"
+        - "Intake received before fieldwork"
+        - "Report scope/objective matches intake (no generic filler)"
+      fail_levels:
+        HIGH:
+          - "Fieldwork without signed contract/intake"
+          - "Objective/scope mismatch vs intake"
+
+    - id: identity_alignment
+      description: "Consistent identity and address across sources; intake primary."
+      rules:
+        - "Names/DOB across intake/TLO/field match within strict bounds"
+        - "Address congruence: must match ≥ 2 sources OR be field-confirmed"
+      fail_levels:
+        HIGH:
+          - "Name or DOB mismatch"
+          - "Address contradictions without variance note"
+
+    - id: timeline_integrity
+      description: "Linear, gap-justified chronology; no fabrication."
+      rules:
+        - "Daily logs numbered sequentially; time ascending within day"
+        - "No invented or phantom days"
+        - "Media timestamps (EXIF/overlay/logs) align ±5 minutes"
+        - "Report-level dates reflect exact surveillance window"
+      fail_levels:
+        HIGH:
+          - "Fabricated days"
+          - "Impossible sequences or >10 min drift without note"
+
+    - id: geography_consistency
+      description: "Venue and travel arcs coherent across sources."
+      rules:
+        - "Observed locations consistent with intake/TLO/field"
+        - "County/state alignment maintained"
+        - "Multi-city/state travel arcs explained in logs"
+      fail_levels:
+        MEDIUM:
+          - "Ambiguous venue without bridging note"
+        HIGH:
+          - "Contradictory state/county for same event"
+
+    - id: media_integrity
+      description: "Placement and timestamp policy for photos/videos."
+      rules:
+        - "Pre-surv visuals only in Pre-Surveillance Summary"
+        - "Surveillance media only in Surveillance Photo Section"
+        - "All surveillance images require visible overlay or EXIF"
+        - "EXIF/overlay/log alignment ±5 minutes"
+      fail_levels:
+        HIGH:
+          - "Media in wrong section"
+          - "Missing timestamps without justification"
+
+    - id: section_placement_rules
+      description: "Strict section boundaries per DKI templates."
+      rules:
+        - "Investigation Details = daily logs only (no billing/disclosures)"
+        - "Surveillance Photo Section = surveillance-day images by date"
+        - "Pre-Surveillance Summary = maps/vehicle/location/route visuals only"
+        - "Conclusion = evidence-based; no character attacks"
+        - "Disclosures = italicized 8pt, last page only with small logo"
+      fail_levels:
+        MEDIUM:
+          - "Minor spillover text"
+        HIGH:
+          - "Structural mixing (e.g., presurv images in photo section)"
+
+    - id: template_constraints
+      description: "Cover/last-page locks; rebuild policy."
+      rules:
+        - "Cover locked; only case number editable"
+        - "Last page locked disclosures/logo file"
+        - "No stitched/merged DOCX; rebuild from masters if edits fail"
+      fail_levels:
+        HIGH:
+          - "Altered cover beyond case number"
+          - "Wrong/altered last page asset"
+
+    - id: mileage_hook
+      description: "Mileage continuity handled in dedicated module; enforce integration points."
+      rules:
+        - "Mileage module executed per-day and at report-level"
+        - "Mileage Summary placed after Cost of Investigation Summary"
+        - "Invoice state aligned with waived/pass-through policy"
+      fail_levels:
+        MEDIUM:
+          - "Missing daily mileage entry on active surveillance day"
+        HIGH:
+          - "Billing contrary to waive-by-default without approvals"
+          - "Mileage Summary misplacement"
+
+    - id: continuity_matrix
+      description: "Cross-reference matrices to catch orphans and cross-contamination."
+      matrices:
+        - name: Parties_vs_Documents
+          axes: ["subjects", "contracts|intake|background_reports|logs"]
+          expect: "All subjects appear consistently across documents"
+        - name: Timeline_vs_Media
+          axes: ["surveillance_logs.entries", "media"]
+          expect: "Each media_id maps to same-day/time log entry"
+        - name: Locations_vs_Logs
+          axes: ["primary_locations", "surveillance_logs"]
+          expect: "Logs reference verified or plausibly connected locations"
+        - name: Template_Isolation
+          axes: ["surveillance_template", "missing_person_template"]
+          expect: "No cross-template contamination"
+      fail_levels:
+        HIGH:
+          - "Orphan media/log items"
+          - "Cross-template contamination"
+continuity_check:
+  tool: reverse_continuity_tool
+  validate_on_exit: true
+  fallback_chain:
+    - step: verify_against_documents
+      sources: [report_text, intake_form, contract, supporting_documents]
+      if_resolved:
+        - pass_continuity_check: true
+        - log: "Continuity issue resolved through document validation"
+    - step: verify_against_field_assets
+      sources: [photo_logs, video_logs, field_reports, timestamp_logs]
+      if_resolved:
+        - pass_continuity_check: true
+        - log: "Continuity issue resolved through field asset confirmation"
+    - step: user_intervention_required
+      if_unresolved:
+        - flag_issue: true
+        - prompt_user:
+            message: >
+              "A continuity flaw could not be resolved through documents or field data.
+              Please review and manually validate the section."
+        - require_user_action: true
+        - notify_roles: [assigned_investigator, supervisor]
+
+  # --- Execution Model (Dual-Direction) ---
+  execution:
+    level: "section_and_report"
+    section_range: [1,2,3,4,5,6,7,8]
+    per_section:
+      passes:
+        - id: forward_pass
+          path: "top->bottom"
+          includes: ["checks.*"]   # all checks relevant to the section content
+        - id: reverse_pass
+          path: "bottom->top"
+          includes: ["checks.*"]
+      outputs:
+        - "section_continuity_log_{section_id}.json"
+        - "section_exceptions_{section_id}.md"
+      gate:
+        - "Any HIGH in either pass ⇒ HALT section"
+        - "Section must PASS both directions to advance"
+    full_report:
+      prerequisite: "All sections PASSED both directions"
+      passes:
+        - id: forward_pass
+          path: "cover -> disclosures"
+          includes: ["checks.*"]
+        - id: reverse_pass
+          path: "disclosures -> cover"
+          includes: ["checks.*"]
+      outputs:
+        - "report_continuity_log.json"
+        - "report_exceptions.md"
+      gate:
+        - "Any HIGH or ≥3 MEDIUM ⇒ FAIL until remediated"
+
+  # --- Exception Handling & Scoring ---
+  severities:
+    weights: {LOW: 1, MEDIUM: 3, HIGH: 7}
+    gate_logic: |
+      If any HIGH → FAIL.
+      Else if total_weight >= 9 or MEDIUM_count >= 3 → FAIL.
+      Else PASS.
+  exception_register:
+    fields: ["check_id","rule","severity","evidence","proposed_fix","owner","due_by"]
+    escalate_rules:
+      - "Three or more MEDIUM in related area (timeline/media/geography) ⇒ escalate to HIGH"
+      - "Repeat violation after remediation ⇒ elevate severity by one level"
+
+  # --- Validators (Concrete Assertions) ---
+  validators:
+    - name: intake_presence
+      logic: "assert(intake.signed_date != null)"
+    - name: objective_verbatim
+      logic: "assert(report.objective_text.contains(intake.objective_text) or approved_variance)"
+    - name: license_guard
+      logic: "assert(investigators.assigned_investigator_name && investigators.assigned_investigator_license)"
+    - name: time_alignment
+      logic: "for media: |exif - log| <= 5min and |overlay - log| <= 5min unless justification"
+    - name: sequential_days
+      logic: "assert(no missing/fabricated days in surveillance_logs)"
+    - name: template_lock
+      logic: "assert(cover_only_case_number_edited && last_page_is_official_asset)"
+    - name: placement_rules
+      logic: "assert(presurv_visuals_only_in_presurv && surveillance_media_only_in_photo_section)"
+    - name: mileage_integration
+      logic: "assert(Mileage_Continuity_Protocol.state in ['waived','pass_through','absorbed'])"
+    - name: matrix_integrity
+      logic: "assert(no_orphan_media && no_cross_template_contamination)"
+
+  # --- Outputs & Artifacts ---
+  outputs:
+    gate_decision: "PASS|FAIL"
+    severity_score: 0
+    medium_count: 0
+    high_count: 0
+    artifacts:
+      - "./audit/{case_number}/section_continuity_log_{section_id}.json"
+      - "./audit/{case_number}/section_exceptions_{section_id}.md"
+      - "./audit/{case_number}/report_continuity_log.json"
+      - "./audit/{case_number}/report_exceptions.md"
+      - "./audit/{case_number}/exception_register.json"
+    notifications:
+      on_fail: ["case_manager_email","assigned_investigator_email"]
+      on_pass: ["assigned_investigator_email"]
+
+  # --- Logging & Audit Trail ---
+  audit_trail:
+    enabled: true
+    include_hashes_for:
+      - "contracts"
+      - "intake"
+      - "media"
+      - "mileage_artifacts"  # from Mileage module
+    store_path: "./audit/{case_number}/"
+    retention_days: 1095
+
+  # --- Stop Conditions (Global) ---
+  stop_conditions:
+    hard_fail:
+      - "Missing signed intake or contract"
+      - "No Field_Brief or missing operator acknowledgement"
+      - "Investigator missing or license invalid"
+      - "Fabricated surveillance days"
+      - "Altered cover/last-page assets"
+      - "Surveillance media without timestamps and no justification"
+      - "Cross-template contamination"
+      - "Mileage billed to client without subcontractor charge + approvals"
+    medium_fail:
+      - "≥3 MEDIUM across any single check family"
+      - "Ambiguous geography not bridged in logs"
+
+  # --- Remediation Playbook (Targeted Fixes) ---
+  remediation:
+    - trigger: "intake_authority.HIGH"
+      fix: "Obtain signed intake; align objective to intake text; regenerate Field_Brief and collect operator ack."
+    - trigger: "timeline_integrity.HIGH"
+      fix: "Remove fabricated days; correct timestamps or document variance; re-run continuity."
+    - trigger: "media_integrity.HIGH"
+      fix: "Move media to correct section; add timestamp overlay or document EXIF variance; re-run checks."
+    - trigger: "template_constraints.HIGH"
+      fix: "Rebuild from master templates; reinsert content section-by-section."
+    - trigger: "mileage_hook.HIGH"
+      fix: "Re-run Mileage module; correct invoice state/placement; attach approvals if pass-through."
+    - trigger: "continuity_matrix.HIGH"
+      fix: "Bind orphan media/logs; purge cross-template artifacts; validate matrices re-run."
+
+  # --- API Contracts (Optional Integrations) ---
+  api_contracts:
+    route_map_lookup:
+      inputs: [start, end, time_window]
+      returns: {distance_miles: "float"}
+    media_exif_reader:
+      inputs: [media_path]
+      returns: {datetime: "ISO8601|null"}
+    template_validator:
+      inputs: [docx_path]
+      returns: {cover_locked: "bool", last_page_official: "bool"}
+
+  # --- Notes ---
+  notes:
+    - "Run continuity per-section (forward then reverse) immediately after drafting each section."
+    - "Run final full-report continuity (forward then reverse) only after all sections pass."
+    - "Conclusion must remain empathetic and strictly evidence-based."
+    - "Pre-surveillance visuals never appear in Surveillance Photo Section."
+    - "Mileage rules live in Mileage_Continuity_Protocol and are invoked here as a hook."

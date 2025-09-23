@@ -1,0 +1,382 @@
+gateway:
+  id: section_1
+  label: "Investigation Objectives"
+  node_type: "root"
+  protocols_engaged:
+    - north_star_protocol
+    - cochran_theory
+    - one_question_resolution_strategy
+    - reverse_continuity_protocol
+  description: >
+    Master intake and authorization section. Governs case identity, source anchors, jurisdiction,
+    and report flow switches. All sections route through this node.
+
+gateway_callbox_hub:
+  id: callbox_router
+  description: >
+    Centralized communication hub for gateway and section signal routing, tool triggers,
+    and cross-section data interactions.
+
+  accepted_signals:
+    - "10-4"  # Section Approved
+    - "10-9"  # Manual Review Requested
+    - "10-10" # Emergency Halt
+    - "10-6"  # Toolkit Initialized
+    - "10-8"  # Section Completed
+
+  on_signal:
+    - if signal == "10-4":
+        action:
+          - unlock_next_section: true
+          - log: "Signal 10-4: Section approved. Unlocked next section."
+
+    - if signal == "10-9":
+        action:
+          - trigger_manual_review: true
+          - log: "Signal 10-9: Routing to manual override."
+
+    - if signal == "10-10":
+        action:
+          - freeze_gateway: true
+          - notify: [lead_investigator]
+          - log: "Signal 10-10: Gateway frozen per operator command."
+
+    - if signal == "10-6":
+        action:
+          - broadcast_toolkit_context: true
+          - log: "Toolkit initialized and dispatched to sections."
+
+    - if signal == "10-8":
+        action:
+          - collect_output_payload
+          - store_progress_flags
+          - log: "Section reported complete. Gateway updated."
+
+  fallback_logic:
+    on_unrecognized_signal:
+      - log: "Unknown signal received."
+      - notify_admin: true
+
+    on_timeout:
+      - wait_duration: 48h
+      - escalate_to: lead_investigator
+      - log: "Callbox timeout. No response received in window."
+
+callbox_endpoints:
+  section_1: "section_1_response_handler"
+  section_2: "section_2_response_handler"
+  section_3: "section_3_response_handler"
+  section_4: "section_4_response_handler"
+  section_5: "section_5_response_handler"
+  section_6: "section_6_response_handler"
+  section_7: "section_7_response_handler"
+  section_8: "section_8_response_handler"
+
+logic_switches:
+  - if report_type == "Investigative":
+      section_1: "Investigation Objective"
+      section_2: "Investigation Requirements"
+      section_3: "Investigation Details"
+      section_4: "Review of Details"
+      section_5: "Review of Supporting Documents"
+      section_6: "Billing Summary"
+      section_7: "Conclusion"
+      section_8: "Investigation Evidence Review"
+
+  - if report_type == "Surveillance":
+      section_1: "Surveillance Objectives"
+      section_2: "Pre-Surveillance Planning"
+      section_3: "Investigation Details"
+      section_4: "Review of Surveillance Sessions"
+      section_5: "Review of Supporting Documents"
+      section_6: "Billing Summary"
+      section_7: "Conclusion"
+      section_8: "Investigation Evidence Review"
+
+  - if report_type == "Hybrid":
+      section_1: "Investigation Objective"
+      section_2: "Preliminary Case Review"
+      section_3: "Investigative Details"
+      section_4: "Review of Surveillance Sessions"
+      section_5: "Review of Supporting Documents"
+      section_6: "Billing Summary"
+      section_7: "Conclusion"
+      section_8: "Investigation Evidence Review"
+section_transmission_check:
+  id: section_{{ section_number }}_transmission_verification
+  description: >
+    Validates outbound toolkit signals were received by the callbox.
+    Performs echo check and readiness confirmation loop.
+
+section_1_toolkit_signal_emitter:
+  sends:
+    - to: callbox
+  emit_signals:
+    - signal: "section_completed"
+      payload:
+        origin: "section_1"
+        summary: "{{ generated_summary }}"
+        flags: "{{ section_flags }}"
+    - signal: "ready_for_next"
+      payload:
+        from: "section_1"
+    - log: "Section_1 dispatched completion signal to callbox."
+
+gateway_signal_interpreter:
+  on_toolkit_ready:
+    - verify_payload
+    - emit_signal: "toolkit_acknowledged"
+      payload:
+        section: "{{ incoming_signal.from }}"
+        status: "confirmed"
+    - log: "Toolkit ready signal acknowledged for {{ incoming_signal.from }}."
+unified_toolkit_dispatch:
+  id: master_toolkit_trigger
+  description: >
+    Calls the unified Python toolkit engine before each section report.
+    Runs all tools (billing, continuity, metadata, etc.) and stores output.
+  trigger_on: section_entry
+
+section_wake_up_protocol:
+  id: section_{{ section_number }}_wake_up
+  description: >
+    Initialization phase for Section {{ section_number }}.
+    Loads context, verifies connectivity, and signals readiness.
+
+  on_entry:
+    - log: "Section_{{ section_number }} wake-up initiated."
+    - fetch:
+        - section_context.unified_results
+        - report_meta
+        - assigned_documents
+        - previous_section.flags
+    - apply_context:
+        unified_results: "{{ section_context.unified_results }}"
+        report_meta: "{{ report_meta }}"
+        assigned_documents: "{{ assigned_documents }}"
+        section_flags: "{{ previous_section.flags }}"
+    - emit_signal:
+        signal: "wake_up_call"
+        payload:
+          from: "section_{{ section_number }}"
+          status: "initiated"
+    - log: "Section_{{ section_number }} context loaded and wake-up signal emitted."
+
+  apply_to_sections:
+    - section_1
+    - section_2
+    - section_3
+    - section_4
+    - section_5
+    - section_6
+    - section_7
+    - section_8
+
+  action:
+    - python_call:
+        module: tools.master_toolkit_engine
+        class: MasterToolKitEngine
+        method: run_all
+        inputs:
+          section_id: "{{ current_section }}"
+          text_data: "{{ section_text }}"
+          report_meta: "{{ report_metadata }}"
+          documents: "{{ document_set }}"
+          assets: "{{ media_assets }}"
+        store_as: unified_results
+
+    - store_output:
+        context_key: section_context.unified_results
+    - log: "Unified toolkit analysis complete and results stored for reporting."
+
+- if toolkit_run.failed:
+    emit_signal: "10-10"
+    log: "Toolkit failed. Section halted."
+    escalate: lead_investigator
+
+toolkit_endpoints:
+  section_1: "section_1_response_handler"
+  section_2: "section_2_response_handler"
+  section_3: "section_3_response_handler"
+  section_4: "section_4_response_handler"
+  section_5: "section_5_response_handler"
+  section_6: "section_6_response_handler"
+  section_7: "section_7_response_handler"
+  section_8: "section_8_response_handler"
+
+section_1_toolkit_handler:
+  on_entry:
+    - run_tools:
+        tools:
+          - cochran_match_tool
+          - northstar_protocol_tool
+          - reverse_continuity_tool
+          - metadata_tool_v_5
+        input:
+          section_id: section_1
+          text_data: "{{ section_text }}"
+          meta: "{{ report_meta }}"
+          docs: "{{ assigned_documents }}"
+          media: "{{ media_assets }}"
+        store_as: section_toolkit_results
+    - log: "Section_1 tools executed."
+
+section_1_toolkit_emitter:
+  sends:
+    - to: callbox
+  emit_signals:
+    - signal: "toolkit_ready"
+      payload:
+        from: "section_1"
+        tools_used:
+          - cochran_match_tool
+          - northstar_protocol_tool
+          - reverse_continuity_tool
+          - metadata_tool_v_5
+    - log: "Section_1 emitted toolkit ready signal."
+
+toolkit_ready:
+  - wait_for: toolkit_result
+  - emit_signal: "toolkit_ready"
+    payload:
+      tools_ready: true
+      section_id: "{{ current_section }}"
+    log: "Toolkit is ready and tools initialized."
+
+  - wait_for_signal:
+      - "toolkit_acknowledged":
+          action: continue
+          log: "Gateway acknowledged toolkit readiness."
+  - log: "Toolkit acknowledgment loop complete."
+
+  logic:
+    - if signal == "10-4":
+        action:
+          - unlock_next_section: true
+          - log: "Approval received. Advancing to next section."
+    - if signal == "10-9":
+        action:
+          - reroute_to_section_editor: "{{ previous_section }}"
+          - log: "Section flagged for revision. Returning to previous section."
+    - if signal == "10-10":
+        action:
+          - freeze_gateway: true
+          - notify_roles: [lead_investigator]
+          - log: "Critical halt triggered. Investigation suspended."
+
+  fallback:
+    - on_missing_signal:
+        notify_roles: [qa_admin]
+        log: "No response signal after section output. Manual review required."
+
+trigger_on: section_output_received
+
+gateway_tool_ports:
+  media_injection:
+    accepts:
+      - .jpg
+      - .png
+      - .gif
+      - .mp4
+    storage_path: /assets/media/
+    on_upload:
+      - verify_media_type
+      - hash: true
+      - generate_preview: true
+      - link_to_section: true
+      - log: "Media injected and linked to current section."
+
+  document_injection:
+    accepts:
+      - .pdf
+      - .docx
+      - .xlsx
+    storage_path: /assets/docs/
+    on_upload:
+      - verify_file_type
+      - extract_text
+      - link_to_case_id
+      - tag_with_meta: true
+      - log: "Document injected and text extraction complete."
+
+  export_hooks:
+    pdf_export:
+      path: /exports/report.pdf
+      on_generate:
+        - include_all_sections: true
+        - include_timestamps: true
+        - lock_tokenized_format: true
+        - redact_placeholders: true
+        - watermark: "DKI Confidential"
+        - log: "PDF export complete."
+
+    json_export:
+      path: /exports/report.json
+      on_generate:
+        - include_all_sections: true
+        - include_context: true
+        - minify: false
+        - attach_case_id: true
+        - log: "JSON export ready."
+
+    raw_data_dump:
+      path: /exports/data.raw
+      on_generate:
+        - dump_type: full
+        - log: "Full raw data export completed."
+
+master_controls:
+  gateway_lock: false
+  tokenized_mode: true
+  timestamp_required: true
+  allow_manual_override: true
+  runtime_logs_enabled: true
+  diagnostics_enabled: true
+
+  override_triggers:
+    - if lead_investigator_signal == "override":
+        action:
+          - unlock_all_sections: true
+          - emit_log: "Manual override engaged by lead investigator."
+
+default_states:
+  section_status:
+    - section_1: "idle"
+    - section_2: "idle"
+    - section_3: "idle"
+    - section_4: "idle"
+    - section_5: "idle"
+    - section_6: "idle"
+    - section_7: "idle"
+    - section_8: "idle"
+
+  toolkit_engine:
+    - status: "awaiting_section_entry"
+    - last_run: null
+    - last_output: null
+
+diagnostic_channels:
+  - audit_log:
+      - path: /logs/gateway_audit.log
+      - record_every_signal: true
+      - archive_on_close: true
+
+  - runtime_output_log:
+      - path: /logs/runtime_output.log
+      - capture_payloads: true
+      - redact_sensitive: true
+
+  - error_trace:
+      - path: /logs/error_trace.log
+      - capture_stack_traces: true
+      - notify_roles_on_critical: [sysadmin, lead_investigator]
+
+gateway_closure_protocol:
+  on_complete:
+    - emit_final_signal: "gateway_complete"
+    - consolidate_all_sections
+    - archive_case_assets
+    - export_pdf
+    - export_json
+    - log: "Gateway closure complete. Reports exported. Assets archived."
+

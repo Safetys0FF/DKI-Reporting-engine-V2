@@ -1,0 +1,92 @@
+
+
+unified_toolkit_dispatch:
+  id: master_toolkit_trigger
+  description: >
+    Calls the unified Python toolkit engine before each section report.
+    Runs all tools (billing, continuity, metadata, etc.) and stores output.
+
+  trigger_on: section_entry
+
+  apply_to_sections:
+    - section_1
+    - section_2
+    - section_3
+    - section_4
+    - section_5
+    - section_6
+    - section_7
+    - section_8
+
+  action:
+    - python_call:
+        module: tools.master_toolkit_engine
+        class: MasterToolKitEngine
+        method: run_all
+        inputs:
+          section_id: "{{ current_section }}"
+          text_data: "{{ section_text }}"
+          report_meta: "{{ report_metadata }}"
+          documents: "{{ document_set }}"
+          assets: "{{ media_assets }}"
+        store_as: unified_results
+
+    - store_output:
+        context_key: section_context.unified_results
+    - log: "Unified toolkit analysis complete and results stored for reporting."
+
+section_input:
+  receives_from:
+    - gateway
+    - previous_section
+  requires:
+    - section_context.unified_results
+    - report_meta
+    - assigned_documents
+    - section_flags
+  initialize:
+    - load_toolkit_results: "{{ section_context.unified_results }}"
+    - apply_report_meta: "{{ report_meta }}"
+    - verify_required_docs: "{{ assigned_documents }}"
+    - inherit_flags: "{{ section_flags }}"
+
+section_output:
+  sends_to:
+    - gateway
+    - next_section
+  emits:
+    - signal: "section_completed"
+      condition: if section_valid == true
+    - payload:
+        section_summary: "{{ generated_summary }}"
+        flags: "{{ generated_flags }}"
+        context: "{{ section_context }}"
+    - log: "Section {{ current_section }} completed. Output dispatched to gateway."
+
+gateway_input_hooks:
+  id: gateway_section_loader
+  description: Injects toolkit data and context into sections on entry.
+
+  on_section_entry:
+    - fetch: section_context.unified_results
+    - fetch: report_meta
+    - fetch: assigned_documents
+    - fetch: previous_section.flags
+    - apply_to_section:
+        context_key: unified_results
+        data_key: section_context.unified_results
+    - log: "Section entry: Context injected for {{ current_section }}"
+
+gateway_output_hooks:
+  id: gateway_section_dispatcher
+  description: Captures section output and routes updates.
+
+  on_section_exit:
+    - capture:
+        - section_summary
+        - flags
+        - updated_context
+    - store:
+        section_flags: "{{ flags }}"
+        report_progress: "{{ section_summary }}"
+    - log: "Gateway received output from {{ current_section }} and updated flow state."

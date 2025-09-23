@@ -1,0 +1,1003 @@
+gateway_section_control:
+  id: section_3_gateway_interface
+  description: >
+    Gateway interface for Section 3.
+    Manages input/output binding, toolkit result injection,
+    signal dispatching, and progress tracking.
+  linked_to: callbox_central_dispatch
+  section_id: section_3
+
+
+gateway_callbox_hub:
+  id: callbox_central_dispatch
+  description: >
+    Centralized gateway communication hub. Handles signal routing, tool triggers,
+    section callouts, and cross-section data interactions.
+
+  accepted_signals:
+    - "10-4"
+    - "10-9"
+    - "10-10"
+    - "10-6"
+    - "10-8"
+
+  on_signal:
+    - if signal == "10-4":
+        action:
+          - unlock_next_section: true
+          - log: "Signal 10-4: Section approved. Unlocked next section."
+
+    - if signal == "10-9":
+        action:
+          - trigger_manual_review: true
+          - log: "Signal 10-9: Routing to manual override."
+
+    - if signal == "10-10":
+        action:
+          - freeze_gateway: true
+          - notify: [lead_investigator]
+          - log: "Signal 10-10: Gateway frozen per operator command."
+
+    - if signal == "10-6":
+        action:
+          - broadcast_toolkit_context: true
+          - log: "Toolkit initialized and dispatched to sections."
+
+    - if signal == "10-8":
+        action:
+          - collect_output_payload
+          - store_progress_flags
+          - log: "Section reported complete. Gateway updated."
+
+  fallback_logic:
+    on_unrecognized_signal:
+      - log: "Unknown signal received."
+      - notify_admin: true
+
+    on_timeout:
+      - wait_duration: 48h
+      - escalate_to: lead_investigator
+      - log: "Callbox timeout. No response received in window."
+
+callbox_endpoints:
+  section_cp: "section_cp_response_handler"
+  section_toc: "section_toc_response_handler"
+  section_1: "section_1_response_handler"
+  section_2: "section_2_response_handler"
+  section_3: "section_3_response_handler"
+  section_4: "section_4_response_handler"
+  section_5: "section_5_response_handler"
+  section_6: "section_6_response_handler"
+  section_7: "section_7_response_handler"
+  section_8: "section_8_response_handler"
+  section_dp: "section_dp_response_handler"
+  section_fr: "section_fr_response_handler"
+
+
+section_transmission_check:
+  id: section_{{ section_number }}_transmission_verification
+  description: >
+    Validates outbound toolkit signals were received by the callbox.
+    Performs echo check and readiness confirmation loop.
+section_3_toolkit_signal_emitter:
+  sends:
+    - to: callbox
+  emit_signals:
+    - signal: "section_completed"
+      payload:
+        origin: "section_3"
+        summary: "{{ generated_summary }}"
+        flags: "{{ section_flags }}"
+    - signal: "ready_for_next"
+      payload:
+        from: "section_3"
+    - log: "Section_3 dispatched completion signal to callbox."
+
+gateway_signal_interpreter:
+  on_toolkit_ready:
+    - verify_payload
+    - emit_signal: "toolkit_acknowledged"
+      payload:
+        section: "{{ incoming_signal.from }}"
+        status: "confirmed"
+    - log: "Toolkit ready signal acknowledged for {{ incoming_signal.from }}."
+
+unified_toolkit_dispatch:
+  id: master_toolkit_trigger
+  description: >
+    Calls the unified Python toolkit engine before each section report.
+    Runs all tools (billing, continuity, metadata, etc.) and stores output.
+
+  trigger_on: section_entry
+
+  on_entry:
+    - log: "Section_{{ section_number }} wake-up initiated."
+    - fetch:
+        - section_context.unified_results
+        - report_meta
+        - assigned_documents
+        - previous_section.flags
+    - apply_context:
+        unified_results: "{{ section_context.unified_results }}"
+        report_meta: "{{ report_meta }}"
+        assigned_documents: "{{ assigned_documents }}"
+        section_flags: "{{ previous_section.flags }}"
+    - emit_signal:
+        signal: "wake_up_call"
+        payload:
+          from: "section_{{ section_number }}"
+          status: "initiated"
+    - log: "Section_{{ section_number }} context loaded and wake-up signal emitted."
+
+  action:
+    - python_call:
+        module: tools.master_toolkit_engine
+        class: MasterToolKitEngine
+        method: run_all
+        inputs:
+          section_id: "{{ current_section }}"
+          text_data: "{{ section_text }}"
+          report_meta: "{{ report_metadata }}"
+          documents: "{{ document_set }}"
+          assets: "{{ media_assets }}"
+        store_as: unified_results
+
+    - store_output:
+        context_key: section_context.unified_results
+    - log: "Unified toolkit analysis complete and results stored for reporting."
+
+toolkit_endpoints:
+  section_cp: "section_cp_response_handler"
+  section_toc: "section_toc_response_handler"
+  section_1: "section_1_response_handler"
+  section_2: "section_2_response_handler"
+  section_3: "section_3_response_handler"
+  section_4: "section_4_response_handler"
+  section_5: "section_5_response_handler"
+  section_6: "section_6_response_handler"
+  section_7: "section_7_response_handler"
+  section_8: "section_8_response_handler"
+  section_dp: "section_dp_response_handler"
+  section_fr: "section_fr_response_handler"
+
+section_3_toolkit_handler:
+  on_entry:
+    - run_tools:
+        tools:
+          - cochran_match_tool
+          - northstar_protocol_tool
+          - reverse_continuity_tool
+          - metadata_tool_v_5
+          - mileage_tool_v_2
+        input:
+          section_id: section_3
+          text_data: "{{ section_text }}"
+          meta: "{{ report_meta }}"
+          docs: "{{ assigned_documents }}"
+          media: "{{ media_assets }}"
+        store_as: section_toolkit_results
+    - log: "Section_3 tools executed."
+
+  on_failure:
+    - if: toolkit_run.failed
+      then:
+        - emit_signal: "10-10"
+        - log: "Toolkit failed. Section halted."
+        - escalate: lead_investigator
+
+section_3_toolkit_emitter:
+  sends:
+    - to: callbox
+  emit_signals:
+    - signal: "toolkit_ready"
+      payload:
+        from: "section_3"
+        tools_used:
+          - cochran_match_tool
+          - northstar_protocol_tool
+          - reverse_continuity_tool
+          - metadata_tool_v_5
+          - mileage_tool_v_2
+    - log: "Section_3 emitted toolkit ready signal."
+
+section_3_toolkit_guard:
+  on_entry:
+    - fetch_manifest:
+        from: "section_1"
+        key: "toolkit_manifest.section_3"
+        store_as: allowed_tools
+
+    - validate_access:
+        allowed: "{{ allowed_tools }}"
+        attempted: "{{ tools_requested }}"
+        on_violation:
+          - emit_signal: "10-9"
+          - log: "Unauthorized tool access in Section_3."
+
+section_3_toolkit_ready:
+  trigger_on: section_output_received
+  steps:
+    - wait_for: toolkit_result
+    - emit_signal:
+        signal: "10-6"
+        payload:
+          tools_ready: true
+          section_id: "{{ current_section }}"
+    - wait_for_signal:
+        toolkit.10-4:
+          action: continue
+          log: "Gateway acknowledged toolkit readiness."
+    - log: "Toolkit acknowledgment loop complete."
+  logic:
+    - if signal == "10-4":
+        action:
+          - unlock_next_section: true
+          - log: "Approval received. Advancing to next section."
+
+    - if signal == "10-9":
+        action:
+          - reroute_to_section_editor: "{{ previous_section }}"
+          - log: "Section flagged for revision. Returning to previous section."
+
+    - if signal == "10-10":
+        action:
+          - freeze_gateway: true
+          - notify_roles: [lead_investigator]
+          - log: "Critical halt triggered. Investigation suspended."
+
+        fallback:
+          - on_missing_signal:
+        notify_roles: [qa_admin]
+        log: "No response signal after section output. Manual review required."
+
+
+gateway_tool_port_media:
+  id: media_entry_port
+  description: >
+    Manages entry, verification, tagging, and linking of photo/video evidence.
+    Requires user to assign narrative before toolkit triggers.
+
+  accepted_inputs:
+    - media_upload
+    - section_reference
+    - metadata_tags
+    - user_narrative_link
+
+  compliance_rules:
+    - require_narrative_link == true
+    - no auto-generated content allowed
+    - audit_user_id == true
+
+  on_upload:
+    - verify_media_format
+    - check_for_user_prompt
+    - emit_signal: "media_attached"
+      payload:
+        section_id: "{{ section_reference }}"
+        media_type: "{{ media_type }}"
+        tags: "{{ metadata_tags }}"
+    - log: "Media linked and approved by investigator."
+
+  on_violation:
+    - reject_upload
+    - notify_user: "Narrative required before media linkage is allowed."
+
+gateway_tool_port_documents:
+  id: document_archive_port
+  description: >
+    Central archive for supporting documents. Ensures validation before linkage.
+    Maintains audit logs for compliance.
+gateway_tool_port_export:
+  id: export_dispatch_port
+  description: >
+    Controls generation and secure delivery of finalized reports.
+    Ensures final review was completed before exporting.
+
+  preconditions:
+    - section_lifecycle_complete == true
+    - final_review_approved == true
+    - compliance_clearance_passed == true
+
+  accepted_requests:
+    - export_type: ["pdf", "zip", "summary_only"]
+    - delivery_target: ["client", "internal", "secure_archive"]
+
+  on_export:
+    - generate_package
+    - emit_signal: "report_ready_for_delivery"
+      payload:
+        export_link: "{{ secure_url }}"
+        type: "{{ export_type }}"
+        recipient: "{{ delivery_target }}"
+    - log: "Export complete and dispatched."
+
+  on_blocked:
+    - notify_user: "Cannot export. Final approval or lifecycle check not completed."
+
+  accepted_inputs:
+    - document_file
+    - classification_tag
+    - section_reference
+    - user_confirmation
+
+  validation_rules:
+    - must_include_classification_tag
+    - file_integrity_verified
+    - user_role_allowed_to_upload == true
+
+  on_document_link:
+    - store_in_repository
+    - emit_signal: "document_attached"
+      payload:
+        document_id: "{{ file_id }}"
+        section_linked: "{{ section_reference }}"
+    - log: "Document uploaded and approved for section {{ section_reference }}."
+
+  on_reject:
+    - notify_user: "Document missing classification or failed verification."
+
+  toc_identifier: "{{ report_type | lower }}_toc"
+
+
+section_handoff_router:
+  id: section_handoff_controller
+  description: >
+    Coordinates lifecycle transitions between sections.
+    Validates output, interprets gateway signals, and activates next section or returns for revision.
+
+section_3_input:
+  receives_from:
+    - gateway
+    - previous_section
+  requires:
+    - section_context.unified_results
+    - report_meta
+    - assigned_documents
+    - section_flags
+  initialize:
+    - load_toolkit_results: "{{ section_context.unified_results }}"
+    - apply_report_meta: "{{ report_meta }}"
+    - verify_required_docs: "{{ assigned_documents }}"
+    - inherit_flags: "{{ section_flags }}"
+
+section_3_response_handler:
+  receives:
+    - from: callbox
+    - accepted_signals:
+        - "section_update"
+        - "callback_confirmed"
+        - "override_request"
+  on_signal:
+    - if signal == "section_update":
+        update_context:
+          key: section_context.sync
+          value: "{{ signal_payload }}"
+        log: "Section_2 synced with gateway payload."
+
+    - if signal == "callback_confirmed":
+        set_flag: section_validated
+        log: "Section_2 confirmed by central callbox."
+
+    - if signal == "override_request":
+        trigger_manual_review: true
+        log: "Manual review trigger set by callbox directive."
+
+section_3_output:
+  sends_to:
+    - gateway
+    - next_section
+  emits:
+    - signal: "section_completed"
+      condition: if section_valid == true
+    - payload:
+        section_summary: "{{ generated_summary }}"
+        flags: "{{ generated_flags }}"
+        context: "{{ section_context }}"
+    - log: "Section {{ current_section }} completed. Output dispatched to gateway."
+
+gateway_section_3_input_hooks:
+  id: gateway_section_loader_1
+  description: Injects toolkit data and context into section_1 on entry.
+  on_section_entry:
+    - fetch: section_context.unified_results
+    - fetch: report_meta
+    - fetch: assigned_documents
+    - fetch: previous_section.flags
+    - apply_to_section:
+        context_key: unified_results
+        data_key: section_context.unified_results
+    - log: "Section entry: Context injected for section_1"
+
+gateway_section_3_output_hooks:
+  id: gateway_section_dispatcher_2
+  description: Captures section_2 output and routes updates.
+  on_section_exit:
+    - capture:
+        - section_summary
+        - flags
+        - updated_context
+    - store:
+        section_flags: "{{ flags }}"
+        report_progress: "{{ section_summary }}"
+    - emit_signal: "section_received"
+      payload:
+        section_id: "section_2"
+        status: "acknowledged"
+    - log: "Gateway received and acknowledged output from section_2."
+
+section_signal_lifecycle_template:
+  on_start:
+    - emit_signal: "10-6"  # Toolkit dispatched
+      log: "Toolkit deployment initiated for {{ current_section }}."
+
+ report_generation:
+    - run: generate_report_section
+    - log: "Report generation initiated for {{ current_section }}."
+
+  logic_switches:
+    - if: report_type == "Investigative"
+      then:
+        section_2:
+          label: "INVESTIGATIVE REQUIREMENTS"
+          focus:
+            - background checks
+            - legal tracing
+            - employment verification
+        suppress_modules:
+          - Surveillance Logs
+          - Route Planning
+          - Vehicle Tracking
+          - Mileage Tracking
+        billing_model: "Flat Rate"
+
+    - if: report_type == "Field"
+      then:
+        section_2:
+          label: "PRE-SURVEILLANCE SUMMARY"
+          focus:
+            - recon
+            - vehicle identifiers
+            - surveillance strategy
+            - location planning
+        enable_modules:
+          - Surveillance Logs
+          - Photographic Evidence
+          - Time Logs
+        suppress_modules:
+          - Investigative Analysis
+          - Court Research Blocks
+        billing_model: "Hourly or Flat"
+
+    - if: report_type == "Hybrid"
+      then:
+        section_2:
+          label: "HYBRID PREPARATION SUMMARY"
+          focus:
+            - investigative analysis
+            - field readiness
+        enable_modules:
+          - All Modules
+        billing_model: "Hybrid (stacked or tiered)"
+
+  billing_triggers:
+    - if: contract_count >= 2
+      then:
+        mode: "MULTICONTRACT"
+        effects:
+          - suppress_duplicate_planning_charges: true
+          - prep_work_covered: true
+
+    - if: is_first_field_contract
+      then:
+        planning_fee:
+          amount: 500
+          waive_condition: "explicit waiver"
+
+  output_controls:
+    style_enforced: true
+    headers_dynamic_by_type: true
+    narrative_adaptive: true
+    time_priority: "Field Time > Received Time"
+    continuity_check: "Approved Intake or Contract Required"
+
+section_3:
+  label: "3. Surveillance Operational Log"
+  locked: true
+  margin: narrow
+
+narrative_construction:
+  description: "Surveillance event construction logic"
+  input_sources:
+    - type: "Photo Metadata"
+      includes: ["EXIF timestamp", "filename timestamp"]
+      source: "Images"
+    - type: "Investigator Notes"
+      includes: ["Written notes", "Voice memos", "GPS logs"]
+      source: "Field logs"
+    - type: "Client Intel"
+      includes: ["Intake form", "Pre-surveillance expectations"]
+      source: "Client documentation"
+  logic:
+          - rule: "Cross-validate all entries using at least two of the three sources"
+          - rule: "If only one source is available, trigger Q&A for verification"
+          - rule: "Do not rely on assumptions to fill time or activity gaps"
+
+section_3:
+  label_logic:
+    if: report_type == "Investigative"
+    then: "INVESTIGATION DETAILS"
+    elif: report_type == "Hybrid"
+    then: "INVESTIGATION DETAILS"
+    else: "SURVEILLANCE SUMMARY"
+
+  content_logic:
+    if: report_type == "Investigative"
+    then:
+      include:
+        - findings_timeline
+        - verified_confirmations
+        - document_notes
+      suppress:
+        - field_logs
+        - visuals
+        - billing_blocks
+
+    elif: report_type == "Hybrid"
+    then:
+      include:
+        - findings_list
+        - hybrid_special_note
+        - field_log_block
+      field_log_block:
+        label: "FIELD DEPLOYMENT (PHASE 2)"
+        visuals_mode: "Supplemental Verification"
+        billing_split:
+          investigative: [1, 2]
+          field: [3]
+      hybrid_special_note: "Due to the needs of both the client and the case filed, in-field surveillance was requested."
+
+    else:  # Field report
+      include:
+        - full_field_log
+        - billing_blocks
+        - visual_metadata_checks
+      enforce:
+        - continuity_checks
+        - timestamp_requirements
+
+  operational_flow:
+    - "All surveillance logs begin with metadata extraction from photos (EXIF, filename timestamp, overlay timestamp)"
+    - "First verifiable photo in the surveillance area marks the start of field operations"
+    - "First visual confirmation of the subject marks the beginning of surveillance contact"
+    - "Field time, drive time, and contact time are treated as distinct billing categories"
+    - "Metadata-anchored evidence supports all report entries and billing items"
+
+  formatting:
+    font: Times New Roman
+    size: 22pt
+    weight: bold
+    align: center
+
+  structure:
+    - header: "3a. Daily Field Entry Log"
+      layout: vertical
+      formatting:
+        header:
+          font: Times New Roman
+          size: 16pt
+          weight: bold
+          align: left
+        body:
+          font: Times New Roman
+          size: 12pt
+          weight: normal
+          align: left
+          line_spacing: single
+
+  entry_fields:
+    - field: "Date of Surveillance"
+      required: true
+      format: "Day, Month DD, YYYY"
+
+    - field: "Investigator Name"
+      required: true
+      source: "Field Report / Metadata Attribution / Subcontract Agreement"
+
+    - field: "Start Time"
+      required: true
+      format: 24hr
+      validation: "Photo Metadata / Time Anchor / First Field Entry"
+
+    - field: "Surveillance Type"
+      options: ["Fixed", "Mobile", "Hybrid"]
+      required: true
+
+    - field: "Location"
+      required: true
+      format: "City, State"
+      validation: "GPS Tag / Pre-Surveillance Report / Intake"
+
+     [DATE BLOCK HEADER] (e.g., Thursday May 22, 2025)
+     Surveillance Time: [start – end]
+     Objective: [Plain tactical goal for that day]
+     Observations:
+     - [timestamped event 1]
+     - [event 2]
+     - ...
+     Summary:
+     - 3 to 5 sentences summarizing logged evets
+
+    - field: "Narrative Summary"
+      rules:
+        - "No vague statements (e.g., 'early hours', 'later that night')"
+        - "All subject movements must be time-anchored"
+        - "All observed actions must be validated with photo or visual context"
+        - "Remove any mention of metadata tools"
+        - "Avoid assumptions; if unsure, Q&A is required"
+        - "Do not speculate on subject intent"
+        - "Do not include operational commentary or tool use"
+        - "If narrative conflicts with visual or metadata, trigger Q&A"
+        - "Reverse continuity logic must validate chain of events"
+
+narrative_gap_analysis:
+  module_label: "Narrative Continuity Validation"
+  type: "Gap Detection + Correction Protocol"
+  version: "1.0"
+
+  logic_enforcement:
+    purpose: "Ensure all surveillance transitions are narratively and evidentially anchored."
+
+    common_gap_types:
+      - transition_missing:
+          description: "Surveillance shift between locations not described."
+      - travel_action_unexplained:
+          description: "No timestamp or reason for investigator movement."
+      - event_jump:
+          description: "Immediate leap from one activity to another without connective narrative."
+      - cohabitation_assumption:
+          description: "Implied subject relationship without narrative or visual anchor."
+
+  resolution_steps:
+    - step: "insert_travel_anchor"
+      description: "Add explicit timestamp and directional movement narrative."
+      example_template: |
+        "At approximately {{time}}, surveillance transitioned from {{location_A}} to {{location_B}} in anticipation of subject activity based on earlier behavior."
+
+    - step: "apply_pattern_logic"
+      description: "Tie movement to previously observed subject behavior patterns."
+      example_template: |
+        "Earlier actions indicated subject would return to {{location}} at {{approx_time}}, warranting repositioning."
+
+    - step: "visual_support_verification"
+      description: "Ensure timestamped photographic confirmation exists for both departure and arrival."
+      enforcement:
+        - photo_match_required: true
+        - timestamp_consistency_required: true
+
+  integration:
+    linked_modules:
+      - reverse_continuity_test
+      - metadata_alignment_engine
+      - QnA_resolution_protocol
+
+  enforcement_flags:
+    missing_travel_transition: "Trigger narrative correction and timestamp inclusion."
+    unsupported_location_jump: "Flag for 1:1 Q&A and suspend finalization."
+    cohabitation_implied: "Highlight and verify with secondary evidence."
+
+  finalization_requirements:
+    - all transitions time-stamped
+    - visual evidence confirms movements
+    - no gap between observational blocks
+    - narrative aligns with metadata path
+
+narrative_evidence_conflict_resolution:
+  module_label: "Narrative-Evidence Conflict Resolution"
+  type: "Training Protocol + Validation Module"
+  version: "1.0"
+
+  principles:
+    - visual_overrides_text: true
+      description: "When discrepancies exist between narrative and visual/photo evidence, the visual record is treated as truth."
+
+    - timestamp_verification_required: true
+      description: "Photo timestamps (EXIF or filename) are used to confirm the authenticity of visual records."
+
+    - metadata_integrity_check:
+        enabled: true
+        fallback_sequence:
+          - exif_timestamp
+          - filename_timestamp
+          - overlay_timestamp
+
+    - narrative_alignment:
+        description: "Misalignment between photo and report is treated as narrative error, not photo error."
+        examples:
+          - conflict_type: "License Plate"
+            mismatch: "Narrative = '678 BCD'; Photo = 'BCD 678'"
+          - conflict_type: "Subject Description"
+            mismatch: "Narrative = 'Short white male'; Photo = 'Tall Black male'"
+
+  reverse_logic_check:
+    description: "Compares narrative elements against timestamped visual metadata."
+    enforcement:
+      required_fields:
+        - subject_description_match: true
+        - vehicle_identity_match: true
+        - time_anchor_alignment: true
+        - location_match_with_GPS: true
+    flag_on:
+      - missing_time_anchor
+      - subject_identity_conflict
+      - vehicle_plate_format_error
+
+  auto_qna_trigger:
+    enabled: true
+    on_discrepancy_detected: true
+    prompt_templates:
+      - "Please confirm plate format — narrative says '{{text}}' vs image '{{photo}}'."
+      - "Does the photo override the written description? Confirm subject ID."
+    required_resolution_before_finalization: true
+
+  enforcement_logic:
+    report_finalization_locked: true
+    unfreeze_conditions:
+      - all_qna_resolved: true
+      - metadata_verified: true
+      - visual-narrative alignment confirmed: true
+
+  audit_trail:
+    include_in_internal_log: true
+    show_correction_note: true
+    log_entry_format:
+      - timestamp
+      - nature_of_discrepancy
+      - investigator_response
+      - resolution_action_taken
+
+
+  internal_evidence_listing:
+    display: false
+    contents:
+      - timestamped_photos: "Count of verified, metadata-tagged photos"
+      - referenced_docs: ["Pre-Surveillance Report", "Intake Report", "Subcontractor Logs"]
+      - field_report_validation: true
+      - file_origin_validated: true
+      - GPS_cross_validation: true
+      - temporal_alignment_verified: true
+
+discrepancy_handling_protocol:
+  label: "Discrepancy Resolution Workflow"
+  version: 1.0
+  purpose: "To detect, flag, resolve, and document any mismatches between narrative entries and visual evidence."
+
+  detection:
+    trigger_points:
+      - plate_format_mismatch
+      - subject_description_conflict
+      - location_or_time_discrepancy
+    sources:
+      - narrative_entry
+      - photo_overlay
+      - metadata_timestamp
+      - filename_timestamp
+      - intake_report
+      - state_format_guidelines
+
+  resolution_steps:
+    - step: "detect_conflict"
+      description: "Compare narrative claims with visual and metadata evidence. Detect if plate or description does not align."
+      example: "Narrative says '678 BCD'; photo shows 'BCD 678'."
+
+    - step: "flag_for_qna"
+      description: "Highlight issue in draft and trigger Q&A session."
+      required_action: "Prompt user with clarification question."
+      prompt_template: "Please confirm correct plate format — does the visual evidence override the field notes?"
+
+    - step: "cross_reference"
+      description: "Cross-check plate format using visual zoom, plate structure (state-specific), or alternate photos."
+      tools:
+        - AI_image_enhancer
+        - metadata_viewer
+        - plate_structure_database
+
+    - step: "apply_resolution"
+      description: "Upon user validation, correct all entries to match verified information."
+      annotation_required: true
+      note_format: "Plate corrected to [validated version] per visual confirmation and user input."
+
+    - step: "final_documentation"
+      description: "Add resolution note to internal log for chain-of-custody tracking and report transparency."
+      compliance_note: "Required for legal integrity and audit readiness."
+
+  precedence_rules:
+    - "Photo evidence (metadata + overlay) overrides narrative when in conflict."
+    - "If conflict exists and no confirmation is possible, report is frozen for review."
+    - "Every discrepancy must be resolved or acknowledged before finalizing report."
+
+  validation:
+    reverse_continuity_required: true
+    qna_status_check: true
+    metadata_consistency_check: true
+    subject_visual_confirmation: true
+
+  finalization:
+    highlight_resolution_required: true
+    submission_lock_until_resolved: true
+    entry_unlocked_after_validation: true
+
+
+metadata_fallback_logic:
+  condition: "Missing or corrupted EXIF metadata"
+  fallback_sequence:
+    - step: "Use filename-embedded timestamp"
+      example: "20250519_202243.jpg → 20:22:43"
+    - step: "If filename unreliable, validate via visible timestamp overlay"
+    - step: "If both are available but conflict, trigger Q&A"
+    - step: "If neither are available, mark as 'visual timestamp only'"
+  annotation:
+    include_in_report: false
+    internal_flag: true
+    flag_term: "visual timestamp only"
+    purpose: "Maintain transparency without exposing tool or fallback chain"
+
+
+  internal_billing_anchors:
+    display: false
+    required_fields:
+      - Drive_to_Field: "Origin City to Surveillance City"
+      - Drive_from_Field: "Return Path Tracking"
+      - Mobile_Surveillance_Distance: "Captured via GPS + Metadata"
+      - Active_Surveillance_Hours: "Start to End Time in 24hr format"
+      - Total_Mileage: "Calculated or Estimated with start/end odometer references"
+      - Evidence_Timestamps_Anchor_Operational_Log: true
+      - Field_Op_Tags_Linked_To_Billing: true
+
+   mileage_handling:
+      - "Mileage is not displayed in final report."
+      - "Captured internally for taxation and billing summary only."
+      - "Pass-through logic controlled by billing module, not shown here."
+
+billing_summary_logic:
+  purpose: "To define and track time and mileage for billing purposes without surfacing client-facing details in the report."
+
+  categories:
+    - Drive_Time:
+        source: "Departure City to Field City"
+        start_point: "Manual entry or log approximation (e.g., 10:00 AM)"
+        end_point: "Timestamp of first Lawton photo (e.g., 20250425_142811 → 14:28)"
+        calculation_method: "End - Start"
+        round_trip: true
+        client_facing: false
+
+    - Field_Operational_Time:
+        start: "Timestamp of first site-based action (e.g., first photo in Lawton)"
+        end: "Final activity/photo of the night (e.g., area sweep)"
+        data_source: ["Photo log", "Field log"]
+        format: "24hr"
+        usage: "Used in operational logs and internal billing structure"
+        client_facing: true
+
+    - Surveillance_Engagement_Time:
+        trigger_start: "First confirmed visual or direct observation of subject"
+        trigger_end: "Last visual or noted subject contact"
+        validation: "Supported by image metadata, timestamped logs"
+        format: "24hr"
+        notes: "This subset is embedded in the field report but supports billing annotation"
+        client_facing: true
+
+    - Mileage:
+        base_calculation:
+          - method: "Tulsa to Lawton round trip mileage + Local driving route"
+          - if_gps_present: "Use GPS log directly"
+          - if_gps_absent: "Use estimated miles from known city distances + Google route"
+        documentation_required: true
+        placeholder: "[investigator input required]"
+        client_facing: false
+
+  integration_policy:
+    - "All billing values must align with photo or log evidence"
+    - "Any undocumented gaps must trigger Q&A before summary generation"
+    - "Do not include raw mileage or timestamps in client-facing final report unless requested"
+
+  continuity_check:
+    enabled: true
+    validation_points:
+      - timestamps_match_narrative: true
+      - subject_location_path_tracked: true
+      - visual_evidence_supports_log: true
+      - no_metadata_mentions: true
+      - vague_statements_flagged: true
+      - narrative_vs_photo_check: strict
+      - subject_identification_confirmation: image/log corroboration
+      - movement_segments_temporally_bound: true
+
+  qna_trigger:
+    rules:
+      - unsupported_or_ambiguous_statement: "Flag for 1:1 Q&A"
+      - contradictory_entry: "Q&A before approval"
+      - unmatched narrative vs. visual: "Q&A required"
+      - plate_discrepancy: "Trigger image check"
+      - subject_description_mismatch: "Trigger evidence review"
+      - missing time anchor: "Q&A resolution prior to report closure"
+    resolution:
+      - highlight_discrepant_entry: true
+      - freeze_submission_until_resolved: true
+      - defer to final review if internal resolution fails
+ 
+report_ready:
+  - wait_for: report_generated
+  - emit_signal: "10-8"
+    payload:
+      section_summary: "{{ generated_summary }}"
+      flags: "{{ generated_flags }}"
+    log: "Report complete. Output dispatched to gateway."
+
+gateway_review_outro:
+  on_section_render_complete:
+    - receive:
+        source: "section_3"
+        payload:
+          rendered_report: "{{ section_report }}"
+          toolkit_flags: "{{ generated_flags }}"
+          summary: "{{ section_summary }}"
+    - log: "Section section_3 submitted report to gateway for review."
+
+  review_phase:
+    - present_to_user:
+        content: "{{ section_report }}"
+        flags: "{{ generated_flags }}"
+        summary: "{{ section_summary }}"
+        prompt: "Approve this section report?"
+        options: [yes, no, halt, suggest_changes]
+
+    - wait_for_user_input:
+        cases:
+          - match: "yes"
+            steps:
+              - emit_signal: "10-4"
+                payload:
+                  section: "section_3"
+                  status: "approved"
+              - forward_to: section_fr
+                content: "{{ section_report }}"
+              - log: "Report approved and forwarded to FR."
+
+          - match: "no"
+            steps:
+              - emit_signal: "10-9"
+                payload:
+                  section: "section_3"
+                  status: "revision_required"
+              - reroute_to: "section_3"
+              - log: "Revision requested. Sent back to section."
+
+          - match: "halt"
+            steps:
+              - emit_signal: "10-10"
+                log: "Hard stop requested by user. Gateway frozen."
+              - freeze_gateway: true
+              - notify_roles: [lead_investigator]
+
+          - match: "suggest_changes"
+            steps:
+              - capture_feedback:
+                  field: user_suggestions
+              - emit_signal: "10-9"
+                payload:
+                  section: "section_3"
+                  status: "user_comments_added"
+                  comments: "{{ user_suggestions }}"
+              - reroute_to: "section_3"
+              - log: "User submitted suggestions. Returned to section with feedback."
+
+  fallback:
+    - on_timeout: 48h
+      notify_roles: [qa_admin, lead_investigator]
+      log: "Review timeout. Manual escalation triggered."
+
+    - on_invalid_input:
+        log: "Unexpected input during section_3 review."
+        notify: admin
+
+
