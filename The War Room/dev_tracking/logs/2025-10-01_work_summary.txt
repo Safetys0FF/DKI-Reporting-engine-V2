@@ -1,0 +1,19 @@
+﻿Work Summary (as of 2025-10-01 16:07:40)
+
+Evidence Locker & Common Pool
+- File: F:\The Central Command\Evidence Locker\bus_extensions.py
+  • Ensured tag taxonomy is always importable so locker classification runs anywhere the bus injects helpers.
+- File: F:\The Central Command\Command Center\UI\central_plugin.py
+  • Added classify_evidence/suggest_category_for_file to call locker heuristics without storing files.
+  • Every scan now adds a normalized entry to an in-memory evidence pool (category, tags, manifest hint, locker response).
+  • The pool feeds report generation/export helpers so downstream modules and the GUI can query the same data.
+- File: F:\The Central Command\Command Center\UI\section_bus_adapter.py
+  • publish_category_need/issue_default_requests now operate on shared taxonomy, emitting section.needs with normalized tags/related sections the moment evidence is scanned.
+
+GUI Integration
+- File: F:\The Central Command\Command Center\UI\enhanced_functional_gui.py
+  • Evidence cards auto-populate category/tags from locker suggestions and log the auto-advertised routing.
+  • Reports tab consumes the evidence pool to build/export quick summaries (proof-of-life for the shared context).
+  • Scan actions refresh the pool summary so any new module that reads it sees the same data.
+
+Outcome: Evidence dropped into the GUI immediately enters a shared, normalized pool (with category hints, tags, bus telemetry). The GUI shows that pool and exports a summary, confirming the locker and bus are populating common data ready for section controllers.

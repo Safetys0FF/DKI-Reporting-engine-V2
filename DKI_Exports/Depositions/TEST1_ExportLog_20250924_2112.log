@@ -1,0 +1,14 @@
+{
+  "timestamp": "2025-09-24T21:12:34.131922",
+  "report_id": "report_20250924_211234",
+  "case_id": "TEST1",
+  "status": "ok",
+  "steps_completed": [
+    "report_generated"
+  ],
+  "tools_used": [
+    "report_generator"
+  ],
+  "output_files": [],
+  "errors": []
+}

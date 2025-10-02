@@ -1,0 +1,18 @@
+
+Mission Debrief Archival Enhancements
+====================================
+Timestamp: 2025-09-24T21:41:36.922472
+
+Summary:
+- Installed pytest locally and executed Mission Debrief deposition tests; suite now passes with adapter stubs.
+- ArchiveManager archives include normalized deposition catalogs, export log metadata, and persisted manifests for retrieval.
+- Added ArchiveManager.get_deposition_catalog plus file metadata helpers for export discovery workflows, and surfaced deposition manifest hints in listing APIs.
+
+Work Location:
+- F:\The Central Command\Command Center\Mission Debrief\Library\archive_manager.py
+- F\The Central Command\Command Center\Mission Debrief\Tests\test_deposition_exports.py
+
+Next Steps:
+1. Backfill additional tests around ArchiveManager.get_deposition_catalog and retrieval flows.
+2. Wire bus signals/UI to surface deposition manifest details from the archive listings.
+3. Consider encrypting or signing deposition manifests for tamper detection.

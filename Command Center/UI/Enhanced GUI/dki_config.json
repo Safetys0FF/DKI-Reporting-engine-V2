@@ -1,0 +1,100 @@
+{
+  "company": {
+    "name": "DKI Services LLC",
+    "license": "0200812-IA000307",
+    "address": "Oklahoma City, Oklahoma",
+    "phone": "(405) 555-0123",
+    "email": "info@dkiservices.com"
+  },
+  "investigator": {
+    "name": "David Krashin",
+    "license": "0163814-C000480",
+    "title": "Licensed Private Investigator"
+  },
+  "ocr": {
+    "language": "eng",
+    "oem": 3,
+    "psm": 6,
+    "dpi": 300,
+    "preprocessing": true,
+    "tesseract_path": null
+  },
+  "ai": {
+    "openai_api_key": null,
+    "openai_model": "gpt-3.5-turbo",
+    "max_tokens": 1000,
+    "temperature": 0.3,
+    "enable_osint": false,
+    "spacy_model": "en_core_web_sm"
+  },
+  "document_processing": {
+    "max_file_size_mb": 100,
+    "supported_formats": {
+      "pdf": [
+        ".pdf"
+      ],
+      "image": [
+        ".jpg",
+        ".jpeg",
+        ".png",
+        ".tiff",
+        ".bmp",
+        ".heic"
+      ],
+      "video": [
+        ".mp4",
+        ".mov",
+        ".avi",
+        ".mkv"
+      ],
+      "document": [
+        ".docx",
+        ".doc",
+        ".txt",
+        ".rtf"
+      ],
+      "spreadsheet": [
+        ".xlsx",
+        ".xls",
+        ".csv"
+      ]
+    },
+    "ocr_timeout_seconds": 300,
+    "video_frame_interval": 30
+  },
+  "report_generation": {
+    "default_font": "Times New Roman",
+    "default_font_size": 12,
+    "header_font_size": 16,
+    "subheader_font_size": 14,
+    "line_spacing": 1.15,
+    "page_margins": {
+      "top": 1.0,
+      "bottom": 1.0,
+      "left": 1.0,
+      "right": 1.0
+    }
+  },
+  "logging": {
+    "level": "INFO",
+    "file": "dki_engine.log",
+    "max_size_mb": 10,
+    "backup_count": 5,
+    "console_output": true
+  },
+  "security": {
+    "encrypt_sensitive_data": true,
+    "auto_backup": true,
+    "backup_interval_hours": 24,
+    "max_backups": 30
+  },
+  "ui": {
+    "theme": "default",
+    "window_size": {
+      "width": 1200,
+      "height": 800
+    },
+    "auto_save_interval_minutes": 5,
+    "recent_files_count": 10
+  }
+}

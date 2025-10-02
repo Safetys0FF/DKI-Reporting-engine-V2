@@ -1,0 +1,16 @@
+{
+  "advanced_parsing_test": "File Processing Capability",
+  "available_test_files": 15,
+  "file_type_distribution": {
+    "json": 4,
+    "txt": 4,
+    "jpg": 2,
+    "png": 2,
+    "wav": 1,
+    "mp4": 1,
+    "pdf": 1
+  },
+  "parsing_readiness_percent": 100.0,
+  "ocr_capability": false,
+  "media_processing_capability": false
+}

@@ -1,0 +1,21 @@
+﻿Evidence Bus Integration Summary
+================================
+
+Tasks Established
+-----------------
+1. Instrument the shared bus with evidence/section signals and logging support.
+2. Extend the Evidence Locker to participate in the signal loop and maintain an evidence manifest.
+3. Update the Gateway controller/section pipeline to consume the new signals via the parsing dispatcher.
+4. Hook Mission Debrief & ECC into the evidence event flow and enrich UI intake metadata.
+
+Completed Work
+--------------
+- `Command Center/Data Bus/Bus Core Design/bus_core.py`: Added evidence and status signal handlers, manifest/state tracking helpers, status accessors, and reset logic.
+- `Evidence Locker/bus_extensions.py`: Introduced mixins that publish `evidence.*`, respond to `evidence.request` / `section.needs`, and track locker manifest state.
+- `Evidence Locker/evidence_locker_main.py`: Applied the bus extensions so the locker now emits/consumes the new signals.
+
+Pending Work
+------------
+- Update `The Marshall/Gateway/gateway_controller.py` and section render flow to pull evidence via the bus (parsing dispatcher integration).
+- Wire Mission Debrief/Narrative Assembler and ECC to listen/respond to the new events and expose consolidated manifests to the UI.
+- Enhance UI intake/locker capture so evidence payloads include the metadata needed by parsing maps.

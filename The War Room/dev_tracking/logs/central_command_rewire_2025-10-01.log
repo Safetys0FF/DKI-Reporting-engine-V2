@@ -1,0 +1,10 @@
+﻿Central Command Rewire Summary - 2025-10-01
+
+- Launcher stack now points entirely at the Central Command workspace: Start Menu scripts call `gui_main_application.py`, rebuild `PYTHONPATH` with Command Center, Warden, Evidence Locker, Marshall, and War Room processors, and drop all legacy `F:\DKI-Report-Engine` references.
+- `central_plugin.py` (UI + Start Menu copy) prepends Central Command tool paths, treats Smart Lookup/OSINT as optional, boots SectionBusAdapter automatically, and emits default evidence requests on startup.
+- Added `section_bus_adapter.py` plus `disclosures_catalog.json`; adapter registers bus handlers, issues evidence requests, and publishes billing/analytics/disclosure payloads.
+- Mission Debrief Librarian consumes `evidence.updated` and `case.snapshot`, merges manifest context into narratives, and broadcasts status telemetry.
+- Evidence Locker bus extensions gained section-aware classification heuristics, per-recipient delivery dedupe, and richer manifest filters; Gateway classification handler now processes the GUI locker handoff metadata correctly.
+- Updated Start Menu runtime (`run_dki_engine.py`, `main_application.py`) and GUI wrapper to launch EnhancedDKIGUI directly from Central Command.
+- `test_api_integration.py` now bootstraps paths from Central Command components only.
+- Remaining work: restore `enhanced_functional_gui.py` (file currently empty), replace section dropdown with tag-based category selector, propagate tags through locker/gateway, refresh GUI copy/tests, and port Smart Lookup if required.

@@ -1,0 +1,22 @@
+﻿Next Steps / TODO (Evidence Locker → Section → Report Pipeline)
+
+1. Manifest/Pool Persistence
+   - Files: F:\The Central Command\Evidence Locker\evidence_locker_main.py, bus_extensions.py
+   - Persist the normalized pool to the locker manifest (so restarts and non-GUI consumers can pull it).
+   - Expose helper (get_structured_manifest / get_common_pool) for other modules and dashboards.
+
+2. Section Controllers + Enrichment
+   - Location: F:\The Central Command\Command Center\Data Bus\Bus Core Design (new controller module)
+   - Subscribe to section.needs/evidence.deliver, pull entries from the common pool, run enrichment, emit section.data.updated back onto the bus.
+
+3. Narrative Generation
+   - Files: F:\The Central Command\Command Center\Mission Debrief\narrative_assembler.py, bus_core.py
+   - Consume the enriched pool to generate real section narratives; push results into bus_core.section_data for GUI display.
+
+4. Full Report Assembly/Export
+   - Files: bus_core.py, mission_debrief_manager.py
+   - Aggregate the narrative outputs, billing snapshots, disclosures; hand off to export routines (PDF/DOCX) and surface status in GUI.
+
+5. Validation Suite
+   - Files: F:\The Central Command\Command Center\UI\test_gateway_wiring.py (extend) + new end-to-end script in F:\The Central Command\The War Room\dev_tracking\
+   - Automate ingest → section generation → full report → export to confirm the pool feeds every stage.

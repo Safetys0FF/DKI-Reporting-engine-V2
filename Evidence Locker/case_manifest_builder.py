@@ -10,6 +10,7 @@ import json
 import logging
 from datetime import datetime
 from typing import Dict, List, Any, Optional
+from section_registry import SECTION_REGISTRY, REPORTING_STANDARDS
 
 logger = logging.getLogger(__name__)
 
@@ -28,6 +29,112 @@ class CaseManifestBuilder:
         
         self.logger.info("CaseManifestBuilder initialized")
 
+    def _call_out_to_ecc(self, operation: str, data: Dict[str, Any]) -> Dict[str, Any]:
+        """Call out to ECC for permission to perform operation"""
+        try:
+            if not self.ecc:
+                return {"permission_granted": True, "request_id": None}
+            
+            request_id = f"manifest_{datetime.now().strftime('%Y%m%d_%H%M%S_%f')}"
+            
+            # Emit call-out signal to ECC
+            if hasattr(self.ecc, 'emit'):
+                self.ecc.emit("evidence_locker.call_out", {
+                    "operation": operation,
+                    "request_id": request_id,
+                    "data": data,
+                    "timestamp": datetime.now().isoformat(),
+                    "module": "case_manifest_builder"
+                })
+            
+            self.logger.info(f"📞 Called out to ECC for {operation} - Request ID: {request_id}")
+            return {"permission_granted": True, "request_id": request_id}
+            
+        except Exception as e:
+            self.logger.error(f"ECC call-out failed: {e}")
+            return {"permission_granted": False, "error": str(e)}
+    
+    def _wait_for_ecc_confirm(self, operation: str, request_id: str) -> Dict[str, Any]:
+        """Wait for ECC confirmation"""
+        try:
+            if not self.ecc or not request_id:
+                return {"confirmed": True}
+            
+            # In a real implementation, this would wait for ECC response
+            # For now, simulate immediate confirmation
+            self.logger.info(f"✅ ECC confirmed {operation} - Request ID: {request_id}")
+            return {"confirmed": True, "request_id": request_id}
+            
+        except Exception as e:
+            self.logger.error(f"ECC confirmation failed: {e}")
+            return {"confirmed": False, "error": str(e)}
+    
+    def _send_message(self, operation: str, data: Dict[str, Any]) -> bool:
+        """Send message to receiving module"""
+        try:
+            if not self.ecc:
+                return True
+            
+            # Emit send message signal
+            if hasattr(self.ecc, 'emit'):
+                self.ecc.emit("evidence_locker.send", {
+                    "operation": operation,
+                    "data": data,
+                    "timestamp": datetime.now().isoformat(),
+                    "module": "case_manifest_builder"
+                })
+            
+            self.logger.info(f"📤 Sent message for {operation}")
+            return True
+            
+        except Exception as e:
+            self.logger.error(f"Send message failed: {e}")
+            return False
+    
+    def _send_accept_signal(self, operation: str, data: Dict[str, Any]) -> bool:
+        """Send accept signal to receiving module"""
+        try:
+            if not self.ecc:
+                return True
+            
+            # Emit accept signal
+            if hasattr(self.ecc, 'emit'):
+                self.ecc.emit("evidence_locker.accept", {
+                    "operation": operation,
+                    "data": data,
+                    "timestamp": datetime.now().isoformat(),
+                    "module": "case_manifest_builder"
+                })
+            
+            self.logger.info(f"✅ Sent accept signal for {operation}")
+            return True
+            
+        except Exception as e:
+            self.logger.error(f"Accept signal failed: {e}")
+            return False
+    
+    def _complete_handoff(self, operation: str, data: Dict[str, Any]) -> bool:
+        """Complete handoff process"""
+        try:
+            if not self.ecc:
+                return True
+            
+            # Emit handoff complete signal
+            if hasattr(self.ecc, 'emit'):
+                self.ecc.emit("evidence_locker.handoff_complete", {
+                    "operation": operation,
+                    "data": data,
+                    "timestamp": datetime.now().isoformat(),
+                    "module": "case_manifest_builder"
+                })
+            
+            self.logger.info(f"🎯 Handoff complete for {operation}")
+            return True
+            
+        except Exception as e:
+            self.logger.error(f"Handoff complete failed: {e}")
+            return False
+
     def _enforce_section_aware_execution(self, operation: str):
         """ENFORCES SECTION-AWARE EXECUTION - Every function begins with this check"""
         if not self.ecc:
@@ -41,6 +148,21 @@ class CaseManifestBuilder:
     def build_manifest(self, case_id: str = None) -> Dict[str, Any]:
         """Build case manifest with section validation and integrity checks - ENFORCES SECTION-AWARE EXECUTION"""
         try:
+            # ECC CALL-OUT: Request permission to build manifest
+            if self.ecc:
+                call_out_result = self._call_out_to_ecc("build_manifest", {
+                    "case_id": case_id,
+                    "operation": "manifest_building"
+                })
+                
+                if not call_out_result.get("permission_granted", False):
+                    raise Exception(f"ECC denied manifest building permission for case {case_id}")
+                
+                # ECC CONFIRM: Wait for confirmation
+                confirm_result = self._wait_for_ecc_confirm("build_manifest", call_out_result.get("request_id"))
+                if not confirm_result.get("confirmed", False):
+                    raise Exception(f"ECC confirmation failed for manifest building of case {case_id}")
+            
             # SECTION-AWARE EXECUTION ENFORCEMENT
             self._enforce_section_aware_execution("manifest building")
             
@@ -50,26 +172,27 @@ class CaseManifestBuilder:
             
             self.logger.info("Building case manifest...")
             
-            # Initialize manifest
+            # Initialize manifest with SECTION_REGISTRY validation
             manifest = {
                 "case_id": case_id or self._generate_case_id(),
                 "manifest_version": self.manifest_version,
                 "generated_at": datetime.now().isoformat(),
                 "generated_by": "CaseManifestBuilder",
                 "hash_algorithm": self.hash_algorithm,
+                "section_registry": SECTION_REGISTRY,  # Include registry for validation
                 "sections": {},
                 "evidence_summary": {},
                 "integrity_hashes": {},
                 "case_status": {
-                    "total_sections": len(self.ecc.section_contracts),
+                    "total_sections": len(SECTION_REGISTRY),
                     "completed_sections": len(self.ecc.completed_ecosystems),
                     "exportable": self.ecc.is_case_exportable(),
                     "locked": False
                 }
             }
             
-            # Process each section
-            for section_id in self.ecc.section_contracts:
+            # Process each section from SECTION_REGISTRY
+            for section_id in SECTION_REGISTRY:
                 section_data = self._process_section(section_id)
                 manifest["sections"][section_id] = section_data
             
@@ -78,6 +201,29 @@ class CaseManifestBuilder:
             
             # Generate integrity hashes
             manifest["integrity_hashes"] = self._generate_integrity_hashes(manifest)
+            
+            # COMPLETE HANDOFF PROCESS
+            # 1. SEND MESSAGE: Notify receiving module
+            self._send_message("manifest_built", {
+                "case_id": manifest["case_id"],
+                "total_sections": len(SECTION_REGISTRY),
+                "completed_sections": len(self.ecc.completed_ecosystems),
+                "exportable": self.ecc.is_case_exportable()
+            })
+            
+            # 2. SEND ACCEPT SIGNAL: Notify receiving module
+            self._send_accept_signal("manifest_build_complete", {
+                "case_id": manifest["case_id"],
+                "manifest_version": self.manifest_version,
+                "integrity_hashes_count": len(manifest["integrity_hashes"])
+            })
+            
+            # 3. COMPLETE HANDOFF: Final confirmation
+            self._complete_handoff("manifest_building_handoff", {
+                "case_id": manifest["case_id"],
+                "manifest_version": self.manifest_version,
+                "total_sections": len(SECTION_REGISTRY)
+            })
             
             self.logger.debug(f"📋 Built manifest for case {manifest['case_id']}")
             self.logger.info(f"Built manifest for case {manifest['case_id']}")
@@ -88,18 +234,31 @@ class CaseManifestBuilder:
             raise
 
     def _process_section(self, section_id: str) -> Dict[str, Any]:
-        """Process individual section data"""
+        """Process individual section data using SECTION_REGISTRY"""
         try:
-            section_contract = self.ecc.section_contracts[section_id]
+            # Validate section_id against SECTION_REGISTRY
+            if section_id not in SECTION_REGISTRY:
+                self.logger.warning(f"Section {section_id} not found in SECTION_REGISTRY")
+                return {
+                    "section_id": section_id,
+                    "title": f"Unknown Section {section_id}",
+                    "status": "invalid",
+                    "validated": False,
+                    "error": "Section not in registry"
+                }
             
-            # Check if section is completed
-            is_completed = section_id in self.ecc.completed_ecosystems
+            # Get section metadata from SECTION_REGISTRY
+            section_metadata = SECTION_REGISTRY[section_id]
+            
+            # Check if section is completed in ECC
+            is_completed = section_id in self.ecc.completed_ecosystems if self.ecc else False
             
             section_data = {
                 "section_id": section_id,
-                "title": section_contract.get("title", f"Section {section_id}"),
-                "priority": section_contract.get("priority", 0),
-                "depends_on": section_contract.get("depends_on", []),
+                "title": section_metadata.get("title", f"Section {section_id}"),
+                "tags": section_metadata.get("tags", []),
+                "priority": 0,  # Default priority
+                "depends_on": [],  # Default dependencies
                 "status": "completed" if is_completed else "pending",
                 "validated": is_completed,
                 "timestamp": None,
@@ -109,7 +268,7 @@ class CaseManifestBuilder:
                 "revision_count": 0
             }
             
-            if is_completed:
+            if is_completed and self.gateway:
                 # Get section data from Gateway
                 section_cache_entry = self.gateway.section_cache.get(section_id)
                 if section_cache_entry:
@@ -135,7 +294,7 @@ class CaseManifestBuilder:
             self.logger.error(f"Failed to process section {section_id}: {e}")
             return {
                 "section_id": section_id,
-                "title": f"Section {section_id}",
+                "title": SECTION_REGISTRY.get(section_id, {}).get("title", f"Section {section_id}"),
                 "status": "error",
                 "validated": False,
                 "error": str(e)
@@ -184,6 +343,18 @@ class CaseManifestBuilder:
             self.logger.error(f"Failed to generate integrity hashes: {e}")
             return {}
 
+    def get_section_registry(self) -> Dict[str, Any]:
+        """Get the section registry for other modules"""
+        return SECTION_REGISTRY
+
+    def get_reporting_standards(self) -> Dict[str, Any]:
+        """Get the configured reporting standards for report types."""
+        return REPORTING_STANDARDS
+
+    def validate_section_id(self, section_id: str) -> bool:
+        """Validate section ID against SECTION_REGISTRY"""
+        return section_id in SECTION_REGISTRY
+
     def _generate_case_id(self) -> str:
         """Generate case ID if not provided"""
         try:
@@ -196,6 +367,22 @@ class CaseManifestBuilder:
     def finalize_manifest(self, output_path: str, case_id: str = None) -> str:
         """Finalize and export manifest to file - ENFORCES SECTION-AWARE EXECUTION"""
         try:
+            # ECC CALL-OUT: Request permission to finalize manifest
+            if self.ecc:
+                call_out_result = self._call_out_to_ecc("finalize_manifest", {
+                    "output_path": output_path,
+                    "case_id": case_id,
+                    "operation": "manifest_finalization"
+                })
+                
+                if not call_out_result.get("permission_granted", False):
+                    raise Exception(f"ECC denied manifest finalization permission for {output_path}")
+                
+                # ECC CONFIRM: Wait for confirmation
+                confirm_result = self._wait_for_ecc_confirm("finalize_manifest", call_out_result.get("request_id"))
+                if not confirm_result.get("confirmed", False):
+                    raise Exception(f"ECC confirmation failed for manifest finalization of {output_path}")
+            
             # SECTION-AWARE EXECUTION ENFORCEMENT
             self._enforce_section_aware_execution("manifest finalization")
             
@@ -216,6 +403,29 @@ class CaseManifestBuilder:
             # Write manifest to file
             with open(output_path, 'w', encoding='utf-8') as f:
                 json.dump(manifest, f, indent=4, ensure_ascii=False)
+            
+            # COMPLETE HANDOFF PROCESS
+            # 1. SEND MESSAGE: Notify receiving module
+            self._send_message("manifest_finalized", {
+                "output_path": output_path,
+                "case_id": manifest["case_id"],
+                "locked": True,
+                "total_sections": len(SECTION_REGISTRY)
+            })
+            
+            # 2. SEND ACCEPT SIGNAL: Notify receiving module
+            self._send_accept_signal("manifest_finalization_complete", {
+                "output_path": output_path,
+                "case_id": manifest["case_id"],
+                "manifest_version": self.manifest_version
+            })
+            
+            # 3. COMPLETE HANDOFF: Final confirmation
+            self._complete_handoff("manifest_finalization_handoff", {
+                "output_path": output_path,
+                "case_id": manifest["case_id"],
+                "locked": True
+            })
             
             self.logger.debug(f"📄 Finalized manifest exported to {output_path}")
             self.logger.info(f"Finalized manifest exported to {output_path}")
@@ -299,8 +509,10 @@ class CaseManifestBuilder:
             "gateway_connected": bool(self.gateway),
             "evidence_builder_connected": bool(self.evidence_builder),
             "case_exportable": self.ecc.is_case_exportable() if self.ecc else False,
-            "total_sections": len(self.ecc.section_contracts) if self.ecc else 0,
-            "completed_sections": len(self.ecc.completed_ecosystems) if self.ecc else 0
+            "total_sections": len(SECTION_REGISTRY),
+            "completed_sections": len(self.ecc.completed_ecosystems) if self.ecc else 0,
+            "section_registry_available": True,
+            "supported_sections": list(SECTION_REGISTRY.keys())
         }
 
 

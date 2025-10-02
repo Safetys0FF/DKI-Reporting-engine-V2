@@ -1,0 +1,39 @@
+{
+  "test_suite": "Scanning and Parsing Tests",
+  "scanning_score": 100.0,
+  "scanning_components": {
+    "evidence_classifier": "FUNCTIONAL",
+    "evidence_index": "FUNCTIONAL",
+    "case_manifest_builder": "FUNCTIONAL"
+  },
+  "parsing_score": 100.0,
+  "parsing_locations": {
+    "F:/The Central Command/The Marshall": {
+      "modules": 1,
+      "frameworks": 0
+    },
+    "F:/The Central Command/The Analyst Deck/Analyst 1": {
+      "modules": 2,
+      "frameworks": 1
+    },
+    "F:/The Central Command/The Analyst Deck/Analyst 2": {
+      "modules": 5,
+      "frameworks": 1
+    },
+    "F:/The Central Command/Command Center/Data Bus": {
+      "modules": 6,
+      "frameworks": 0
+    }
+  },
+  "format_support_score": 85.71428571428571,
+  "supported_formats": {
+    "pdf": 1,
+    "docx": 0,
+    "txt": 4,
+    "jpg": 2,
+    "png": 2,
+    "mp4": 1,
+    "wav": 1
+  },
+  "total_test_files": 11
+}

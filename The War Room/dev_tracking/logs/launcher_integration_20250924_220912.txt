@@ -1,0 +1,9 @@
+
+Launcher & UI Integration Update
+================================
+Timestamp: 2025-09-24T22:09:12.834429
+
+Summary:
+- Updated DKI_ENGINE_LAUNCHER.bat to launch professional_case_manager.py for GUI sessions while keeping runtime mode on main_application.py.
+- Central plugin now loads NarrativeAssembler and MissionDebriefManager from their active Mission Debrief paths, exposing the new deposition pipeline to the UI.
+- Runtime main_application.py uses the same import bridge to ensure Mission Debrief logic is available to headless runs.

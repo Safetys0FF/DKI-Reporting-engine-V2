@@ -1,0 +1,9 @@
+{
+  "scanning_performance_test": "Live Execution Results",
+  "evidence_scan_rate_per_second": 8153.33,
+  "repository_scan_time_ms": 999000,
+  "case_scan_rate_per_second": 0,
+  "file_classification_rate_per_second": 21240.57,
+  "total_files_classified": 15,
+  "classification_time_ms": 0.71
+}

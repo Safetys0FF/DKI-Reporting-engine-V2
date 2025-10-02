@@ -1,0 +1,7 @@
+2025-09-30 21:33:44,235 - bus_core - INFO - Central Command Bus initialized
+2025-09-30 21:33:44,236 - bus_core - INFO - [BUS] Signal 'case_create' bound to _handle_case_create_signal
+2025-09-30 21:33:44,236 - bus_core - INFO - [BUS] Signal 'files_add' bound to _handle_files_add_signal
+2025-09-30 21:33:44,236 - bus_core - INFO - [BUS] Signal 'evidence.tagged' bound to _handle_evidence_tagged_signal
+2025-09-30 21:33:44,236 - bus_core - INFO - [BUS] Signal 'evidence.stored' bound to _handle_evidence_stored_signal
+2025-09-30 21:33:44,236 - bus_core - INFO - [BUS] Signal 'evidence_locker.call_out' bound to _handle_evidence_call_out_signal
+2025-09-30 21:33:44,236 - bus_core - INFO - [BUS] Signal 'evidence_locker.accept' bound to _handle_evidence_accept_signal

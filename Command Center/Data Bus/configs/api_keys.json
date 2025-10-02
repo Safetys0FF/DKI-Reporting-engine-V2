@@ -1,0 +1,38 @@
+{
+    "openai_api": {
+        "key": "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",
+        "endpoint": "https://api.openai.com/v1",
+        "enabled": true,
+        "description": "OpenAI GPT-4o API - PRIMARY for all analysis: document identification, image/video analysis, geolocation, object detection, context analysis"
+    },
+    "google_gemini_api": {
+        "key": "AIzaSyBCLtZHzryMKXvJLiMp3AJyBYUJuV19M8g",
+        "endpoint": "https://generativelanguage.googleapis.com/v1",
+        "enabled": true,
+        "description": "Google Gemini API - FALLBACK for AI services (OpenAI is PRIMARY)"
+    },
+    "google_maps_api": {
+        "key": "AIzaSyD_uRroihNfFZz7H6FC-leEfDRk6kDcOxY",
+        "endpoint": "https://maps.googleapis.com/maps/api",
+        "enabled": true,
+        "description": "Google Maps API - FALLBACK for geocoding and reverse geocoding (OpenAI is PRIMARY)"
+    },
+    "bing_search_api": {
+        "key": "",
+        "endpoint": "https://api.bing.microsoft.com/v7.0",
+        "enabled": false,
+        "description": "Bing Search API for OSINT and web search"
+    },
+    "public_records_api": {
+        "key": "",
+        "endpoint": "https://api.publicrecords.com",
+        "enabled": false,
+        "description": "Public Records API for background checks"
+    },
+    "whitepages_api": {
+        "key": "",
+        "endpoint": "https://proapi.whitepages.com",
+        "enabled": false,
+        "description": "WhitePages API for contact verification"
+    }
+}

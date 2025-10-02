@@ -1,0 +1,22 @@
+
+
+[SECTION_1]
+INVESTIGATION REPORT - Case #[Case Number]
+Client: [Client Name]
+Investigation Date: [Date]
+
+This investigation involved the review and analysis of 0 items of Evidence collected shows.
+
+
+[SECTION_CP]
+INVESTIGATION REPORT
+Prepared by: [Investigator Name]
+Agency: [Agency Name]
+License #: [License Number]
+
+This report contains confidential investigative information. Distribution is restricted to authorized personnel only.
+
+
+[SECTION_TOC]
+TABLE OF CONTENTS.
+

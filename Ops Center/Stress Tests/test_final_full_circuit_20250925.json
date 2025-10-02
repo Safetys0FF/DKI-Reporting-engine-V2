@@ -1,0 +1,17 @@
+{
+  "test_final": "Full Circuit Main Bus ECC Librarian",
+  "circuit_steps": [
+    "main_to_ecc_FAIL",
+    "ecc_to_librarian_PASS",
+    "librarian_to_main_PASS"
+  ],
+  "circuit_status": {
+    "main_to_ecc": "FAIL",
+    "ecc_to_librarian": "PASS",
+    "librarian_to_main": "PASS"
+  },
+  "circuit_integrity_percent": 66.66666666666666,
+  "circuit_cracks": 1,
+  "total_steps": 3,
+  "passed_steps": 2
+}

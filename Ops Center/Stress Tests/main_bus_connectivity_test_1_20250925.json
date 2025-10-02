@@ -1,0 +1,12 @@
+{
+  "test_name": "Main Bus Connectivity Test 1",
+  "timestamp": "2025-09-25T20:45:00",
+  "bus_to_evidence_locker": {
+    "status": "CONNECTED",
+    "cases_found": 6
+  },
+  "bus_to_gateway": {
+    "status": "FILE_MISSING",
+    "path": "./Gateway/gateway_controller.py"
+  }
+}

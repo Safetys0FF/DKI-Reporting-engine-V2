@@ -39,7 +39,7 @@ class FrozenSectionData:
 class EcosystemController:
     """Root boot node - Core controller for managing section ecosystems and their lifecycle"""
     
-    def __init__(self):
+    def __init__(self, bus=None):
         # Boot node status
         self.is_boot_node = True
         self.boot_time = datetime.now().isoformat()
@@ -69,6 +69,10 @@ class EcosystemController:
         
         # Gateway reference for reverse calls (optional)
         self.gateway = None
+        self.bus = None
+        self._bus_handlers_registered = False
+        self.section_activity_log: List[Dict[str, Any]] = []
+        self.latest_mission_status: Dict[str, Any] = {}
         
         # Core engine references
         self.ocr_engine = None
@@ -96,6 +100,7 @@ class EcosystemController:
         self.logger.debug(f" EcosystemController initialized as ROOT BOOT NODE at {self.boot_time}")
         self.logger.debug(f" Preloaded {len(self.section_contracts)} section contracts")
         self.logger.info(f"EcosystemController initialized with {len(self.section_contracts)} section contracts")
+        self._attach_bus(bus)
     
     def inject_gateway(self, gateway_instance):
         """Inject Gateway reference for reverse calls"""
@@ -103,6 +108,76 @@ class EcosystemController:
         self.logger.debug(" Gateway reference injected into ECC")
         self.logger.info("Gateway reference injected into ECC")
     
+    def _attach_bus(self, bus) -> None:
+        if not bus:
+            return
+        if self.bus is bus and getattr(self, "_bus_handlers_registered", False):
+            return
+        self.bus = bus
+        try:
+            bus.register_signal("section.data.updated", self._handle_bus_section_data_updated)
+            bus.register_signal("gateway.section.complete", self._handle_bus_gateway_section_complete)
+            self._bus_handlers_registered = True
+        except Exception as exc:
+            logger.warning("Failed to register EcosystemController bus handlers: %s", exc)
+
+    def _handle_bus_section_data_updated(self, payload: Dict[str, Any]) -> None:
+        if not isinstance(payload, dict):
+            return
+        inner_payload = payload.get("payload") if isinstance(payload.get("payload"), dict) else payload
+        section_id = payload.get("section_id") or inner_payload.get("section_id")
+        if not section_id:
+            return
+        self.section_states[section_id] = "enriched"
+        record = {
+            "event": "section.data.updated",
+            "section_id": section_id,
+            "case_id": payload.get("case_id") or inner_payload.get("case_id"),
+            "timestamp": datetime.now().isoformat(),
+        }
+        self.section_activity_log.append(record)
+        if len(self.section_activity_log) > 100:
+            self.section_activity_log = self.section_activity_log[-100:]
+        self._emit_status_update(reason="section.data.updated", context=record)
+
+    def _handle_bus_gateway_section_complete(self, payload: Dict[str, Any]) -> None:
+        if not isinstance(payload, dict):
+            return
+        inner_payload = payload.get("payload") if isinstance(payload.get("payload"), dict) else payload
+        section_id = payload.get("section_id") or inner_payload.get("section_id")
+        if not section_id:
+            return
+        self.section_states[section_id] = "completed"
+        self.completed_ecosystems.add(section_id)
+        record = {
+            "event": "gateway.section.complete",
+            "section_id": section_id,
+            "case_id": payload.get("case_id") or inner_payload.get("case_id"),
+            "timestamp": datetime.now().isoformat(),
+        }
+        self.section_activity_log.append(record)
+        if len(self.section_activity_log) > 100:
+            self.section_activity_log = self.section_activity_log[-100:]
+        self._emit_status_update(reason="gateway.section.complete", context=record)
+
+    def _emit_status_update(self, *, reason: str, context: Optional[Dict[str, Any]] = None) -> None:
+        if not self.bus:
+            return
+        payload = {
+            "reason": reason,
+            "timestamp": datetime.now().isoformat(),
+            "section_states": dict(self.section_states),
+            "completed_sections": list(self.completed_ecosystems),
+            "active_sections": list(self.active_sections),
+        }
+        if context:
+            payload["context"] = context
+        self.latest_mission_status = payload
+        try:
+            self.bus.emit("mission.status", payload)
+        except Exception as exc:
+            logger.warning("Failed to emit mission.status: %s", exc)
+
     def inject_engines(self, ocr_engine=None, evidence_classifier=None, evidence_index=None, narrative_engine=None):
         """Inject core engine references"""
         if ocr_engine:
@@ -595,7 +670,9 @@ class EcosystemController:
                 'evidence_classifier': bool(self.evidence_classifier),
                 'evidence_index': bool(self.evidence_index),
                 'narrative_engine': bool(self.narrative_engine)
-            }
+            },
+            'section_activity_log_count': len(self.section_activity_log),
+            'latest_mission_status': getattr(self, 'latest_mission_status', {}),
         }
     
     def get_controller_status(self) -> Dict[str, Any]:

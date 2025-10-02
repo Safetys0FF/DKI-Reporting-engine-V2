@@ -1,0 +1,509 @@
+﻿{
+  "source_root": "F:\\DKI-Report-Engine\\Report Engine\\CoreSystem\\Logic",
+  "files": [
+    {
+      "file": "Report Engine\\CoreSystem\\Logic\\CP, TOC, Sec 1.txt",
+      "sections": [
+        {
+          "section_id": "section_1",
+          "inline_title": "title: \"INVESTIGATION OBJECTIVE\"",
+          "heading_title": null,
+          "label_logic": null,
+          "keys_detected": [
+            "layout",
+            "reverse_continuity_test",
+            "role_resolution",
+            "conflict_handling",
+            "report_stage_tags"
+          ],
+          "raw_excerpt": "  layout:\n    header:\n      text: \"INVESTIGATION OBJECTIVE\"\n      font: Times New Roman\n      size: 22pt\n      weight: bold\n      align: center\n\n    subheader:\n      text: \"CLIENT INFORMATION\"\n      font: Times New Roman\n      size: 16pt\n      weight: bold\n      align: left\n\n    fields:\n      - label: \"Client Name\"\n        source: \"Client Intake Form\"\n        field_path: \"Header\"\n        content_type: dynamic_text"
+        }
+      ],
+      "highlights": [
+        "title: \"INVESTIGATION OBJECTIVE\""
+      ]
+    },
+    {
+      "file": "Report Engine\\CoreSystem\\Logic\\Section 1 - Investigation Objectives (updated).txt",
+      "sections": [],
+      "highlights": [
+        "NEW REPORT LOGIC STRUCTURE \u2014 SECTION 1 FOCUS",
+        "1. Report Type Logic Switch (Section 1)",
+        "The **investigative objective statement** of the case",
+        "The **fixed form** that collects client information, subjects, goals, and objectives",
+        "A direct reflection of both the **client intake form** and the **signed contract",
+        "This section's **headings, labels, and fillable fields** are static and must not be altered.",
+        "The report engine does not reformat or suppress this section under any condition.",
+        "The **type of investigation** (Investigative, Field, Hybrid)",
+        "The **report structure** required",
+        "The **billing model** to apply",
+        "Whether any modules should be suppressed or remain active",
+        "If** contract is research-only and no field clause is present \u2192 **Investigative Report Mode",
+        "If** contract is surveillance-only and no investigative support is listed \u2192 **Field Report Mode",
+        "If** both clauses exist or case escalates mid-process \u2192 **Hybrid Report Mode",
+        "Active sections and headings",
+        "Billing logic rules (hourly vs flat)",
+        "Suppressed modules",
+        "Export formatting and summaries",
+        "The **type of tray (report structure)",
+        "The **mesh size (granularity of detail)",
+        "The **processing method (billing, documentation)",
+        "Section 1 never changes. It defines everything else.",
+        "Investigative Report",
+        "Contains only investigative findings, background data, asset info, or research results.",
+        "No surveillance or field operations."
+      ],
+      "raw_excerpt": "**NEW REPORT LOGIC STRUCTURE \u2014 SECTION 1 FOCUS**\n\n\n**NEW REPORT LOGIC STRUCTURE \u2014 SECTION 1 FOCUS**\n\n---\n\n**1. Report Type Logic Switch (Section 1)**\n\nSection 1 is the primary filter for the report system. It establishes the core case identity and anchors logic decisions for the remainder of the report. It does **not** change structurally but controls how the rest of the report behaves.\n\n---\n\n### \ud83d\udccd What Section 1 *Is*:\n\n* The **investigative objective statement** of the case\n* The **fixed form** that collects client information, subjects, goals, and objectives\n* A direct reflection of both the **client intake form** and the **signed contract**\n\n### \ud83d\udd12 Structure:\n\n* This section's **headings, labels, and fillable fields** are static and must not be altered.\n* The report engine does not reformat or suppress this section under any condition.\n\n---\n\n### \ud83d\udd01 Section 1 as a Logic Filter\n\nSection 1 drives all downstream decisions based on two core anchors:\n\n1. **Contract Type**\n2. **Client Intake Needs**\n\nFrom these, the system identifies:\n\n* The **type of investigation** (Investigative, Field, Hybrid)\n* The **report structure** required\n* The **billing model** to apply\n* Whether any modules should be suppressed or remain active\n"
+    },
+    {
+      "file": "Report Engine\\CoreSystem\\Logic\\Section 1 - Investigation Objectives with switches.txt",
+      "sections": [
+        {
+          "section_id": "section_6",
+          "inline_title": "BILLING SUMMARY",
+          "heading_title": null,
+          "label_logic": null,
+          "keys_detected": [
+            "label",
+            "purpose",
+            "formatting",
+            "data_sources_and_anchors",
+            "surveillance_fieldwork_budget",
+            "billable_time"
+          ],
+          "raw_excerpt": "label: \"SURVEILLANCE OPERATIONS BILLING LOGIC\"\npurpose: \"Defines how surveillance-related billing is extracted, verified, and reported. Ensures transparent, court-defensible invoicing based on verified fieldwork.\"\n\n# --- FORMATTING RULES ---\nformatting:\n  default_font: Times New Roman\n  default_size: 11pt\n  header_size: 22pt\n  subheader_size: 16pt\n  label_weight: bold\n  paragraph_weight: normal\n  alignment: left\n\ndata_sources_and_anchors:\n  - section: \"Section 3: Daily Logs\"\n    details:\n      - \"Logs actual hours in the field\"\n      - \"Records departure, contact, and return times\"\n      - \"Primary billing data source\"\n  - section: \"Section 4: Surveillance Sessions\""
+        },
+        {
+          "section_id": "section_6",
+          "inline_title": "label_logic:",
+          "heading_title": null,
+          "label_logic": null,
+          "keys_detected": [],
+          "raw_excerpt": "    if: report_type == \"Investigative\"\n    then: \"BILLING SUMMARY \u2013 INVESTIGATIVE ONLY\"\n    elif: report_type == \"Field\"\n    then: \"BILLING SUMMARY \u2013 FIELD OPERATIONS\"\n    elif: report_type == \"Hybrid\"\n    then: \"BILLING SUMMARY \u2013 COMBINED SERVICES\"\n\n  visibility_logic:\n    always: true\n\n  structure:\n    if: report_type == \"Investigative\"\n    then:\n      line_items:\n        - service: \"Investigative Research\"\n          type: flat\n        - service: \"Document Delivery\"\n          type: optional\n        - service: \"Admin & Compliance Review\"\n          type: optional"
+        }
+      ],
+      "highlights": [
+        "BILLING SUMMARY",
+        "label_logic:"
+      ]
+    },
+    {
+      "file": "Report Engine\\CoreSystem\\Logic\\section 2 - pres-urveillance.txt",
+      "sections": [
+        {
+          "section_id": "section_2",
+          "inline_title": "label: \"2. Pre-Surveillance Summary\"",
+          "heading_title": null,
+          "label_logic": null,
+          "keys_detected": [],
+          "raw_excerpt": "  locked: true\n  margin: narrow\n  formatting:\n    font: Times New Roman\n    size: 22pt\n    weight: bold\n    align: center\n  fallback_clause:\n    enabled: true\n    trigger_condition: \"no_surveillance_required\"\n    text: \"Due to the nature of this case, no surveillance or surveillance planning was performed.\"\n\nreport_logic:\n  section_1:\n    role:\n      - Section 1 defines the report type and governs downstream behavior.\n      - Contract type and client objective dictate whether report is Investigative, Surveillance, or Hybrid.\n      - Section 1 itself is static but determines logic for subsequent sections.\n\nunified_toolkit_dispatch:"
+        },
+        {
+          "section_id": "section_input",
+          "inline_title": "receives_from:",
+          "heading_title": null,
+          "label_logic": null,
+          "keys_detected": [],
+          "raw_excerpt": "  - gateway\n  - previous_section\nrequires:\n  - section_context.unified_results\n  - report_meta\n  - assigned_documents\n  - section_flags\ninitialize:\n  - load_toolkit_results: \"{{ section_context.unified_results }}\"\n  - apply_report_meta: \"{{ report_meta }}\"\n  - verify_required_docs: \"{{ assigned_documents }}\"\n  - inherit_flags: \"{{ section_flags }}\""
+        },
+        {
+          "section_id": "section_output",
+          "inline_title": "sends_to:",
+          "heading_title": null,
+          "label_logic": null,
+          "keys_detected": [],
+          "raw_excerpt": "    - gateway\n    - next_section\n  emits:\n    - signal: \"section_completed\"\n      condition: if section_valid == true\n    - payload:\n        section_summary: \"{{ generated_summary }}\"\n        flags: \"{{ generated_flags }}\"\n        context: \"{{ section_context }}\"\n    - log: \"Section {{ current_section }} completed. Output dispatched to gateway.\"\n\ngateway_input_hooks:\n  id: gateway_section_loader\n  description: Injects toolkit data and context into sections on entry.\n\n  on_section_entry:\n    - fetch: section_context.unified_results\n    - fetch: report_meta\n    - fetch: assigned_documents\n    - fetch: previous_section.flags"
+        },
+        {
+          "section_id": "section_2a",
+          "inline_title": "label: \"2a. Case Summary\"",
+          "heading_title": null,
+          "label_logic": null,
+          "keys_detected": [
+            "layout",
+            "locked",
+            "margin",
+            "formatting",
+            "content_blocks",
+            "fallback_logic",
+            "validation",
+            "reverse_continuity_test",
+            "conflict_handling"
+          ],
+          "raw_excerpt": "  layout: vertical\n  locked: true\n  margin: narrow\n\n  formatting:\n    header:\n      text: \"CASE SUMMARY\"\n      font: Times New Roman\n      size: 16pt\n      weight: bold\n      align: left\n    body:\n      font: Times New Roman\n      size: 12pt\n      weight: normal\n      line_spacing: single\n      align: left\n\n  content_blocks:\n    - type: paragraph"
+        },
+        {
+          "section_id": "section_2b",
+          "inline_title": "label: \"2b. Subject Information\"",
+          "heading_title": null,
+          "label_logic": null,
+          "keys_detected": [
+            "layout",
+            "locked",
+            "margin",
+            "formatting",
+            "organization_logic",
+            "content_blocks",
+            "fallback_logic",
+            "validation",
+            "notes",
+            "reverse_continuity_test",
+            "conflict_handling"
+          ],
+          "raw_excerpt": "layout: vertical\nlocked: true\nmargin: narrow\n\nformatting:\n  header:\n    text: \"SUBJECT INFORMATION\"\n    font: Times New Roman\n    size: 16pt\n    weight: bold\n    align: left\n  body:\n    font: Times New Roman\n    size: 12pt\n    weight: normal\n    align: left\n    line_spacing: single\n\norganization_logic:\n  group_by: \"Subject Entity\""
+        },
+        {
+          "section_id": "section_2c",
+          "inline_title": "label: \"2c. Habits, Patterns, and POIs\"",
+          "heading_title": null,
+          "label_logic": null,
+          "keys_detected": [
+            "layout",
+            "locked",
+            "margin",
+            "formatting",
+            "organization_logic",
+            "content_blocks",
+            "validation",
+            "notes",
+            "reverse_continuity_test",
+            "conflict_handling"
+          ],
+          "raw_excerpt": "layout: vertical\nlocked: true\nmargin: narrow\n\nformatting:\n  header:\n    text: \"SUBJECT HABITS, PATTERNS, AND PLACES OF INTEREST\"\n    font: Times New Roman\n    size: 16pt\n    weight: bold\n    align: left\n  body:\n    font: Times New Roman\n    size: 12pt\n    weight: normal\n    align: left\n    line_spacing: single\n\norganization_logic:\n  group_by: \"Subject Entity\""
+        },
+        {
+          "section_id": "section_2d",
+          "inline_title": "label: \"2d. Maps and Visual Reference Assets\"",
+          "heading_title": null,
+          "label_logic": null,
+          "keys_detected": [
+            "layout",
+            "locked",
+            "margin",
+            "formatting",
+            "content_elements",
+            "metadata_crosscheck",
+            "placement",
+            "notes",
+            "reverse_continuity_test",
+            "conflict_handling"
+          ],
+          "raw_excerpt": "layout: vertical\nlocked: true\nmargin: narrow\n\nformatting:\n  header:\n    text: \"MAPS AND VISUAL REFERENCE ASSETS\"\n    font: Times New Roman\n    size: 16pt\n    weight: bold\n    align: left\n  body:\n    font: Times New Roman\n    size: 12pt\n    weight: normal\n    align: left\n    line_spacing: single\n\ncontent_elements:\n  - type: visual_reference"
+        },
+        {
+          "section_id": "section_2e",
+          "inline_title": "title: \"Final Planning Statement\"",
+          "heading_title": null,
+          "label_logic": null,
+          "keys_detected": [],
+          "raw_excerpt": "  font: Times New Roman\n  size: 22pt\n  weight: bold\n  align: left\n  vertical_spacing: single\n\n  layout:\n    - label: \"Final Planning Statement\"\n      content_type: paragraph\n      font: Times New Roman\n      size: 12pt\n      weight: normal\n      align: left\n      text: >\n        This final planning section summarizes all validated intelligence from sections A through D.\n        It outlines the investigative needs, operational readiness, and the overall scope of the assignment.\n        All data collected is proprietary to DKI Services and may not be redistributed or duplicated without written permission.\n        Field personnel are expected to operate in full accordance with their licensing laws and professional standards.\n\n    - label: \"Ethics Declaration\""
+        },
+        {
+          "section_id": "section_2b",
+          "inline_title": "title: \"Subject Patterning (2B)\"",
+          "heading_title": null,
+          "label_logic": null,
+          "keys_detected": [
+            "uses_fallback"
+          ],
+          "raw_excerpt": "uses_fallback: multi_subject_fallbacks"
+        },
+        {
+          "section_id": "section_2c",
+          "inline_title": "title: \"Behavioral Expectations (2C)\"",
+          "heading_title": null,
+          "label_logic": null,
+          "keys_detected": [
+            "uses_fallback",
+            "reverse_continuity_test",
+            "conflict_handling"
+          ],
+          "raw_excerpt": "uses_fallback: multi_subject_fallbacks\n\n\n# --- REVERSE CONTINUITY TEST ---\nreverse_continuity_test:\n  active: true\n  trace_sources:\n    - Client Intake Form\n    - Client Contract\n  validate_fields:\n    - client_name\n    - client_address\n    - client_phone\n    - date_of_contract\n    - goals_of_investigation\n    - primary_subject\n    - subject_employer\n    - surveillance_hours_requested\n  test_methods:\n    anchor_validation:"
+        }
+      ],
+      "highlights": [
+        "label: \"2. Pre-Surveillance Summary\"",
+        "receives_from:",
+        "sends_to:",
+        "label: \"2a. Case Summary\"",
+        "label: \"2b. Subject Information\"",
+        "label: \"2c. Habits, Patterns, and POIs\"",
+        "label: \"2d. Maps and Visual Reference Assets\"",
+        "title: \"Final Planning Statement\"",
+        "title: \"Subject Patterning (2B)\"",
+        "title: \"Behavioral Expectations (2C)\""
+      ]
+    },
+    {
+      "file": "Report Engine\\CoreSystem\\Logic\\Section 2 - Presurveillance Logic.txt",
+      "sections": [],
+      "highlights": [
+        "ENGLISH REPORT LOGIC SWITCH SCRIPT",
+        "SECTION 1: Anchor Role",
+        "Section 1 defines the type of report and governs all downstream behavior.",
+        "The contract type and client\u2019s stated objective in Section 1 will determine whether the report behaves as Investigative, Field, or Hybrid.",
+        "Section 1 itself does not change, but it tells the system what should and should not appear in later sections.",
+        "LOGIC SWITCHES",
+        "IF the report is Investigative:",
+        "Section 2 becomes \u201cINVESTIGATIVE REQUIREMENTS\u201d",
+        "Content focuses on: background checks, legal tracing, employment verification, etc.",
+        "Surveillance Logs, Route Planning, Vehicle Tracking, and Mileage Tracking are suppressed.",
+        "The billing model is flat-rate.",
+        "IF the report is Field-based:",
+        "Section 2 becomes \u201cPRE-SURVEILLANCE SUMMARY\u201d",
+        "Content focuses on: recon, vehicle identifiers, surveillance strategy, location planning",
+        "Enables modules like: Surveillance Logs, Photographic Evidence, Time Logs",
+        "Suppresses Investigative Analysis or court research blocks",
+        "The billing model can be hourly or flat depending on the contract",
+        "IF the report is Hybrid:",
+        "Section 2 becomes \u201cHYBRID PREPARATION SUMMARY\u201d",
+        "Mixes elements from both Investigative and Field reports",
+        "Enables all modules",
+        "Billing model becomes Hybrid, either stacked or tiered depending on case flow",
+        "BILLING TRIGGERS",
+        "If there are 2 or more contracts: trigger MULTICONTRACT MODE",
+        "Suppresses duplicate planning charges"
+      ],
+      "raw_excerpt": "# === SECTION 2 LOGIC (ENGLISH FORMAT) ===\n\n## Title: PRE-SURVEILLANCE PLANNING\n\n\n**ENGLISH REPORT LOGIC SWITCH SCRIPT**\n\n---\n\n**SECTION 1: Anchor Role**\n\n* Section 1 defines the type of report and governs all downstream behavior.\n* The contract type and client\u2019s stated objective in Section 1 will determine whether the report behaves as Investigative, Field, or Hybrid.\n* Section 1 itself does not change, but it tells the system what should and should not appear in later sections.\n\n---\n\n**LOGIC SWITCHES**\n\n**IF the report is Investigative:**\n\n* Section 2 becomes \u201cINVESTIGATIVE REQUIREMENTS\u201d\n* Content focuses on: background checks, legal tracing, employment verification, etc.\n* Surveillance Logs, Route Planning, Vehicle Tracking, and Mileage Tracking are suppressed.\n* The billing model is flat-rate.\n\n**IF the report is Field-based:**\n\n* Section 2 becomes \u201cPRE-SURVEILLANCE SUMMARY\u201d\n* Content focuses on: recon, vehicle identifiers, surveillance strategy, location planning\n* Enables modules like: Surveillance Logs, Photographic Evidence, Time Logs\n* Suppresses Investigative Analysis or court research blocks\n* The billing model can be hourly or flat depending on the contract\n\n**IF the report is Hybrid:**\n\n* Section 2 becomes \u201cHYBRID PREPARATION SUMMARY\u201d\n* Mixes elements from both Investigative and Field reports\n* Enables all modules\n* Billing model becomes Hybrid, either stacked or tiered depending on case flow"
+    },
+    {
+      "file": "Report Engine\\CoreSystem\\Logic\\section 3 - data logs.txt",
+      "sections": [
+        {
+          "section_id": "section_3",
+          "inline_title": "label: \"3. Surveillance Operational Log\"",
+          "heading_title": null,
+          "label_logic": null,
+          "keys_detected": [],
+          "raw_excerpt": "  locked: true\n  margin: narrow\n\nnarrative_construction:\n  description: \"Surveillance event construction logic\"\n  input_sources:\n    - type: \"Photo Metadata\"\n      includes: [\"EXIF timestamp\", \"filename timestamp\"]\n      source: \"Images\"\n    - type: \"Investigator Notes\"\n      includes: [\"Written notes\", \"Voice memos\", \"GPS logs\"]\n      source: \"Field logs\"\n    - type: \"Client Intel\"\n      includes: [\"Intake form\", \"Pre-surveillance expectations\"]\n      source: \"Client documentation\"\n  logic:\n    - rule: \"Cross-validate all entries using at least two of the three sources\"\n    - rule: \"If only one source is available, trigger Q&A for verification\"\n    - rule: \"Do not rely on assumptions to fill time or activity gaps\""
+        },
+        {
+          "section_id": "section_3",
+          "inline_title": "label_logic:",
+          "heading_title": null,
+          "label_logic": null,
+          "keys_detected": [],
+          "raw_excerpt": "    if: report_type == \"Investigative\"\n    then: \"INVESTIGATION DETAILS\"\n    elif: report_type == \"Hybrid\"\n    then: \"INVESTIGATION DETAILS\"\n    else: \"SURVEILLANCE SUMMARY\"\n\n  content_logic:\n    if: report_type == \"Investigative\"\n    then:\n      include:\n        - findings_timeline\n        - verified_confirmations\n        - document_notes\n      suppress:\n        - field_logs\n        - visuals\n        - billing_blocks\n\n    elif: report_type == \"Hybrid\"\n    then:"
+        }
+      ],
+      "highlights": [
+        "label: \"3. Surveillance Operational Log\"",
+        "label_logic:"
+      ]
+    },
+    {
+      "file": "Report Engine\\CoreSystem\\Logic\\Section 3 - Surveillance Reports - Dialy Logs.txt",
+      "sections": [],
+      "highlights": [
+        "DKI Surveillance Integrity and Billing Logic (Live Field Version)",
+        "SECTION 3 \u2013 SURVEILLANCE SUMMARY: LOGIC SCRIPT (ENGLISH)",
+        "SECTION ROLE",
+        "Section 3 logs all field surveillance activity or investigative findings, depending on report type.",
+        "It is suppressed, relabeled, or activated based on the contract type and field deployment flags.",
+        "This section reflects only verified events captured by licensed investigators or subcontractors.",
+        "LOGIC SWITCHES",
+        "IF report\\_type = Investigative:",
+        "Section 3 relabels as: \u201cINVESTIGATION DETAILS\u201d",
+        "Suppress all field surveillance elements",
+        "Populate with:",
+        "Timeline of investigative findings",
+        "Key confirmations (employment, location, behavior)",
+        "Notes from document retrieval or interviews (where applicable)",
+        "Suppress billing blocks tied to field time, drive time, or visual evidence",
+        "IF report\\_type = Field:",
+        "Section 3 label remains: \u201cSURVEILLANCE SUMMARY\u201d",
+        "Populate daily logs by date and time",
+        "Enable full billing breakdown:",
+        "Drive-To",
+        "Field Operation Time",
+        "Surveillance Engagement",
+        "Mobile Drive",
+        "Drive-From",
+        "Activate metadata checks on:"
+      ],
+      "raw_excerpt": "**DKI Surveillance Integrity and Billing Logic (Live Field Version)**\n\n---\n\n**SECTION 3 \u2013 SURVEILLANCE SUMMARY: LOGIC SCRIPT (ENGLISH)**\n\n---\n\n**SECTION ROLE**\n\n* Section 3 logs all field surveillance activity or investigative findings, depending on report type.\n* It is suppressed, relabeled, or activated based on the contract type and field deployment flags.\n* This section reflects only verified events captured by licensed investigators or subcontractors.\n\n---\n\n**LOGIC SWITCHES**\n\n**IF report\\_type = Investigative:**\n\n* Section 3 relabels as: \u201cINVESTIGATION DETAILS\u201d\n* Suppress all field surveillance elements\n* Populate with:\n\n  * Timeline of investigative findings\n  * Key confirmations (employment, location, behavior)\n  * Notes from document retrieval or interviews (where applicable)\n* Suppress billing blocks tied to field time, drive time, or visual evidence\n\n**IF report\\_type = Field:**\n\n* Section 3 label remains: \u201cSURVEILLANCE SUMMARY\u201d\n* Populate daily logs by date and time\n* Enable full billing breakdown:\n\n  * Drive-To\n  * Field Operation Time\n  * Surveillance Engagement\n  * Mobile Drive\n  * Drive-From"
+    },
+    {
+      "file": "Report Engine\\CoreSystem\\Logic\\Section 4 - Review of Surveillance Sessions.txt",
+      "sections": [],
+      "highlights": [
+        "SECTION 4: REVIEW OF SURVEILLANCE SESSIONS - ENGLISH BASED LOGIC GUIDE",
+        "Purpose of Section 4",
+        "SECTION 1 \u2013 REPORT TYPE LOGIC SWITCHES (ENGLISH LOGIC)",
+        "LOGIC SWITCH BEHAVIOR ONLY",
+        "LOGIC CONDITIONS",
+        "IF report\\_type = Investigative:",
+        "Change heading to \"Investigation Findings\"",
+        "Enable Investigative mode, notate in summary format results of the findings in section 3; Investigative Details",
+        "Billing model = Flat",
+        "IF report\\_type = Field:",
+        "Suppress all Investigative modules",
+        "Enable Field-only modules (logs, visuals, time)",
+        "Billing model = Hourly or Flat",
+        "IF report\\_type = Hybrid:",
+        "Enable both Investigative and Field modules",
+        "Requires phase mapping:",
+        "Phase 1 = Investigative",
+        "Phase 2 = Field",
+        "Billing model = Stacked or Tiered",
+        "Require trigger link from Investigative result to Field deployment",
+        "FALLBACKS",
+        "If no contract type is matched, default to Field",
+        "If 2+ contracts, most recent rules unless hybrid pattern confirmed",
+        "LOGIC ENFORCEMENT",
+        "All downstream behavior strictly follows the `report_type` set by Section 1"
+      ],
+      "raw_excerpt": "**SECTION 4: REVIEW OF SURVEILLANCE SESSIONS - ENGLISH BASED LOGIC GUIDE**\n\n---\n\n**Purpose of Section 4**\nSection 4 is the official, factual record of the surveillance operations. This section explains what was seen, who was seen, when, where, and why it matters. It is not a casual recap. It is the courtroom-ready account that connects physical observation to investigative goals.\n\n---\n\n**SECTION 1 \u2013 REPORT TYPE LOGIC SWITCHES (ENGLISH LOGIC)**\n\n---\n\n**LOGIC SWITCH BEHAVIOR ONLY**\n\nSection 1 determines the `report_type` based on:\n\n1. Contract Type (name or metadata)\n2. Client Intake Goals\n3. Field Work Clauses present or absent\n4. Active contract count and type\n\n---\n\n**LOGIC CONDITIONS**\n\n* **IF report\\_type = Investigative:**\n\n  * Change heading to \"Investigation Findings\"\n  * Enable Investigative mode, notate in summary format results of the findings in section 3; Investigative Details\n  * Billing model = Flat\n\n* **IF report\\_type = Field:**\n\n  * Suppress all Investigative modules\n  * Enable Field-only modules (logs, visuals, time)\n  * Billing model = Hourly or Flat\n\n* **IF report\\_type = Hybrid:**\n"
+    },
+    {
+      "file": "Report Engine\\CoreSystem\\Logic\\Section 4 - review of surveillance.txt",
+      "sections": [
+        {
+          "section_id": "section_4",
+          "inline_title": "label_logic:",
+          "heading_title": null,
+          "label_logic": null,
+          "keys_detected": [
+            "if",
+            "then",
+            "elif",
+            "else",
+            "visibility_logic",
+            "structure",
+            "include",
+            "enforcement",
+            "special_conditions",
+            "subcontractor_disclosure",
+            "compliance",
+            "frameworks",
+            "report_layout"
+          ],
+          "raw_excerpt": "if: report_type == \"Investigative\"\nthen: \"INVESTIGATION FINDINGS\"\nelif: report_type == \"Hybrid\"\nthen: \"INVESTIGATIVE-FIELD REVIEW SUMMARY\"\nelse: \"REVIEW OF SURVEILLANCE SESSIONS\"\n\n\nvisibility_logic:\nif: report_type == \"Investigative\"\nthen: suppress\nelif: report_type == \"Field\" or report_type == \"Hybrid\"\nthen: enable\n\n\nstructure:\nif: report_type == \"Field\"\nthen:\ninclude:\n- date\n- subject"
+        },
+        {
+          "section_id": "section_heading",
+          "inline_title": "title: \"4. REVIEW OF SURVEILLANCE SESSIONS\"",
+          "heading_title": null,
+          "label_logic": null,
+          "keys_detected": [],
+          "raw_excerpt": "style:\nfont_size: 14pt\nfont_weight: bold\ntext_transform: uppercase\nunderline: true\nspacing_before: 24pt\nsubsection_label:\n- field: \"SURVEILLANCE DATES \u2013 (LIST THE COVERED SURVEILLANCE; CONFIRM WITH SECTION 3)\"\nformat:\nfont_weight: bold\nfont_size: 12pt\nline_spacing: 1.5\nsession_format:\ngoal_outcome_statement_logic:\n  if: report_type == \"Field\" or report_type == \"Hybrid\"\n  then: include\n  else: suppress\n- daily_entries:\nrepeatable: true\nfields:"
+        }
+      ],
+      "highlights": [
+        "label_logic:",
+        "title: \"4. REVIEW OF SURVEILLANCE SESSIONS\""
+      ]
+    },
+    {
+      "file": "Report Engine\\CoreSystem\\Logic\\Section 5 - review of documents Logic Overview.txt",
+      "sections": [],
+      "highlights": [
+        "Purpose:** Ensure surveillance logic (movement, timing, placement) reflects reality.",
+        "If an investigator appears somewhere they couldn\u2019t logically reach, flag it.",
+        "If timestamps show impossible travel time, halt finalization.",
+        "Purpose:** Guarantee observations are factual, time-bound, and not speculative.",
+        "Everything must trace to visual or written proof.",
+        "If an inference is made without timestamp or visual confirmation, it\u2019s marked speculative.",
+        "Anything conflicting with photo evidence gets flagged for Q\\&A.",
+        "Font: Times New Roman, 12pt, bold",
+        "Alignment: Left",
+        "No bullet icons",
+        "Indented record listings",
+        "All documents obtained are listed.",
+        "No photos included in this section.",
+        "Records are grouped into generalized, jurisdiction-neutral categories.",
+        "No original file names \u2014 use record type and jurisdiction (e.g., Sheriff Report \u2013 Tulsa County).",
+        "Subject names must be formatted as Last, First.",
+        "Client intake form and signed contract always appear last.",
+        "Final output is client-facing \u2014 all material must be transparent and verifiable.",
+        "Records without names, dates, or clear jurisdictions are flagged.",
+        "Erroneous documents (wrong person, proves nothing) are reviewed before removal.",
+        "Nothing can be deleted without admin approval and justification.",
+        "Missing or questionable fields trigger prompts to validate:",
+        "\u201cPlease verify subject name for: \\[Record]\u201d",
+        "\u201cConfirm jurisdiction source for: \\[Document]\u201d",
+        "\u201cAdd applicable date for: \\[Record]\u201d"
+      ],
+      "raw_excerpt": "# Section 5 Logic Overview (English-Based)\n\nThis section defines how supporting documents are handled, formatted, and validated for integrity and admissibility within the investigative report. The logic is based on legal best practices, operational transparency, and traceable continuity.\n\n## NORTH STAR PROTOCOL\n\n**Purpose:** Ensure surveillance logic (movement, timing, placement) reflects reality.\n\n* If an investigator appears somewhere they couldn\u2019t logically reach, flag it.\n* If timestamps show impossible travel time, halt finalization.\n\n## COCHRAN THEORY\n\n**Purpose:** Guarantee observations are factual, time-bound, and not speculative.\n\n* Everything must trace to visual or written proof.\n* If an inference is made without timestamp or visual confirmation, it\u2019s marked speculative.\n* Anything conflicting with photo evidence gets flagged for Q\\&A.\n\n## SECTION 5 FORMATTING RULES\n\n* Font: Times New Roman, 12pt, bold\n* Alignment: Left\n* No bullet icons\n* Indented record listings\n\n## DOCUMENT HANDLING POLICY\n\n* All documents obtained are listed.\n* No photos included in this section.\n* Records are grouped into generalized, jurisdiction-neutral categories.\n* No original file names \u2014 use record type and jurisdiction (e.g., Sheriff Report \u2013 Tulsa County).\n* Subject names must be formatted as Last, First.\n* Client intake form and signed contract always appear last.\n* Final output is client-facing \u2014 all material must be transparent and verifiable.\n\n## LOGIC CHECKS AND DISCREPANCY HANDLING\n\n* Records without names, dates, or clear jurisdictions are flagged.\n* Erroneous documents (wrong person, proves nothing) are reviewed before removal."
+    },
+    {
+      "file": "Report Engine\\CoreSystem\\Logic\\Section 5 - Review of Supporting Docs.txt",
+      "sections": [],
+      "highlights": [],
+      "raw_excerpt": "Section5Formatting:\n  section_heading:\n    title: \"5. REVIEW OF SUPPORTING DOCUMENTS\"\n    style:\n      font_size: 14pt\n      font_weight: bold\n      text_transform: uppercase\n      underline: true\n      spacing_before: 24pt\n\n  record_structure:\n    sorting_order:\n      - Identity Records\n      - Supporting Government Records\n      - County & Court Filings\n      - Delivery Confirmations\n      - Case Administration\n    display_format:\n      - heading: \"[Jurisdiction or Source \u2013 e.g., Tulsa County Sheriff\u2019s Office Records]\"\n        records:\n          repeatable: true\n          fields:\n            - description: \"[Record Type \u2013 e.g., Sheriff Report, Court Docket, FOIA Response]\"\n            - subject_name: \"[Last Name, First Name]\"\n            - date_reference: \"[Applicable Date or Filing Date]\"\n            - additional_notes: \"[Optional \u2013 e.g., Case ID, Tracking ID]\"\n\n  inclusivity_policy:\n    include_all_documents: true\n    photo_exclusion: true\n    computer_filenames_omitted: true\n    client_rights:\n      full_record_delivery: true\n      post-investigation_archive: required\n\n  layout:\n    alignment: Left\n    font_family: \"Times New Roman\"\n    font_size: 12pt\n    font_weight: bold"
+    },
+    {
+      "file": "Report Engine\\CoreSystem\\Logic\\section 6 - BILLING SUMMARY.txt",
+      "sections": [
+        {
+          "section_id": "section_6",
+          "inline_title": "label: \"BILLING SUMMARY\"",
+          "heading_title": null,
+          "label_logic": null,
+          "keys_detected": [],
+          "raw_excerpt": "  layout:\n    font_family: \"Times New Roman\"\n    font_size: 12\n    font_weight: \"normal\"\n    text_align: \"left\"\n    header_format: \"UPPERCASE\"\n    subsection_indent: 2\n    bullet_style: \"standard\"\n    spacing:\n      before_section: 1.5em\n      after_section: 1em\n\n**SECTION 6 \u2013 BILLING SUMMARY LOGIC (ENGLISH)**\n\n---\n\n**ROLE OF SECTION 6**\n\n* Section 6 provides a comprehensive, itemized billing breakdown.\n* It directly reflects the contract structure, report type, and sequence of services rendered."
+        }
+      ],
+      "highlights": [
+        "label: \"BILLING SUMMARY\""
+      ]
+    },
+    {
+      "file": "Report Engine\\CoreSystem\\Logic\\sections 7, 8, & 9.txt",
+      "sections": [
+        {
+          "section_id": "section_7",
+          "inline_title": "heading:",
+          "heading_title": null,
+          "label_logic": null,
+          "keys_detected": [],
+          "raw_excerpt": "  title: \"7. CONCLUSION\"\n  font_family: \"Times New Roman\"\n  font_size: 22pt\n  font_weight: bold\n  text_align: left\n  background_color: \"#B7C6A5\"\n  spacing_after: 0.5em\n\nlayout:\n  font_family: \"Times New Roman\"\n  font_size: 12pt\n  text_align: \"justified\"\n  spacing_before: 1em\n  spacing_after: 1em\n\ncontent_logic:\n  summary_scope: >\n    Pull summarized findings from Section 2 (Pre-Surveillance Strategy),\n    Section 3 (Daily Logs), Section 4 (Surveillance Sessions), and Section 5 (Case Findings).\n    Prioritize field-based observation, investigator narrative, and photographic records."
+        },
+        {
+          "section_id": "section_8",
+          "inline_title": "heading:",
+          "heading_title": null,
+          "label_logic": null,
+          "keys_detected": [],
+          "raw_excerpt": "    title: \"8. PHOTO/VIDEO EVIDENCE INDEX\"\n    font_family: \"Times New Roman\"\n    font_size: 22pt\n    font_weight: bold\n    text_align: left\n    background_color: \"#B7C6A5\"\n    spacing_after: 0.5em\n\n  layout:\n    font_family: \"Times New Roman\"\n    font_size: 12pt\n    text_align: \"left\"\n    spacing_before: 1em\n    spacing_after: 1em\n\n  content_logic:\n    evidence_grouping_rule: \"Group all media by date in Day, Month Date, Year format\"\n    media_sorting_criteria:\n      primary: \"Extracted metadata timestamp\"\n      secondary: \"Visible timestamp from image/video frame\""
+        }
+      ],
+      "highlights": [
+        "heading:",
+        "heading:"
+      ]
+    },
+    {
+      "file": "Report Engine\\CoreSystem\\Logic\\Sections 7, 8, and 9 Final Report.txt",
+      "sections": [],
+      "highlights": [
+        "Section 2: Pre-Surveillance Strategy",
+        "Section 3: Daily Logs",
+        "Section 4: Surveillance Sessions",
+        "Section 5: Investigative Notes",
+        "Focus primarily on verified field activity and surveillance documentation.",
+        "If surveillance was performed, tie the conclusion directly to observed subject behavior and time logs.",
+        "If **no surveillance** was performed, produce a **clear summary** of investigative findings.",
+        "Case status must fall under one of the following determinations:",
+        "Confirms client\u2019s claims",
+        "Denies client\u2019s claims",
+        "Inconclusive findings",
+        "Write as though presenting to a judge, lawyer, or insurance company",
+        "Avoid childish or overly complex language",
+        "Must be:",
+        "Empathetic",
+        "Legally aligned",
+        "Factual and firm",
+        "Indicate whether further investigation is required",
+        "Close with a statement directly addressing the client",
+        "Each entry begins with:",
+        "\"DATE OF SURVEILLANCE: \\[Insert Day, Month Date, Year]\"",
+        "Beneath each date:",
+        "Insert all photos taken on that day",
+        "Label photos sequentially:",
+        "Photo 1"
+      ],
+      "raw_excerpt": "# Sections 7, 8, and 9: Final Report Logic Framework\n\n---\n\n## Section 7: CONCLUSION\n\n### Purpose\n\nTo summarize the entire investigation clearly and legally while aligning the findings with the client\u2019s original concerns and the field observations.\n\n### Input Sources\n\n* Section 2: Pre-Surveillance Strategy\n* Section 3: Daily Logs\n* Section 4: Surveillance Sessions\n* Section 5: Investigative Notes\n\n### Logic Guidelines\n\n* Focus primarily on verified field activity and surveillance documentation.\n* If surveillance was performed, tie the conclusion directly to observed subject behavior and time logs.\n* If **no surveillance** was performed, produce a **clear summary** of investigative findings.\n* Case status must fall under one of the following determinations:\n\n  * **Confirms client\u2019s claims**\n  * **Denies client\u2019s claims**\n  * **Inconclusive findings**\n\n### Tone & Presentation\n\n* Write as though presenting to a judge, lawyer, or insurance company\n* Avoid childish or overly complex language\n* Must be:\n\n  * Empathetic\n  * Legally aligned\n  * Factual and firm\n\n### Closing Instructions\n"
+    }
+  ]
+}

@@ -1,0 +1,20 @@
+{
+  "test_name": "Mission Debrief Full Circuit NEW Design Test 3",
+  "mission_debrief_status": {
+    "subsystems_count": 6,
+    "Debrief": "IMPLEMENTED",
+    "Library": "IMPLEMENTED",
+    "The Librarian": "IMPLEMENTED",
+    "Tests": "IMPLEMENTED"
+  },
+  "circuit_results": {
+    "Evidence_Locker": "OPERATIONAL",
+    "Warden": "OPERATIONAL",
+    "Marshall": "OPERATIONAL",
+    "Data_Bus": "OPERATIONAL",
+    "Mission_Debrief": "OPERATIONAL"
+  },
+  "circuit_integrity_percent": 100.0,
+  "operational_components": 5,
+  "total_components": 5
+}

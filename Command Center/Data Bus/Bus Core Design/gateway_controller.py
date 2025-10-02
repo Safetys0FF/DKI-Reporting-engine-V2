@@ -1,4 +1,4 @@
- gateway_controller.py — Signal-Aware Gateway Interface
+# gateway_controller.py — Signal-Aware Gateway Interface
 
 def initialize(bus):
     """Register signal handlers with the DKI Bus Core"""
@@ -27,3 +27,26 @@ def handle_initialize_gateway(payload):
     case_info = payload.get("case_metadata")
     print(f"[GATEWAY] Initializing gateway for report type '{report_type}'")
     # Apply initialization routines
+
+class GatewayController:
+    """Compatibility wrapper exposing the functional gateway API as a class."""
+
+    def __init__(self, ecosystem_controller=None, bus=None):
+        self.ecosystem_controller = ecosystem_controller
+        self.bus = bus
+        if bus and hasattr(bus, 'register_signal'):
+            initialize(bus)
+
+    def register_bus(self, bus):
+        self.bus = bus
+        initialize(bus)
+
+    def get_evidence_locker_status(self):
+        return {'status': 'online', 'last_update': None}
+
+    def reset(self):
+        handle_reset_gateway({})
+
+    def initialize_case(self, payload):
+        handle_initialize_gateway(payload)
+

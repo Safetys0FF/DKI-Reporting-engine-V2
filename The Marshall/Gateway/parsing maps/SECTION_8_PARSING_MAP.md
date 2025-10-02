@@ -1,25 +1,29 @@
-﻿# Section 8 Parsing Map (Investigation Evidence Review)
+﻿# Section 8 Parsing Map (Investigation Evidence Review / Photo Section)
 
 ## Purpose
-Index all evidence objects with provenance, validation status, and routing so other sections can reference media, documents, and transcripts reliably.
+Deliver the surveillance photo deck and supporting media manifest, showing capture dates, descriptions, and links back to the narrative (Sections 3 & 4) along with custody metadata.
 
 ## Data Inputs
-| Field | Origin | Notes |
-|-------|--------|-------|
-| evidence_manifest | `processed.images/videos/audio/files` | Raw and derived assets grouped by media type. |
-| media_analysis | `processed.media_analysis` | Analytics from media processing engine (faces, transcription, quality). |
-| chain_of_custody | `processed.manual_notes.custody` | Custody chain remarks for auditing. |
-| validation_status | `processed.manual_notes.validation` | Manual or automated validation outcomes. |
-| section_routing | `processed.manual_notes.routing` | Links between evidence items and report sections. |
+| Evidence Element                      | Source Path(s)                                                                                       | Notes |
+|--------------------------------------|------------------------------------------------------------------------------------------------------|-------|
+| photo_sessions                        | `section4.manifest.windows`, `processed.images.by_session`                                           | Determines “Date of surveillance” headings and photo grouping. |
+| media_items (photos/video stills)     | `processed.images`, `processed.videos.thumbnails`                                                     | Supplies file path, capture timestamp, camera metadata. |
+| captions / descriptions               | `processed.manual_notes.media_captions`, `toolkit_results.session_summary.media_notes`               | One- to two-sentence description aligned with Section 4 observations. |
+| evidence_ids & hashes                 | `processed.metadata.hashes`, `processed.images[].hash`                                                | Displayed for chain-of-custody and export manifest. |
+| voice memo transcripts                | `processed.audio.transcripts`, `section4.manifest.voice_memos`                                       | Optional attachments listed alongside photo sessions. |
+| validation status                     | `processed.manual_notes.validation`, `toolkit_results.chain_integrity`                                | Indicates media authentication outcome. |
+| routing references                    | `processed.manual_notes.routing`, `section3.render_manifest.media_links`                              | Links each media asset back to narrative entries. |
 
 ## Toolkit & AI Triggers
-- OpenAI `content_verification` (post_ocr) – extracts salient facts and checks for tampering cues.
-- OpenAI `chain_integrity` (pre_render) – summarises custody sequence and flags breaks.
+- Media processing engine performs face/object detection, EXIF validation, and generates thumbnails.
+- OpenAI `content_verification` (post_ocr) – extracts salient details for captions and flags tampering cues.
+- OpenAI `chain_integrity` (pre_render) – summarises custody and highlights any breaks.
 
 ## UI Checklist
-- Ensure each evidence item has title, description, custody, and validation status.
-- Initiate re-validation where required.
+- Ensure each photo entry lists capture date/time, description, and related observation.
+- Confirm hashes/custody notes exist for every media asset delivered to the client.
+- Remove or flag any media not cleared for disclosure.
 
 ## Dependencies
-- Feeds: Sections 3, 7, 9, and DP rely on evidence links and validation summaries.
-- Shares: `evidence_links`, `validation_summary`, `routing`.
+- Section 7 references key media in findings.
+- Final report export bundles these assets into the client package and Librarian archive manifest.

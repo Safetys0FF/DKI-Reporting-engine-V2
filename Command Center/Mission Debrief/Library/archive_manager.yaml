@@ -1,0 +1,29 @@
+archive_manager:
+  id: archive_manager
+  role: "Securely store finalized narratives"
+
+  logic:
+    path: /final_reports/{case_number}/
+    case_identifier_source: gui_input
+    description: |
+      Case folders and filenames are indexed using the user-provided case number,
+      not the internal system ID. This ensures that recall and access from the GUI
+      align with human-readable naming conventions.
+    naming: final_narrative_{case_number}_{timestamp}.json
+    permissions: read-only
+
+  tamper_proofing:
+    hash_check: true
+    audit_log: true
+
+  retrieval:
+    - list_all_reports
+    - get_case_report(case_id)
+
+  export:
+    allow_user_movement: true
+    gui_controls: true
+
+  future:
+    cloud_driver_ready: true
+    sync_target: "S3 / GDrive / Azure"

@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+﻿#!/usr/bin/env python3
 """
 GatewayController - Core Gateway orchestration system
 Owns master evidence index, mediates section communication, manages data flow
@@ -13,10 +13,30 @@ from datetime import datetime
 from typing import Dict, List, Any, Optional, Set
 from enum import Enum
 
+# Ensure parsing dispatcher is reachable for section context building
+marshall_gateway_path = os.path.join(
+    os.path.dirname(os.path.dirname(__file__)),
+    "The Marshall",
+    "Gateway",
+)
+if marshall_gateway_path not in sys.path:
+    sys.path.insert(0, marshall_gateway_path)
+
+try:
+    from section_parsing_dispatcher import build_section_context  # type: ignore
+except Exception:  # pragma: no cover - dispatcher may be absent during bootstrap
+    build_section_context = None
+
 # Add Processors directory to Python path for OCR tools
 processors_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "The War Room", "Processors")
 if processors_path not in sys.path:
     sys.path.insert(0, processors_path)
+
+root_dir = os.path.dirname(os.path.dirname(__file__))
+if root_dir not in sys.path:
+    sys.path.insert(0, root_dir)
+
+from tag_taxonomy import resolve_tags
 
 # OCR and Document Processing Imports - All tools available in Processors
 try:
@@ -98,7 +118,7 @@ class GatewayController:
     """Core Gateway Controller - owns master evidence index and mediates section communication
     DEFERS ALL SECTION EXECUTION PERMISSION TO ECOSYSTEM CONTROLLER"""
     
-    def __init__(self, ecosystem_controller=None):
+    def __init__(self, ecosystem_controller=None, bus=None):
         # Reference to Ecosystem Controller (ROOT BOOT NODE)
         self.ecosystem_controller = ecosystem_controller
         
@@ -163,7 +183,18 @@ class GatewayController:
             'auto_persistence': True,
             'persistence_path': 'gateway_data.json'
         }
-        
+
+        self.bus = None
+        self._bus_handlers_registered = False
+        self.section_outputs = {}
+        self.section_drafts = {}
+        self.section_needs_registry = {}
+        self.pending_evidence_requests = {}
+        self.evidence_catalog = {}
+        self.case_snapshots = []
+        self._pending_section_outputs = {}
+        self.toolkit_results_cache = {}
+
         self.logger = logging.getLogger(__name__)
         self.logger.info("Gateway Controller initialized - DEFERS TO ECOSYSTEM CONTROLLER")
         self.logger.info("Gateway orchestration capabilities enabled")
@@ -173,7 +204,214 @@ class GatewayController:
         # Self-validation through ECC
         if self.ecosystem_controller:
             self._validate_gateway_with_ecc()
+
+        self._attach_bus(bus)
     
+    def attach_bus(self, bus) -> None:
+        """Attach or replace the Central Command bus instance."""
+        self._attach_bus(bus)
+
+    def _attach_bus(self, bus) -> None:
+        if not bus:
+            return
+        self.bus = bus
+        self._register_bus_handlers()
+
+    def _register_bus_handlers(self) -> None:
+        if self._bus_handlers_registered or not self.bus:
+            return
+        handler_map = {"evidence.new": self._handle_bus_evidence_new,
+                       "evidence.updated": self._handle_bus_evidence_updated,
+                       "section.needs": self._handle_bus_section_needs,
+                       "case.snapshot": self._handle_bus_case_snapshot}
+        for signal_name, handler in handler_map.items():
+            try:
+                self.bus.register_signal(signal_name, handler)
+            except Exception as exc:  # pragma: no cover - bus registration best effort
+                self.logger.warning("Failed to register bus handler %s: %s", signal_name, exc)
+        self._bus_handlers_registered = True
+
+    def _emit_bus_event(self, signal: str, payload: Dict[str, Any]) -> None:
+        if not self.bus:
+            return
+        envelope = dict(payload or {})
+        envelope.setdefault("source", "gateway_controller")
+        envelope.setdefault("timestamp", datetime.now().isoformat())
+        try:
+            self.bus.emit(signal, envelope)
+        except Exception as exc:  # pragma: no cover - log and continue
+            self.logger.warning("Failed to emit %s via bus: %s", signal, exc)
+
+    def _handle_bus_evidence_new(self, payload: Dict[str, Any]) -> None:
+        if not isinstance(payload, dict):
+            return
+        evidence_id = payload.get("evidence_id") or payload.get("artifact_id")
+        if not evidence_id:
+            return
+        entry = dict(payload)
+        entry.setdefault("last_event", "evidence.new")
+        entry.setdefault("last_seen", datetime.now().isoformat())
+        self.evidence_catalog[evidence_id] = entry
+
+    def _handle_bus_evidence_updated(self, payload: Dict[str, Any]) -> None:
+        if not isinstance(payload, dict):
+            return
+        evidence_id = payload.get("evidence_id") or payload.get("artifact_id")
+        if evidence_id:
+            entry = dict(payload)
+            entry.setdefault("last_event", "evidence.updated")
+            entry.setdefault("last_seen", datetime.now().isoformat())
+            self.evidence_catalog[evidence_id] = entry
+        section_hint = payload.get("section_id") or payload.get("section_hint") or payload.get("recipient")
+        if not section_hint:
+            return
+        section_id = str(section_hint)
+        pending = self._pending_section_outputs.get(section_id)
+        if pending:
+            enriched_payload = dict(payload)
+            if pending.get("plan") and "parsing_plan" not in enriched_payload:
+                enriched_payload["parsing_plan"] = pending["plan"]
+            if pending.get("draft") and "draft" not in enriched_payload:
+                enriched_payload["draft"] = pending["draft"]
+            self._finalize_section_output(section_id, enriched_payload, source="bus_evidence_updated")
+
+    def _handle_bus_section_needs(self, payload: Dict[str, Any]) -> None:
+        if not isinstance(payload, dict):
+            return
+        section_id = payload.get("section_id") or payload.get("section") or payload.get("target")
+        if not section_id:
+            return
+        section_id = str(section_id)
+        record = dict(payload)
+        record.setdefault("timestamp", datetime.now().isoformat())
+        self.section_needs_registry[section_id] = record
+        self._issue_evidence_request(section_id, record)
+
+    def _handle_bus_case_snapshot(self, payload: Dict[str, Any]) -> None:
+        if not isinstance(payload, dict):
+            return
+        snapshot = dict(payload)
+        snapshot.setdefault("received_at", datetime.now().isoformat())
+        self.case_snapshots.append(snapshot)
+        if len(self.case_snapshots) > 50:
+            self.case_snapshots = self.case_snapshots[-50:]
+
+    def _issue_evidence_request(self, section_id: str, need_payload: Dict[str, Any]) -> None:
+        if not self.bus:
+            return
+        request_id = f"{section_id}_{uuid.uuid4().hex[:8]}"
+        filters = need_payload.get("filters") or {}
+        request_payload = {
+            "section_id": section_id,
+            "request_id": request_id,
+            "case_id": self._current_case_id(),
+            "filters": filters,
+            "priority": need_payload.get("priority", "normal"),
+            "requested_at": datetime.now().isoformat(),
+        }
+        self.pending_evidence_requests[request_id] = request_payload
+        self._emit_bus_event("evidence.request", request_payload)
+
+    def _current_case_id(self) -> Optional[str]:
+        manifest = self.case_bundle.get("manifest")
+        if isinstance(manifest, dict):
+            for key in ("case_id", "id"):
+                value = manifest.get(key)
+                if value:
+                    return str(value)
+            case_data = manifest.get("case_data")
+            if isinstance(case_data, dict):
+                for key in ("case_id", "id"):
+                    value = case_data.get(key)
+                    if value:
+                        return str(value)
+        return None
+
+    def _aggregate_processed_data(self, processed_files: List[str]) -> Dict[str, Any]:
+        aggregated: Dict[str, Any] = {"files": {}}
+        for file_path in processed_files:
+            entry = self.case_bundle.get(file_path)
+            if not entry:
+                continue
+            data = entry.get("processed_data") or {}
+            aggregated["files"][file_path] = data
+            for key in ("metadata", "contracts", "images", "videos", "audio", "forms", "summary", "manual_notes", "processing_log", "media_analysis"):
+                value = data.get(key)
+                if not value:
+                    continue
+                if isinstance(value, dict):
+                    target = aggregated.setdefault(key, {})
+                    target.update(value)
+                elif isinstance(value, list):
+                    target = aggregated.setdefault(key, [])
+                    target.extend(value)
+                else:
+                    aggregated.setdefault(key, value)
+        return aggregated
+
+    def _build_section_parsing_plan(self, section_id: str, processed_files: List[str]) -> Optional[Dict[str, Any]]:
+        if build_section_context is None:
+            return None
+        processed_data = self._aggregate_processed_data(processed_files)
+        manifest = self.case_bundle.get("manifest")
+        case_data: Dict[str, Any] = {}
+        report_type = None
+        if isinstance(manifest, dict):
+            case_data = manifest.get("case_data") if isinstance(manifest.get("case_data"), dict) else dict(manifest)
+            report_type = manifest.get("report_type") or case_data.get("report_type")
+        section_sequence = [(sid, sid) for sid in sorted(self.section_handlers.keys())]
+        plan = build_section_context(
+            section_id=section_id,
+            processed_data=processed_data,
+            case_data=case_data,
+            toolkit_results=self.toolkit_results_cache.get(section_id, {}),
+            report_type=report_type,
+            section_sequence=section_sequence,
+            section_outputs=self.section_outputs,
+            section_states=self.section_states,
+        )
+        return plan
+
+    def _remember_section_draft(self, section_id: str, draft: Any, plan: Optional[Dict[str, Any]]) -> None:
+        if draft is None:
+            return
+        snapshot = {
+            "draft": draft,
+            "plan": plan,
+            "case_id": self._current_case_id(),
+            "timestamp": datetime.now().isoformat(),
+        }
+        self.section_drafts[section_id] = snapshot
+        self._pending_section_outputs[section_id] = dict(snapshot)
+
+    def _finalize_section_output(self, section_id: str, enriched_payload: Dict[str, Any], *, source: str) -> None:
+        timestamp = datetime.now().isoformat()
+        record = {
+            "section_id": section_id,
+            "case_id": self._current_case_id(),
+            "payload": dict(enriched_payload or {}),
+            "source": source,
+            "timestamp": timestamp,
+        }
+        draft_info = self._pending_section_outputs.pop(section_id, None)
+        if draft_info:
+            if draft_info.get("plan") and "parsing_plan" not in record["payload"]:
+                record["payload"]["parsing_plan"] = draft_info["plan"]
+            if draft_info.get("draft") and "draft" not in record["payload"]:
+                record["payload"]["draft"] = draft_info["draft"]
+        self.section_outputs[section_id] = record["payload"]
+        self.section_cache[section_id] = {
+            "data": record,
+            "validated": False,
+            "timestamp": timestamp,
+            "review_notes": [],
+            "revision_count": 0,
+            "last_revision": None,
+        }
+        self.section_states[section_id] = "enriched"
+        self._emit_bus_event("section.data.updated", record)
+        self._emit_bus_event("gateway.section.complete", record)
+
     def track_evidence_locker_module(self, module_name: str, status: str, activity_data: Dict[str, Any] = None):
         """Track Evidence Locker module status and activity"""
         try:
@@ -188,7 +426,7 @@ class GatewayController:
             if activity_data:
                 self.evidence_locker_modules[module_name]['last_activity_data'] = activity_data
             
-            self.logger.info(f"📊 Evidence Locker module {module_name} status: {status}")
+            self.logger.info(f"ðŸ“Š Evidence Locker module {module_name} status: {status}")
             
             # Check for bottlenecks
             self._check_evidence_locker_bottlenecks()
@@ -213,7 +451,7 @@ class GatewayController:
             if from_module in self.evidence_locker_modules:
                 self.evidence_locker_modules[from_module]['pending_handoffs'].append(handoff_record)
             
-            self.logger.info(f"🔄 Registered handoff: {from_module} → {to_module}")
+            self.logger.info(f"ðŸ”„ Registered handoff: {from_module} â†’ {to_module}")
             
             # Process handoff immediately
             self._process_evidence_locker_handoff(handoff_record)
@@ -249,7 +487,7 @@ class GatewayController:
             # Update module status
             self.track_evidence_locker_module(from_module, 'handoff_complete', handoff_data)
             
-            self.logger.info(f"✅ Processed handoff from {from_module}")
+            self.logger.info(f"âœ… Processed handoff from {from_module}")
             
         except Exception as e:
             self.logger.error(f"Failed to process Evidence Locker handoff: {e}")
@@ -279,7 +517,7 @@ class GatewayController:
                             }
                             
                             self.evidence_locker_bottleneck_alerts.append(bottleneck_alert)
-                            self.logger.warning(f"⚠️ Evidence Locker bottleneck detected: {module_name} stuck for {time_diff:.1f} minutes")
+                            self.logger.warning(f"âš ï¸ Evidence Locker bottleneck detected: {module_name} stuck for {time_diff:.1f} minutes")
                             
                             # Notify ECC of bottleneck
                             if self.ecosystem_controller and hasattr(self.ecosystem_controller, 'emit'):
@@ -289,21 +527,145 @@ class GatewayController:
             self.logger.error(f"Failed to check Evidence Locker bottlenecks: {e}")
     
     def _handle_classification_handoff(self, handoff_data: Dict[str, Any]):
-        """Handle evidence classification handoff"""
+        """Handle evidence classification handoff."""
         try:
+            evidence_id = handoff_data.get('evidence_id')
             file_path = handoff_data.get('file_path')
-            assigned_section = handoff_data.get('assigned_section')
-            
-            if file_path and assigned_section:
-                # Register file in Gateway's master index
-                evidence_record = self.register_file(file_path)
-                evidence_record['assigned_section'] = assigned_section
-                
-                self.logger.info(f"📁 Gateway received classification: {file_path} → {assigned_section}")
-            
+            classification = handoff_data.get('classification') or handoff_data.get('classification_result') or {}
+            if not isinstance(classification, dict):
+                classification = dict(classification)
+            assigned_section = (
+                handoff_data.get('assigned_section')
+                or handoff_data.get('section_hint')
+                or classification.get('assigned_section')
+            )
+            tags = handoff_data.get('tags') or classification.get('tags') or []
+            related_sections = handoff_data.get('related_sections') or classification.get('related_sections') or []
+            case_id = handoff_data.get('case_id') or self._current_case_id()
+            timestamp = datetime.now().isoformat()
+
+            category_hint = handoff_data.get('category') or classification.get('category')
+            resolution = resolve_tags(category=category_hint, tags=tags)
+            normalized_tags = resolution.get('tags') or []
+            if normalized_tags:
+                tags = normalized_tags
+                classification.setdefault('tags', normalized_tags)
+            category_slug = resolution.get('category') or category_hint
+            if not assigned_section:
+                assigned_section = resolution.get('primary_section') or assigned_section
+            if not related_sections:
+                related_sections = resolution.get('related_sections') or related_sections
+            if category_slug and 'category' not in classification:
+                classification['category'] = category_slug
+
+            if not evidence_id and file_path:
+                registered = self.register_file(file_path)
+                evidence_id = registered.get('evidence_id')
+
+            if evidence_id:
+                catalog_entry = dict(self.evidence_catalog.get(evidence_id, {}))
+                catalog_entry.update({
+                    'evidence_id': evidence_id,
+                    'file_path': file_path,
+                    'classification': classification,
+                    'assigned_section': assigned_section,
+                    'tags': tags,
+                    'last_event': 'evidence_classification',
+                    'last_seen': timestamp,
+                })
+                self.evidence_catalog[evidence_id] = catalog_entry
+
+                master_record = self.master_evidence_index.get(evidence_id)
+                if not master_record:
+                    master_record = {
+                        'evidence_id': evidence_id,
+                        'filename': os.path.basename(file_path) if file_path else None,
+                        'path': file_path,
+                        'assigned_section': assigned_section or 'unassigned',
+                        'classification': classification or {},
+                        'tags': tags,
+                        'processing_status': 'classified',
+                        'timestamp': timestamp,
+                    }
+                else:
+                    if file_path and not master_record.get('path'):
+                        master_record['path'] = file_path
+                    if assigned_section:
+                        master_record['assigned_section'] = assigned_section
+                    if classification:
+                        master_record['classification'] = classification
+                    if tags:
+                        master_record['tags'] = tags
+                    master_record['timestamp'] = timestamp
+                self.master_evidence_index[evidence_id] = master_record
+
+            target_sections: List[str] = []
+            if assigned_section:
+                target_sections.append(str(assigned_section))
+            for sec in related_sections:
+                if sec and str(sec) not in target_sections:
+                    target_sections.append(str(sec))
+            if not target_sections:
+                target_sections.append('section_cp')
+
+            for target in target_sections:
+                filters = dict(handoff_data.get('filters', {}))
+                if tags:
+                    filters['tags'] = tags
+                    filters.pop('section_id', None)
+                else:
+                    filters.setdefault('section_id', target)
+                if category_slug:
+                    filters['category'] = category_slug
+                evidence_type = classification.get('evidence_type') if isinstance(classification, dict) else None
+                if evidence_type and 'evidence_type' not in filters:
+                    filters['evidence_type'] = evidence_type
+
+                payload = {
+                    'section_id': target,
+                    'case_id': case_id,
+                    'evidence_id': evidence_id,
+                    'file_path': file_path,
+                    'filters': filters,
+                    'category': category_slug,
+                    'priority': 'high' if target in {'section_3', 'section_8'} else handoff_data.get('priority', 'normal'),
+                    'source': 'gateway.classification',
+                    'classification': classification,
+                    'related_sections': target_sections,
+                    'tags': tags,
+                    'timestamp': timestamp,
+                }
+                self._emit_bus_event('section.needs', payload)
+
+                existing = self._pending_section_outputs.get(target, {})
+                snapshot = dict(existing)
+                if evidence_id:
+                    snapshot['evidence_id'] = evidence_id
+                if classification:
+                    snapshot['classification'] = classification
+                if tags:
+                    snapshot['tags'] = tags
+                if case_id:
+                    snapshot['case_id'] = case_id
+                if file_path:
+                    snapshot['file_path'] = file_path
+                snapshot.setdefault('related_sections', target_sections)
+                snapshot['requested_at'] = timestamp
+                self._pending_section_outputs[target] = snapshot
+
+                if evidence_id:
+                    section_evidence = self.evidence_map.setdefault(target, [])
+                    if evidence_id not in section_evidence:
+                        section_evidence.append(evidence_id)
+
+            self.logger.info(
+                "Gateway classified %s for sections %s",
+                evidence_id or file_path,
+                ", ".join(target_sections),
+            )
         except Exception as e:
             self.logger.error(f"Failed to handle classification handoff: {e}")
-    
+
     def _handle_indexing_handoff(self, handoff_data: Dict[str, Any]):
         """Handle evidence indexing handoff"""
         try:
@@ -317,7 +679,7 @@ class GatewayController:
                 
                 self.evidence_map[section_id].append(evidence_id)
                 
-                self.logger.info(f"📋 Gateway received indexing: {evidence_id} → {section_id}")
+                self.logger.info(f"ðŸ“‹ Gateway received indexing: {evidence_id} â†’ {section_id}")
             
         except Exception as e:
             self.logger.error(f"Failed to handle indexing handoff: {e}")
@@ -333,7 +695,7 @@ class GatewayController:
                 if evidence_id:
                     self.master_evidence_index[evidence_id] = evidence_metadata
                     
-                    self.logger.info(f"🔧 Gateway received evidence class: {evidence_id}")
+                    self.logger.info(f"ðŸ”§ Gateway received evidence class: {evidence_id}")
             
         except Exception as e:
             self.logger.error(f"Failed to handle class building handoff: {e}")
@@ -347,7 +709,7 @@ class GatewayController:
                 # Store manifest in Gateway
                 self.case_bundle['manifest'] = manifest_data
                 
-                self.logger.info(f"📋 Gateway received case manifest")
+                self.logger.info(f"ðŸ“‹ Gateway received case manifest")
             
         except Exception as e:
             self.logger.error(f"Failed to handle manifest handoff: {e}")
@@ -365,7 +727,7 @@ class GatewayController:
                 'timestamp': datetime.now().isoformat()
             })
             
-            self.logger.info(f"📦 Gateway received generic handoff: {operation}")
+            self.logger.info(f"ðŸ“¦ Gateway received generic handoff: {operation}")
             
         except Exception as e:
             self.logger.error(f"Failed to handle generic handoff: {e}")
@@ -416,7 +778,7 @@ class GatewayController:
             # Add to master index
             self.master_evidence_index[evidence_id] = record
             
-            self.logger.info(f"🧾 Registered {file_path} as {evidence_id}")
+            self.logger.info(f"ðŸ§¾ Registered {file_path} as {evidence_id}")
             
             return {
                 'success': True,
@@ -450,7 +812,7 @@ class GatewayController:
             if evidence_id not in existing_ids:
                 self.evidence_map[section_id].append(self.master_evidence_index[evidence_id])
             
-            self.logger.info(f"📋 Assigned evidence {evidence_id} to {section_id}")
+            self.logger.info(f"ðŸ“‹ Assigned evidence {evidence_id} to {section_id}")
             return True
             
         except Exception as e:
@@ -485,7 +847,7 @@ class GatewayController:
                 'timestamp': datetime.now().isoformat()
             })
             
-            self.logger.info(f"🔗 Added cross-link: {keyword} to {evidence_id}")
+            self.logger.info(f"ðŸ”— Added cross-link: {keyword} to {evidence_id}")
             return True
             
         except Exception as e:
@@ -504,16 +866,10 @@ class GatewayController:
                 if section_id in self.ecosystem_controller.frozen_sections:
                     raise ValueError(f"Section '{section_id}' is frozen (completed). Use reopen() to modify.")
             
-            self.section_cache[section_id] = {
-                'data': structured_section_data,
-                'validated': False,
-                'timestamp': datetime.now().isoformat(),
-                'review_notes': [],
-                'revision_count': 0,
-                'last_revision': None
-            }
-            
-            self.logger.debug(f"📡 Section data stored for {section_id} (ECC validated)")
+            payload = structured_section_data if isinstance(structured_section_data, dict) else {'value': structured_section_data}
+            self._finalize_section_output(section_id, payload, source="section_transfer")
+
+            self.logger.debug("Section data stored for %s (ECC validated)", section_id)
             self.logger.info(f"Section data stored for {section_id}")
             return True
             
@@ -532,13 +888,13 @@ class GatewayController:
             if self.ecosystem_controller:
                 ecc_can_complete = self.ecosystem_controller.can_run(section_id)
                 if not ecc_can_complete:
-                    self.logger.error(f"❌ ECC denied completion for section {section_id}")
+                    self.logger.error(f"âŒ ECC denied completion for section {section_id}")
                     return False
                 
                 # Notify ECC of completion
                 ecc_success = self.ecosystem_controller.mark_complete(section_id, by_user)
                 if not ecc_success:
-                    self.logger.error(f"❌ ECC failed to mark section {section_id} complete")
+                    self.logger.error(f"âŒ ECC failed to mark section {section_id} complete")
                     return False
             
             self.section_cache[section_id]['validated'] = True
@@ -546,7 +902,7 @@ class GatewayController:
             self.section_cache[section_id]['sign_time'] = datetime.now().isoformat()
             self.completed_sections.add(section_id)
             
-            self.logger.debug(f"✅ Section {section_id} validated and authorized by {by_user} (ECC approved)")
+            self.logger.debug(f"âœ… Section {section_id} validated and authorized by {by_user} (ECC approved)")
             self.logger.info(f"Section {section_id} validated and authorized by {by_user}")
             return True
             
@@ -564,7 +920,7 @@ class GatewayController:
             # Hard gate - check if case is exportable
             if self.ecosystem_controller:
                 if not self.ecosystem_controller.is_case_exportable():
-                    self.logger.error(f"❌ Case not exportable - not all sections completed")
+                    self.logger.error(f"âŒ Case not exportable - not all sections completed")
                     return {}
             
             authorized = {}
@@ -576,12 +932,12 @@ class GatewayController:
                     if self.ecosystem_controller:
                         ecc_validated = sec_id in self.ecosystem_controller.completed_ecosystems
                         if not ecc_validated:
-                            self.logger.warning(f"⚠️ Section {sec_id} not ECC-validated, excluding from authorized context")
+                            self.logger.warning(f"âš ï¸ Section {sec_id} not ECC-validated, excluding from authorized context")
                             continue
                     
                     authorized[sec_id] = self.section_cache[sec_id]['data']
             
-            self.logger.debug(f"📋 Authorized context contains {len(authorized)} ECC-validated sections")
+            self.logger.debug(f"ðŸ“‹ Authorized context contains {len(authorized)} ECC-validated sections")
             self.logger.info(f"Authorized context contains {len(authorized)} ECC-validated sections")
             return authorized
             
@@ -601,7 +957,7 @@ class GatewayController:
             if self.ecosystem_controller:
                 ecc_revision_success = self.ecosystem_controller.request_revision(section_id, revision_reason, requester)
                 if not ecc_revision_success:
-                    self.logger.error(f"❌ ECC denied revision request for section {section_id}")
+                    self.logger.error(f"âŒ ECC denied revision request for section {section_id}")
                     return False
             
             # Check revision limits
@@ -630,7 +986,7 @@ class GatewayController:
                 self.completed_sections.remove(section_id)
                 self.section_cache[section_id]['validated'] = False
             
-            self.logger.debug(f"📝 Revision requested for section {section_id} by {requester} (ECC notified)")
+            self.logger.debug(f"ðŸ“ Revision requested for section {section_id} by {requester} (ECC notified)")
             self.logger.info(f"Revision requested for section {section_id} by {requester}")
             return True
             
@@ -646,7 +1002,7 @@ class GatewayController:
                 return self.ecosystem_controller.can_run(section_id)
             
             # Fallback if no ecosystem controller
-            self.logger.warning(f"⚠️ No Ecosystem Controller - using fallback for {section_id}")
+            self.logger.warning(f"âš ï¸ No Ecosystem Controller - using fallback for {section_id}")
             if section_id not in self.section_cache:
                 self.logger.error(f"Section {section_id} not found")
                 return False
@@ -678,7 +1034,7 @@ class GatewayController:
                 return success
             
             # Fallback if no ecosystem controller
-            self.logger.warning(f"⚠️ No Ecosystem Controller - using fallback for {section_id}")
+            self.logger.warning(f"âš ï¸ No Ecosystem Controller - using fallback for {section_id}")
             if section_id not in self.section_cache:
                 self.logger.error(f"Section {section_id} not found")
                 return False
@@ -692,7 +1048,7 @@ class GatewayController:
             self.section_cache[section_id]['signed_by'] = by_user
             self.section_cache[section_id]['sign_time'] = datetime.now().isoformat()
             
-            self.logger.info(f"✅ Section {section_id} marked complete by {by_user}")
+            self.logger.info(f"âœ… Section {section_id} marked complete by {by_user}")
             return True
             
         except Exception as e:
@@ -713,7 +1069,7 @@ class GatewayController:
                 return success
             
             # Fallback if no ecosystem controller
-            self.logger.warning(f"⚠️ No Ecosystem Controller - using fallback for {section_id}")
+            self.logger.warning(f"âš ï¸ No Ecosystem Controller - using fallback for {section_id}")
             if section_id not in self.section_cache:
                 self.logger.error(f"Section {section_id} not found")
                 return False
@@ -730,7 +1086,7 @@ class GatewayController:
             self.section_cache[section_id]['revision_count'] = self.section_cache[section_id].get('revision_count', 0) + 1
             self.section_cache[section_id]['last_revision'] = datetime.now().isoformat()
             
-            self.logger.info(f"🔄 Section {section_id} reopened by {by_user}")
+            self.logger.info(f"ðŸ”„ Section {section_id} reopened by {by_user}")
             return True
             
         except Exception as e:
@@ -745,7 +1101,7 @@ class GatewayController:
         """Gateway forces itself to be validated by ECC"""
         try:
             if not self.ecosystem_controller:
-                self.logger.warning("⚠️ No ECC available for Gateway validation")
+                self.logger.warning("âš ï¸ No ECC available for Gateway validation")
                 return False
             
             # Register Gateway as a special section with ECC
@@ -755,10 +1111,10 @@ class GatewayController:
             can_run = self.ecosystem_controller.can_run(gateway_section_id)
             
             if can_run:
-                self.logger.info("✅ Gateway validated by ECC - operational")
+                self.logger.info("âœ… Gateway validated by ECC - operational")
                 return True
             else:
-                self.logger.error("❌ Gateway validation failed by ECC")
+                self.logger.error("âŒ Gateway validation failed by ECC")
                 return False
                 
         except Exception as e:
@@ -791,7 +1147,7 @@ class GatewayController:
             self.execution_coordination[target_section_id] = coordination_record
             self.communication_log.append(coordination_record)
             
-            self.logger.debug(f"🎯 Coordinated execution for {target_section_id}")
+            self.logger.debug(f"ðŸŽ¯ Coordinated execution for {target_section_id}")
             self.logger.info(f"Coordinated execution for {target_section_id}")
             return True
             
@@ -827,7 +1183,7 @@ class GatewayController:
             self.data_flow_status[flow_id] = flow_record
             self.communication_log.append(flow_record)
             
-            self.logger.debug(f"📡 Managed data flow {flow_id}")
+            self.logger.debug(f"ðŸ“¡ Managed data flow {flow_id}")
             self.logger.info(f"Managed data flow {source_section} -> {target_section}")
             return True
             
@@ -851,7 +1207,7 @@ class GatewayController:
             
             self.communication_log.append(log_entry)
             
-            self.logger.debug(f"📝 Logged {communication_type} communication")
+            self.logger.debug(f"ðŸ“ Logged {communication_type} communication")
             self.logger.info(f"Logged {communication_type} communication")
             return True
             
@@ -878,7 +1234,7 @@ class GatewayController:
         """Clear communication log"""
         try:
             self.communication_log.clear()
-            self.logger.debug(f"🗑️ Cleared communication log")
+            self.logger.debug(f"ðŸ—‘ï¸ Cleared communication log")
             self.logger.info(f"Cleared communication log")
             return True
         except Exception as e:
@@ -915,7 +1271,7 @@ class GatewayController:
             # Store in case bundle
             self._store_in_case_bundle(file_path, primary_result, section_id)
             
-            self.logger.debug(f"📄 Complete pipeline processed {file_path}")
+            self.logger.debug(f"ðŸ“„ Complete pipeline processed {file_path}")
             self.logger.info(f"Complete pipeline processed {file_path}")
             
             return primary_result
@@ -1122,7 +1478,7 @@ class GatewayController:
             
             # Store processed content
             self.processed_content[file_path] = result
-            self.logger.debug(f"🔍 Tesseract processed {file_path}")
+            self.logger.debug(f"ðŸ” Tesseract processed {file_path}")
             self.logger.info(f"Tesseract processed {file_path}")
             
             return result
@@ -1175,7 +1531,7 @@ class GatewayController:
             
             # Store processed content
             self.processed_content[file_path] = result
-            self.logger.debug(f"📄 Unstructured processed {file_path}")
+            self.logger.debug(f"ðŸ“„ Unstructured processed {file_path}")
             self.logger.info(f"Unstructured processed {file_path}")
             
             return result
@@ -1246,7 +1602,7 @@ class GatewayController:
             # Store classification
             self.content_classification[file_path] = classification
             
-            self.logger.debug(f"🏷️ Classified {file_path} as {classification['content_type']}")
+            self.logger.debug(f"ðŸ·ï¸ Classified {file_path} as {classification['content_type']}")
             self.logger.info(f"Classified {file_path} as {classification['content_type']}")
             
             return classification
@@ -1285,7 +1641,7 @@ class GatewayController:
             success = self.transfer_section_data(target_section, handoff_payload)
             
             if success:
-                self.logger.debug(f"📤 Handed off {file_path} to {target_section}")
+                self.logger.debug(f"ðŸ“¤ Handed off {file_path} to {target_section}")
                 self.logger.info(f"Handed off {file_path} to {target_section}")
                 
                 # Log handoff in communication log
@@ -1336,7 +1692,7 @@ class GatewayController:
             
             # Process each file through the pipeline
             for file_path in file_paths:
-                self.logger.debug(f"🔄 Processing {file_path} for {section_id}")
+                self.logger.debug(f"ðŸ”„ Processing {file_path} for {section_id}")
                 
                 # Run complete document pipeline
                 pipeline_result = self.process_document_pipeline(file_path, section_id)
@@ -1364,7 +1720,7 @@ class GatewayController:
             
             orchestration_result['status'] = 'completed'
             
-            self.logger.debug(f"🎯 Section orchestration completed for {section_id}")
+            self.logger.debug(f"ðŸŽ¯ Section orchestration completed for {section_id}")
             self.logger.info(f"Section orchestration completed for {section_id}")
             
             return orchestration_result
@@ -1400,19 +1756,25 @@ class GatewayController:
                 if file_path in self.case_bundle:
                     section_data.append(self.case_bundle[file_path]['processed_data'])
             
-            # Create signal for handler
+            plan = self._build_section_parsing_plan(section_id, processed_files)
+
+            signal_payload = {'processed_files': processed_files, 'section_data': section_data}
+            if plan:
+                signal_payload['parsing_plan'] = plan
+
             signal = self.create_signal(
                 signal_type=SignalType.PROCESS,
                 target=section_id,
                 source="gateway_orchestration",
-                payload={'processed_files': processed_files, 'section_data': section_data},
+                payload=signal_payload,
                 case_id="orchestration"
             )
             
             # Route to section handler
             handler_result = handler(signal.to_dict())
+            self._remember_section_draft(section_id, handler_result, plan)
             
-            self.logger.debug(f"📡 Routed {section_id} to section handler")
+            self.logger.debug(f"ðŸ“¡ Routed {section_id} to section handler")
             self.logger.info(f"Routed {section_id} to section handler")
             
             return handler_result
@@ -1426,7 +1788,7 @@ class GatewayController:
         """Register a section handler for signal processing"""
         try:
             self.section_handlers[section_id] = handler_func
-            self.logger.debug(f"📡 Registered handler for {section_id}")
+            self.logger.debug(f"ðŸ“¡ Registered handler for {section_id}")
             self.logger.info(f"Registered handler for {section_id}")
             return True
         except Exception as e:
@@ -1484,7 +1846,7 @@ class GatewayController:
                 "timestamp": signal.timestamp
             }
             
-            self.logger.debug(f"📡 Signal dispatched: {signal.type.value} -> {signal.target}")
+            self.logger.debug(f"ðŸ“¡ Signal dispatched: {signal.type.value} -> {signal.target}")
             self.logger.info(f"Signal dispatched: {signal.type.value} -> {signal.target}")
             
             return result
@@ -1502,7 +1864,7 @@ class GatewayController:
         """Queue signal for processing"""
         try:
             self.signal_queue.append(signal)
-            self.logger.debug(f"📥 Signal queued: {signal.type.value} -> {signal.target}")
+            self.logger.debug(f"ðŸ“¥ Signal queued: {signal.type.value} -> {signal.target}")
             return True
         except Exception as e:
             self.logger.error(f"Failed to queue signal: {e}")
@@ -1520,7 +1882,7 @@ class GatewayController:
                 results.append(result)
                 processed_count += 1
             
-            self.logger.debug(f"📤 Processed {processed_count} signals from queue")
+            self.logger.debug(f"ðŸ“¤ Processed {processed_count} signals from queue")
             self.logger.info(f"Processed {processed_count} signals from queue")
             
             return {
@@ -1547,7 +1909,7 @@ class GatewayController:
             # Update signal target if routing decision differs
             if routing_decision.get('recommended_section') and routing_decision['recommended_section'] != signal.target:
                 signal.target = routing_decision['recommended_section']
-                self.logger.debug(f"🔄 Signal rerouted to {signal.target}")
+                self.logger.debug(f"ðŸ”„ Signal rerouted to {signal.target}")
             
             # Dispatch the signal
             result = self.dispatch_signal(signal)
@@ -1660,7 +2022,7 @@ class GatewayController:
             # Step 6: Complete handoff
             self._complete_handoff("narrative_request", "success")
             
-            logger.info(f"📝 Requested narrative from assembler for {section_id}")
+            logger.info(f"ðŸ“ Requested narrative from assembler for {section_id}")
             return {"status": "success", "section_id": section_id}
             
         except Exception as e:
@@ -1686,7 +2048,7 @@ class GatewayController:
             # Emit call-out signal to ECC
             if hasattr(self.ecosystem_controller, 'emit'):
                 self.ecosystem_controller.emit("gateway_controller.call_out", call_out_data)
-                logger.info(f"📞 Called out to ECC for operation: {operation}")
+                logger.info(f"ðŸ“ž Called out to ECC for operation: {operation}")
                 return True
             else:
                 logger.warning("ECC does not support signal emission")
@@ -1701,11 +2063,11 @@ class GatewayController:
         try:
             # In a real implementation, this would wait for ECC response
             # For now, we'll simulate immediate confirmation
-            logger.info("⏳ Waiting for ECC confirmation...")
+            logger.info("â³ Waiting for ECC confirmation...")
             # Simulate confirmation delay
             import time
             time.sleep(0.1)  # Brief delay to simulate processing
-            logger.info("✅ ECC confirmation received")
+            logger.info("âœ… ECC confirmation received")
             return True
             
         except Exception as e:
@@ -1729,7 +2091,7 @@ class GatewayController:
             # Emit message to ECC
             if hasattr(self.ecosystem_controller, 'emit'):
                 self.ecosystem_controller.emit(f"gateway_controller.{message_type}", message_data)
-                logger.info(f"📤 Sent message to ECC: {message_type}")
+                logger.info(f"ðŸ“¤ Sent message to ECC: {message_type}")
                 return True
             else:
                 logger.warning("ECC does not support signal emission")
@@ -1756,7 +2118,7 @@ class GatewayController:
             # Emit accept signal to ECC
             if hasattr(self.ecosystem_controller, 'emit'):
                 self.ecosystem_controller.emit("gateway_controller.accept", accept_data)
-                logger.info(f"✅ Sent accept signal to ECC for operation: {operation}")
+                logger.info(f"âœ… Sent accept signal to ECC for operation: {operation}")
                 return True
             else:
                 logger.warning("ECC does not support signal emission")
@@ -1782,7 +2144,7 @@ class GatewayController:
             
             self.handoff_log.append(handoff_data)
             
-            logger.info(f"🔄 Handoff completed: {operation} - {status}")
+            logger.info(f"ðŸ”„ Handoff completed: {operation} - {status}")
             return True
             
         except Exception as e:
@@ -1808,5 +2170,16 @@ class GatewayController:
             'orchestration_status': self.get_orchestration_status(),
             'ocr_status': self.get_ocr_status(),
             'case_bundle_status': self.get_case_bundle_status(),
+            'bus_connected': bool(self.bus),
+            'evidence_catalog_size': len(self.evidence_catalog),
+            'pending_section_drafts': len(self._pending_section_outputs),
+            'pending_evidence_requests': list(self.pending_evidence_requests.keys()),
+            'section_needs': list(self.section_needs_registry.keys()),
+            'case_snapshots_count': len(self.case_snapshots),
             'signal_status': self.get_signal_status()
         }
+
+
+
+
+

@@ -1,0 +1,824 @@
+2025-10-01 07:05:20,857 - bus_core - INFO - Central Command Bus initialized
+2025-10-01 07:05:20,857 - bus_core - INFO - [BUS] Signal 'case_create' bound to _handle_case_create_signal
+2025-10-01 07:05:20,857 - bus_core - INFO - [BUS] Signal 'files_add' bound to _handle_files_add_signal
+2025-10-01 07:05:20,857 - bus_core - INFO - [BUS] Signal 'evidence.new' bound to _handle_evidence_new_signal
+2025-10-01 07:05:20,858 - bus_core - INFO - [BUS] Signal 'evidence.annotated' bound to _handle_evidence_annotated_signal
+2025-10-01 07:05:20,858 - bus_core - INFO - [BUS] Signal 'evidence.request' bound to _handle_evidence_request_signal
+2025-10-01 07:05:20,858 - bus_core - INFO - [BUS] Signal 'evidence.deliver' bound to _handle_evidence_deliver_signal
+2025-10-01 07:05:20,858 - bus_core - INFO - [BUS] Signal 'evidence.updated' bound to _handle_evidence_updated_signal
+2025-10-01 07:05:20,858 - bus_core - INFO - [BUS] Signal 'evidence.tagged' bound to _handle_evidence_tagged_signal
+2025-10-01 07:05:20,858 - bus_core - INFO - [BUS] Signal 'evidence.stored' bound to _handle_evidence_stored_signal
+2025-10-01 07:05:20,858 - bus_core - INFO - [BUS] Signal 'evidence_locker.call_out' bound to _handle_evidence_call_out_signal
+2025-10-01 07:05:20,858 - bus_core - INFO - [BUS] Signal 'evidence_locker.accept' bound to _handle_evidence_accept_signal
+2025-10-01 07:05:20,858 - bus_core - INFO - [BUS] Signal 'section.needs' bound to _handle_section_needs_signal
+2025-10-01 07:05:20,859 - bus_core - INFO - [BUS] Signal 'case.snapshot' bound to _handle_case_snapshot_signal
+2025-10-01 07:05:20,859 - bus_core - INFO - [BUS] Signal 'gateway.status' bound to _handle_gateway_status_signal
+2025-10-01 07:05:20,859 - bus_core - INFO - [BUS] Signal 'locker.status' bound to _handle_locker_status_signal
+2025-10-01 07:05:20,859 - bus_core - INFO - [BUS] Signal 'mission.status' bound to _handle_mission_status_signal
+2025-10-01 07:05:20,859 - central_plugin - INFO - Data Bus initialized successfully
+2025-10-01 07:05:20,859 - central_plugin - INFO - API Manager initialized successfully
+2025-10-01 07:05:20,859 - central_plugin - INFO - Smart Lookup Resolver unavailable; skipping initialization
+2025-10-01 07:05:20,860 - osint_module - INFO - Loaded API keys from F:\The Central Command\Command Center\Data Bus\configs\api_keys.json
+2025-10-01 07:05:20,860 - osint_module - INFO - OSINT Engine initialized
+2025-10-01 07:05:20,860 - central_plugin - INFO - OSINT Engine initialized successfully
+2025-10-01 07:05:20,860 - bus_core - INFO - [BUS] Signal 'narrative.generate' bound to _handle_narrative_generation
+2025-10-01 07:05:20,860 - bus_core - INFO - [BUS] Signal 'osint.verify' bound to _handle_osint_verification
+2025-10-01 07:05:20,860 - bus_core - INFO - [BUS] Signal 'geocoding.reverse' bound to _handle_reverse_geocoding
+2025-10-01 07:05:20,860 - bus_core - INFO - [BUS] Signal 'geocoding' bound to _handle_geocoding
+2025-10-01 07:05:20,860 - bus_core - INFO - [BUS] Signal 'api.test' bound to _handle_api_test
+2025-10-01 07:05:20,860 - bus_core - INFO - [BUS] Signal 'api.status' bound to _handle_api_status
+2025-10-01 07:05:20,860 - bus_core - INFO - [BUS] Signal 'evidence.scan' bound to _handle_evidence_scan
+2025-10-01 07:05:20,861 - bus_core - INFO - [BUS] Signal 'mission_debrief.process_report' bound to _handle_mission_debrief
+2025-10-01 07:05:20,861 - central_plugin - INFO - API signal handlers registered with Data Bus
+2025-10-01 07:05:20,868 - section_bus_adapter - WARNING - Failed to load disclosures catalog: Unexpected UTF-8 BOM (decode using utf-8-sig): line 1 column 1 (char 0)
+2025-10-01 07:05:20,868 - bus_core - INFO - [BUS] Signal 'section.needs' bound to _handle_section_needs_signal
+2025-10-01 07:05:20,868 - bus_core - INFO - [BUS] Signal 'evidence.deliver' bound to _handle_evidence_deliver_signal
+2025-10-01 07:05:20,868 - bus_core - INFO - [BUS][bus.evidence_request] Evidence <unknown> requested by section_1
+2025-10-01 07:05:20,868 - bus_core - INFO - [BUS][bus.evidence_request] Evidence <unknown> requested by section_1
+2025-10-01 07:05:20,869 - bus_core - INFO - [BUS][bus.evidence_request] Evidence <unknown> requested by section_2
+2025-10-01 07:05:20,869 - bus_core - INFO - [BUS][bus.evidence_request] Evidence <unknown> requested by section_2
+2025-10-01 07:05:20,869 - bus_core - INFO - [BUS][bus.evidence_request] Evidence <unknown> requested by section_3
+2025-10-01 07:05:20,869 - bus_core - INFO - [BUS][bus.evidence_request] Evidence <unknown> requested by section_3
+2025-10-01 07:05:20,869 - bus_core - INFO - [BUS][bus.evidence_request] Evidence <unknown> requested by section_4
+2025-10-01 07:05:20,869 - bus_core - INFO - [BUS][bus.evidence_request] Evidence <unknown> requested by section_4
+2025-10-01 07:05:20,869 - bus_core - INFO - [BUS][bus.evidence_request] Evidence <unknown> requested by section_5
+2025-10-01 07:05:20,869 - bus_core - INFO - [BUS][bus.evidence_request] Evidence <unknown> requested by section_5
+2025-10-01 07:05:20,869 - bus_core - INFO - [BUS][bus.evidence_request] Evidence <unknown> requested by section_6
+2025-10-01 07:05:20,869 - bus_core - INFO - [BUS][bus.evidence_request] Evidence <unknown> requested by section_6
+2025-10-01 07:05:20,869 - bus_core - INFO - [BUS][bus.evidence_request] Evidence <unknown> requested by section_7
+2025-10-01 07:05:20,870 - bus_core - INFO - [BUS][bus.evidence_request] Evidence <unknown> requested by section_7
+2025-10-01 07:05:20,870 - bus_core - INFO - [BUS][bus.evidence_request] Evidence <unknown> requested by section_8
+2025-10-01 07:05:20,870 - bus_core - INFO - [BUS][bus.evidence_request] Evidence <unknown> requested by section_8
+2025-10-01 07:05:20,870 - bus_core - INFO - [BUS][bus.evidence_updated] Evidence updated: <unknown>
+2025-10-01 07:05:20,870 - bus_core - INFO - [BUS][bus.evidence_updated] Evidence updated: <unknown>
+2025-10-01 07:05:20,870 - central_plugin - INFO - Central Plugin initialized with Data Bus integration
+2025-10-01 07:05:21,427 - central_plugin - INFO - Central Plugin Event: Enhanced GUI started
+2025-10-01 07:05:21,428 - bus_core - INFO - [BUS] Signal 'narrative.assembled' bound to _wrapper
+2025-10-01 07:05:21,428 - bus_core - INFO - [BUS] Signal 'mission_debrief.report_processed' bound to _wrapper
+2025-10-01 07:05:21,428 - bus_core - INFO - [BUS] Signal 'mission_debrief.digital_signed' bound to _wrapper
+2025-10-01 07:05:21,428 - bus_core - INFO - [BUS] Signal 'mission_debrief.template_applied' bound to _wrapper
+2025-10-01 07:05:21,429 - bus_core - INFO - [BUS] Signal 'mission_debrief.watermark_added' bound to _wrapper
+2025-10-01 07:05:21,429 - bus_core - INFO - [BUS] Signal 'mission_debrief.osint_completed' bound to _wrapper
+2025-10-01 07:05:21,429 - bus_core - INFO - [BUS] Signal 'evidence_locker.evidence_handoff' bound to _wrapper
+2025-10-01 07:05:21,448 - enhanced_functional_gui - INFO - Enhanced DKI Central Command GUI initialized
+2025-10-01 07:06:07,224 - bus_core - INFO - [BUS][bus.case_create] Case created via signal: CASE_20251001_070607
+2025-10-01 07:06:07,225 - bus_core - INFO - New case created: CASE_20251001_070607
+2025-10-01 07:06:07,225 - central_plugin - INFO - Central Plugin Event: GUI registered case CASE_20251001_070607
+2025-10-01 07:06:44,721 - enhanced_functional_gui - ERROR - Error handling file drop: name 'section_id' is not defined
+2025-10-01 07:07:08,688 - enhanced_functional_gui - ERROR - Error handling file drop: name 'section_id' is not defined
+2025-10-01 07:07:58,630 - enhanced_functional_gui - ERROR - Error handling file drop: name 'section_id' is not defined
+2025-10-01 07:08:04,116 - enhanced_functional_gui - ERROR - Error handling file drop: name 'section_id' is not defined
+2025-10-01 07:21:10,253 - bus_core - INFO - Central Command Bus initialized
+2025-10-01 07:21:10,257 - bus_core - INFO - [BUS] Signal 'case_create' bound to _handle_case_create_signal
+2025-10-01 07:21:10,257 - bus_core - INFO - [BUS] Signal 'files_add' bound to _handle_files_add_signal
+2025-10-01 07:21:10,257 - bus_core - INFO - [BUS] Signal 'evidence.new' bound to _handle_evidence_new_signal
+2025-10-01 07:21:10,257 - bus_core - INFO - [BUS] Signal 'evidence.annotated' bound to _handle_evidence_annotated_signal
+2025-10-01 07:21:10,257 - bus_core - INFO - [BUS] Signal 'evidence.request' bound to _handle_evidence_request_signal
+2025-10-01 07:21:10,257 - bus_core - INFO - [BUS] Signal 'evidence.deliver' bound to _handle_evidence_deliver_signal
+2025-10-01 07:21:10,257 - bus_core - INFO - [BUS] Signal 'evidence.updated' bound to _handle_evidence_updated_signal
+2025-10-01 07:21:10,257 - bus_core - INFO - [BUS] Signal 'evidence.tagged' bound to _handle_evidence_tagged_signal
+2025-10-01 07:21:10,258 - bus_core - INFO - [BUS] Signal 'evidence.stored' bound to _handle_evidence_stored_signal
+2025-10-01 07:21:10,258 - bus_core - INFO - [BUS] Signal 'evidence_locker.call_out' bound to _handle_evidence_call_out_signal
+2025-10-01 07:21:10,258 - bus_core - INFO - [BUS] Signal 'evidence_locker.accept' bound to _handle_evidence_accept_signal
+2025-10-01 07:21:10,258 - bus_core - INFO - [BUS] Signal 'section.needs' bound to _handle_section_needs_signal
+2025-10-01 07:21:10,258 - bus_core - INFO - [BUS] Signal 'case.snapshot' bound to _handle_case_snapshot_signal
+2025-10-01 07:21:10,258 - bus_core - INFO - [BUS] Signal 'gateway.status' bound to _handle_gateway_status_signal
+2025-10-01 07:21:10,258 - bus_core - INFO - [BUS] Signal 'locker.status' bound to _handle_locker_status_signal
+2025-10-01 07:21:10,258 - bus_core - INFO - [BUS] Signal 'mission.status' bound to _handle_mission_status_signal
+2025-10-01 07:21:10,258 - central_plugin - INFO - Data Bus initialized successfully
+2025-10-01 07:21:10,259 - central_plugin - INFO - API Manager initialized successfully
+2025-10-01 07:21:10,259 - central_plugin - INFO - Smart Lookup Resolver unavailable; skipping initialization
+2025-10-01 07:21:10,259 - osint_module - INFO - Loaded API keys from F:\The Central Command\Command Center\Data Bus\configs\api_keys.json
+2025-10-01 07:21:10,259 - osint_module - INFO - OSINT Engine initialized
+2025-10-01 07:21:10,260 - central_plugin - INFO - OSINT Engine initialized successfully
+2025-10-01 07:21:10,260 - bus_core - INFO - [BUS] Signal 'narrative.generate' bound to _handle_narrative_generation
+2025-10-01 07:21:10,260 - bus_core - INFO - [BUS] Signal 'osint.verify' bound to _handle_osint_verification
+2025-10-01 07:21:10,260 - bus_core - INFO - [BUS] Signal 'geocoding.reverse' bound to _handle_reverse_geocoding
+2025-10-01 07:21:10,260 - bus_core - INFO - [BUS] Signal 'geocoding' bound to _handle_geocoding
+2025-10-01 07:21:10,260 - bus_core - INFO - [BUS] Signal 'api.test' bound to _handle_api_test
+2025-10-01 07:21:10,260 - bus_core - INFO - [BUS] Signal 'api.status' bound to _handle_api_status
+2025-10-01 07:21:10,260 - bus_core - INFO - [BUS] Signal 'evidence.scan' bound to _handle_evidence_scan
+2025-10-01 07:21:10,260 - bus_core - INFO - [BUS] Signal 'mission_debrief.process_report' bound to _handle_mission_debrief
+2025-10-01 07:21:10,260 - central_plugin - INFO - API signal handlers registered with Data Bus
+2025-10-01 07:21:10,274 - bus_core - INFO - [BUS] Signal 'section.needs' bound to _handle_section_needs_signal
+2025-10-01 07:21:10,274 - bus_core - INFO - [BUS] Signal 'evidence.deliver' bound to _handle_evidence_deliver_signal
+2025-10-01 07:21:10,274 - bus_core - INFO - [BUS][bus.evidence_request] Evidence <unknown> requested by section_1
+2025-10-01 07:21:10,274 - bus_core - INFO - [BUS][bus.evidence_request] Evidence <unknown> requested by section_1
+2025-10-01 07:21:10,275 - bus_core - INFO - [BUS][bus.evidence_request] Evidence <unknown> requested by section_2
+2025-10-01 07:21:10,275 - bus_core - INFO - [BUS][bus.evidence_request] Evidence <unknown> requested by section_2
+2025-10-01 07:21:10,275 - bus_core - INFO - [BUS][bus.evidence_request] Evidence <unknown> requested by section_3
+2025-10-01 07:21:10,275 - bus_core - INFO - [BUS][bus.evidence_request] Evidence <unknown> requested by section_3
+2025-10-01 07:21:10,275 - bus_core - INFO - [BUS][bus.evidence_request] Evidence <unknown> requested by section_4
+2025-10-01 07:21:10,275 - bus_core - INFO - [BUS][bus.evidence_request] Evidence <unknown> requested by section_4
+2025-10-01 07:21:10,275 - bus_core - INFO - [BUS][bus.evidence_request] Evidence <unknown> requested by section_5
+2025-10-01 07:21:10,275 - bus_core - INFO - [BUS][bus.evidence_request] Evidence <unknown> requested by section_5
+2025-10-01 07:21:10,275 - bus_core - INFO - [BUS][bus.evidence_request] Evidence <unknown> requested by section_6
+2025-10-01 07:21:10,275 - bus_core - INFO - [BUS][bus.evidence_request] Evidence <unknown> requested by section_6
+2025-10-01 07:21:10,275 - bus_core - INFO - [BUS][bus.evidence_request] Evidence <unknown> requested by section_7
+2025-10-01 07:21:10,275 - bus_core - INFO - [BUS][bus.evidence_request] Evidence <unknown> requested by section_7
+2025-10-01 07:21:10,276 - bus_core - INFO - [BUS][bus.evidence_request] Evidence <unknown> requested by section_8
+2025-10-01 07:21:10,276 - bus_core - INFO - [BUS][bus.evidence_request] Evidence <unknown> requested by section_8
+2025-10-01 07:21:10,276 - bus_core - INFO - [BUS][bus.evidence_updated] Evidence updated: <unknown>
+2025-10-01 07:21:10,276 - bus_core - INFO - [BUS][bus.evidence_updated] Evidence updated: <unknown>
+2025-10-01 07:21:10,276 - central_plugin - INFO - Central Plugin initialized with Data Bus integration
+2025-10-01 07:21:10,499 - central_plugin - INFO - Central Plugin Event: Enhanced GUI started
+2025-10-01 07:21:10,500 - bus_core - INFO - [BUS] Signal 'narrative.assembled' bound to _wrapper
+2025-10-01 07:21:10,500 - bus_core - INFO - [BUS] Signal 'mission_debrief.report_processed' bound to _wrapper
+2025-10-01 07:21:10,500 - bus_core - INFO - [BUS] Signal 'mission_debrief.digital_signed' bound to _wrapper
+2025-10-01 07:21:10,501 - bus_core - INFO - [BUS] Signal 'mission_debrief.template_applied' bound to _wrapper
+2025-10-01 07:21:10,501 - bus_core - INFO - [BUS] Signal 'mission_debrief.watermark_added' bound to _wrapper
+2025-10-01 07:21:10,501 - bus_core - INFO - [BUS] Signal 'mission_debrief.osint_completed' bound to _wrapper
+2025-10-01 07:21:10,501 - bus_core - INFO - [BUS] Signal 'evidence_locker.evidence_handoff' bound to _wrapper
+2025-10-01 07:21:10,520 - enhanced_functional_gui - INFO - Enhanced DKI Central Command GUI initialized
+2025-10-01 07:21:59,435 - bus_core - INFO - [BUS][bus.case_create] Case created via signal: CASE_20251001_072159
+2025-10-01 07:21:59,435 - bus_core - INFO - New case created: CASE_20251001_072159
+2025-10-01 07:21:59,435 - central_plugin - INFO - Central Plugin Event: GUI registered case CASE_20251001_072159
+2025-10-01 07:22:10,926 - enhanced_functional_gui - ERROR - Error handling file drop: name 'section_id' is not defined
+2025-10-01 09:01:28,522 - bus_core - INFO - Central Command Bus initialized
+2025-10-01 09:01:28,525 - bus_core - INFO - [BUS] Signal 'case_create' bound to _handle_case_create_signal
+2025-10-01 09:01:28,525 - bus_core - INFO - [BUS] Signal 'files_add' bound to _handle_files_add_signal
+2025-10-01 09:01:28,525 - bus_core - INFO - [BUS] Signal 'evidence.new' bound to _handle_evidence_new_signal
+2025-10-01 09:01:28,525 - bus_core - INFO - [BUS] Signal 'evidence.annotated' bound to _handle_evidence_annotated_signal
+2025-10-01 09:01:28,526 - bus_core - INFO - [BUS] Signal 'evidence.request' bound to _handle_evidence_request_signal
+2025-10-01 09:01:28,526 - bus_core - INFO - [BUS] Signal 'evidence.deliver' bound to _handle_evidence_deliver_signal
+2025-10-01 09:01:28,526 - bus_core - INFO - [BUS] Signal 'evidence.updated' bound to _handle_evidence_updated_signal
+2025-10-01 09:01:28,526 - bus_core - INFO - [BUS] Signal 'evidence.tagged' bound to _handle_evidence_tagged_signal
+2025-10-01 09:01:28,526 - bus_core - INFO - [BUS] Signal 'evidence.stored' bound to _handle_evidence_stored_signal
+2025-10-01 09:01:28,526 - bus_core - INFO - [BUS] Signal 'evidence_locker.call_out' bound to _handle_evidence_call_out_signal
+2025-10-01 09:01:28,527 - bus_core - INFO - [BUS] Signal 'evidence_locker.accept' bound to _handle_evidence_accept_signal
+2025-10-01 09:01:28,527 - bus_core - INFO - [BUS] Signal 'section.needs' bound to _handle_section_needs_signal
+2025-10-01 09:01:28,527 - bus_core - INFO - [BUS] Signal 'case.snapshot' bound to _handle_case_snapshot_signal
+2025-10-01 09:01:28,527 - bus_core - INFO - [BUS] Signal 'gateway.status' bound to _handle_gateway_status_signal
+2025-10-01 09:01:28,527 - bus_core - INFO - [BUS] Signal 'locker.status' bound to _handle_locker_status_signal
+2025-10-01 09:01:28,527 - bus_core - INFO - [BUS] Signal 'mission.status' bound to _handle_mission_status_signal
+2025-10-01 09:01:28,527 - central_plugin - INFO - Data Bus initialized successfully
+2025-10-01 09:01:28,528 - central_plugin - INFO - API Manager initialized successfully
+2025-10-01 09:01:28,528 - central_plugin - INFO - Smart Lookup Resolver unavailable; skipping initialization
+2025-10-01 09:01:28,528 - osint_module - INFO - Loaded API keys from F:\The Central Command\Command Center\Data Bus\configs\api_keys.json
+2025-10-01 09:01:28,528 - osint_module - INFO - OSINT Engine initialized
+2025-10-01 09:01:28,528 - central_plugin - INFO - OSINT Engine initialized successfully
+2025-10-01 09:01:28,528 - bus_core - INFO - [BUS] Signal 'narrative.generate' bound to _handle_narrative_generation
+2025-10-01 09:01:28,528 - bus_core - INFO - [BUS] Signal 'osint.verify' bound to _handle_osint_verification
+2025-10-01 09:01:28,529 - bus_core - INFO - [BUS] Signal 'geocoding.reverse' bound to _handle_reverse_geocoding
+2025-10-01 09:01:28,529 - bus_core - INFO - [BUS] Signal 'geocoding' bound to _handle_geocoding
+2025-10-01 09:01:28,529 - bus_core - INFO - [BUS] Signal 'api.test' bound to _handle_api_test
+2025-10-01 09:01:28,529 - bus_core - INFO - [BUS] Signal 'api.status' bound to _handle_api_status
+2025-10-01 09:01:28,529 - bus_core - INFO - [BUS] Signal 'evidence.scan' bound to _handle_evidence_scan
+2025-10-01 09:01:28,529 - bus_core - INFO - [BUS] Signal 'mission_debrief.process_report' bound to _handle_mission_debrief
+2025-10-01 09:01:28,529 - central_plugin - INFO - API signal handlers registered with Data Bus
+2025-10-01 09:01:28,543 - bus_core - INFO - [BUS] Signal 'section.needs' bound to _handle_section_needs_signal
+2025-10-01 09:01:28,543 - bus_core - INFO - [BUS] Signal 'evidence.deliver' bound to _handle_evidence_deliver_signal
+2025-10-01 09:01:28,543 - bus_core - INFO - [BUS][bus.evidence_request] Evidence <unknown> requested by section_1
+2025-10-01 09:01:28,544 - bus_core - INFO - [BUS][bus.evidence_request] Evidence <unknown> requested by section_1
+2025-10-01 09:01:28,544 - bus_core - INFO - [BUS][bus.evidence_request] Evidence <unknown> requested by section_2
+2025-10-01 09:01:28,544 - bus_core - INFO - [BUS][bus.evidence_request] Evidence <unknown> requested by section_2
+2025-10-01 09:01:28,544 - bus_core - INFO - [BUS][bus.evidence_request] Evidence <unknown> requested by section_3
+2025-10-01 09:01:28,544 - bus_core - INFO - [BUS][bus.evidence_request] Evidence <unknown> requested by section_3
+2025-10-01 09:01:28,544 - bus_core - INFO - [BUS][bus.evidence_request] Evidence <unknown> requested by section_4
+2025-10-01 09:01:28,544 - bus_core - INFO - [BUS][bus.evidence_request] Evidence <unknown> requested by section_4
+2025-10-01 09:01:28,545 - bus_core - INFO - [BUS][bus.evidence_request] Evidence <unknown> requested by section_5
+2025-10-01 09:01:28,545 - bus_core - INFO - [BUS][bus.evidence_request] Evidence <unknown> requested by section_5
+2025-10-01 09:01:28,545 - bus_core - INFO - [BUS][bus.evidence_request] Evidence <unknown> requested by section_6
+2025-10-01 09:01:28,545 - bus_core - INFO - [BUS][bus.evidence_request] Evidence <unknown> requested by section_6
+2025-10-01 09:01:28,545 - bus_core - INFO - [BUS][bus.evidence_request] Evidence <unknown> requested by section_7
+2025-10-01 09:01:28,545 - bus_core - INFO - [BUS][bus.evidence_request] Evidence <unknown> requested by section_7
+2025-10-01 09:01:28,545 - bus_core - INFO - [BUS][bus.evidence_request] Evidence <unknown> requested by section_8
+2025-10-01 09:01:28,545 - bus_core - INFO - [BUS][bus.evidence_request] Evidence <unknown> requested by section_8
+2025-10-01 09:01:28,546 - bus_core - INFO - [BUS][bus.evidence_updated] Evidence updated: <unknown>
+2025-10-01 09:01:28,546 - bus_core - INFO - [BUS][bus.evidence_updated] Evidence updated: <unknown>
+2025-10-01 09:01:28,546 - central_plugin - INFO - Central Plugin initialized with Data Bus integration
+2025-10-01 09:01:28,737 - central_plugin - INFO - Central Plugin Event: Enhanced GUI started
+2025-10-01 09:01:28,738 - bus_core - INFO - [BUS] Signal 'narrative.assembled' bound to _wrapper
+2025-10-01 09:01:28,738 - bus_core - INFO - [BUS] Signal 'mission_debrief.report_processed' bound to _wrapper
+2025-10-01 09:01:28,738 - bus_core - INFO - [BUS] Signal 'mission_debrief.digital_signed' bound to _wrapper
+2025-10-01 09:01:28,738 - bus_core - INFO - [BUS] Signal 'mission_debrief.template_applied' bound to _wrapper
+2025-10-01 09:01:28,738 - bus_core - INFO - [BUS] Signal 'mission_debrief.watermark_added' bound to _wrapper
+2025-10-01 09:01:28,738 - bus_core - INFO - [BUS] Signal 'mission_debrief.osint_completed' bound to _wrapper
+2025-10-01 09:01:28,738 - bus_core - INFO - [BUS] Signal 'evidence_locker.evidence_handoff' bound to _wrapper
+2025-10-01 09:01:28,756 - enhanced_functional_gui - INFO - Enhanced DKI Central Command GUI initialized
+2025-10-01 09:02:09,630 - bus_core - INFO - [BUS][bus.case_create] Case created via signal: CASE_20251001_090209
+2025-10-01 09:02:09,630 - bus_core - INFO - New case created: CASE_20251001_090209
+2025-10-01 09:02:09,631 - central_plugin - INFO - Central Plugin Event: GUI registered case CASE_20251001_090209
+2025-10-01 09:02:15,725 - enhanced_functional_gui - ERROR - Error handling file drop: name 'section_id' is not defined
+2025-10-01 11:14:51,199 - bus_core - INFO - Central Command Bus initialized
+2025-10-01 11:14:51,199 - bus_core - INFO - [BUS] Signal 'case_create' bound to _handle_case_create_signal
+2025-10-01 11:14:51,199 - bus_core - INFO - [BUS] Signal 'files_add' bound to _handle_files_add_signal
+2025-10-01 11:14:51,199 - bus_core - INFO - [BUS] Signal 'evidence.new' bound to _handle_evidence_new_signal
+2025-10-01 11:14:51,199 - bus_core - INFO - [BUS] Signal 'evidence.annotated' bound to _handle_evidence_annotated_signal
+2025-10-01 11:14:51,200 - bus_core - INFO - [BUS] Signal 'evidence.request' bound to _handle_evidence_request_signal
+2025-10-01 11:14:51,200 - bus_core - INFO - [BUS] Signal 'evidence.deliver' bound to _handle_evidence_deliver_signal
+2025-10-01 11:14:51,200 - bus_core - INFO - [BUS] Signal 'evidence.updated' bound to _handle_evidence_updated_signal
+2025-10-01 11:14:51,200 - bus_core - INFO - [BUS] Signal 'evidence.tagged' bound to _handle_evidence_tagged_signal
+2025-10-01 11:14:51,200 - bus_core - INFO - [BUS] Signal 'evidence.stored' bound to _handle_evidence_stored_signal
+2025-10-01 11:14:51,200 - bus_core - INFO - [BUS] Signal 'evidence_locker.call_out' bound to _handle_evidence_call_out_signal
+2025-10-01 11:14:51,201 - bus_core - INFO - [BUS] Signal 'evidence_locker.accept' bound to _handle_evidence_accept_signal
+2025-10-01 11:14:51,201 - bus_core - INFO - [BUS] Signal 'section.needs' bound to _handle_section_needs_signal
+2025-10-01 11:14:51,201 - bus_core - INFO - [BUS] Signal 'case.snapshot' bound to _handle_case_snapshot_signal
+2025-10-01 11:14:51,201 - bus_core - INFO - [BUS] Signal 'gateway.status' bound to _handle_gateway_status_signal
+2025-10-01 11:14:51,201 - bus_core - INFO - [BUS] Signal 'locker.status' bound to _handle_locker_status_signal
+2025-10-01 11:14:51,201 - bus_core - INFO - [BUS] Signal 'mission.status' bound to _handle_mission_status_signal
+2025-10-01 11:14:51,201 - central_plugin - INFO - Data Bus initialized successfully
+2025-10-01 11:14:51,202 - central_plugin - INFO - API Manager initialized successfully
+2025-10-01 11:14:51,202 - central_plugin - INFO - Smart Lookup Resolver unavailable; skipping initialization
+2025-10-01 11:14:51,202 - osint_module - INFO - Loaded API keys from F:\The Central Command\Command Center\Data Bus\configs\api_keys.json
+2025-10-01 11:14:51,202 - osint_module - INFO - OSINT Engine initialized
+2025-10-01 11:14:51,203 - central_plugin - INFO - OSINT Engine initialized successfully
+2025-10-01 11:14:51,203 - bus_core - INFO - [BUS] Signal 'narrative.generate' bound to _handle_narrative_generation
+2025-10-01 11:14:51,203 - bus_core - INFO - [BUS] Signal 'osint.verify' bound to _handle_osint_verification
+2025-10-01 11:14:51,203 - bus_core - INFO - [BUS] Signal 'geocoding.reverse' bound to _handle_reverse_geocoding
+2025-10-01 11:14:51,203 - bus_core - INFO - [BUS] Signal 'geocoding' bound to _handle_geocoding
+2025-10-01 11:14:51,203 - bus_core - INFO - [BUS] Signal 'api.test' bound to _handle_api_test
+2025-10-01 11:14:51,203 - bus_core - INFO - [BUS] Signal 'api.status' bound to _handle_api_status
+2025-10-01 11:14:51,203 - bus_core - INFO - [BUS] Signal 'evidence.scan' bound to _handle_evidence_scan
+2025-10-01 11:14:51,203 - bus_core - INFO - [BUS] Signal 'mission_debrief.process_report' bound to _handle_mission_debrief
+2025-10-01 11:14:51,203 - central_plugin - INFO - API signal handlers registered with Data Bus
+2025-10-01 11:14:51,204 - bus_core - INFO - [BUS] Signal 'section.needs' bound to _handle_section_needs_signal
+2025-10-01 11:14:51,204 - bus_core - INFO - [BUS] Signal 'evidence.deliver' bound to _handle_evidence_deliver_signal
+2025-10-01 12:06:56,168 - bus_core - INFO - Central Command Bus initialized
+2025-10-01 12:06:56,168 - bus_core - INFO - [BUS] Signal 'case_create' bound to _handle_case_create_signal
+2025-10-01 12:06:56,168 - bus_core - INFO - [BUS] Signal 'files_add' bound to _handle_files_add_signal
+2025-10-01 12:06:56,168 - bus_core - INFO - [BUS] Signal 'evidence.new' bound to _handle_evidence_new_signal
+2025-10-01 12:06:56,168 - bus_core - INFO - [BUS] Signal 'evidence.annotated' bound to _handle_evidence_annotated_signal
+2025-10-01 12:06:56,169 - bus_core - INFO - [BUS] Signal 'evidence.request' bound to _handle_evidence_request_signal
+2025-10-01 12:06:56,169 - bus_core - INFO - [BUS] Signal 'evidence.deliver' bound to _handle_evidence_deliver_signal
+2025-10-01 12:06:56,169 - bus_core - INFO - [BUS] Signal 'evidence.updated' bound to _handle_evidence_updated_signal
+2025-10-01 12:06:56,169 - bus_core - INFO - [BUS] Signal 'evidence.tagged' bound to _handle_evidence_tagged_signal
+2025-10-01 12:06:56,169 - bus_core - INFO - [BUS] Signal 'evidence.stored' bound to _handle_evidence_stored_signal
+2025-10-01 12:06:56,169 - bus_core - INFO - [BUS] Signal 'evidence_locker.call_out' bound to _handle_evidence_call_out_signal
+2025-10-01 12:06:56,169 - bus_core - INFO - [BUS] Signal 'evidence_locker.accept' bound to _handle_evidence_accept_signal
+2025-10-01 12:06:56,169 - bus_core - INFO - [BUS] Signal 'section.needs' bound to _handle_section_needs_signal
+2025-10-01 12:06:56,169 - bus_core - INFO - [BUS] Signal 'case.snapshot' bound to _handle_case_snapshot_signal
+2025-10-01 12:06:56,169 - bus_core - INFO - [BUS] Signal 'gateway.status' bound to _handle_gateway_status_signal
+2025-10-01 12:06:56,169 - bus_core - INFO - [BUS] Signal 'locker.status' bound to _handle_locker_status_signal
+2025-10-01 12:06:56,170 - bus_core - INFO - [BUS] Signal 'mission.status' bound to _handle_mission_status_signal
+2025-10-01 12:06:56,170 - central_plugin - INFO - Data Bus initialized successfully
+2025-10-01 12:06:56,170 - central_plugin - INFO - API Manager initialized successfully
+2025-10-01 12:06:56,170 - central_plugin - INFO - Smart Lookup Resolver unavailable; skipping initialization
+2025-10-01 12:06:56,170 - osint_module - INFO - Loaded API keys from F:\The Central Command\Command Center\Data Bus\configs\api_keys.json
+2025-10-01 12:06:56,170 - osint_module - INFO - OSINT Engine initialized
+2025-10-01 12:06:56,171 - central_plugin - INFO - OSINT Engine initialized successfully
+2025-10-01 12:06:56,171 - bus_core - INFO - [BUS] Signal 'narrative.generate' bound to _handle_narrative_generation
+2025-10-01 12:06:56,171 - bus_core - INFO - [BUS] Signal 'osint.verify' bound to _handle_osint_verification
+2025-10-01 12:06:56,171 - bus_core - INFO - [BUS] Signal 'geocoding.reverse' bound to _handle_reverse_geocoding
+2025-10-01 12:06:56,171 - bus_core - INFO - [BUS] Signal 'geocoding' bound to _handle_geocoding
+2025-10-01 12:06:56,171 - bus_core - INFO - [BUS] Signal 'api.test' bound to _handle_api_test
+2025-10-01 12:06:56,171 - bus_core - INFO - [BUS] Signal 'api.status' bound to _handle_api_status
+2025-10-01 12:06:56,171 - bus_core - INFO - [BUS] Signal 'evidence.scan' bound to _handle_evidence_scan
+2025-10-01 12:06:56,171 - bus_core - INFO - [BUS] Signal 'mission_debrief.process_report' bound to _handle_mission_debrief
+2025-10-01 12:06:56,171 - central_plugin - INFO - API signal handlers registered with Data Bus
+2025-10-01 12:06:56,171 - bus_core - INFO - [BUS] Signal 'section.needs' bound to _handle_section_needs_signal
+2025-10-01 12:06:56,171 - bus_core - INFO - [BUS] Signal 'evidence.deliver' bound to _handle_evidence_deliver_signal
+2025-10-01 12:06:56,172 - bus_core - INFO - [BUS][bus.evidence_request] Evidence <unknown> requested by section_1
+2025-10-01 12:06:56,172 - bus_core - INFO - [BUS][bus.evidence_request] Evidence <unknown> requested by section_1
+2025-10-01 12:06:56,172 - bus_core - INFO - [BUS][bus.evidence_request] Evidence <unknown> requested by section_2
+2025-10-01 12:06:56,172 - bus_core - INFO - [BUS][bus.evidence_request] Evidence <unknown> requested by section_3
+2025-10-01 12:06:56,172 - bus_core - INFO - [BUS][bus.evidence_request] Evidence <unknown> requested by section_3
+2025-10-01 12:06:56,172 - bus_core - INFO - [BUS][bus.evidence_request] Evidence <unknown> requested by section_4
+2025-10-01 12:06:56,172 - bus_core - INFO - [BUS][bus.evidence_request] Evidence <unknown> requested by section_5
+2025-10-01 12:06:56,172 - bus_core - INFO - [BUS][bus.evidence_request] Evidence <unknown> requested by section_5
+2025-10-01 12:06:56,172 - bus_core - INFO - [BUS][bus.evidence_request] Evidence <unknown> requested by section_6
+2025-10-01 12:06:56,172 - bus_core - INFO - [BUS][bus.evidence_request] Evidence <unknown> requested by section_7
+2025-10-01 12:06:56,173 - bus_core - INFO - [BUS][bus.evidence_request] Evidence <unknown> requested by section_8
+2025-10-01 12:06:56,173 - bus_core - INFO - [BUS][bus.evidence_request] Evidence <unknown> requested by section_8
+2025-10-01 12:06:56,173 - bus_core - INFO - [BUS][bus.evidence_updated] Evidence updated: <unknown>
+2025-10-01 12:06:56,173 - bus_core - INFO - [BUS][bus.evidence_updated] Evidence updated: <unknown>
+2025-10-01 12:06:56,173 - central_plugin - INFO - Central Plugin initialized with Data Bus integration
+2025-10-01 12:06:56,266 - bus_core - INFO - Central Command Bus initialized
+2025-10-01 12:06:56,266 - bus_core - INFO - [BUS] Signal 'case_create' bound to _handle_case_create_signal
+2025-10-01 12:06:56,266 - bus_core - INFO - [BUS] Signal 'files_add' bound to _handle_files_add_signal
+2025-10-01 12:06:56,266 - bus_core - INFO - [BUS] Signal 'evidence.new' bound to _handle_evidence_new_signal
+2025-10-01 12:06:56,266 - bus_core - INFO - [BUS] Signal 'evidence.annotated' bound to _handle_evidence_annotated_signal
+2025-10-01 12:06:56,266 - bus_core - INFO - [BUS] Signal 'evidence.request' bound to _handle_evidence_request_signal
+2025-10-01 12:06:56,266 - bus_core - INFO - [BUS] Signal 'evidence.deliver' bound to _handle_evidence_deliver_signal
+2025-10-01 12:06:56,266 - bus_core - INFO - [BUS] Signal 'evidence.updated' bound to _handle_evidence_updated_signal
+2025-10-01 12:06:56,267 - bus_core - INFO - [BUS] Signal 'evidence.tagged' bound to _handle_evidence_tagged_signal
+2025-10-01 12:06:56,267 - bus_core - INFO - [BUS] Signal 'evidence.stored' bound to _handle_evidence_stored_signal
+2025-10-01 12:06:56,267 - bus_core - INFO - [BUS] Signal 'evidence_locker.call_out' bound to _handle_evidence_call_out_signal
+2025-10-01 12:06:56,267 - bus_core - INFO - [BUS] Signal 'evidence_locker.accept' bound to _handle_evidence_accept_signal
+2025-10-01 12:06:56,267 - bus_core - INFO - [BUS] Signal 'section.needs' bound to _handle_section_needs_signal
+2025-10-01 12:06:56,267 - bus_core - INFO - [BUS] Signal 'case.snapshot' bound to _handle_case_snapshot_signal
+2025-10-01 12:06:56,267 - bus_core - INFO - [BUS] Signal 'gateway.status' bound to _handle_gateway_status_signal
+2025-10-01 12:06:56,267 - bus_core - INFO - [BUS] Signal 'locker.status' bound to _handle_locker_status_signal
+2025-10-01 12:06:56,267 - bus_core - INFO - [BUS] Signal 'mission.status' bound to _handle_mission_status_signal
+2025-10-01 12:06:56,267 - central_plugin - INFO - Data Bus initialized successfully
+2025-10-01 12:06:56,268 - central_plugin - INFO - API Manager initialized successfully
+2025-10-01 12:06:56,268 - central_plugin - INFO - Smart Lookup Resolver unavailable; skipping initialization
+2025-10-01 12:06:56,268 - osint_module - INFO - Loaded API keys from F:\The Central Command\Command Center\Data Bus\configs\api_keys.json
+2025-10-01 12:06:56,268 - osint_module - INFO - OSINT Engine initialized
+2025-10-01 12:06:56,268 - central_plugin - INFO - OSINT Engine initialized successfully
+2025-10-01 12:06:56,268 - bus_core - INFO - [BUS] Signal 'narrative.generate' bound to _handle_narrative_generation
+2025-10-01 12:06:56,268 - bus_core - INFO - [BUS] Signal 'osint.verify' bound to _handle_osint_verification
+2025-10-01 12:06:56,268 - bus_core - INFO - [BUS] Signal 'geocoding.reverse' bound to _handle_reverse_geocoding
+2025-10-01 12:06:56,269 - bus_core - INFO - [BUS] Signal 'geocoding' bound to _handle_geocoding
+2025-10-01 12:06:56,269 - bus_core - INFO - [BUS] Signal 'api.test' bound to _handle_api_test
+2025-10-01 12:06:56,269 - bus_core - INFO - [BUS] Signal 'api.status' bound to _handle_api_status
+2025-10-01 12:06:56,269 - bus_core - INFO - [BUS] Signal 'evidence.scan' bound to _handle_evidence_scan
+2025-10-01 12:06:56,269 - bus_core - INFO - [BUS] Signal 'mission_debrief.process_report' bound to _handle_mission_debrief
+2025-10-01 12:06:56,269 - central_plugin - INFO - API signal handlers registered with Data Bus
+2025-10-01 12:06:56,270 - bus_core - INFO - [BUS] Signal 'section.needs' bound to _handle_section_needs_signal
+2025-10-01 12:06:56,270 - bus_core - INFO - [BUS] Signal 'evidence.deliver' bound to _handle_evidence_deliver_signal
+2025-10-01 12:06:56,270 - bus_core - INFO - [BUS][bus.evidence_request] Evidence <unknown> requested by section_1
+2025-10-01 12:06:56,270 - bus_core - INFO - [BUS][bus.evidence_request] Evidence <unknown> requested by section_1
+2025-10-01 12:06:56,270 - bus_core - INFO - [BUS][bus.evidence_request] Evidence <unknown> requested by section_2
+2025-10-01 12:06:56,270 - bus_core - INFO - [BUS][bus.evidence_request] Evidence <unknown> requested by section_3
+2025-10-01 12:06:56,270 - bus_core - INFO - [BUS][bus.evidence_request] Evidence <unknown> requested by section_3
+2025-10-01 12:06:56,270 - bus_core - INFO - [BUS][bus.evidence_request] Evidence <unknown> requested by section_4
+2025-10-01 12:06:56,270 - bus_core - INFO - [BUS][bus.evidence_request] Evidence <unknown> requested by section_5
+2025-10-01 12:06:56,270 - bus_core - INFO - [BUS][bus.evidence_request] Evidence <unknown> requested by section_5
+2025-10-01 12:06:56,270 - bus_core - INFO - [BUS][bus.evidence_request] Evidence <unknown> requested by section_6
+2025-10-01 12:06:56,271 - bus_core - INFO - [BUS][bus.evidence_request] Evidence <unknown> requested by section_7
+2025-10-01 12:06:56,271 - bus_core - INFO - [BUS][bus.evidence_request] Evidence <unknown> requested by section_8
+2025-10-01 12:06:56,271 - bus_core - INFO - [BUS][bus.evidence_request] Evidence <unknown> requested by section_8
+2025-10-01 12:06:56,271 - bus_core - INFO - [BUS][bus.evidence_updated] Evidence updated: <unknown>
+2025-10-01 12:06:56,271 - bus_core - INFO - [BUS][bus.evidence_updated] Evidence updated: <unknown>
+2025-10-01 12:06:56,271 - central_plugin - INFO - Central Plugin initialized with Data Bus integration
+2025-10-01 12:07:31,403 - bus_core - INFO - Central Command Bus initialized
+2025-10-01 12:07:31,406 - bus_core - INFO - [BUS] Signal 'case_create' bound to _handle_case_create_signal
+2025-10-01 12:07:31,406 - bus_core - INFO - [BUS] Signal 'files_add' bound to _handle_files_add_signal
+2025-10-01 12:07:31,406 - bus_core - INFO - [BUS] Signal 'evidence.new' bound to _handle_evidence_new_signal
+2025-10-01 12:07:31,407 - bus_core - INFO - [BUS] Signal 'evidence.annotated' bound to _handle_evidence_annotated_signal
+2025-10-01 12:07:31,407 - bus_core - INFO - [BUS] Signal 'evidence.request' bound to _handle_evidence_request_signal
+2025-10-01 12:07:31,407 - bus_core - INFO - [BUS] Signal 'evidence.deliver' bound to _handle_evidence_deliver_signal
+2025-10-01 12:07:31,407 - bus_core - INFO - [BUS] Signal 'evidence.updated' bound to _handle_evidence_updated_signal
+2025-10-01 12:07:31,407 - bus_core - INFO - [BUS] Signal 'evidence.tagged' bound to _handle_evidence_tagged_signal
+2025-10-01 12:07:31,407 - bus_core - INFO - [BUS] Signal 'evidence.stored' bound to _handle_evidence_stored_signal
+2025-10-01 12:07:31,407 - bus_core - INFO - [BUS] Signal 'evidence_locker.call_out' bound to _handle_evidence_call_out_signal
+2025-10-01 12:07:31,407 - bus_core - INFO - [BUS] Signal 'evidence_locker.accept' bound to _handle_evidence_accept_signal
+2025-10-01 12:07:31,407 - bus_core - INFO - [BUS] Signal 'section.needs' bound to _handle_section_needs_signal
+2025-10-01 12:07:31,408 - bus_core - INFO - [BUS] Signal 'case.snapshot' bound to _handle_case_snapshot_signal
+2025-10-01 12:07:31,408 - bus_core - INFO - [BUS] Signal 'gateway.status' bound to _handle_gateway_status_signal
+2025-10-01 12:07:31,408 - bus_core - INFO - [BUS] Signal 'locker.status' bound to _handle_locker_status_signal
+2025-10-01 12:07:31,408 - bus_core - INFO - [BUS] Signal 'mission.status' bound to _handle_mission_status_signal
+2025-10-01 12:07:31,408 - central_plugin - INFO - Data Bus initialized successfully
+2025-10-01 12:07:31,408 - central_plugin - INFO - API Manager initialized successfully
+2025-10-01 12:07:31,409 - central_plugin - INFO - Smart Lookup Resolver unavailable; skipping initialization
+2025-10-01 12:07:31,409 - osint_module - INFO - Loaded API keys from F:\The Central Command\Command Center\Data Bus\configs\api_keys.json
+2025-10-01 12:07:31,409 - osint_module - INFO - OSINT Engine initialized
+2025-10-01 12:07:31,409 - central_plugin - INFO - OSINT Engine initialized successfully
+2025-10-01 12:07:31,409 - bus_core - INFO - [BUS] Signal 'narrative.generate' bound to _handle_narrative_generation
+2025-10-01 12:07:31,409 - bus_core - INFO - [BUS] Signal 'osint.verify' bound to _handle_osint_verification
+2025-10-01 12:07:31,409 - bus_core - INFO - [BUS] Signal 'geocoding.reverse' bound to _handle_reverse_geocoding
+2025-10-01 12:07:31,409 - bus_core - INFO - [BUS] Signal 'geocoding' bound to _handle_geocoding
+2025-10-01 12:07:31,410 - bus_core - INFO - [BUS] Signal 'api.test' bound to _handle_api_test
+2025-10-01 12:07:31,410 - bus_core - INFO - [BUS] Signal 'api.status' bound to _handle_api_status
+2025-10-01 12:07:31,410 - bus_core - INFO - [BUS] Signal 'evidence.scan' bound to _handle_evidence_scan
+2025-10-01 12:07:31,410 - bus_core - INFO - [BUS] Signal 'mission_debrief.process_report' bound to _handle_mission_debrief
+2025-10-01 12:07:31,410 - central_plugin - INFO - API signal handlers registered with Data Bus
+2025-10-01 12:07:31,410 - bus_core - INFO - [BUS] Signal 'section.needs' bound to _handle_section_needs_signal
+2025-10-01 12:07:31,410 - bus_core - INFO - [BUS] Signal 'evidence.deliver' bound to _handle_evidence_deliver_signal
+2025-10-01 12:07:31,410 - bus_core - INFO - [BUS][bus.evidence_request] Evidence <unknown> requested by section_1
+2025-10-01 12:07:31,410 - bus_core - INFO - [BUS][bus.evidence_request] Evidence <unknown> requested by section_1
+2025-10-01 12:07:31,410 - bus_core - INFO - [BUS][bus.evidence_request] Evidence <unknown> requested by section_2
+2025-10-01 12:07:31,411 - bus_core - INFO - [BUS][bus.evidence_request] Evidence <unknown> requested by section_3
+2025-10-01 12:07:31,411 - bus_core - INFO - [BUS][bus.evidence_request] Evidence <unknown> requested by section_3
+2025-10-01 12:07:31,411 - bus_core - INFO - [BUS][bus.evidence_request] Evidence <unknown> requested by section_4
+2025-10-01 12:07:31,411 - bus_core - INFO - [BUS][bus.evidence_request] Evidence <unknown> requested by section_5
+2025-10-01 12:07:31,411 - bus_core - INFO - [BUS][bus.evidence_request] Evidence <unknown> requested by section_5
+2025-10-01 12:07:31,411 - bus_core - INFO - [BUS][bus.evidence_request] Evidence <unknown> requested by section_6
+2025-10-01 12:07:31,411 - bus_core - INFO - [BUS][bus.evidence_request] Evidence <unknown> requested by section_7
+2025-10-01 12:07:31,411 - bus_core - INFO - [BUS][bus.evidence_request] Evidence <unknown> requested by section_8
+2025-10-01 12:07:31,411 - bus_core - INFO - [BUS][bus.evidence_request] Evidence <unknown> requested by section_8
+2025-10-01 12:07:31,411 - bus_core - INFO - [BUS][bus.evidence_updated] Evidence updated: <unknown>
+2025-10-01 12:07:31,411 - bus_core - INFO - [BUS][bus.evidence_updated] Evidence updated: <unknown>
+2025-10-01 12:07:31,411 - central_plugin - INFO - Central Plugin initialized with Data Bus integration
+2025-10-01 12:07:31,492 - bus_core - INFO - Central Command Bus initialized
+2025-10-01 12:07:31,493 - bus_core - INFO - [BUS] Signal 'case_create' bound to _handle_case_create_signal
+2025-10-01 12:07:31,493 - bus_core - INFO - [BUS] Signal 'files_add' bound to _handle_files_add_signal
+2025-10-01 12:07:31,493 - bus_core - INFO - [BUS] Signal 'evidence.new' bound to _handle_evidence_new_signal
+2025-10-01 12:07:31,493 - bus_core - INFO - [BUS] Signal 'evidence.annotated' bound to _handle_evidence_annotated_signal
+2025-10-01 12:07:31,493 - bus_core - INFO - [BUS] Signal 'evidence.request' bound to _handle_evidence_request_signal
+2025-10-01 12:07:31,493 - bus_core - INFO - [BUS] Signal 'evidence.deliver' bound to _handle_evidence_deliver_signal
+2025-10-01 12:07:31,493 - bus_core - INFO - [BUS] Signal 'evidence.updated' bound to _handle_evidence_updated_signal
+2025-10-01 12:07:31,494 - bus_core - INFO - [BUS] Signal 'evidence.tagged' bound to _handle_evidence_tagged_signal
+2025-10-01 12:07:31,494 - bus_core - INFO - [BUS] Signal 'evidence.stored' bound to _handle_evidence_stored_signal
+2025-10-01 12:07:31,494 - bus_core - INFO - [BUS] Signal 'evidence_locker.call_out' bound to _handle_evidence_call_out_signal
+2025-10-01 12:07:31,494 - bus_core - INFO - [BUS] Signal 'evidence_locker.accept' bound to _handle_evidence_accept_signal
+2025-10-01 12:07:31,494 - bus_core - INFO - [BUS] Signal 'section.needs' bound to _handle_section_needs_signal
+2025-10-01 12:07:31,494 - bus_core - INFO - [BUS] Signal 'case.snapshot' bound to _handle_case_snapshot_signal
+2025-10-01 12:07:31,494 - bus_core - INFO - [BUS] Signal 'gateway.status' bound to _handle_gateway_status_signal
+2025-10-01 12:07:31,494 - bus_core - INFO - [BUS] Signal 'locker.status' bound to _handle_locker_status_signal
+2025-10-01 12:07:31,494 - bus_core - INFO - [BUS] Signal 'mission.status' bound to _handle_mission_status_signal
+2025-10-01 12:07:31,494 - central_plugin - INFO - Data Bus initialized successfully
+2025-10-01 12:07:31,495 - central_plugin - INFO - API Manager initialized successfully
+2025-10-01 12:07:31,495 - central_plugin - INFO - Smart Lookup Resolver unavailable; skipping initialization
+2025-10-01 12:07:31,495 - osint_module - INFO - Loaded API keys from F:\The Central Command\Command Center\Data Bus\configs\api_keys.json
+2025-10-01 12:07:31,495 - osint_module - INFO - OSINT Engine initialized
+2025-10-01 12:07:31,496 - central_plugin - INFO - OSINT Engine initialized successfully
+2025-10-01 12:07:31,496 - bus_core - INFO - [BUS] Signal 'narrative.generate' bound to _handle_narrative_generation
+2025-10-01 12:07:31,496 - bus_core - INFO - [BUS] Signal 'osint.verify' bound to _handle_osint_verification
+2025-10-01 12:07:31,496 - bus_core - INFO - [BUS] Signal 'geocoding.reverse' bound to _handle_reverse_geocoding
+2025-10-01 12:07:31,496 - bus_core - INFO - [BUS] Signal 'geocoding' bound to _handle_geocoding
+2025-10-01 12:07:31,496 - bus_core - INFO - [BUS] Signal 'api.test' bound to _handle_api_test
+2025-10-01 12:07:31,496 - bus_core - INFO - [BUS] Signal 'api.status' bound to _handle_api_status
+2025-10-01 12:07:31,496 - bus_core - INFO - [BUS] Signal 'evidence.scan' bound to _handle_evidence_scan
+2025-10-01 12:07:31,496 - bus_core - INFO - [BUS] Signal 'mission_debrief.process_report' bound to _handle_mission_debrief
+2025-10-01 12:07:31,496 - central_plugin - INFO - API signal handlers registered with Data Bus
+2025-10-01 12:07:31,496 - bus_core - INFO - [BUS] Signal 'section.needs' bound to _handle_section_needs_signal
+2025-10-01 12:07:31,497 - bus_core - INFO - [BUS] Signal 'evidence.deliver' bound to _handle_evidence_deliver_signal
+2025-10-01 12:07:31,497 - bus_core - INFO - [BUS][bus.evidence_request] Evidence <unknown> requested by section_1
+2025-10-01 12:07:31,497 - bus_core - INFO - [BUS][bus.evidence_request] Evidence <unknown> requested by section_1
+2025-10-01 12:07:31,497 - bus_core - INFO - [BUS][bus.evidence_request] Evidence <unknown> requested by section_2
+2025-10-01 12:07:31,497 - bus_core - INFO - [BUS][bus.evidence_request] Evidence <unknown> requested by section_3
+2025-10-01 12:07:31,497 - bus_core - INFO - [BUS][bus.evidence_request] Evidence <unknown> requested by section_3
+2025-10-01 12:07:31,497 - bus_core - INFO - [BUS][bus.evidence_request] Evidence <unknown> requested by section_4
+2025-10-01 12:07:31,497 - bus_core - INFO - [BUS][bus.evidence_request] Evidence <unknown> requested by section_5
+2025-10-01 12:07:31,497 - bus_core - INFO - [BUS][bus.evidence_request] Evidence <unknown> requested by section_5
+2025-10-01 12:07:31,497 - bus_core - INFO - [BUS][bus.evidence_request] Evidence <unknown> requested by section_6
+2025-10-01 12:07:31,497 - bus_core - INFO - [BUS][bus.evidence_request] Evidence <unknown> requested by section_7
+2025-10-01 12:07:31,498 - bus_core - INFO - [BUS][bus.evidence_request] Evidence <unknown> requested by section_8
+2025-10-01 12:07:31,498 - bus_core - INFO - [BUS][bus.evidence_request] Evidence <unknown> requested by section_8
+2025-10-01 12:07:31,498 - bus_core - INFO - [BUS][bus.evidence_updated] Evidence updated: <unknown>
+2025-10-01 12:07:31,498 - bus_core - INFO - [BUS][bus.evidence_updated] Evidence updated: <unknown>
+2025-10-01 12:07:31,498 - central_plugin - INFO - Central Plugin initialized with Data Bus integration
+2025-10-01 12:53:45,854 - bus_core - INFO - Central Command Bus initialized
+2025-10-01 12:53:45,857 - bus_core - INFO - [BUS] Signal 'case_create' bound to _handle_case_create_signal
+2025-10-01 12:53:45,858 - bus_core - INFO - [BUS] Signal 'files_add' bound to _handle_files_add_signal
+2025-10-01 12:53:45,858 - bus_core - INFO - [BUS] Signal 'evidence.new' bound to _handle_evidence_new_signal
+2025-10-01 12:53:45,858 - bus_core - INFO - [BUS] Signal 'evidence.annotated' bound to _handle_evidence_annotated_signal
+2025-10-01 12:53:45,858 - bus_core - INFO - [BUS] Signal 'evidence.request' bound to _handle_evidence_request_signal
+2025-10-01 12:53:45,858 - bus_core - INFO - [BUS] Signal 'evidence.deliver' bound to _handle_evidence_deliver_signal
+2025-10-01 12:53:45,858 - bus_core - INFO - [BUS] Signal 'evidence.updated' bound to _handle_evidence_updated_signal
+2025-10-01 12:53:45,858 - bus_core - INFO - [BUS] Signal 'evidence.tagged' bound to _handle_evidence_tagged_signal
+2025-10-01 12:53:45,859 - bus_core - INFO - [BUS] Signal 'evidence.stored' bound to _handle_evidence_stored_signal
+2025-10-01 12:53:45,859 - bus_core - INFO - [BUS] Signal 'evidence_locker.call_out' bound to _handle_evidence_call_out_signal
+2025-10-01 12:53:45,859 - bus_core - INFO - [BUS] Signal 'evidence_locker.accept' bound to _handle_evidence_accept_signal
+2025-10-01 12:53:45,859 - bus_core - INFO - [BUS] Signal 'section.needs' bound to _handle_section_needs_signal
+2025-10-01 12:53:45,859 - bus_core - INFO - [BUS] Signal 'case.snapshot' bound to _handle_case_snapshot_signal
+2025-10-01 12:53:45,859 - bus_core - INFO - [BUS] Signal 'gateway.status' bound to _handle_gateway_status_signal
+2025-10-01 12:53:45,859 - bus_core - INFO - [BUS] Signal 'locker.status' bound to _handle_locker_status_signal
+2025-10-01 12:53:45,859 - bus_core - INFO - [BUS] Signal 'mission.status' bound to _handle_mission_status_signal
+2025-10-01 12:53:45,859 - central_plugin - INFO - Data Bus initialized successfully
+2025-10-01 12:53:45,945 - central_plugin - INFO - API Manager initialized successfully
+2025-10-01 12:53:45,945 - central_plugin - INFO - Smart Lookup Resolver unavailable; skipping initialization
+2025-10-01 12:53:45,945 - osint_module - INFO - Loaded API keys from F:\The Central Command\Command Center\Data Bus\configs\api_keys.json
+2025-10-01 12:53:45,945 - osint_module - INFO - OSINT Engine initialized
+2025-10-01 12:53:45,946 - central_plugin - INFO - OSINT Engine initialized successfully
+2025-10-01 12:53:45,946 - bus_core - INFO - [BUS] Signal 'narrative.generate' bound to _handle_narrative_generation
+2025-10-01 12:53:45,946 - bus_core - INFO - [BUS] Signal 'osint.verify' bound to _handle_osint_verification
+2025-10-01 12:53:45,946 - bus_core - INFO - [BUS] Signal 'geocoding.reverse' bound to _handle_reverse_geocoding
+2025-10-01 12:53:45,946 - bus_core - INFO - [BUS] Signal 'geocoding' bound to _handle_geocoding
+2025-10-01 12:53:45,946 - bus_core - INFO - [BUS] Signal 'api.test' bound to _handle_api_test
+2025-10-01 12:53:45,946 - bus_core - INFO - [BUS] Signal 'api.status' bound to _handle_api_status
+2025-10-01 12:53:45,947 - bus_core - INFO - [BUS] Signal 'evidence.scan' bound to _handle_evidence_scan
+2025-10-01 12:53:45,947 - bus_core - INFO - [BUS] Signal 'mission_debrief.process_report' bound to _handle_mission_debrief
+2025-10-01 12:53:45,947 - central_plugin - INFO - API signal handlers registered with Data Bus
+2025-10-01 12:53:45,947 - bus_core - INFO - [BUS] Signal 'section.needs' bound to _handle_section_needs_signal
+2025-10-01 12:53:45,947 - bus_core - INFO - [BUS] Signal 'evidence.deliver' bound to _handle_evidence_deliver_signal
+2025-10-01 12:53:45,947 - bus_core - INFO - [BUS][bus.evidence_request] Evidence <unknown> requested by section_1
+2025-10-01 12:53:45,947 - bus_core - INFO - [BUS][bus.evidence_request] Evidence <unknown> requested by section_1
+2025-10-01 12:53:45,948 - bus_core - INFO - [BUS][bus.evidence_request] Evidence <unknown> requested by section_2
+2025-10-01 12:53:45,948 - bus_core - INFO - [BUS][bus.evidence_request] Evidence <unknown> requested by section_3
+2025-10-01 12:53:45,948 - bus_core - INFO - [BUS][bus.evidence_request] Evidence <unknown> requested by section_3
+2025-10-01 12:53:45,948 - bus_core - INFO - [BUS][bus.evidence_request] Evidence <unknown> requested by section_4
+2025-10-01 12:53:45,948 - bus_core - INFO - [BUS][bus.evidence_request] Evidence <unknown> requested by section_5
+2025-10-01 12:53:45,948 - bus_core - INFO - [BUS][bus.evidence_request] Evidence <unknown> requested by section_5
+2025-10-01 12:53:45,948 - bus_core - INFO - [BUS][bus.evidence_request] Evidence <unknown> requested by section_6
+2025-10-01 12:53:45,948 - bus_core - INFO - [BUS][bus.evidence_request] Evidence <unknown> requested by section_7
+2025-10-01 12:53:45,948 - bus_core - INFO - [BUS][bus.evidence_request] Evidence <unknown> requested by section_8
+2025-10-01 12:53:45,948 - bus_core - INFO - [BUS][bus.evidence_request] Evidence <unknown> requested by section_8
+2025-10-01 12:53:45,949 - bus_core - INFO - [BUS][bus.evidence_updated] Evidence updated: <unknown>
+2025-10-01 12:53:45,949 - bus_core - INFO - [BUS][bus.evidence_updated] Evidence updated: <unknown>
+2025-10-01 12:53:45,949 - central_plugin - INFO - Central Plugin initialized with Data Bus integration
+2025-10-01 12:53:46,040 - bus_core - INFO - Central Command Bus initialized
+2025-10-01 12:53:46,040 - bus_core - INFO - [BUS] Signal 'case_create' bound to _handle_case_create_signal
+2025-10-01 12:53:46,040 - bus_core - INFO - [BUS] Signal 'files_add' bound to _handle_files_add_signal
+2025-10-01 12:53:46,040 - bus_core - INFO - [BUS] Signal 'evidence.new' bound to _handle_evidence_new_signal
+2025-10-01 12:53:46,041 - bus_core - INFO - [BUS] Signal 'evidence.annotated' bound to _handle_evidence_annotated_signal
+2025-10-01 12:53:46,041 - bus_core - INFO - [BUS] Signal 'evidence.request' bound to _handle_evidence_request_signal
+2025-10-01 12:53:46,041 - bus_core - INFO - [BUS] Signal 'evidence.deliver' bound to _handle_evidence_deliver_signal
+2025-10-01 12:53:46,041 - bus_core - INFO - [BUS] Signal 'evidence.updated' bound to _handle_evidence_updated_signal
+2025-10-01 12:53:46,041 - bus_core - INFO - [BUS] Signal 'evidence.tagged' bound to _handle_evidence_tagged_signal
+2025-10-01 12:53:46,041 - bus_core - INFO - [BUS] Signal 'evidence.stored' bound to _handle_evidence_stored_signal
+2025-10-01 12:53:46,041 - bus_core - INFO - [BUS] Signal 'evidence_locker.call_out' bound to _handle_evidence_call_out_signal
+2025-10-01 12:53:46,041 - bus_core - INFO - [BUS] Signal 'evidence_locker.accept' bound to _handle_evidence_accept_signal
+2025-10-01 12:53:46,041 - bus_core - INFO - [BUS] Signal 'section.needs' bound to _handle_section_needs_signal
+2025-10-01 12:53:46,041 - bus_core - INFO - [BUS] Signal 'case.snapshot' bound to _handle_case_snapshot_signal
+2025-10-01 12:53:46,041 - bus_core - INFO - [BUS] Signal 'gateway.status' bound to _handle_gateway_status_signal
+2025-10-01 12:53:46,042 - bus_core - INFO - [BUS] Signal 'locker.status' bound to _handle_locker_status_signal
+2025-10-01 12:53:46,042 - bus_core - INFO - [BUS] Signal 'mission.status' bound to _handle_mission_status_signal
+2025-10-01 12:53:46,042 - central_plugin - INFO - Data Bus initialized successfully
+2025-10-01 12:53:46,042 - central_plugin - INFO - API Manager initialized successfully
+2025-10-01 12:53:46,042 - central_plugin - INFO - Smart Lookup Resolver unavailable; skipping initialization
+2025-10-01 12:53:46,042 - osint_module - INFO - Loaded API keys from F:\The Central Command\Command Center\Data Bus\configs\api_keys.json
+2025-10-01 12:53:46,042 - osint_module - INFO - OSINT Engine initialized
+2025-10-01 12:53:46,043 - central_plugin - INFO - OSINT Engine initialized successfully
+2025-10-01 12:53:46,043 - bus_core - INFO - [BUS] Signal 'narrative.generate' bound to _handle_narrative_generation
+2025-10-01 12:53:46,043 - bus_core - INFO - [BUS] Signal 'osint.verify' bound to _handle_osint_verification
+2025-10-01 12:53:46,043 - bus_core - INFO - [BUS] Signal 'geocoding.reverse' bound to _handle_reverse_geocoding
+2025-10-01 12:53:46,043 - bus_core - INFO - [BUS] Signal 'geocoding' bound to _handle_geocoding
+2025-10-01 12:53:46,043 - bus_core - INFO - [BUS] Signal 'api.test' bound to _handle_api_test
+2025-10-01 12:53:46,043 - bus_core - INFO - [BUS] Signal 'api.status' bound to _handle_api_status
+2025-10-01 12:53:46,043 - bus_core - INFO - [BUS] Signal 'evidence.scan' bound to _handle_evidence_scan
+2025-10-01 12:53:46,043 - bus_core - INFO - [BUS] Signal 'mission_debrief.process_report' bound to _handle_mission_debrief
+2025-10-01 12:53:46,043 - central_plugin - INFO - API signal handlers registered with Data Bus
+2025-10-01 12:53:46,043 - bus_core - INFO - [BUS] Signal 'section.needs' bound to _handle_section_needs_signal
+2025-10-01 12:53:46,044 - bus_core - INFO - [BUS] Signal 'evidence.deliver' bound to _handle_evidence_deliver_signal
+2025-10-01 12:53:46,044 - bus_core - INFO - [BUS][bus.evidence_request] Evidence <unknown> requested by section_1
+2025-10-01 12:53:46,044 - bus_core - INFO - [BUS][bus.evidence_request] Evidence <unknown> requested by section_1
+2025-10-01 12:53:46,044 - bus_core - INFO - [BUS][bus.evidence_request] Evidence <unknown> requested by section_2
+2025-10-01 12:53:46,044 - bus_core - INFO - [BUS][bus.evidence_request] Evidence <unknown> requested by section_3
+2025-10-01 12:53:46,044 - bus_core - INFO - [BUS][bus.evidence_request] Evidence <unknown> requested by section_3
+2025-10-01 12:53:46,044 - bus_core - INFO - [BUS][bus.evidence_request] Evidence <unknown> requested by section_4
+2025-10-01 12:53:46,044 - bus_core - INFO - [BUS][bus.evidence_request] Evidence <unknown> requested by section_5
+2025-10-01 12:53:46,044 - bus_core - INFO - [BUS][bus.evidence_request] Evidence <unknown> requested by section_5
+2025-10-01 12:53:46,044 - bus_core - INFO - [BUS][bus.evidence_request] Evidence <unknown> requested by section_6
+2025-10-01 12:53:46,044 - bus_core - INFO - [BUS][bus.evidence_request] Evidence <unknown> requested by section_7
+2025-10-01 12:53:46,045 - bus_core - INFO - [BUS][bus.evidence_request] Evidence <unknown> requested by section_8
+2025-10-01 12:53:46,045 - bus_core - INFO - [BUS][bus.evidence_request] Evidence <unknown> requested by section_8
+2025-10-01 12:53:46,045 - bus_core - INFO - [BUS][bus.evidence_updated] Evidence updated: <unknown>
+2025-10-01 12:53:46,045 - bus_core - INFO - [BUS][bus.evidence_updated] Evidence updated: <unknown>
+2025-10-01 12:53:46,045 - central_plugin - INFO - Central Plugin initialized with Data Bus integration
+2025-10-01 12:56:17,034 - bus_core - INFO - Central Command Bus initialized
+2025-10-01 12:56:17,037 - bus_core - INFO - [BUS] Signal 'case_create' bound to _handle_case_create_signal
+2025-10-01 12:56:17,037 - bus_core - INFO - [BUS] Signal 'files_add' bound to _handle_files_add_signal
+2025-10-01 12:56:17,038 - bus_core - INFO - [BUS] Signal 'evidence.new' bound to _handle_evidence_new_signal
+2025-10-01 12:56:17,038 - bus_core - INFO - [BUS] Signal 'evidence.annotated' bound to _handle_evidence_annotated_signal
+2025-10-01 12:56:17,038 - bus_core - INFO - [BUS] Signal 'evidence.request' bound to _handle_evidence_request_signal
+2025-10-01 12:56:17,038 - bus_core - INFO - [BUS] Signal 'evidence.deliver' bound to _handle_evidence_deliver_signal
+2025-10-01 12:56:17,038 - bus_core - INFO - [BUS] Signal 'evidence.updated' bound to _handle_evidence_updated_signal
+2025-10-01 12:56:17,038 - bus_core - INFO - [BUS] Signal 'evidence.tagged' bound to _handle_evidence_tagged_signal
+2025-10-01 12:56:17,038 - bus_core - INFO - [BUS] Signal 'evidence.stored' bound to _handle_evidence_stored_signal
+2025-10-01 12:56:17,039 - bus_core - INFO - [BUS] Signal 'evidence_locker.call_out' bound to _handle_evidence_call_out_signal
+2025-10-01 12:56:17,039 - bus_core - INFO - [BUS] Signal 'evidence_locker.accept' bound to _handle_evidence_accept_signal
+2025-10-01 12:56:17,039 - bus_core - INFO - [BUS] Signal 'section.needs' bound to _handle_section_needs_signal
+2025-10-01 12:56:17,039 - bus_core - INFO - [BUS] Signal 'case.snapshot' bound to _handle_case_snapshot_signal
+2025-10-01 12:56:17,039 - bus_core - INFO - [BUS] Signal 'gateway.status' bound to _handle_gateway_status_signal
+2025-10-01 12:56:17,039 - bus_core - INFO - [BUS] Signal 'locker.status' bound to _handle_locker_status_signal
+2025-10-01 12:56:17,039 - bus_core - INFO - [BUS] Signal 'mission.status' bound to _handle_mission_status_signal
+2025-10-01 12:56:17,039 - central_plugin - INFO - Data Bus initialized successfully
+2025-10-01 12:56:17,040 - central_plugin - INFO - API Manager initialized successfully
+2025-10-01 12:56:17,040 - central_plugin - INFO - Smart Lookup Resolver unavailable; skipping initialization
+2025-10-01 12:56:17,040 - osint_module - INFO - Loaded API keys from F:\The Central Command\Command Center\Data Bus\configs\api_keys.json
+2025-10-01 12:56:17,040 - osint_module - INFO - OSINT Engine initialized
+2025-10-01 12:56:17,040 - central_plugin - INFO - OSINT Engine initialized successfully
+2025-10-01 12:56:17,040 - bus_core - INFO - [BUS] Signal 'narrative.generate' bound to _handle_narrative_generation
+2025-10-01 12:56:17,041 - bus_core - INFO - [BUS] Signal 'osint.verify' bound to _handle_osint_verification
+2025-10-01 12:56:17,041 - bus_core - INFO - [BUS] Signal 'geocoding.reverse' bound to _handle_reverse_geocoding
+2025-10-01 12:56:17,041 - bus_core - INFO - [BUS] Signal 'geocoding' bound to _handle_geocoding
+2025-10-01 12:56:17,041 - bus_core - INFO - [BUS] Signal 'api.test' bound to _handle_api_test
+2025-10-01 12:56:17,041 - bus_core - INFO - [BUS] Signal 'api.status' bound to _handle_api_status
+2025-10-01 12:56:17,041 - bus_core - INFO - [BUS] Signal 'evidence.scan' bound to _handle_evidence_scan
+2025-10-01 12:56:17,041 - bus_core - INFO - [BUS] Signal 'mission_debrief.process_report' bound to _handle_mission_debrief
+2025-10-01 12:56:17,041 - central_plugin - INFO - API signal handlers registered with Data Bus
+2025-10-01 12:56:17,041 - bus_core - INFO - [BUS] Signal 'section.needs' bound to _handle_section_needs_signal
+2025-10-01 12:56:17,041 - bus_core - INFO - [BUS] Signal 'evidence.deliver' bound to _handle_evidence_deliver_signal
+2025-10-01 12:56:17,042 - bus_core - INFO - [BUS][bus.evidence_request] Evidence <unknown> requested by section_1
+2025-10-01 12:56:17,042 - bus_core - INFO - [BUS][bus.evidence_request] Evidence <unknown> requested by section_1
+2025-10-01 12:56:17,042 - bus_core - INFO - [BUS][bus.evidence_request] Evidence <unknown> requested by section_2
+2025-10-01 12:56:17,042 - bus_core - INFO - [BUS][bus.evidence_request] Evidence <unknown> requested by section_3
+2025-10-01 12:56:17,042 - bus_core - INFO - [BUS][bus.evidence_request] Evidence <unknown> requested by section_3
+2025-10-01 12:56:17,042 - bus_core - INFO - [BUS][bus.evidence_request] Evidence <unknown> requested by section_4
+2025-10-01 12:56:17,042 - bus_core - INFO - [BUS][bus.evidence_request] Evidence <unknown> requested by section_5
+2025-10-01 12:56:17,042 - bus_core - INFO - [BUS][bus.evidence_request] Evidence <unknown> requested by section_5
+2025-10-01 12:56:17,042 - bus_core - INFO - [BUS][bus.evidence_request] Evidence <unknown> requested by section_6
+2025-10-01 12:56:17,042 - bus_core - INFO - [BUS][bus.evidence_request] Evidence <unknown> requested by section_7
+2025-10-01 12:56:17,042 - bus_core - INFO - [BUS][bus.evidence_request] Evidence <unknown> requested by section_8
+2025-10-01 12:56:17,042 - bus_core - INFO - [BUS][bus.evidence_request] Evidence <unknown> requested by section_8
+2025-10-01 12:56:17,043 - bus_core - INFO - [BUS][bus.evidence_updated] Evidence updated: <unknown>
+2025-10-01 12:56:17,043 - bus_core - INFO - [BUS][bus.evidence_updated] Evidence updated: <unknown>
+2025-10-01 12:56:17,043 - central_plugin - INFO - Central Plugin initialized with Data Bus integration
+2025-10-01 12:56:17,131 - bus_core - INFO - Central Command Bus initialized
+2025-10-01 12:56:17,131 - bus_core - INFO - [BUS] Signal 'case_create' bound to _handle_case_create_signal
+2025-10-01 12:56:17,132 - bus_core - INFO - [BUS] Signal 'files_add' bound to _handle_files_add_signal
+2025-10-01 12:56:17,132 - bus_core - INFO - [BUS] Signal 'evidence.new' bound to _handle_evidence_new_signal
+2025-10-01 12:56:17,132 - bus_core - INFO - [BUS] Signal 'evidence.annotated' bound to _handle_evidence_annotated_signal
+2025-10-01 12:56:17,132 - bus_core - INFO - [BUS] Signal 'evidence.request' bound to _handle_evidence_request_signal
+2025-10-01 12:56:17,132 - bus_core - INFO - [BUS] Signal 'evidence.deliver' bound to _handle_evidence_deliver_signal
+2025-10-01 12:56:17,132 - bus_core - INFO - [BUS] Signal 'evidence.updated' bound to _handle_evidence_updated_signal
+2025-10-01 12:56:17,132 - bus_core - INFO - [BUS] Signal 'evidence.tagged' bound to _handle_evidence_tagged_signal
+2025-10-01 12:56:17,132 - bus_core - INFO - [BUS] Signal 'evidence.stored' bound to _handle_evidence_stored_signal
+2025-10-01 12:56:17,133 - bus_core - INFO - [BUS] Signal 'evidence_locker.call_out' bound to _handle_evidence_call_out_signal
+2025-10-01 12:56:17,133 - bus_core - INFO - [BUS] Signal 'evidence_locker.accept' bound to _handle_evidence_accept_signal
+2025-10-01 12:56:17,133 - bus_core - INFO - [BUS] Signal 'section.needs' bound to _handle_section_needs_signal
+2025-10-01 12:56:17,133 - bus_core - INFO - [BUS] Signal 'case.snapshot' bound to _handle_case_snapshot_signal
+2025-10-01 12:56:17,133 - bus_core - INFO - [BUS] Signal 'gateway.status' bound to _handle_gateway_status_signal
+2025-10-01 12:56:17,133 - bus_core - INFO - [BUS] Signal 'locker.status' bound to _handle_locker_status_signal
+2025-10-01 12:56:17,133 - bus_core - INFO - [BUS] Signal 'mission.status' bound to _handle_mission_status_signal
+2025-10-01 12:56:17,133 - central_plugin - INFO - Data Bus initialized successfully
+2025-10-01 12:56:17,134 - central_plugin - INFO - API Manager initialized successfully
+2025-10-01 12:56:17,134 - central_plugin - INFO - Smart Lookup Resolver unavailable; skipping initialization
+2025-10-01 12:56:17,134 - osint_module - INFO - Loaded API keys from F:\The Central Command\Command Center\Data Bus\configs\api_keys.json
+2025-10-01 12:56:17,134 - osint_module - INFO - OSINT Engine initialized
+2025-10-01 12:56:17,134 - central_plugin - INFO - OSINT Engine initialized successfully
+2025-10-01 12:56:17,134 - bus_core - INFO - [BUS] Signal 'narrative.generate' bound to _handle_narrative_generation
+2025-10-01 12:56:17,135 - bus_core - INFO - [BUS] Signal 'osint.verify' bound to _handle_osint_verification
+2025-10-01 12:56:17,135 - bus_core - INFO - [BUS] Signal 'geocoding.reverse' bound to _handle_reverse_geocoding
+2025-10-01 12:56:17,135 - bus_core - INFO - [BUS] Signal 'geocoding' bound to _handle_geocoding
+2025-10-01 12:56:17,135 - bus_core - INFO - [BUS] Signal 'api.test' bound to _handle_api_test
+2025-10-01 12:56:17,135 - bus_core - INFO - [BUS] Signal 'api.status' bound to _handle_api_status
+2025-10-01 12:56:17,135 - bus_core - INFO - [BUS] Signal 'evidence.scan' bound to _handle_evidence_scan
+2025-10-01 12:56:17,135 - bus_core - INFO - [BUS] Signal 'mission_debrief.process_report' bound to _handle_mission_debrief
+2025-10-01 12:56:17,135 - central_plugin - INFO - API signal handlers registered with Data Bus
+2025-10-01 12:56:17,135 - bus_core - INFO - [BUS] Signal 'section.needs' bound to _handle_section_needs_signal
+2025-10-01 12:56:17,135 - bus_core - INFO - [BUS] Signal 'evidence.deliver' bound to _handle_evidence_deliver_signal
+2025-10-01 12:56:17,135 - bus_core - INFO - [BUS][bus.evidence_request] Evidence <unknown> requested by section_1
+2025-10-01 12:56:17,136 - bus_core - INFO - [BUS][bus.evidence_request] Evidence <unknown> requested by section_1
+2025-10-01 12:56:17,136 - bus_core - INFO - [BUS][bus.evidence_request] Evidence <unknown> requested by section_2
+2025-10-01 12:56:17,136 - bus_core - INFO - [BUS][bus.evidence_request] Evidence <unknown> requested by section_3
+2025-10-01 12:56:17,136 - bus_core - INFO - [BUS][bus.evidence_request] Evidence <unknown> requested by section_3
+2025-10-01 12:56:17,136 - bus_core - INFO - [BUS][bus.evidence_request] Evidence <unknown> requested by section_4
+2025-10-01 12:56:17,136 - bus_core - INFO - [BUS][bus.evidence_request] Evidence <unknown> requested by section_5
+2025-10-01 12:56:17,136 - bus_core - INFO - [BUS][bus.evidence_request] Evidence <unknown> requested by section_5
+2025-10-01 12:56:17,136 - bus_core - INFO - [BUS][bus.evidence_request] Evidence <unknown> requested by section_6
+2025-10-01 12:56:17,136 - bus_core - INFO - [BUS][bus.evidence_request] Evidence <unknown> requested by section_7
+2025-10-01 12:56:17,136 - bus_core - INFO - [BUS][bus.evidence_request] Evidence <unknown> requested by section_8
+2025-10-01 12:56:17,136 - bus_core - INFO - [BUS][bus.evidence_request] Evidence <unknown> requested by section_8
+2025-10-01 12:56:17,136 - bus_core - INFO - [BUS][bus.evidence_updated] Evidence updated: <unknown>
+2025-10-01 12:56:17,137 - bus_core - INFO - [BUS][bus.evidence_updated] Evidence updated: <unknown>
+2025-10-01 12:56:17,137 - central_plugin - INFO - Central Plugin initialized with Data Bus integration
+2025-10-01 13:05:42,053 - bus_core - INFO - Central Command Bus initialized
+2025-10-01 13:05:42,056 - bus_core - INFO - [BUS] Signal 'case_create' bound to _handle_case_create_signal
+2025-10-01 13:05:42,057 - bus_core - INFO - [BUS] Signal 'files_add' bound to _handle_files_add_signal
+2025-10-01 13:05:42,057 - bus_core - INFO - [BUS] Signal 'evidence.new' bound to _handle_evidence_new_signal
+2025-10-01 13:05:42,057 - bus_core - INFO - [BUS] Signal 'evidence.annotated' bound to _handle_evidence_annotated_signal
+2025-10-01 13:05:42,057 - bus_core - INFO - [BUS] Signal 'evidence.request' bound to _handle_evidence_request_signal
+2025-10-01 13:05:42,057 - bus_core - INFO - [BUS] Signal 'evidence.deliver' bound to _handle_evidence_deliver_signal
+2025-10-01 13:05:42,057 - bus_core - INFO - [BUS] Signal 'evidence.updated' bound to _handle_evidence_updated_signal
+2025-10-01 13:05:42,057 - bus_core - INFO - [BUS] Signal 'evidence.tagged' bound to _handle_evidence_tagged_signal
+2025-10-01 13:05:42,058 - bus_core - INFO - [BUS] Signal 'evidence.stored' bound to _handle_evidence_stored_signal
+2025-10-01 13:05:42,058 - bus_core - INFO - [BUS] Signal 'evidence_locker.call_out' bound to _handle_evidence_call_out_signal
+2025-10-01 13:05:42,058 - bus_core - INFO - [BUS] Signal 'evidence_locker.accept' bound to _handle_evidence_accept_signal
+2025-10-01 13:05:42,058 - bus_core - INFO - [BUS] Signal 'section.needs' bound to _handle_section_needs_signal
+2025-10-01 13:05:42,058 - bus_core - INFO - [BUS] Signal 'case.snapshot' bound to _handle_case_snapshot_signal
+2025-10-01 13:05:42,058 - bus_core - INFO - [BUS] Signal 'gateway.status' bound to _handle_gateway_status_signal
+2025-10-01 13:05:42,058 - bus_core - INFO - [BUS] Signal 'locker.status' bound to _handle_locker_status_signal
+2025-10-01 13:05:42,058 - bus_core - INFO - [BUS] Signal 'mission.status' bound to _handle_mission_status_signal
+2025-10-01 13:05:42,059 - central_plugin - INFO - Data Bus initialized successfully
+2025-10-01 13:05:42,059 - central_plugin - INFO - API Manager initialized successfully
+2025-10-01 13:05:42,059 - central_plugin - INFO - Smart Lookup Resolver unavailable; skipping initialization
+2025-10-01 13:05:42,060 - osint_module - INFO - Loaded API keys from F:\The Central Command\Command Center\Data Bus\configs\api_keys.json
+2025-10-01 13:05:42,060 - osint_module - INFO - OSINT Engine initialized
+2025-10-01 13:05:42,060 - central_plugin - INFO - OSINT Engine initialized successfully
+2025-10-01 13:05:42,060 - bus_core - INFO - [BUS] Signal 'narrative.generate' bound to _handle_narrative_generation
+2025-10-01 13:05:42,060 - bus_core - INFO - [BUS] Signal 'osint.verify' bound to _handle_osint_verification
+2025-10-01 13:05:42,060 - bus_core - INFO - [BUS] Signal 'geocoding.reverse' bound to _handle_reverse_geocoding
+2025-10-01 13:05:42,060 - bus_core - INFO - [BUS] Signal 'geocoding' bound to _handle_geocoding
+2025-10-01 13:05:42,060 - bus_core - INFO - [BUS] Signal 'api.test' bound to _handle_api_test
+2025-10-01 13:05:42,060 - bus_core - INFO - [BUS] Signal 'api.status' bound to _handle_api_status
+2025-10-01 13:05:42,060 - bus_core - INFO - [BUS] Signal 'evidence.scan' bound to _handle_evidence_scan
+2025-10-01 13:05:42,060 - bus_core - INFO - [BUS] Signal 'mission_debrief.process_report' bound to _handle_mission_debrief
+2025-10-01 13:05:42,060 - central_plugin - INFO - API signal handlers registered with Data Bus
+2025-10-01 13:05:42,061 - bus_core - INFO - [BUS] Signal 'section.needs' bound to _handle_section_needs_signal
+2025-10-01 13:05:42,061 - bus_core - INFO - [BUS] Signal 'evidence.deliver' bound to _handle_evidence_deliver_signal
+2025-10-01 13:05:42,061 - bus_core - INFO - [BUS][bus.evidence_request] Evidence <unknown> requested by section_1
+2025-10-01 13:05:42,061 - bus_core - INFO - [BUS][bus.evidence_request] Evidence <unknown> requested by section_1
+2025-10-01 13:05:42,061 - bus_core - INFO - [BUS][bus.evidence_request] Evidence <unknown> requested by section_2
+2025-10-01 13:05:42,061 - bus_core - INFO - [BUS][bus.evidence_request] Evidence <unknown> requested by section_3
+2025-10-01 13:05:42,061 - bus_core - INFO - [BUS][bus.evidence_request] Evidence <unknown> requested by section_3
+2025-10-01 13:05:42,061 - bus_core - INFO - [BUS][bus.evidence_request] Evidence <unknown> requested by section_4
+2025-10-01 13:05:42,062 - bus_core - INFO - [BUS][bus.evidence_request] Evidence <unknown> requested by section_5
+2025-10-01 13:05:42,062 - bus_core - INFO - [BUS][bus.evidence_request] Evidence <unknown> requested by section_5
+2025-10-01 13:05:42,062 - bus_core - INFO - [BUS][bus.evidence_request] Evidence <unknown> requested by section_6
+2025-10-01 13:05:42,062 - bus_core - INFO - [BUS][bus.evidence_request] Evidence <unknown> requested by section_7
+2025-10-01 13:05:42,062 - bus_core - INFO - [BUS][bus.evidence_request] Evidence <unknown> requested by section_8
+2025-10-01 13:05:42,062 - bus_core - INFO - [BUS][bus.evidence_request] Evidence <unknown> requested by section_8
+2025-10-01 13:05:42,062 - bus_core - INFO - [BUS][bus.evidence_updated] Evidence updated: <unknown>
+2025-10-01 13:05:42,062 - bus_core - INFO - [BUS][bus.evidence_updated] Evidence updated: <unknown>
+2025-10-01 13:05:42,062 - central_plugin - INFO - Central Plugin initialized with Data Bus integration
+2025-10-01 13:05:42,246 - bus_core - INFO - Central Command Bus initialized
+2025-10-01 13:05:42,246 - bus_core - INFO - [BUS] Signal 'case_create' bound to _handle_case_create_signal
+2025-10-01 13:05:42,246 - bus_core - INFO - [BUS] Signal 'files_add' bound to _handle_files_add_signal
+2025-10-01 13:05:42,246 - bus_core - INFO - [BUS] Signal 'evidence.new' bound to _handle_evidence_new_signal
+2025-10-01 13:05:42,246 - bus_core - INFO - [BUS] Signal 'evidence.annotated' bound to _handle_evidence_annotated_signal
+2025-10-01 13:05:42,247 - bus_core - INFO - [BUS] Signal 'evidence.request' bound to _handle_evidence_request_signal
+2025-10-01 13:05:42,247 - bus_core - INFO - [BUS] Signal 'evidence.deliver' bound to _handle_evidence_deliver_signal
+2025-10-01 13:05:42,247 - bus_core - INFO - [BUS] Signal 'evidence.updated' bound to _handle_evidence_updated_signal
+2025-10-01 13:05:42,247 - bus_core - INFO - [BUS] Signal 'evidence.tagged' bound to _handle_evidence_tagged_signal
+2025-10-01 13:05:42,247 - bus_core - INFO - [BUS] Signal 'evidence.stored' bound to _handle_evidence_stored_signal
+2025-10-01 13:05:42,247 - bus_core - INFO - [BUS] Signal 'evidence_locker.call_out' bound to _handle_evidence_call_out_signal
+2025-10-01 13:05:42,247 - bus_core - INFO - [BUS] Signal 'evidence_locker.accept' bound to _handle_evidence_accept_signal
+2025-10-01 13:05:42,247 - bus_core - INFO - [BUS] Signal 'section.needs' bound to _handle_section_needs_signal
+2025-10-01 13:05:42,247 - bus_core - INFO - [BUS] Signal 'case.snapshot' bound to _handle_case_snapshot_signal
+2025-10-01 13:05:42,248 - bus_core - INFO - [BUS] Signal 'gateway.status' bound to _handle_gateway_status_signal
+2025-10-01 13:05:42,248 - bus_core - INFO - [BUS] Signal 'locker.status' bound to _handle_locker_status_signal
+2025-10-01 13:05:42,248 - bus_core - INFO - [BUS] Signal 'mission.status' bound to _handle_mission_status_signal
+2025-10-01 13:05:42,248 - central_plugin - INFO - Data Bus initialized successfully
+2025-10-01 13:05:42,248 - central_plugin - INFO - API Manager initialized successfully
+2025-10-01 13:05:42,249 - central_plugin - INFO - Smart Lookup Resolver unavailable; skipping initialization
+2025-10-01 13:05:42,249 - osint_module - INFO - Loaded API keys from F:\The Central Command\Command Center\Data Bus\configs\api_keys.json
+2025-10-01 13:05:42,249 - osint_module - INFO - OSINT Engine initialized
+2025-10-01 13:05:42,249 - central_plugin - INFO - OSINT Engine initialized successfully
+2025-10-01 13:05:42,249 - bus_core - INFO - [BUS] Signal 'narrative.generate' bound to _handle_narrative_generation
+2025-10-01 13:05:42,249 - bus_core - INFO - [BUS] Signal 'osint.verify' bound to _handle_osint_verification
+2025-10-01 13:05:42,249 - bus_core - INFO - [BUS] Signal 'geocoding.reverse' bound to _handle_reverse_geocoding
+2025-10-01 13:05:42,249 - bus_core - INFO - [BUS] Signal 'geocoding' bound to _handle_geocoding
+2025-10-01 13:05:42,250 - bus_core - INFO - [BUS] Signal 'api.test' bound to _handle_api_test
+2025-10-01 13:05:42,250 - bus_core - INFO - [BUS] Signal 'api.status' bound to _handle_api_status
+2025-10-01 13:05:42,250 - bus_core - INFO - [BUS] Signal 'evidence.scan' bound to _handle_evidence_scan
+2025-10-01 13:05:42,250 - bus_core - INFO - [BUS] Signal 'mission_debrief.process_report' bound to _handle_mission_debrief
+2025-10-01 13:05:42,250 - central_plugin - INFO - API signal handlers registered with Data Bus
+2025-10-01 13:05:42,250 - bus_core - INFO - [BUS] Signal 'section.needs' bound to _handle_section_needs_signal
+2025-10-01 13:05:42,250 - bus_core - INFO - [BUS] Signal 'evidence.deliver' bound to _handle_evidence_deliver_signal
+2025-10-01 13:05:42,251 - bus_core - INFO - [BUS][bus.evidence_request] Evidence <unknown> requested by section_1
+2025-10-01 13:05:42,251 - bus_core - INFO - [BUS][bus.evidence_request] Evidence <unknown> requested by section_1
+2025-10-01 13:05:42,251 - bus_core - INFO - [BUS][bus.evidence_request] Evidence <unknown> requested by section_2
+2025-10-01 13:05:42,251 - bus_core - INFO - [BUS][bus.evidence_request] Evidence <unknown> requested by section_3
+2025-10-01 13:05:42,251 - bus_core - INFO - [BUS][bus.evidence_request] Evidence <unknown> requested by section_3
+2025-10-01 13:05:42,251 - bus_core - INFO - [BUS][bus.evidence_request] Evidence <unknown> requested by section_4
+2025-10-01 13:05:42,251 - bus_core - INFO - [BUS][bus.evidence_request] Evidence <unknown> requested by section_5
+2025-10-01 13:05:42,252 - bus_core - INFO - [BUS][bus.evidence_request] Evidence <unknown> requested by section_5
+2025-10-01 13:05:42,252 - bus_core - INFO - [BUS][bus.evidence_request] Evidence <unknown> requested by section_6
+2025-10-01 13:05:42,252 - bus_core - INFO - [BUS][bus.evidence_request] Evidence <unknown> requested by section_7
+2025-10-01 13:05:42,252 - bus_core - INFO - [BUS][bus.evidence_request] Evidence <unknown> requested by section_8
+2025-10-01 13:05:42,252 - bus_core - INFO - [BUS][bus.evidence_request] Evidence <unknown> requested by section_8
+2025-10-01 13:05:42,252 - bus_core - INFO - [BUS][bus.evidence_updated] Evidence updated: <unknown>
+2025-10-01 13:05:42,252 - bus_core - INFO - [BUS][bus.evidence_updated] Evidence updated: <unknown>
+2025-10-01 13:05:42,252 - central_plugin - INFO - Central Plugin initialized with Data Bus integration
+2025-10-01 14:04:13,438 - bus_core - INFO - Central Command Bus initialized
+2025-10-01 14:04:13,441 - bus_core - INFO - [BUS] Signal 'case_create' bound to _handle_case_create_signal
+2025-10-01 14:04:13,441 - bus_core - INFO - [BUS] Signal 'files_add' bound to _handle_files_add_signal
+2025-10-01 14:04:13,441 - bus_core - INFO - [BUS] Signal 'evidence.new' bound to _handle_evidence_new_signal
+2025-10-01 14:04:13,441 - bus_core - INFO - [BUS] Signal 'evidence.annotated' bound to _handle_evidence_annotated_signal
+2025-10-01 14:04:13,441 - bus_core - INFO - [BUS] Signal 'evidence.request' bound to _handle_evidence_request_signal
+2025-10-01 14:04:13,442 - bus_core - INFO - [BUS] Signal 'evidence.deliver' bound to _handle_evidence_deliver_signal
+2025-10-01 14:04:13,442 - bus_core - INFO - [BUS] Signal 'evidence.updated' bound to _handle_evidence_updated_signal
+2025-10-01 14:04:13,442 - bus_core - INFO - [BUS] Signal 'evidence.tagged' bound to _handle_evidence_tagged_signal
+2025-10-01 14:04:13,442 - bus_core - INFO - [BUS] Signal 'evidence.stored' bound to _handle_evidence_stored_signal
+2025-10-01 14:04:13,442 - bus_core - INFO - [BUS] Signal 'evidence_locker.call_out' bound to _handle_evidence_call_out_signal
+2025-10-01 14:04:13,442 - bus_core - INFO - [BUS] Signal 'evidence_locker.accept' bound to _handle_evidence_accept_signal
+2025-10-01 14:04:13,442 - bus_core - INFO - [BUS] Signal 'section.needs' bound to _handle_section_needs_signal
+2025-10-01 14:04:13,442 - bus_core - INFO - [BUS] Signal 'case.snapshot' bound to _handle_case_snapshot_signal
+2025-10-01 14:04:13,442 - bus_core - INFO - [BUS] Signal 'gateway.status' bound to _handle_gateway_status_signal
+2025-10-01 14:04:13,443 - bus_core - INFO - [BUS] Signal 'locker.status' bound to _handle_locker_status_signal
+2025-10-01 14:04:13,443 - bus_core - INFO - [BUS] Signal 'mission.status' bound to _handle_mission_status_signal
+2025-10-01 14:04:13,443 - central_plugin - INFO - Data Bus initialized successfully
+2025-10-01 14:04:13,460 - central_plugin - INFO - API Manager initialized successfully
+2025-10-01 14:04:13,461 - central_plugin - INFO - Smart Lookup Resolver unavailable; skipping initialization
+2025-10-01 14:04:13,461 - osint_module - INFO - Loaded API keys from F:\The Central Command\Command Center\Data Bus\configs\api_keys.json
+2025-10-01 14:04:13,461 - osint_module - INFO - OSINT Engine initialized
+2025-10-01 14:04:13,461 - central_plugin - INFO - OSINT Engine initialized successfully
+2025-10-01 14:04:13,461 - bus_core - INFO - [BUS] Signal 'narrative.generate' bound to _handle_narrative_generation
+2025-10-01 14:04:13,461 - bus_core - INFO - [BUS] Signal 'osint.verify' bound to _handle_osint_verification
+2025-10-01 14:04:13,461 - bus_core - INFO - [BUS] Signal 'geocoding.reverse' bound to _handle_reverse_geocoding
+2025-10-01 14:04:13,461 - bus_core - INFO - [BUS] Signal 'geocoding' bound to _handle_geocoding
+2025-10-01 14:04:13,461 - bus_core - INFO - [BUS] Signal 'api.test' bound to _handle_api_test
+2025-10-01 14:04:13,462 - bus_core - INFO - [BUS] Signal 'api.status' bound to _handle_api_status
+2025-10-01 14:04:13,462 - bus_core - INFO - [BUS] Signal 'evidence.scan' bound to _handle_evidence_scan
+2025-10-01 14:04:13,462 - bus_core - INFO - [BUS] Signal 'mission_debrief.process_report' bound to _handle_mission_debrief
+2025-10-01 14:04:13,462 - central_plugin - INFO - API signal handlers registered with Data Bus
+2025-10-01 14:04:13,474 - bus_core - INFO - [BUS] Signal 'section.needs' bound to _handle_section_needs_signal
+2025-10-01 14:04:13,474 - bus_core - INFO - [BUS] Signal 'evidence.deliver' bound to _handle_evidence_deliver_signal
+2025-10-01 14:04:13,474 - bus_core - INFO - [BUS][bus.evidence_request] Evidence <unknown> requested by section_1
+2025-10-01 14:04:13,474 - bus_core - INFO - [BUS][bus.evidence_request] Evidence <unknown> requested by section_1
+2025-10-01 14:04:13,474 - bus_core - INFO - [BUS][bus.evidence_request] Evidence <unknown> requested by section_2
+2025-10-01 14:04:13,475 - bus_core - INFO - [BUS][bus.evidence_request] Evidence <unknown> requested by section_3
+2025-10-01 14:04:13,475 - bus_core - INFO - [BUS][bus.evidence_request] Evidence <unknown> requested by section_3
+2025-10-01 14:04:13,475 - bus_core - INFO - [BUS][bus.evidence_request] Evidence <unknown> requested by section_4
+2025-10-01 14:04:13,475 - bus_core - INFO - [BUS][bus.evidence_request] Evidence <unknown> requested by section_5
+2025-10-01 14:04:13,475 - bus_core - INFO - [BUS][bus.evidence_request] Evidence <unknown> requested by section_5
+2025-10-01 14:04:13,475 - bus_core - INFO - [BUS][bus.evidence_request] Evidence <unknown> requested by section_6
+2025-10-01 14:04:13,475 - bus_core - INFO - [BUS][bus.evidence_request] Evidence <unknown> requested by section_7
+2025-10-01 14:04:13,475 - bus_core - INFO - [BUS][bus.evidence_request] Evidence <unknown> requested by section_8
+2025-10-01 14:04:13,475 - bus_core - INFO - [BUS][bus.evidence_request] Evidence <unknown> requested by section_8
+2025-10-01 14:04:13,476 - bus_core - INFO - [BUS][bus.evidence_updated] Evidence updated: <unknown>
+2025-10-01 14:04:13,476 - bus_core - INFO - [BUS][bus.evidence_updated] Evidence updated: <unknown>
+2025-10-01 14:04:13,476 - central_plugin - INFO - Central Plugin initialized with Data Bus integration
+2025-10-01 14:04:14,258 - bus_core - INFO - Central Command Bus initialized
+2025-10-01 14:04:14,259 - bus_core - INFO - [BUS] Signal 'case_create' bound to _handle_case_create_signal
+2025-10-01 14:04:14,259 - bus_core - INFO - [BUS] Signal 'files_add' bound to _handle_files_add_signal
+2025-10-01 14:04:14,259 - bus_core - INFO - [BUS] Signal 'evidence.new' bound to _handle_evidence_new_signal
+2025-10-01 14:04:14,259 - bus_core - INFO - [BUS] Signal 'evidence.annotated' bound to _handle_evidence_annotated_signal
+2025-10-01 14:04:14,259 - bus_core - INFO - [BUS] Signal 'evidence.request' bound to _handle_evidence_request_signal
+2025-10-01 14:04:14,259 - bus_core - INFO - [BUS] Signal 'evidence.deliver' bound to _handle_evidence_deliver_signal
+2025-10-01 14:04:14,259 - bus_core - INFO - [BUS] Signal 'evidence.updated' bound to _handle_evidence_updated_signal
+2025-10-01 14:04:14,259 - bus_core - INFO - [BUS] Signal 'evidence.tagged' bound to _handle_evidence_tagged_signal
+2025-10-01 14:04:14,260 - bus_core - INFO - [BUS] Signal 'evidence.stored' bound to _handle_evidence_stored_signal
+2025-10-01 14:04:14,260 - bus_core - INFO - [BUS] Signal 'evidence_locker.call_out' bound to _handle_evidence_call_out_signal
+2025-10-01 14:04:14,260 - bus_core - INFO - [BUS] Signal 'evidence_locker.accept' bound to _handle_evidence_accept_signal
+2025-10-01 14:04:14,260 - bus_core - INFO - [BUS] Signal 'section.needs' bound to _handle_section_needs_signal
+2025-10-01 14:04:14,260 - bus_core - INFO - [BUS] Signal 'case.snapshot' bound to _handle_case_snapshot_signal
+2025-10-01 14:04:14,260 - bus_core - INFO - [BUS] Signal 'gateway.status' bound to _handle_gateway_status_signal
+2025-10-01 14:04:14,260 - bus_core - INFO - [BUS] Signal 'locker.status' bound to _handle_locker_status_signal
+2025-10-01 14:04:14,260 - bus_core - INFO - [BUS] Signal 'mission.status' bound to _handle_mission_status_signal
+2025-10-01 14:04:14,260 - central_plugin - INFO - Data Bus initialized successfully
+2025-10-01 14:04:14,261 - central_plugin - INFO - API Manager initialized successfully
+2025-10-01 14:04:14,261 - central_plugin - INFO - Smart Lookup Resolver unavailable; skipping initialization
+2025-10-01 14:04:14,261 - osint_module - INFO - Loaded API keys from F:\The Central Command\Command Center\Data Bus\configs\api_keys.json
+2025-10-01 14:04:14,261 - osint_module - INFO - OSINT Engine initialized
+2025-10-01 14:04:14,261 - central_plugin - INFO - OSINT Engine initialized successfully
+2025-10-01 14:04:14,261 - bus_core - INFO - [BUS] Signal 'narrative.generate' bound to _handle_narrative_generation
+2025-10-01 14:04:14,261 - bus_core - INFO - [BUS] Signal 'osint.verify' bound to _handle_osint_verification
+2025-10-01 14:04:14,261 - bus_core - INFO - [BUS] Signal 'geocoding.reverse' bound to _handle_reverse_geocoding
+2025-10-01 14:04:14,261 - bus_core - INFO - [BUS] Signal 'geocoding' bound to _handle_geocoding
+2025-10-01 14:04:14,261 - bus_core - INFO - [BUS] Signal 'api.test' bound to _handle_api_test
+2025-10-01 14:04:14,262 - bus_core - INFO - [BUS] Signal 'api.status' bound to _handle_api_status
+2025-10-01 14:04:14,262 - bus_core - INFO - [BUS] Signal 'evidence.scan' bound to _handle_evidence_scan
+2025-10-01 14:04:14,262 - bus_core - INFO - [BUS] Signal 'mission_debrief.process_report' bound to _handle_mission_debrief
+2025-10-01 14:04:14,262 - central_plugin - INFO - API signal handlers registered with Data Bus
+2025-10-01 14:04:14,262 - bus_core - INFO - [BUS] Signal 'section.needs' bound to _handle_section_needs_signal
+2025-10-01 14:04:14,262 - bus_core - INFO - [BUS] Signal 'evidence.deliver' bound to _handle_evidence_deliver_signal
+2025-10-01 14:04:14,262 - bus_core - INFO - [BUS][bus.evidence_request] Evidence <unknown> requested by section_1
+2025-10-01 14:04:14,262 - bus_core - INFO - [BUS][bus.evidence_request] Evidence <unknown> requested by section_1
+2025-10-01 14:04:14,263 - bus_core - INFO - [BUS][bus.evidence_request] Evidence <unknown> requested by section_2
+2025-10-01 14:04:14,263 - bus_core - INFO - [BUS][bus.evidence_request] Evidence <unknown> requested by section_3
+2025-10-01 14:04:14,263 - bus_core - INFO - [BUS][bus.evidence_request] Evidence <unknown> requested by section_3
+2025-10-01 14:04:14,263 - bus_core - INFO - [BUS][bus.evidence_request] Evidence <unknown> requested by section_4
+2025-10-01 14:04:14,263 - bus_core - INFO - [BUS][bus.evidence_request] Evidence <unknown> requested by section_5
+2025-10-01 14:04:14,263 - bus_core - INFO - [BUS][bus.evidence_request] Evidence <unknown> requested by section_5
+2025-10-01 14:04:14,264 - bus_core - INFO - [BUS][bus.evidence_request] Evidence <unknown> requested by section_6
+2025-10-01 14:04:14,264 - bus_core - INFO - [BUS][bus.evidence_request] Evidence <unknown> requested by section_7
+2025-10-01 14:04:14,264 - bus_core - INFO - [BUS][bus.evidence_request] Evidence <unknown> requested by section_8
+2025-10-01 14:04:14,264 - bus_core - INFO - [BUS][bus.evidence_request] Evidence <unknown> requested by section_8
+2025-10-01 14:04:14,264 - bus_core - INFO - [BUS][bus.evidence_updated] Evidence updated: <unknown>
+2025-10-01 14:04:14,264 - bus_core - INFO - [BUS][bus.evidence_updated] Evidence updated: <unknown>
+2025-10-01 14:04:14,264 - central_plugin - INFO - Central Plugin initialized with Data Bus integration

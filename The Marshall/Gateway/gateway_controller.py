@@ -10,7 +10,7 @@ import json
 import os
 import sys
 from datetime import datetime
-from typing import Dict, List, Any, Optional, Tuple
+from typing import Dict, List, Any, Optional, Tuple, Set
 from enum import Enum
 import threading
 import time
@@ -38,6 +38,62 @@ from final_assembly import FinalAssemblyManager
 from media_processing_engine import MediaProcessingEngine, MediaAnalysisTool
 
 logger = logging.getLogger(__name__)
+
+
+SURVEILLANCE_KEYWORDS = (
+    'surveillance',
+    'pre-surveillance',
+    'field contract',
+    'field operations',
+    'field investigation',
+    'field ops',
+    'counter surveillance',
+    'mobile surveillance',
+    'surveillance session',
+    'surveillance report',
+)
+
+SURVEILLANCE_RETAINER_KEYWORDS = (
+    'retainer',
+    'non-refundable',
+    'status report',
+    'remaining balance',
+    'deposit',
+)
+
+INVESTIGATIVE_KEYWORDS = (
+    'background check',
+    'background',
+    'double verified',
+    'flat rate',
+    'desk review',
+    'analysis',
+    'research',
+    'asset search',
+    'fraud',
+    'theft',
+    'missing person',
+    'catfish',
+    'due diligence',
+)
+
+HYBRID_KEYWORD_SETS = (
+    ('skip tracing', 'process service'),
+    ('skip-tracing', 'process service'),
+    ('skip tracing', 'process-server'),
+)
+
+CONTRACT_CATEGORY_MAP = {
+    'investigative_only': 'Investigative',
+    'investigative': 'Investigative',
+    'investigation': 'Investigative',
+    'desk': 'Investigative',
+    'surveillance': 'Surveillance',
+    'field': 'Surveillance',
+    'field_ops': 'Surveillance',
+    'field operations': 'Surveillance',
+    'hybrid': 'Hybrid',
+}
 
 class SignalType(Enum):
     """Gateway signal types for section communication"""
@@ -169,16 +225,238 @@ class GatewayController:
         
         logger.info("Gateway Controller initialized with media processing capabilities")
     
+
+
+
+    def _map_contract_category(self, value: Optional[str]) -> Optional[str]:
+        if not value or not isinstance(value, str):
+            return None
+        normalized = value.strip().lower()
+        for key, mapped in CONTRACT_CATEGORY_MAP.items():
+            if key in normalized:
+                return mapped
+        return None
+
+    def _add_contract_entry(self, entries: List[Tuple[str, Dict[str, Any]]], seen_ids: Set[str], identifier: Optional[str], data: Any, source: str) -> None:
+        if data is None:
+            return
+        if isinstance(data, dict):
+            entry = dict(data)
+        else:
+            entry = {'text': str(data)}
+        entry.setdefault('source', source)
+        entry_id = str(identifier) if identifier not in (None, '') else f"{source}_{len(entries)}"
+        if entry_id in seen_ids:
+            entry_id = f"{entry_id}_{len(entries)}"
+        seen_ids.add(entry_id)
+        entries.append((entry_id, entry))
+
+    def _normalize_contract_collection(self, entries: List[Tuple[str, Dict[str, Any]]], seen_ids: Set[str], raw: Any, source: str) -> None:
+        if not raw:
+            return
+        if isinstance(raw, dict):
+            for key, value in raw.items():
+                self._add_contract_entry(entries, seen_ids, key, value, source)
+        elif isinstance(raw, list):
+            for idx, value in enumerate(raw):
+                identifier = None
+                if isinstance(value, dict):
+                    identifier = value.get('id') or value.get('contract_id') or value.get('document_id') or value.get('name') or value.get('uid')
+                if identifier is None:
+                    identifier = f"{source}_{idx}"
+                self._add_contract_entry(entries, seen_ids, identifier, value, source)
+        elif isinstance(raw, str):
+            self._add_contract_entry(entries, seen_ids, source, {'text': raw}, source)
+
+    def _extract_contract_entries(self, case_data: Dict[str, Any]) -> List[Tuple[str, Dict[str, Any]]]:
+        entries: List[Tuple[str, Dict[str, Any]]] = []
+        if not isinstance(case_data, dict):
+            return entries
+        seen_ids: Set[str] = set()
+        self._normalize_contract_collection(entries, seen_ids, case_data.get('contracts'), 'case.contracts')
+        self._normalize_contract_collection(entries, seen_ids, case_data.get('contract_history'), 'case.contract_history')
+        case_meta = case_data.get('case_metadata')
+        if isinstance(case_meta, dict):
+            self._normalize_contract_collection(entries, seen_ids, case_meta.get('contracts'), 'case_metadata.contracts')
+            self._normalize_contract_collection(entries, seen_ids, case_meta.get('contract_history'), 'case_metadata.contract_history')
+        supporting = case_data.get('supporting_documents')
+        if isinstance(supporting, dict):
+            self._normalize_contract_collection(entries, seen_ids, supporting.get('contracts'), 'supporting.contracts')
+        if not entries:
+            text_hint = case_data.get('contract_text') or case_data.get('contract_summary')
+            if isinstance(text_hint, str) and text_hint.strip():
+                self._add_contract_entry(entries, seen_ids, 'case.contract_text', {'text': text_hint}, 'case.contract_text')
+        return entries
+
+    def _classify_contract_entry(self, entry: Dict[str, Any]) -> Tuple[Optional[str], Dict[str, Any]]:
+        metadata = entry.get('metadata') or {}
+        classification = self._map_contract_category(
+            metadata.get('investigation_category')
+            or entry.get('investigation_category')
+            or metadata.get('profile_hint')
+            or entry.get('profile_hint')
+            or metadata.get('category')
+            or entry.get('category')
+        )
+        evidence_keywords: Set[str] = set()
+        text_chunks: List[str] = []
+
+        def add_chunk(value: Any) -> None:
+            if isinstance(value, str):
+                stripped = value.strip()
+                if stripped:
+                    text_chunks.append(stripped.lower())
+
+        for key in ('text', 'content', 'summary', 'body', 'contract_text'):
+            add_chunk(entry.get(key))
+            add_chunk(metadata.get(key))
+
+        services_included = entry.get('services_included') or metadata.get('services_included')
+        add_chunk(services_included)
+
+        billing = entry.get('billing') or metadata.get('billing')
+        payload = entry.get('payload')
+        if isinstance(payload, dict):
+            billing = billing or payload.get('billing')
+            add_chunk(payload.get('title'))
+
+        if isinstance(billing, dict):
+            for val in ('model', 'payment_instructions'):
+                add_chunk(billing.get(val))
+
+        if isinstance(payload, dict):
+            refund_policy = payload.get('refund_policy')
+            if isinstance(refund_policy, dict):
+                add_chunk(refund_policy.get('conditions'))
+            deliverables = payload.get('deliverables')
+            if isinstance(deliverables, dict):
+                add_chunk(deliverables.get('report_contents'))
+            communication = payload.get('communication')
+            if isinstance(communication, dict):
+                add_chunk(communication.get('contact_policy'))
+                add_chunk(communication.get('start_conditions'))
+            payload_clauses = payload.get('clauses')
+        else:
+            payload_clauses = None
+
+        clauses: List[Any] = []
+        if isinstance(entry.get('clauses'), list):
+            clauses.extend(entry['clauses'])
+        if isinstance(payload_clauses, list):
+            clauses.extend(payload_clauses)
+        if isinstance(metadata, dict) and isinstance(metadata.get('clauses'), list):
+            clauses.extend(metadata['clauses'])
+        for clause in clauses:
+            if isinstance(clause, dict):
+                add_chunk(clause.get('text'))
+                tags = clause.get('tags')
+                if isinstance(tags, list):
+                    for tag in tags:
+                        add_chunk(tag)
+            elif isinstance(clause, str):
+                add_chunk(clause)
+
+        file_info = entry.get('file_info')
+        if isinstance(file_info, dict):
+            add_chunk(file_info.get('name'))
+
+        text_lower = ' '.join(text_chunks)
+
+        if text_lower:
+            hybrid_hits = [pair for pair in HYBRID_KEYWORD_SETS if all(term in text_lower for term in pair)]
+            if 'hybrid' in text_lower:
+                hybrid_hits.append(('hybrid',))
+            surveillance_hits = [kw for kw in SURVEILLANCE_KEYWORDS if kw in text_lower]
+            retainer_hits = [kw for kw in SURVEILLANCE_RETAINER_KEYWORDS if kw in text_lower]
+            investigative_hits = [kw for kw in INVESTIGATIVE_KEYWORDS if kw in text_lower]
+
+            if hybrid_hits and classification != 'Hybrid':
+                classification = 'Hybrid'
+                for hit in hybrid_hits:
+                    evidence_keywords.add('+'.join(hit))
+
+            if classification != 'Hybrid' and (retainer_hits or surveillance_hits):
+                classification = 'Surveillance'
+                evidence_keywords.update(retainer_hits + surveillance_hits)
+
+            if classification is None and investigative_hits:
+                classification = 'Investigative'
+                evidence_keywords.update(investigative_hits)
+
+        if classification is None:
+            classification = 'Investigative'
+
+        return classification, {'keywords': sorted(evidence_keywords)}
+
+    def _auto_classify_contracts(self, case_data: Dict[str, Any]) -> None:
+        if not isinstance(case_data, dict):
+            return
+        entries = self._extract_contract_entries(case_data)
+        if not entries:
+            return
+        details: List[Dict[str, Any]] = []
+        types_seen: Set[str] = set()
+        for identifier, entry in entries:
+            classification, info = self._classify_contract_entry(entry)
+            if classification:
+                types_seen.add(classification)
+            detail: Dict[str, Any] = {
+                'id': identifier,
+                'source': entry.get('source'),
+                'classification': classification or 'Unknown',
+            }
+            if isinstance(info, dict) and info.get('keywords'):
+                detail['keywords'] = info['keywords']
+            details.append(detail)
+        if details:
+            case_data['contract_type_details'] = details
+            detected = {d['classification'] for d in details if d.get('classification') and d['classification'] != 'Unknown'}
+            if detected:
+                case_data['contract_types_detected'] = sorted(detected)
+        if types_seen:
+            if 'Hybrid' in types_seen or ('Surveillance' in types_seen and 'Investigative' in types_seen):
+                resolved = 'Hybrid'
+            elif 'Surveillance' in types_seen:
+                resolved = 'Surveillance'
+            elif 'Investigative' in types_seen:
+                resolved = 'Investigative'
+            else:
+                resolved = None
+        else:
+            resolved = None
+        if resolved:
+            case_data.setdefault('contract_type_auto', resolved)
+            if not case_data.get('contract_type'):
+                case_data['contract_type'] = resolved
+
+
+    def _derive_contract_total(self, details: Any) -> Optional[float]:
+        if not isinstance(details, list):
+            return None
+        totals: List[float] = []
+        for item in details:
+            if not isinstance(item, dict):
+                continue
+            billing = item.get('billing')
+            if isinstance(billing, dict):
+                if billing.get('flat_rate_amount'):
+                    totals.append(float(billing['flat_rate_amount']))
+                elif billing.get('retainer_amount'):
+                    totals.append(float(billing['retainer_amount']))
+        return totals[0] if totals else None
+
     def initialize_case(self, report_type: Optional[str], case_data: Dict[str, Any]) -> Dict[str, Any]:
         """Initialize a new case with specified (or inferred) report type and data.
         If report_type is None or 'auto', infer from case_data and fallback logic.
         Accepts alias mapping where 'Field' is treated as 'Surveillance'.
         """
 
+        case_payload = dict(case_data or {})
+        self._auto_classify_contracts(case_payload)
+
         normalized = self._normalize_report_type(report_type)
         if normalized is None:
-            inferred = self._infer_report_type(case_data)
-            normalized = inferred
+            normalized = self._infer_report_type(case_payload)
             self.processing_log.append({
                 'timestamp': datetime.now().isoformat(),
                 'action': 'report_type_inferred',
@@ -189,34 +467,43 @@ class GatewayController:
             raise ValueError(f"Unsupported report type: {report_type}")
 
         self.current_report_type = normalized
-        self.current_case_data = case_data.copy()
-        
+        self.current_case_data = case_payload.copy()
+
+        # Ensure baseline financial defaults
+        self.current_case_data.setdefault('planning_budget', 500.0)
+        self.current_case_data.setdefault('documentation_hours', 1.0)
+        self.current_case_data.setdefault('documentation_rate', 100.0)
+
+        if 'contract_total' not in self.current_case_data:
+            derived_total = self._derive_contract_total(self.current_case_data.get('contract_type_details'))
+            if derived_total is not None:
+                self.current_case_data['contract_total'] = derived_total
+
         # Initialize section states
         sections = self.report_types[normalized]["sections"]
         self.section_states = {
-            section_id: SectionState.PENDING 
+            section_id: SectionState.PENDING
             for section_id, _ in sections
         }
         self.section_outputs = {}
         self.lookup_cache = {}
-        
+
         # Clear media processing state
         with self.media_lock:
             self.media_processing_queue.clear()
             self.media_results_cache.clear()
             self.media_processing_active = False
-        
+
         # Generate case ID if not provided
         if 'case_id' not in self.current_case_data:
             self.current_case_data['case_id'] = self._generate_case_id()
-        
+
         # Inject client_profile from signed-in user's profile (agency + investigator defaults)
         try:
             upm = getattr(self.toolkit_engine, 'user_profile_manager', None)
             if upm and upm.is_authenticated():
                 merged = self._build_client_profile_from_user(upm, self.current_case_data.get('client_profile', {}))
                 self.current_case_data['client_profile'] = merged
-                # Enforce investigator license presence
                 inv_lic = (merged.get('investigator_license') or '').strip()
                 if not inv_lic:
                     raise ValueError("Investigator license is required to initialize a case. Please update User Profile.")
@@ -229,16 +516,15 @@ class GatewayController:
             'report_type': normalized,
             'case_id': self.current_case_data.get('case_id')
         })
-        
+
         logger.info(f"Case initialized: {normalized} - {self.current_case_data.get('case_id')}")
-        
+
         return {
             'case_id': self.current_case_data.get('case_id'),
             'report_type': normalized,
             'sections': sections,
             'status': 'initialized'
         }
-
     def _normalize_report_type(self, report_type: Optional[str]) -> Optional[str]:
         """Normalize input report_type; map aliases and accept None/auto."""
         if not report_type:
@@ -257,52 +543,84 @@ class GatewayController:
                 return k
         return rt
 
-    def _infer_report_type(self, case_data: Dict[str, Any]) -> str:
-        """Infer report type from case_data using fallback logic cues.
-        Defaults to Field≡Surveillance when ambiguous; Hybrid when both clauses present.
-        """
-        text_blobs = []
-        for key in ('contract_type', 'contract_name', 'investigation_goals', 'goals', 'notes'):
-            val = case_data.get(key)
-            if isinstance(val, str):
-                text_blobs.append(val.lower())
-        joined = "\n".join(text_blobs)
 
-        field_flags = set()
-        inv_flags = set()
 
-        # Clause flags
-        if 'field' in joined or 'surveillance' in joined or 'in-field' in joined or case_data.get('field_work') or case_data.get('field_ops'):
-            field_flags.add('field')
-        if 'investigative' in joined or 'investigation' in joined or 'desk' in joined or 'background' in joined:
-            inv_flags.add('investigative')
+        def _infer_report_type(self, case_data: Dict[str, Any]) -> str:
+            """Infer report type from case_data using fallback logic cues.
+            Defaults to Investigative when ambiguous; Hybrid when both clauses present.
+            """
+            text_blobs = []
+            for key in ('contract_type', 'contract_name', 'investigation_goals', 'goals', 'notes'):
+                val = case_data.get(key)
+                if isinstance(val, str):
+                    text_blobs.append(val.lower())
+            joined = "\\n".join(text_blobs)
 
-        # Explicit contract_type mapping
-        ct = str(case_data.get('contract_type', '')).lower()
-        if ct in {'investigative', 'investigation'}:
-            inv_flags.add('explicit')
-        if ct in {'field', 'surveillance'}:
-            field_flags.add('explicit')
-        if ct in {'hybrid'}:
-            return 'Hybrid'
 
-        # Multiple contracts
-        contracts = case_data.get('contracts')
-        if isinstance(contracts, list) and len(contracts) > 1:
-            # Prefer Hybrid if mixed cues
-            if field_flags or inv_flags:
+            field_flags = set()
+            inv_flags = set()
+
+            if 'field' in joined or 'surveillance' in joined or 'in-field' in joined or case_data.get('field_work') or case_data.get('field_ops'):
+                field_flags.add('field')
+            if 'investigative' in joined or 'investigation' in joined or 'desk' in joined or 'background' in joined:
+                inv_flags.add('investigative')
+
+            ct_candidates: List[str] = []
+            for key in ('contract_type', 'contract_type_auto'):
+                candidate = case_data.get(key)
+                if isinstance(candidate, str) and candidate.strip():
+                    ct_candidates.append(candidate)
+
+            for ct_value in ct_candidates:
+                ct = ct_value.strip().lower()
+                if ct in {'hybrid'}:
+                    return 'Hybrid'
+                if ct in {'investigative', 'investigation', 'investigative_only'}:
+                    inv_flags.add('explicit')
+                if ct in {'field', 'surveillance'}:
+                    field_flags.add('explicit')
+
+            detected_types = case_data.get('contract_types_detected')
+            if isinstance(detected_types, list):
+                normalized_types = {str(item).title() for item in detected_types if item}
+                if 'Hybrid' in normalized_types:
+                    return 'Hybrid'
+                if 'Surveillance' in normalized_types:
+                    field_flags.add('detected')
+                if 'Investigative' in normalized_types:
+                    inv_flags.add('detected')
+                if 'Surveillance' in normalized_types and 'Investigative' in normalized_types:
+                    return 'Hybrid'
+
+            details = case_data.get('contract_type_details')
+            if isinstance(details, list):
+                detail_types = {str(item.get('classification')).title() for item in details if item.get('classification')}
+                if 'Hybrid' in detail_types:
+                    return 'Hybrid'
+                if 'Surveillance' in detail_types:
+                    field_flags.add('classified')
+                if 'Investigative' in detail_types:
+                    inv_flags.add('classified')
+                if 'Surveillance' in detail_types and 'Investigative' in detail_types:
+                    return 'Hybrid'
+
+            contracts = case_data.get('contracts')
+            contract_count = 0
+            if isinstance(contracts, list):
+                contract_count = len(contracts)
+            elif isinstance(contracts, dict):
+                contract_count = len(contracts)
+
+            if contract_count > 1 and field_flags and inv_flags:
                 return 'Hybrid'
 
-        # Decision
-        if field_flags and inv_flags:
-            return 'Hybrid'
-        if field_flags:
-            return 'Surveillance'
-        if inv_flags:
+            if field_flags and inv_flags:
+                return 'Hybrid'
+            if field_flags:
+                return 'Surveillance'
+            if inv_flags:
+                return 'Investigative'
             return 'Investigative'
-        # Fallback default to Field≡Surveillance per fallback docs
-        return 'Surveillance'
-
     def _build_client_profile_from_user(self, upm, current_profile: Dict[str, Any]) -> Dict[str, Any]:
         """Merge agency-level and investigator-level settings from the signed-in user profile.
         Uses structured accessors (get_personal_info, get_business_info) for complete profile data.

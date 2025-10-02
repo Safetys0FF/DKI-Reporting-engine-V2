@@ -1,0 +1,8 @@
+{
+  "test_5": "Main Bus Librarian to Gateway",
+  "pathway_status": {
+    "librarian_accessible": "PASS",
+    "gateway_reachable": "FAIL"
+  },
+  "pathway_cracks": 1
+}

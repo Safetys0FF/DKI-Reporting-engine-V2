@@ -1,0 +1,16 @@
+Mission Debrief Export Routing Update
+==================================
+Timestamp: 2025-09-24T21:05:49.388894
+
+Summary:
+- Redirected Mission Debrief exports to ROOT_INSTALL_DIRECTORY/DKI_Exports/Depositions with adapter-aware helpers.
+- Added case-aware filename templates for FinalReport, BillingSummary, EvidenceManifest, PrintVersion, and ExportLog artifacts.
+- Recorded export pipeline activity into structured log files for each run.
+
+Work Location:
+- F:\The Central Command\Command Center\Mission Debrief\Debrief\README\mission_debrief_manager.py
+
+Next Steps:
+1. Wire billing summary, evidence manifest, and print-special PDFs when upstream generators are ready.
+2. Expand automated tests to cover deposition catalog generation and export log creation.
+3. Integrate UI prompts to surface the new Depositions directory and artifact list.

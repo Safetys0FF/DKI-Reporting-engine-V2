@@ -24,18 +24,19 @@ logging.basicConfig(level=logging.INFO)
 class Warden:
     """Central Command Control System - ECC + Gateway Controller"""
     
-    def __init__(self):
+    def __init__(self, bus=None):
         global ECC, GATEWAY
         
         # Initialize ECC (Ecosystem Controller)
-        ECC = EcosystemController()
+        ECC = EcosystemController(bus=bus)
         
         # Initialize Gateway Controller with ECC reference
-        GATEWAY = GatewayController(ecosystem_controller=ECC)
+        GATEWAY = GatewayController(ecosystem_controller=ECC, bus=bus)
         
         # Store references
         self.ecc = ECC
         self.gateway = GATEWAY
+        self.bus = bus
         
         # Initialize Warden tracking
         self.warden_modules = {

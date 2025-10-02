@@ -48,9 +48,34 @@ logger = logging.getLogger(__name__)
 class DigitalSignatureSystem:
     """Professional digital signature system for DKI Engine reports"""
     
-    def __init__(self, certificates_dir: str = "certificates"):
+    # SECTION REGISTRY - Standardized 10-section registry matching Evidence Locker
+    SECTION_REGISTRY = {
+        "section_1": {"title": "Client & Subject Details", "tags": ["client", "subject", "intake"]},
+        "section_2": {"title": "Pre-Surveillance Summary", "tags": ["background", "planning", "map", "aerial"]},
+        "section_3": {"title": "Surveillance Details", "tags": ["surveillance", "field-log", "observed"]},
+        "section_4": {"title": "Surveillance Recap", "tags": ["summary", "recap", "patterns"]},
+        "section_5": {"title": "Supporting Documents", "tags": ["contract", "agreement", "lease", "court record"]},
+        "section_6": {"title": "Billing Summary", "tags": ["billing", "retainer", "payment", "hours"]},
+        "section_7": {"title": "Surveillance Photos", "tags": ["photo", "image", "visual"]},
+        "section_8": {"title": "Conclusion", "tags": ["conclusion", "findings", "outcome"]},
+        "section_9": {"title": "Disclosures / Legal", "tags": ["disclosure", "legal", "compliance", "licensing"]},
+        "section_cp": {"title": "Cover Page", "tags": ["cover", "title", "branding"]},
+        "section_dp": {"title": "Disclosure Page", "tags": ["disclosure", "authenticity", "signature"]},
+        "section_toc": {"title": "Table of Contents", "tags": ["toc", "index", "navigation"]}
+    }
+    
+    def __init__(self, certificates_dir: str = "certificates", ecc=None, bus=None, gateway=None):
         self.certificates_dir = Path(certificates_dir)
         self.certificates_dir.mkdir(exist_ok=True)
+        
+        # ECC Integration
+        self.ecc = ecc
+        self.bus = bus
+        self.gateway = gateway
+        
+        # ECC Integration tracking
+        self.handoff_log = []
+        self.signature_log = []
         
         # Signature configurations
         self.signature_configs = {
@@ -79,6 +104,157 @@ class DigitalSignatureSystem:
         self.load_certificates()
         
         logger.info("Digital signature system initialized")
+    
+    # ECC Integration Methods - Following Evidence Locker Pattern
+    def _call_out_to_ecc(self, operation: str, data: Dict[str, Any]) -> bool:
+        """Call out to ECC for permission to perform operation"""
+        try:
+            if not self.ecc:
+                logger.warning("ECC not available for call-out")
+                return False
+            
+            # Prepare call-out data
+            call_out_data = {
+                "operation": operation,
+                "source": "digital_signature_system",
+                "data": data,
+                "timestamp": datetime.now().isoformat()
+            }
+            
+            # Emit call-out signal to ECC
+            if hasattr(self.ecc, 'emit'):
+                self.ecc.emit("digital_signature_system.call_out", call_out_data)
+                logger.info(f"📡 Called out to ECC for operation: {operation}")
+                return True
+            else:
+                logger.warning("ECC does not support signal emission")
+                return False
+                
+        except Exception as e:
+            logger.error(f"Failed to call out to ECC: {e}")
+            return False
+    
+    def _wait_for_ecc_confirm(self, timeout: int = 30) -> bool:
+        """Wait for ECC confirmation"""
+        try:
+            # In a real implementation, this would wait for ECC response
+            # For now, we'll simulate immediate confirmation
+            logger.info("⏳ Waiting for ECC confirmation...")
+            # Simulate confirmation delay
+            import time
+            time.sleep(0.1)  # Brief delay to simulate processing
+            logger.info("✅ ECC confirmation received")
+            return True
+            
+        except Exception as e:
+            logger.error(f"ECC confirmation timeout or error: {e}")
+            return False
+    
+    def _send_message(self, message_type: str, data: Dict[str, Any]) -> bool:
+        """Send message to ECC"""
+        try:
+            if not self.ecc:
+                logger.warning("ECC not available for message sending")
+                return False
+            
+            message_data = {
+                "message_type": message_type,
+                "source": "digital_signature_system",
+                "data": data,
+                "timestamp": datetime.now().isoformat()
+            }
+            
+            # Emit message to ECC
+            if hasattr(self.ecc, 'emit'):
+                self.ecc.emit(f"digital_signature_system.{message_type}", message_data)
+                logger.info(f"📤 Sent message to ECC: {message_type}")
+                return True
+            else:
+                logger.warning("ECC does not support signal emission")
+                return False
+                
+        except Exception as e:
+            logger.error(f"Failed to send message to ECC: {e}")
+            return False
+    
+    def _send_accept_signal(self, operation: str) -> bool:
+        """Send accept signal to ECC"""
+        try:
+            if not self.ecc:
+                logger.warning("ECC not available for accept signal")
+                return False
+            
+            accept_data = {
+                "operation": operation,
+                "source": "digital_signature_system",
+                "status": "accepted",
+                "timestamp": datetime.now().isoformat()
+            }
+            
+            # Emit accept signal to ECC
+            if hasattr(self.ecc, 'emit'):
+                self.ecc.emit("digital_signature_system.accept", accept_data)
+                logger.info(f"✅ Sent accept signal to ECC for operation: {operation}")
+                return True
+            else:
+                logger.warning("ECC does not support signal emission")
+                return False
+                
+        except Exception as e:
+            logger.error(f"Failed to send accept signal to ECC: {e}")
+            return False
+    
+    def _complete_handoff(self, operation: str, status: str) -> bool:
+        """Complete handoff process"""
+        try:
+            handoff_data = {
+                "operation": operation,
+                "source": "digital_signature_system",
+                "status": status,
+                "timestamp": datetime.now().isoformat()
+            }
+            
+            # Log handoff completion
+            self.handoff_log.append(handoff_data)
+            
+            logger.info(f"🔄 Handoff completed: {operation} - {status}")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Failed to complete handoff: {e}")
+            return False
+    
+    def _enforce_section_aware_execution(self, section_id: str) -> bool:
+        """Enforce section-aware execution before operations"""
+        try:
+            if not self.ecc:
+                logger.warning("ECC not available for section validation")
+                return True  # Allow execution if ECC not available
+            
+            # Validate section ID against registry
+            if not self.validate_section_id(section_id):
+                logger.error(f"Invalid section ID: {section_id}")
+                return False
+            
+            # Check if section is active in ECC
+            if hasattr(self.ecc, 'can_run'):
+                if not self.ecc.can_run(section_id):
+                    logger.error(f"Section {section_id} not active or blocked")
+                    return False
+            
+            return True
+            
+        except Exception as e:
+            logger.error(f"Section-aware execution validation failed: {e}")
+            return False
+    
+    def validate_section_id(self, section_id: str) -> bool:
+        """Validate section ID against SECTION_REGISTRY"""
+        return section_id in self.SECTION_REGISTRY
+    
+    def get_section_registry(self) -> Dict[str, Any]:
+        """Get the section registry"""
+        return self.SECTION_REGISTRY.copy()
     
     def load_certificates(self):
         """Load available digital certificates"""

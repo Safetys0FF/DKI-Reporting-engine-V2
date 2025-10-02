@@ -1,0 +1,48 @@
+disclosure_engine:
+  id: disclosure_engine
+  role: "Inject customizable disclosures into final report"
+
+  source:
+    profile_fields:
+      - agency_name: from user profile
+      - agent_name: from user profile (e.g., David Krashin of DKI Services)
+    templates:
+      - agency_disclosures.json
+      - user_disclosures.json
+
+  behavior:
+    - Present selectable disclosure blocks to user:
+        Display available options in GUI based on agency/user configuration.
+    - Enforce mandatory agency disclosures:
+        Default mandatory disclosures are set using a predefined standard (ie. David Krashin of DKI Services).
+        Agency and agent details are dynamically pulled from the authenticated user profile.
+        Users may override, remove, or replace disclosures via their personal settings,
+        while still maintaining audit traceability and respecting agency enforcement rules.
+    - Allow user to add or save custom disclosures:
+        User-written disclosures can be stored for reuse or temporary injection.
+    - Merge selected blocks in structured order:
+        Final page is assembled with preserved order and spacing rules.
+    - Tag disclosures with source + hash for audit:
+        Each block stamped with origin (user/agency) and checksum to detect edits.
+
+  layout:
+  formatting:
+    justification: full
+    font_size: 8pt
+    placement: bottom_of_last_page
+  signature_block:
+    required: true
+    editable_by_user: true
+    default_text: "The above statements are true and honest to the best of my knowledge, to the best of my ability, available information, services, and by the trusted individuals I partner with. The statements made herein are recorded on {finalization_date}."
+    date_binding: finalization_date
+  logo:
+    source: user_profile_image
+    max_dimensions:
+      square: 2.5in x 2.5in
+      rectangular: auto-adjust to aspect ratio
+    placement: centered_above_signature
+
+integration:
+  with: debrief_manager
+    triggered_by: gui.finalize_report
+    output_section: section_dp

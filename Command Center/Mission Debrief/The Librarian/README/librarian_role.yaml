@@ -1,0 +1,56 @@
+librarian:
+  id: librarian
+  role: "Compile and finalize section narratives"
+  responsibilities:
+    - Receive structured data from Gateway per section:
+        Intake bundles for each report section (e.g., section_1, section_2), containing structured evidence, metadata, or extracted summaries.
+    - Apply court-safe language and professional tone:
+        Ensure phrasing is neutral, precise, and free of slang, bias, or conjecture. Translate raw field notes into court-admissible language.
+    - Validate grammar, spelling, and formatting:
+        Perform automated and manual passes for language issues, sentence clarity, and report uniformity per agency standards.
+    - Assemble section narratives into ordered structure:
+        Combine each section’s narrative in proper order (section_1 to section_9), ensuring logical flow and narrative continuity.
+    - Emit structured narrative object per case:
+        Produce a final `{ section_id: narrative_text }` object for downstream use by the Debrief Manager, GUI, or export tools.
+    - Archive finalized report to local read-only storage:
+        Save the completed narrative bundle into a timestamped, immutable format under a case-specific directory for audit and reuse.
+  output:
+    format: "{ section_id: narrative_text }"
+    archived_as: "final_narrative_{case_id}_{timestamp}.json"
+    permissions: "read-only"
+    future_ready: true
+    cloud_integration: planned
+  interfaces:
+  api:
+    description: |
+      Provides indirect API access to sections via Gateway.
+      When a section requests verification, compliance checks, or template access,
+      the Gateway routes that request to the Librarian, which performs the callout
+      and returns the result back through the Gateway.
+      This preserves separation of responsibility while enabling section-level checks
+      without exposing them to direct network access.
+    capabilities:
+      - verify_report_integrity: true
+      - fetch_section_template: true
+      - check_compliance_status: true
+      - register_section_output: true
+    callouts:
+      - url: /api/verify
+        method: POST
+        description: Trigger third-party or internal verification of narrative bundle integrity.
+      - url: /api/templates/{section_id}
+        method: GET
+        description: Retrieve the latest narrative template for a specific section.
+      - url: /api/compliance/check
+        method: POST
+        description: Validate the current narrative against legal/compliance standards.
+      - url: /api/archive/register
+        method: POST
+        description: Register archived output with external or internal audit systems.
+  signals:
+      emits:
+        - narrative.assembled
+        - narrative.validation_passed
+      receives:
+        - gateway.section_bundle
+        - gui.approval_ready

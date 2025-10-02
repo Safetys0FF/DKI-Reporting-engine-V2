@@ -1,0 +1,9 @@
+
+Professional Case Manager UI Status
+===================================
+Timestamp: 2025-09-24T22:01:49.410087
+
+Summary:
+- Identified `professional_case_manager.py` as the active Tkinter case-management interface with evidence-processing workflows and legitimate `main()` entry point.
+- Other UI scripts (gui_main_application_clean.py, gui_main_application.py, gui_main_application_legacy.py, case_management_panel.py) are legacy shells or component panels without the incoming-evidence pipeline.
+- `professional_case_manager.log` continues to capture runtime logging for the live UI.

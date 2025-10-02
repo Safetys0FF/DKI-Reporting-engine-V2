@@ -1,0 +1,22 @@
+﻿[
+    {
+        "title":  "Standard Investigative Disclosure",
+        "body":  "All investigative activities were conducted in accordance with applicable laws, licensing requirements, and contractual obligations. Findings are reported as observed without alteration.",
+        "id":  "standard"
+    },
+    {
+        "title":  "Confidentiality Notice",
+        "body":  "This report contains privileged investigative material intended solely for authorized recipients. Unauthorized dissemination is prohibited without written consent.",
+        "id":  "confidentiality"
+    },
+    {
+        "title":  "Methodology Summary",
+        "body":  "Evidence and narratives were generated through verified chain-of-custody procedures, gateway-managed enrichment, and cross-section validation under the Central Command bus architecture.",
+        "id":  "methodology"
+    },
+    {
+        "title":  "Limitations of Findings",
+        "body":  "Conclusions are based on information available at the time of reporting. Additional evidence or testimony may impact investigative outcomes.",
+        "id":  "limitations"
+    }
+]

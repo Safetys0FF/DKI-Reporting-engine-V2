@@ -1,0 +1,50 @@
+{
+  "gui_signal_analysis": "GUI to Backend Signal Break Analysis",
+  "gui_locations": {
+    "OLD_UI_Location": {
+      "exists": false,
+      "python_files": 0
+    },
+    "NEW_UI_Location": {
+      "exists": true,
+      "python_files": 4
+    },
+    "WAR_ROOM_UI": {
+      "exists": true,
+      "python_files": 0
+    },
+    "START_MENU_UI": {
+      "exists": true,
+      "python_files": 1
+    }
+  },
+  "signal_components": {
+    "Data_Bus_API": {
+      "exists": true,
+      "size": 1771
+    },
+    "Plugin_Manager": {
+      "exists": true,
+      "size": 1980
+    },
+    "Ecosystem_Portal": {
+      "exists": true,
+      "size": 2166
+    },
+    "GUI_Main_App": {
+      "exists": true,
+      "size": 164
+    },
+    "Enhanced_GUI": {
+      "exists": true,
+      "size": 72193
+    }
+  },
+  "backend_connectivity": {
+    "Repository_Manager_Import": "FUNCTIONAL",
+    "API_Tester_Import": "FUNCTIONAL",
+    "Smart_Lookup_Import": "FUNCTIONAL"
+  },
+  "connectivity_score": 100.0,
+  "identified_break_points": []
+}

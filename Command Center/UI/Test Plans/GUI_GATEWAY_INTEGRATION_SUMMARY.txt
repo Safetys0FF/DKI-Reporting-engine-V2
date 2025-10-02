@@ -1,0 +1,20 @@
+Current State
+- GUI loads `central_plugin` but never routes actions to Gateway; bus handlers remain empty, so evidence/report requests go nowhere, and parsing logic is dormant.
+- `central_plugin` instantiates Warden/Gateway/EvidenceLocker/MissionDebrief with their own `DKIReportBus`, yet never registers gateway handlers or exposes helpers for GUI workflows.
+- GUI buttons still call `send_to_bus`, expecting the legacy Report Engine; no handlers are registered, so these calls return `{}` and cells stay disconnected.
+- Docs under `read_me_file` still brand everything as ?DKI Report Engine,? reference a missing root Makefile, and ship UTF-8 box diagrams that render as mojibake.
+- Dependency bundle (`The War Room/Processors/requirements.txt`) lists stdlib modules, causing `make install` to fail before optional OCR/AI packages install.
+
+Key Files & Dependencies
+- Integration glue: `Command Center/UI/central_plugin.py`, `Command Center/UI/enhanced_functional_gui.py`
+- Gateway orchestration: `The Warden/warden_main.py`, `The Warden/gateway_controller.py`
+- Bus infrastructure: `Command Center/Data Bus/Bus Core Design/bus_core.py`, `ecosystem_integration_portal.py`
+- Launchers & docs: `Command Center/Start Menu/Run Time/DKI_ENGINE_LAUNCHER.bat`, `Command Center/read_me_file/*.md`, `Command Center/read_me_file/Makefile`
+- Dependency manifest: `The War Room/Processors/requirements.txt`
+
+Suggested Repairs / Additions
+1. Wire GUI to gateway: share the bus instance, register gateway handlers, and expose helper methods that call `GatewayController` directly.
+2. Refactor GUI actions: use the new helpers for evidence intake, section coordination, and report triggers; propagate gateway status back to the UI.
+3. Add integration diagnostics: automated harness plus optional GUI panel to confirm signals reach `GatewayController` and handoffs complete.
+4. Fix documentation/build: move or point Makefile correctly, update terminology to ?Central Command,? and replace diagrams with ASCII or images.
+5. Clean requirements: remove stdlib modules and optionally split heavy OCR/AI dependencies into optional extras.

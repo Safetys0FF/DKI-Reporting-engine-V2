@@ -1,0 +1,96 @@
+﻿debrief_manager:
+  id: debrief_manager
+  role: "Package, style, and export finalized report"
+  responsibilities:
+    - name: wait_for_gui_approval
+      description: Activation awaits an explicit user action in the GUI; no automated rollout.
+    - name: insert_cover_page
+      description: Pull agency branding (logo, headers, investigator credentials) from the GUI profile and apply to the cover template.
+    - name: generate_table_of_contents
+      description: Build a TOC aligned with produced sections, resolve page numbers post-layout, and ensure section presence before listing.
+    - name: append_disclosure_page
+      description: Present disclosure templates, enforce mandatory legal clauses flagged in the user profile, and verify section alignment.
+    - name: ensure_brand_consistency
+      description: Apply typography, headers, and compliance formatting to meet agency standards.
+    - name: reflow_layout
+      description: Fix pagination issues (orphans/widows) and align report flow prior to export.
+    - name: prompt_export_method
+      description: After formatting, prompt the GUI for delivery preference (save/email/print) and file type.
+    - name: apply_watermarks_or_signatures
+      description: Coordinate with tooling for digital overlays (watermark/signature) when enabled.
+  input:
+    source: librarian
+    format: "{ section_id: narrative_text }"
+  user_prompt:
+    options:
+      export_format: [PDF, DOCX, MS_WORD]
+      delivery_method: [SAVE, EMAIL, PRINT]
+      apply_watermark: true
+      digital_signature: true
+  interfaces:
+    signals:
+      listens:
+        - gui.finalize_report
+      emits:
+        - report.finalized
+        - report.export_ready
+  tools:
+    pdf_extraction:
+      adapter: mission_debrief.tools.pdf_extraction_adapter.PdfExtractionAdapter
+      upstream_module: "F:/The Central Command/The War Room/Processors/document_processor.py"
+      capabilities:
+        primary: pdfplumber
+        optional:
+          - pytesseract
+          - easyocr
+          - paddleocr
+        notes: "Falls back gracefully when OCR engines are unavailable."
+    evidence_pipeline:
+      adapter: mission_debrief.tools.evidence_pipeline_adapter.EvidencePipelineAdapter
+      upstream_module: "F:/The Central Command/The War Room/Processors/evidence_pipeline.py"
+      capabilities:
+        - routing_manifest
+        - normalized_file_metadata
+    api_services:
+      adapter: mission_debrief.tools.api_manager_adapter.ApiServiceAdapter
+      upstream_module: "F:/The Central Command/The War Room/Processors/osint_module.py"
+      dependencies:
+        - requests
+        - API key storage (api_keys.json)
+      provides:
+        - google_search
+        - google_maps
+        - bing_search
+    report_generation:
+      adapter: mission_debrief.tools.report_generator_adapter.ReportGeneratorAdapter
+      upstream_module: "F:/The Central Command/The War Room/Processors/report generator/report_generator.py"
+      dependencies:
+        - reportlab
+      delivers:
+        - docx_export
+        - pdf_export
+    professional_tools:
+      digital_signature:
+        adapter: mission_debrief.tools.digital_signature_adapter.DigitalSignatureAdapter
+        dependencies:
+          primary:
+            - cryptography
+            - PyPDF2
+          optional:
+            - reportlab
+      watermark:
+        adapter: mission_debrief.tools.watermark_adapter.WatermarkAdapter
+        dependencies:
+          - reportlab
+      printing:
+        adapter: mission_debrief.tools.printing_adapter.PrintingAdapter
+        dependencies:
+          - pywin32 (Windows)
+      osint:
+        adapter: mission_debrief.tools.osint_adapter.OsintAdapter
+        dependencies:
+          - requests
+          - API key storage
+  status_tracking:
+    audit_log: MissionDebrief/logs/debrief_manager.log
+    emit_bus_events: true

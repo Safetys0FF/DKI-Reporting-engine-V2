@@ -1,0 +1,25 @@
+{
+  "timestamp": "2025-09-29T07:59:42.639782",
+  "report_id": "report_20250929_075942",
+  "case_id": "UNKNOWN_20250929_075108",
+  "status": "ok",
+  "steps_completed": [
+    "report_generated",
+    "report_exported",
+    "evidence_manifest_exported",
+    "print_version_exported",
+    "export_log_recorded"
+  ],
+  "tools_used": [
+    "report_generator",
+    "report_generator",
+    "mission_debrief_manager"
+  ],
+  "output_files": [
+    "F:\\The Central Command\\DKI_Exports\\Depositions\\UNKNOWN_20250929_075108_FinalReport_20250929_0759.pdf",
+    "F:\\The Central Command\\DKI_Exports\\Depositions\\UNKNOWN_20250929_075108_EvidenceManifest_20250929_0759.pdf",
+    "F:\\The Central Command\\DKI_Exports\\Depositions\\UNKNOWN_20250929_075108_PrintVersion_20250929_0759.pdf",
+    "F:\\The Central Command\\DKI_Exports\\Depositions\\UNKNOWN_20250929_075108_ExportLog_20250929_0759.log"
+  ],
+  "errors": []
+}

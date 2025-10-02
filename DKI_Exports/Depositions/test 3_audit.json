@@ -1,0 +1,246 @@
+{
+  "report_file": "test 3.pdf",
+  "generated_timestamp": "2025-09-29T07:59:51.692595",
+  "case_id": "UNKNOWN_20250929_075108",
+  "user": {},
+  "user_role": "user",
+  "profile_settings": {
+    "auto_open_admin_audit": null
+  },
+  "processing_log": [
+    {
+      "timestamp": "2025-09-29T07:50:39.817774",
+      "action": "case_initialized",
+      "report_type": "Investigative",
+      "case_id": "UNKNOWN_20250929_075039"
+    },
+    {
+      "timestamp": "2025-09-29T07:51:08.638954",
+      "action": "case_initialized",
+      "report_type": "Hybrid",
+      "case_id": "UNKNOWN_20250929_075108"
+    },
+    {
+      "timestamp": "2025-09-29T07:51:38.103594",
+      "action": "section_generated",
+      "section_id": "section_toc",
+      "section_name": "Table of Contents"
+    },
+    {
+      "timestamp": "2025-09-29T07:51:48.011984",
+      "action": "section_generated",
+      "section_id": "section_1",
+      "section_name": "Investigation Objectives"
+    },
+    {
+      "timestamp": "2025-09-29T07:52:02.849530",
+      "action": "section_generated",
+      "section_id": "section_2",
+      "section_name": "Preliminary Case Review"
+    },
+    {
+      "timestamp": "2025-09-29T07:52:22.209290",
+      "action": "section_generated",
+      "section_id": "section_3",
+      "section_name": "Investigative Details"
+    },
+    {
+      "timestamp": "2025-09-29T07:52:52.158639",
+      "action": "section_generated",
+      "section_id": "section_cp",
+      "section_name": "Cover Page"
+    },
+    {
+      "timestamp": "2025-09-29T07:53:17.725789",
+      "action": "section_generated",
+      "section_id": "section_toc",
+      "section_name": "Table of Contents"
+    },
+    {
+      "timestamp": "2025-09-29T07:53:25.365908",
+      "action": "section_generated",
+      "section_id": "section_1",
+      "section_name": "Investigation Objectives"
+    },
+    {
+      "timestamp": "2025-09-29T07:53:29.074572",
+      "action": "section_generated",
+      "section_id": "section_2",
+      "section_name": "Preliminary Case Review"
+    },
+    {
+      "timestamp": "2025-09-29T07:53:38.643703",
+      "action": "section_generated",
+      "section_id": "section_3",
+      "section_name": "Investigative Details"
+    },
+    {
+      "timestamp": "2025-09-29T07:53:42.097480",
+      "action": "section_generated",
+      "section_id": "section_4",
+      "section_name": "Review of Surveillance Sessions"
+    },
+    {
+      "timestamp": "2025-09-29T07:53:45.024869",
+      "action": "section_generated",
+      "section_id": "section_5",
+      "section_name": "Review of Supporting Documents"
+    },
+    {
+      "timestamp": "2025-09-29T07:53:49.523601",
+      "action": "section_generated",
+      "section_id": "section_6",
+      "section_name": "Billing Summary"
+    },
+    {
+      "timestamp": "2025-09-29T07:54:03.886372",
+      "action": "section_generated",
+      "section_id": "section_7",
+      "section_name": "Conclusion"
+    },
+    {
+      "timestamp": "2025-09-29T07:54:23.023288",
+      "action": "section_generated",
+      "section_id": "section_8",
+      "section_name": "Investigation Evidence Review"
+    },
+    {
+      "timestamp": "2025-09-29T07:54:28.741924",
+      "event": "librarian_bundle_assembled",
+      "section_count": 10,
+      "assembler": "available"
+    },
+    {
+      "timestamp": "2025-09-29T07:54:28.823663",
+      "action": "section_generated",
+      "section_id": "section_9",
+      "section_name": "Certification & Disclaimers"
+    },
+    {
+      "timestamp": "2025-09-29T07:55:28.521369",
+      "event": "librarian_draft_updated",
+      "section_id": "section_cp",
+      "delta_chars": 85
+    },
+    {
+      "timestamp": "2025-09-29T07:56:07.472148",
+      "event": "librarian_draft_updated",
+      "section_id": "section_2",
+      "delta_chars": 47
+    },
+    {
+      "timestamp": "2025-09-29T07:56:26.934789",
+      "event": "librarian_draft_updated",
+      "section_id": "section_3",
+      "delta_chars": 25
+    },
+    {
+      "timestamp": "2025-09-29T07:56:40.920960",
+      "event": "librarian_draft_updated",
+      "section_id": "section_4",
+      "delta_chars": 25
+    },
+    {
+      "timestamp": "2025-09-29T07:57:24.692607",
+      "event": "librarian_draft_updated",
+      "section_id": "section_5",
+      "delta_chars": 89
+    },
+    {
+      "timestamp": "2025-09-29T07:58:03.388484",
+      "event": "librarian_draft_updated",
+      "section_id": "section_6",
+      "delta_chars": 75
+    },
+    {
+      "timestamp": "2025-09-29T07:59:00.754945",
+      "event": "librarian_draft_updated",
+      "section_id": "section_7",
+      "delta_chars": 110
+    },
+    {
+      "timestamp": "2025-09-29T07:59:34.260372",
+      "event": "librarian_draft_updated",
+      "section_id": "section_8",
+      "delta_chars": 32
+    },
+    {
+      "timestamp": "2025-09-29T07:59:42.970704",
+      "event": "narrative_debrief",
+      "status": "ok",
+      "archive_status": "error",
+      "outputs": [
+        "F:\\The Central Command\\DKI_Exports\\Depositions\\UNKNOWN_20250929_075108_FinalReport_20250929_0759.pdf",
+        "F:\\The Central Command\\DKI_Exports\\Depositions\\UNKNOWN_20250929_075108_EvidenceManifest_20250929_0759.pdf",
+        "F:\\The Central Command\\DKI_Exports\\Depositions\\UNKNOWN_20250929_075108_PrintVersion_20250929_0759.pdf",
+        "F:\\The Central Command\\DKI_Exports\\Depositions\\UNKNOWN_20250929_075108_ExportLog_20250929_0759.log"
+      ]
+    }
+  ],
+  "lookup_cache": {},
+  "sections": [
+    {
+      "section_id": "section_1",
+      "section_name": "Investigation Objectives",
+      "internal_identity_verification": {
+        "status": "unavailable"
+      }
+    },
+    {
+      "section_id": "section_2",
+      "section_name": "Preliminary Case Review"
+    },
+    {
+      "section_id": "section_3",
+      "section_name": "Investigative Details",
+      "internal_sidebar": {
+        "windows": [],
+        "counts": {
+          "windows": 0,
+          "images": 0,
+          "videos": 0,
+          "matches": 0
+        },
+        "policies": {}
+      }
+    },
+    {
+      "section_id": "section_4",
+      "section_name": "Review of Surveillance Sessions",
+      "internal_sidebar": {
+        "windows": [],
+        "counts": {
+          "windows": 0,
+          "images": 0,
+          "videos": 0,
+          "matches": 0
+        },
+        "policies": {}
+      }
+    },
+    {
+      "section_id": "section_5",
+      "section_name": "Review of Supporting Documents",
+      "internal_identity_verification": {
+        "status": "unavailable"
+      }
+    },
+    {
+      "section_id": "section_9",
+      "section_name": "Certification & Disclaimers"
+    },
+    {
+      "section_id": "section_7",
+      "section_name": "Conclusion"
+    },
+    {
+      "section_id": "section_8",
+      "section_name": "Investigation Evidence Review"
+    },
+    {
+      "section_id": "section_6",
+      "section_name": "Billing Summary"
+    }
+  ],
+  "flags_count": 0
+}

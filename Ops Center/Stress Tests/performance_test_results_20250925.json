@@ -1,0 +1,8 @@
+{
+  "test_suite": "NEW System Performance Tests",
+  "data_bus_signals_per_second": 3622024.18,
+  "evidence_locker_response_ms": 999000,
+  "evidence_locker_performance": "FAILED",
+  "component_discovery_rate": 149903.65,
+  "total_components_found": 50
+}

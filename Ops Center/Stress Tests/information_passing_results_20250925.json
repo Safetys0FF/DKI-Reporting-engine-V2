@@ -1,0 +1,14 @@
+{
+  "information_passing_test": "NEW System Information Flow",
+  "successful_hops": 5,
+  "total_modules": 5,
+  "flow_success_rate": 100.0,
+  "data_integrity_percent": 100.0,
+  "flow_path": [
+    "Evidence_Locker",
+    "Data_Bus",
+    "Warden",
+    "Marshall",
+    "Analyst_Deck"
+  ]
+}

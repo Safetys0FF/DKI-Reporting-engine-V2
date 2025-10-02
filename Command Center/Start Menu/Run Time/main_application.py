@@ -8,6 +8,7 @@ import os
 import sys
 import logging
 from datetime import datetime
+from pathlib import Path
 
 # Import Warden (ECC + Gateway Controller)
 sys.path.append(r"F:\The Central Command\The Warden")
@@ -23,8 +24,26 @@ from evidence_manager import EvidenceManager
 
 # Import Narrative Assembler and Mission Debrief Manager
 sys.path.append(r"F:\The Central Command\Command Center\Mission Debrief")
-from narrative_assembler import NarrativeAssembler
-from mission_debrief_manager import MissionDebriefManager
+from importlib.util import spec_from_file_location, module_from_spec
+
+LIBRARIAN_DIR = Path(r"F:/The Central Command/Command Center/Mission Debrief/The Librarian")
+DEBRIEF_DIR = Path(r"F:/The Central Command/Command Center/Mission Debrief/Debrief/README")
+
+
+def _load_class(module_name: str, module_path: Path, attr_name: str):
+    spec = spec_from_file_location(module_name, module_path)
+    if spec is None or spec.loader is None:
+        raise ImportError(f"Unable to load spec for {module_name} from {module_path}")
+    module = module_from_spec(spec)
+    spec.loader.exec_module(module)
+    try:
+        return getattr(module, attr_name)
+    except AttributeError as exc:
+        raise ImportError(f"{attr_name} not found in {module_path}") from exc
+
+
+NarrativeAssembler = _load_class("narrative_assembler", LIBRARIAN_DIR / "narrative_assembler.py", "NarrativeAssembler")
+MissionDebriefManager = _load_class("mission_debrief_manager", DEBRIEF_DIR / "mission_debrief_manager.py", "MissionDebriefManager")
 
 # Import Central Command Bus
 sys.path.append(r"F:\The Central Command\Command Center\Data Bus\Bus Core Design")

@@ -1,0 +1,8 @@
+﻿Mission Debrief Tool Integration Plan
+====================================
+
+Scope: Wire Mission Debrief Manager (F:\The Central Command\Command Center\Mission Debrief) to the processor toolset under F:\The Central Command\The War Room\Processors. New adapters will expose PDF extraction, API management, and other professional tooling so the debrief pipeline can orchestrate them through ECC/bus signals.
+
+Work Location: Primary code changes will occur in Mission Debrief modules (MissionDebriefManager, ArchiveManager, tool wrappers under Mission Debrief\tools) with supporting imports from The War Room\Processors. Configuration updates will touch debrief_manager.yaml and related YAML manifests.
+
+Next Steps After Completion: Once integration and tests pass, surface the new capabilities in the user-facing UI (Professional Case Manager tabs), update deployment docs/requirements to include added dependencies, and schedule combined end-to-end testing across War Room and Mission Debrief services.

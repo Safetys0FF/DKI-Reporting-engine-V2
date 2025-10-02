@@ -1,0 +1,16 @@
+Mission Debrief Manager Progress Update
+========================================
+Timestamp: 2025-09-24T20:27:07.136951
+
+Summary:
+- Rewired mission_debrief_manager to initialise adapter layer for evidence, extraction, API, generator, signature, watermark, and printing tools.
+- Hardened ECC/bus orchestration and tool status reporting with clean ASCII logging.
+- Added adapter-driven processing pipeline covering export, watermark, signature, and print options with graceful fallbacks.
+
+Work Location:
+- F:\The Central Command\Command Center\Mission Debrief\Debrief\README\mission_debrief_manager.py
+
+Next Steps:
+1. Run Mission Debrief test harness to validate adapter wiring and error handling.
+2. Evaluate ArchiveManager persistence enhancements for new metadata artefacts.
+3. Surface adapter-driven capabilities in the UI/profile menus and update dependency notes.

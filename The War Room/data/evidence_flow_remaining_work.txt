@@ -1,0 +1,50 @@
+﻿Evidence Flow Roadmap – Remaining Work
+======================================
+
+1. Gateway Controller & Section Pipeline Updates
+-----------------------------------------------
+- Subscribe the gateway to `evidence.new`, `evidence.updated`, `section.needs`, and `case.snapshot` directly from the bus (`The Marshall/Gateway/gateway_controller.py`).
+- Replace the current `_prepare_section_payload` logic with calls to `section_parsing_dispatcher.build_section_context(...)` so each section receives the curated inputs defined in the parsing maps.
+- Implement a section broker (within the gateway or a helper module) that:
+  • processes `section.needs` advertisements and issues `evidence.request` payloads when sections require additional artifacts;
+  • updates `self.section_outputs` only after enriched data has been pushed back to the bus via `evidence.updated`;
+  • emits `gateway.section.complete` and `section.data.updated` with the same enriched payload the locker is expecting.
+- Ensure section renderers publish enrichment through the bus before finalizing their results (e.g., Section 3 adds timeline metadata, Section 8 posts media captions).
+
+2. Evidence Locker Feedback & Cross-Section Validation
+------------------------------------------------------
+- Expand the locker manifest entries to include per-section usage flags (who consumed each artifact, timestamps, enrichment level). This enables downstream validation and final manifest assembly.
+- Respond to `section.needs` by prioritising notifications with tailored `evidence.request` responses (e.g., pre-filter by tags, media type).
+- When enrichment is returned via `evidence.updated`, merge the new metadata into `case_snapshots` so sections can pull consolidated context without refetching the base artifact.
+
+3. Mission Debrief & Narrative Assembler Integration
+----------------------------------------------------
+- Subscribe `Mission Debrief/narrative_assembler.py` (and related adapters in `Command Center/Mission Debrief/tools/`) to `evidence.updated`, `gateway.section.complete`, and `case.snapshot` so narrative drafts update automatically as sections publish enriched data.
+- Emit `narrative.draft.ready` / `debrief.summary.updated` back onto the bus, then push the enriched excerpts into the locker via `evidence.updated` so other sections and the final assembly can reuse them.
+- Update the Warden/ECC (`The Warden/warden_main.py`, `ecosystem_controller.py`) to listen for the new status signals (`gateway.status`, `locker.status`, `mission.status`) and provide consolidated health reports.
+
+4. UI & Intake Enhancements
+---------------------------
+- Adjust `Command Center/UI/enhanced_functional_gui.py` intake pathways so uploaded evidence carries comprehensive metadata: manual notes, daily logs, document categories, geo tags, and any user-provided context required by the parsing maps.
+- When evidence is dropped through the UI, publish a `section.needs` hint so the locker knows which sections should be notified first (e.g., Section 3 for daily logs, Section 8 for media).
+- Surface bus status and manifest snapshots in the UI dashboard by calling the new bus APIs (`get_evidence_manifest`, `get_latest_status`, `get_case_snapshots`).
+
+5. Final Assembly & Reporting
+-----------------------------
+- Before final report generation, have the gateway request an `evidence.manifest` (using `bus.get_evidence_manifest()`) so Sections 5, 7, 8, DP, and FR can align their outputs with the canonical evidence pool.
+- Ensure disclosures selection flows emit a summary to the locker so the manifest reflects the final legal statements that accompany the report.
+
+6. Validation & Automation
+--------------------------
+- Add integration tests (smoke & end-to-end) that simulate locker broadcasts, section requests, enrichment updates, and final manifest reconciliation.
+- Log all evidence lifecycle events in `dki_bus_core.log` and verify that the ECC audit trail (case snapshots) captures consumption by each section before final assembly is triggered.
+
+Implementation Priorities
+-------------------------
+1. Wire the gateway to the bus (subscribe to evidence signals, use parsing dispatcher, emit section complete events).
+2. Enhance the locker manifest/enrichment feedback (already partially complete via `bus_extensions.py`).
+3. Connect Mission Debrief/Narrative assembler and ECC status broadcasts.
+4. Enrich UI intake + final assembly to utilise manifest APIs.
+5. Add automated tests and logging verifications.
+
+The bus and locker foundations are now ready; completing the steps above will close the loop so every module can collaborate through the evidence pool and shared manifest.

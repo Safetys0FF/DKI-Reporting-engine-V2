@@ -1,0 +1,8 @@
+{
+  "parsing_performance_test": "Live Execution Results",
+  "document_parse_rate_per_second": 1652.21,
+  "document_throughput_kb_per_second": 78.09,
+  "media_processing_rate_per_second": 113.47,
+  "total_documents_parsed": 5,
+  "total_media_processed": 6
+}

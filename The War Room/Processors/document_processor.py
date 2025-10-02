@@ -167,14 +167,16 @@ class DocumentProcessor:
     
     def _check_dependencies(self):
         """Check and log available dependencies"""
+        _load_ocr_modules()
+        have_ocr = HAVE_TESSERACT or HAVE_EASYOCR or HAVE_PADDLEOCR or HAVE_AZURE_OCR
         deps = {
-            'OCR (Tesseract)': HAVE_OCR,
+            'OCR (Tesseract)': have_ocr,
             'PDF Processing': HAVE_PDF,
             'Video Processing': HAVE_VIDEO,
             'Document Processing': HAVE_DOCS,
             'EXIF Metadata': HAVE_EXIF
         }
-        
+
         for dep, available in deps.items():
             status = "Available" if available else "Missing"
             logger.info(f"{dep}: {status}")

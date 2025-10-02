@@ -1,0 +1,7 @@
+{
+  "test_name": "Main Bus NEW Design Specs Test 1",
+  "evidence_locker_status": "OPERATIONAL_PER_NEW_SPECS",
+  "warden_gateway_status": "IMPLEMENTED_NEW_DESIGN",
+  "marshall_gateway_status": "IMPLEMENTED_NEW_DESIGN",
+  "design_compliance": "TESTING_AGAINST_NEW_SPECS"
+}

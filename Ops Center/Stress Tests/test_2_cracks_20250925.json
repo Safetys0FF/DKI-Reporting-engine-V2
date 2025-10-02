@@ -1,0 +1,16 @@
+{
+  "test_2": "Main Bus Modules Drivers Gateway",
+  "modules": {
+    "document_processor": "MISSING",
+    "master_toolkit_engine": "EXISTS",
+    "smart_lookup": "EXISTS",
+    "api_tester": "EXISTS",
+    "repository_manager": "EXISTS"
+  },
+  "gateway": {
+    "gateway_controller.py": "MISSING",
+    "final_assembly.py": "MISSING",
+    "report_generator.py": "MISSING"
+  },
+  "total_cracks": 4
+}

@@ -1,0 +1,15 @@
+{
+  "user_name": "David Krashin",
+  "business_name": "DKI Services",
+  "business_address": "10026 - A PO Box 285",
+  "city_state": "Tulsa, OK 74133",
+  "email": "david@dkiservicesok.com",
+  "phone": "918-882-5539",
+  "agency_license": "0200812-IA000307",
+  "investigator_license": "0163814-C000480",
+  "cover_logo_path": "F:\\The Central Command\\Command Center\\UI\\profile_pictures\\New Business Logo 4-25_1.png",
+  "labor_rate": 100.0,
+  "profile_picture_path": "F:\\The Central Command\\Command Center\\UI\\profile_pictures\\New Business Logo 4-25_2.png",
+  "preferred_workflow": "surveillance",
+  "preferred_intake_form": "client_intake_pdf"
+}

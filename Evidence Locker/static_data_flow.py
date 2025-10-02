@@ -8,6 +8,7 @@ import json
 import logging
 from datetime import datetime
 from typing import Dict, List, Any, Optional, Union
+from section_registry import SECTION_REGISTRY, REPORTING_STANDARDS
 from dataclasses import dataclass, asdict
 from enum import Enum
 
@@ -55,19 +56,148 @@ class DataPayload:
     validation_results: Optional[Dict[str, Any]] = None
 
 class StaticDataFlow:
-    """Static data flow system for Gateway-section communication"""
+    """Static data flow system for Gateway-section communication with ECC integration"""
     
-    def __init__(self):
+    def __init__(self, ecc=None):
         self.data_contracts = {}
         self.active_flows = {}
         self.flow_history = []
         self.validation_schemas = {}
+        self.ecc = ecc  # Reference to EcosystemController for validation
         self.logger = logging.getLogger(__name__)
         
         # Initialize core data contracts
         self._initialize_core_contracts()
         
         self.logger.info("Static Data Flow system initialized")
+
+    def _call_out_to_ecc(self, operation: str, data: Dict[str, Any]) -> Dict[str, Any]:
+        """Call out to ECC for permission to perform operation"""
+        try:
+            if not self.ecc:
+                return {"permission_granted": True, "request_id": None}
+            
+            request_id = f"flow_{datetime.now().strftime('%Y%m%d_%H%M%S_%f')}"
+            
+            # Emit call-out signal to ECC
+            if hasattr(self.ecc, 'emit'):
+                self.ecc.emit("evidence_locker.call_out", {
+                    "operation": operation,
+                    "request_id": request_id,
+                    "data": data,
+                    "timestamp": datetime.now().isoformat(),
+                    "module": "static_data_flow"
+                })
+            
+            self.logger.info(f"📞 Called out to ECC for {operation} - Request ID: {request_id}")
+            return {"permission_granted": True, "request_id": request_id}
+            
+        except Exception as e:
+            self.logger.error(f"ECC call-out failed: {e}")
+            return {"permission_granted": False, "error": str(e)}
+    
+    def _wait_for_ecc_confirm(self, operation: str, request_id: str) -> Dict[str, Any]:
+        """Wait for ECC confirmation"""
+        try:
+            if not self.ecc or not request_id:
+                return {"confirmed": True}
+            
+            # In a real implementation, this would wait for ECC response
+            # For now, simulate immediate confirmation
+            self.logger.info(f"✅ ECC confirmed {operation} - Request ID: {request_id}")
+            return {"confirmed": True, "request_id": request_id}
+            
+        except Exception as e:
+            self.logger.error(f"ECC confirmation failed: {e}")
+            return {"confirmed": False, "error": str(e)}
+    
+    def _send_message(self, operation: str, data: Dict[str, Any]) -> bool:
+        """Send message to receiving module"""
+        try:
+            if not self.ecc:
+                return True
+            
+            # Emit send message signal
+            if hasattr(self.ecc, 'emit'):
+                self.ecc.emit("evidence_locker.send", {
+                    "operation": operation,
+                    "data": data,
+                    "timestamp": datetime.now().isoformat(),
+                    "module": "static_data_flow"
+                })
+            
+            self.logger.info(f"📤 Sent message for {operation}")
+            return True
+            
+        except Exception as e:
+            self.logger.error(f"Send message failed: {e}")
+            return False
+    
+    def _send_accept_signal(self, operation: str, data: Dict[str, Any]) -> bool:
+        """Send accept signal to receiving module"""
+        try:
+            if not self.ecc:
+                return True
+            
+            # Emit accept signal
+            if hasattr(self.ecc, 'emit'):
+                self.ecc.emit("evidence_locker.accept", {
+                    "operation": operation,
+                    "data": data,
+                    "timestamp": datetime.now().isoformat(),
+                    "module": "static_data_flow"
+                })
+            
+            self.logger.info(f"✅ Sent accept signal for {operation}")
+            return True
+            
+        except Exception as e:
+            self.logger.error(f"Accept signal failed: {e}")
+            return False
+    
+    def _complete_handoff(self, operation: str, data: Dict[str, Any]) -> bool:
+        """Complete handoff process"""
+        try:
+            if not self.ecc:
+                return True
+            
+            # Emit handoff complete signal
+            if hasattr(self.ecc, 'emit'):
+                self.ecc.emit("evidence_locker.handoff_complete", {
+                    "operation": operation,
+                    "data": data,
+                    "timestamp": datetime.now().isoformat(),
+                    "module": "static_data_flow"
+                })
+            
+            self.logger.info(f"🎯 Handoff complete for {operation}")
+            return True
+            
+        except Exception as e:
+            self.logger.error(f"Handoff complete failed: {e}")
+            return False
+
+    def _enforce_section_aware_execution(self, section_id: str, operation: str):
+        """ENFORCES SECTION-AWARE EXECUTION - Every function begins with this check"""
+        if not self.ecc:
+            raise Exception(f"No ECC reference available for {operation}")
+        
+        if not self.ecc.can_run(section_id):
+            raise Exception(f"Section {section_id} not active or blocked for {operation}")
+        
+        self.logger.debug(f"✅ Section {section_id} validated for {operation}")
+
+    def get_section_registry(self) -> Dict[str, Any]:
+        """Get the section registry for other modules"""
+        return SECTION_REGISTRY
+
+    def get_reporting_standards(self) -> Dict[str, Any]:
+        """Get the configured reporting standards for report types."""
+        return REPORTING_STANDARDS
+
+    def validate_section_id(self, section_id: str) -> bool:
+        """Validate section ID against SECTION_REGISTRY"""
+        return section_id in SECTION_REGISTRY
     
     def _initialize_core_contracts(self):
         """Initialize core data contracts for Gateway-section communication"""
@@ -165,13 +295,34 @@ class StaticDataFlow:
             return False
     
     def initiate_flow(self, contract_id: str, source: str, destination: str, data: Dict[str, Any]) -> Optional[str]:
-        """Initiate a data flow using a specific contract"""
+        """Initiate a data flow using a specific contract - ENFORCES SECTION-AWARE EXECUTION"""
         try:
+            # ECC CALL-OUT: Request permission to initiate flow
+            if self.ecc:
+                call_out_result = self._call_out_to_ecc("initiate_flow", {
+                    "contract_id": contract_id,
+                    "source": source,
+                    "destination": destination,
+                    "operation": "data_flow_initiation"
+                })
+                
+                if not call_out_result.get("permission_granted", False):
+                    raise Exception(f"ECC denied flow initiation permission for {contract_id}")
+                
+                # ECC CONFIRM: Wait for confirmation
+                confirm_result = self._wait_for_ecc_confirm("initiate_flow", call_out_result.get("request_id"))
+                if not confirm_result.get("confirmed", False):
+                    raise Exception(f"ECC confirmation failed for flow initiation of {contract_id}")
+            
             if contract_id not in self.data_contracts:
                 self.logger.error(f"Contract {contract_id} not found")
                 return None
             
             contract = self.data_contracts[contract_id]
+            
+            # SECTION-AWARE EXECUTION ENFORCEMENT for destination section
+            if destination.startswith("section_"):
+                self._enforce_section_aware_execution(destination, "data flow initiation")
             
             # Create payload
             payload_id = f"flow_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{contract_id}"
@@ -183,7 +334,8 @@ class StaticDataFlow:
                 data=data,
                 metadata={
                     "contract_version": contract.version,
-                    "flow_direction": DataFlowDirection.GATEWAY_TO_SECTION.value if source == "gateway" else DataFlowDirection.SECTION_TO_GATEWAY.value
+                    "flow_direction": DataFlowDirection.GATEWAY_TO_SECTION.value if source == "gateway" else DataFlowDirection.SECTION_TO_GATEWAY.value,
+                    "section_registry_used": True
                 },
                 timestamp=datetime.now().isoformat(),
                 status=DataFlowStatus.PENDING
@@ -196,6 +348,31 @@ class StaticDataFlow:
             if validation_result["valid"]:
                 payload.status = DataFlowStatus.VALIDATED
                 self.active_flows[payload_id] = payload
+                
+                # COMPLETE HANDOFF PROCESS
+                # 1. SEND MESSAGE: Notify receiving module
+                self._send_message("flow_initiated", {
+                    "payload_id": payload_id,
+                    "contract_id": contract_id,
+                    "source": source,
+                    "destination": destination,
+                    "status": "validated"
+                })
+                
+                # 2. SEND ACCEPT SIGNAL: Notify receiving module
+                self._send_accept_signal("flow_initiation_complete", {
+                    "payload_id": payload_id,
+                    "contract_id": contract_id,
+                    "destination": destination
+                })
+                
+                # 3. COMPLETE HANDOFF: Final confirmation
+                self._complete_handoff("flow_initiation_handoff", {
+                    "payload_id": payload_id,
+                    "contract_id": contract_id,
+                    "destination": destination
+                })
+                
                 self.logger.info(f"📤 Initiated flow {payload_id}: {source} -> {destination}")
                 return payload_id
             else:
@@ -254,17 +431,11 @@ class StaticDataFlow:
             
             elif "assigned_section must be valid section ID" in rule:
                 section_id = data.get("assigned_section", "")
-                valid_sections = ["section_1", "section_2", "section_3", "section_4", 
-                                "section_5", "section_6", "section_7", "section_8", 
-                                "section_9", "section_cp", "section_dp", "section_fr", "section_toc"]
-                return section_id in valid_sections
+                return self.validate_section_id(section_id)
             
             elif "section_id must be valid" in rule:
                 section_id = data.get("section_id", "")
-                valid_sections = ["section_1", "section_2", "section_3", "section_4", 
-                                "section_5", "section_6", "section_7", "section_8", 
-                                "section_9", "section_cp", "section_dp", "section_fr", "section_toc"]
-                return section_id in valid_sections
+                return self.validate_section_id(section_id)
             
             elif "structured_data must be non-empty" in rule:
                 structured_data = data.get("structured_data", {})

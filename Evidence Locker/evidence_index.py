@@ -10,6 +10,7 @@ import json
 import logging
 from datetime import datetime
 from typing import Dict, List, Any, Optional, Set
+from section_registry import SECTION_REGISTRY, REPORTING_STANDARDS
 
 logger = logging.getLogger(__name__)
 
@@ -54,7 +55,7 @@ class EvidenceIndex:
                     "module": "evidence_index"
                 })
             
-            self.logger.info(f"📞 Called out to ECC for {operation} - Request ID: {request_id}")
+            self.logger.info(f" Called out to ECC for {operation} - Request ID: {request_id}")
             return {"permission_granted": True, "request_id": request_id}
             
         except Exception as e:
@@ -135,13 +136,13 @@ class EvidenceIndex:
                     "module": "evidence_index"
                 })
             
-            self.logger.info(f"🎯 Handoff complete for {operation}")
+            self.logger.info(f" Handoff complete for {operation}")
             return True
             
         except Exception as e:
             self.logger.error(f"Handoff complete failed: {e}")
             return False
-    
+
     def add_file(self, file_path: str, tags: List[str] = None, source: str = "upload", section_id: str = None) -> str:
         """Add file to master evidence index - ENFORCES SECTION-AWARE EXECUTION"""
         try:
@@ -179,12 +180,18 @@ class EvidenceIndex:
                 'source': source
             }
             
+            # Registry validation and default tag enrichment
+            if section_id and section_id not in SECTION_REGISTRY:
+                raise Exception(f"Invalid section {section_id} not in registry")
+            default_tags = SECTION_REGISTRY.get(section_id, {}).get('tags', []) if section_id else []
+            record_tags = (tags or default_tags)
+
             # Evidence record
             evidence_record = {
                 'evidence_id': evidence_id,
                 'filename': filename,
                 'path': file_path,
-                'tags': tags or [],
+                'tags': record_tags,
                 'source': source,
                 'links': [],
                 'assigned_section': section_id or 'unassigned',
@@ -199,7 +206,7 @@ class EvidenceIndex:
             self.path_index[file_path] = evidence_id
             
             # Index by tags
-            for tag in (tags or []):
+            for tag in record_tags:
                 if tag not in self.file_tags:
                     self.file_tags[tag] = []
                 self.file_tags[tag].append(evidence_id)
@@ -209,7 +216,7 @@ class EvidenceIndex:
                 self.source_registry[source] = []
             self.source_registry[source].append(evidence_id)
             
-            self.logger.debug(f"📁 Added file {filename} as {evidence_id}")
+            self.logger.debug(f" Added file {filename} as {evidence_id}")
             self.logger.info(f"Added file {filename} to evidence index")
             
             # COMPLETE HANDOFF PROCESS
@@ -254,9 +261,10 @@ class EvidenceIndex:
                 if not self.ecc.can_run(section_id):
                     raise Exception(f"Section {section_id} not active or blocked for evidence assignment")
             
-            if evidence_id not in self.master_evidence_index:
-                self.logger.error(f"Evidence {evidence_id} not found")
+            if section_id not in SECTION_REGISTRY:
+                self.logger.error(f"Invalid section {section_id} — not in registry")
                 return False
+
             
             # Update master record
             self.master_evidence_index[evidence_id]['assigned_section'] = section_id
@@ -278,6 +286,14 @@ class EvidenceIndex:
             self.logger.error(f"Failed to assign evidence {evidence_id} to {section_id}: {e}")
             raise
     
+    def get_section_registry(self) -> Dict[str, Any]:
+        """Expose registry to other modules (ECC, Gateway, Narrative Engine)"""
+        return SECTION_REGISTRY
+
+    def get_reporting_standards(self) -> Dict[str, Any]:
+        """Get the configured reporting standards for report types."""
+        return REPORTING_STANDARDS
+
     def add_cross_link(self, evidence_id: str, keyword: str, target_evidence_id: Optional[str] = None, link_strength: float = 1.0) -> bool:
         """Tracks file relationships"""
         try:

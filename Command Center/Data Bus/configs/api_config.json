@@ -1,0 +1,56 @@
+{
+    "api_settings": {
+        "rate_limits": {
+            "openai_api": {
+                "calls_per_hour": 100,
+                "calls_per_minute": 10
+            },
+            "google_gemini_api": {
+                "calls_per_hour": 1000,
+                "calls_per_minute": 60
+            },
+            "google_maps_api": {
+                "calls_per_hour": 1000,
+                "calls_per_minute": 100
+            },
+            "bing_search_api": {
+                "calls_per_hour": 1000,
+                "calls_per_minute": 100
+            }
+        },
+        "timeouts": {
+            "default": 30,
+            "openai_api": 60,
+            "google_maps_api": 15,
+            "bing_search_api": 20
+        },
+        "retry_settings": {
+            "max_retries": 3,
+            "backoff_factor": 2,
+            "retry_on_status": [500, 502, 503, 504]
+        },
+        "cache_settings": {
+            "enabled": true,
+            "ttl_seconds": 3600,
+            "max_size": 1000
+        }
+    },
+    "provider_priority": {
+        "geocoding": ["openai_api", "google_maps_api", "google_gemini_api"],
+        "search": ["openai_api", "bing_search_api", "google_gemini_api"],
+        "narrative": ["openai_api", "google_gemini_api"],
+        "verification": ["openai_api", "public_records_api", "whitepages_api", "bing_search_api"],
+        "document_analysis": ["openai_api", "google_gemini_api"],
+        "image_analysis": ["openai_api", "google_gemini_api"],
+        "video_analysis": ["openai_api", "google_gemini_api"],
+        "object_detection": ["openai_api", "google_gemini_api"],
+        "context_analysis": ["openai_api", "google_gemini_api"],
+        "identification": ["openai_api", "google_gemini_api"]
+    },
+    "fallback_behavior": {
+        "on_failure": "try_next_provider",
+        "on_timeout": "try_next_provider",
+        "on_rate_limit": "wait_and_retry",
+        "final_fallback": "template_generation"
+    }
+}

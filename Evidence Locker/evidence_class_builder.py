@@ -117,27 +117,37 @@ class EvidenceClassBuilder:
         
         # Section-specific evidence requirements
         self.section_requirements = {
-            'section_1': {
-                'required_types': [EvidenceType.DOCUMENT, EvidenceType.TEXT],
-                'priority': EvidencePriority.HIGH,
-                'description': 'Case overview and initial documentation'
-            },
-            'section_3': {
-                'required_types': [EvidenceType.VIDEO, EvidenceType.AUDIO, EvidenceType.IMAGE],
-                'priority': EvidencePriority.CRITICAL,
-                'description': 'Surveillance operations and monitoring'
-            },
-            'section_5': {
-                'required_types': [EvidenceType.DOCUMENT, EvidenceType.DATA],
-                'priority': EvidencePriority.HIGH,
-                'description': 'Financial records and supporting documents'
-            },
-            'section_8': {
-                'required_types': [EvidenceType.IMAGE, EvidenceType.DOCUMENT],
-                'priority': EvidencePriority.MEDIUM,
-                'description': 'Media documentation and evidence index'
-            }
+           'section_1': {'required_types': [EvidenceType.DOCUMENT, EvidenceType.TEXT], 'priority': EvidencePriority.HIGH, 'description': 'Client & Subject Details'},
+           'section_2': {'required_types': [EvidenceType.DOCUMENT, EvidenceType.IMAGE, EvidenceType.DATA], 'priority': EvidencePriority.HIGH, 'description': 'Pre-Surveillance Summary (maps, aerials, planning docs)'},
+           'section_3': {'required_types': [EvidenceType.VIDEO, EvidenceType.AUDIO, EvidenceType.IMAGE], 'priority': EvidencePriority.CRITICAL, 'description': 'Surveillance Field Logs'},
+           'section_4': {'required_types': [EvidenceType.DOCUMENT, EvidenceType.TEXT], 'priority': EvidencePriority.MEDIUM, 'description': 'Review/Recap of Surveillance Sessions'},
+           'section_5': {'required_types': [EvidenceType.DOCUMENT, EvidenceType.DATA], 'priority': EvidencePriority.HIGH, 'description': 'Supporting Documents (contracts, reports)'},
+           'section_6': {'required_types': [EvidenceType.DOCUMENT, EvidenceType.DATA], 'priority': EvidencePriority.HIGH, 'description': 'Billing Summary'},
+           'section_7': {'required_types': [EvidenceType.IMAGE], 'priority': EvidencePriority.HIGH, 'description': 'Surveillance Photos'},
+           'section_8': {'required_types': [EvidenceType.DOCUMENT], 'priority': EvidencePriority.MEDIUM, 'description': 'Case Conclusion'},
+           'section_9': {'required_types': [EvidenceType.DOCUMENT], 'priority': EvidencePriority.HIGH, 'description': 'Disclosures/Legal Statements'},
+           'section_cp': {'required_types': [EvidenceType.UNKNOWN], 'priority': EvidencePriority.LOW, 'description': 'Catch-All / Unverified'}
         }
+
+    def _generate_tags(self, filename: str, evidence_type: EvidenceType, section_id: str) -> List[str]:
+        tags = [evidence_type.value, section_id]
+
+        # Add default tags from registry
+        default_tags = SECTION_REQUIREMENTS.get(section_id, {}).get("tags", [])
+        tags.extend(default_tags)
+
+        filename_lower = filename.lower()
+        keyword_map = {
+            'surveillance': ['surveillance', 'camera', 'footage', 'monitor'],
+            'legal': ['contract', 'agreement', 'court', 'lease'],
+            'billing': ['invoice', 'payment', 'retainer', 'billing'],
+            'planning': ['map', 'aerial', 'geotag', 'streetview']
+        }
+    for tag_category, kws in keyword_map.items():
+        if any(kw in filename_lower for kw in kws):
+            tags.append(tag_category)
+
+        return list(set(tags))
         
         self.logger.info("EvidenceClassBuilder initialized")
     
@@ -159,7 +169,7 @@ class EvidenceClassBuilder:
                     "module": "evidence_class_builder"
                 })
             
-            self.logger.info(f"📞 Called out to ECC for {operation} - Request ID: {request_id}")
+            self.logger.info(f" Called out to ECC for {operation} - Request ID: {request_id}")
             return {"permission_granted": True, "request_id": request_id}
             
         except Exception as e:
@@ -174,7 +184,7 @@ class EvidenceClassBuilder:
             
             # In a real implementation, this would wait for ECC response
             # For now, simulate immediate confirmation
-            self.logger.info(f"✅ ECC confirmed {operation} - Request ID: {request_id}")
+            self.logger.info(f" ECC confirmed {operation} - Request ID: {request_id}")
             return {"confirmed": True, "request_id": request_id}
             
         except Exception as e:
@@ -196,7 +206,7 @@ class EvidenceClassBuilder:
                     "module": "evidence_class_builder"
                 })
             
-            self.logger.info(f"📤 Sent message for {operation}")
+            self.logger.info(f" Sent message for {operation}")
             return True
             
         except Exception as e:
@@ -240,7 +250,7 @@ class EvidenceClassBuilder:
                     "module": "evidence_class_builder"
                 })
             
-            self.logger.info(f"🎯 Handoff complete for {operation}")
+            self.logger.info(f" Handoff complete for {operation}")
             return True
             
         except Exception as e:
@@ -263,7 +273,7 @@ class EvidenceClassBuilder:
                     "timestamp": datetime.now().isoformat()
                 })
             
-            self.logger.info(f"🔄 Handing off to {target_module} for {operation}")
+            self.logger.info(f" Handing off to {target_module} for {operation}")
             return True
             
         except Exception as e:
@@ -278,7 +288,7 @@ class EvidenceClassBuilder:
         if not self.ecc.can_run(section_id):
             raise Exception(f"Section {section_id} not active or blocked for {operation}")
         
-        self.logger.debug(f"✅ Section {section_id} validated for {operation}")
+        self.logger.debug(f" Section {section_id} validated for {operation}")
 
     def detect_evidence_type(self, file_path: str) -> EvidenceType:
         """Detect evidence type from file path and content"""
@@ -464,33 +474,6 @@ class EvidenceClassBuilder:
             self.logger.error(f"Failed to determine priority: {e}")
             return EvidencePriority.LOW
 
-    def _generate_tags(self, filename: str, evidence_type: EvidenceType, section_id: str) -> List[str]:
-        """Generate tags for evidence based on filename and type"""
-        tags = []
-        
-        # Add evidence type tag
-        tags.append(evidence_type.value)
-        
-        # Add section tag
-        tags.append(section_id)
-        
-        # Add filename-based tags
-        filename_lower = filename.lower()
-        
-        # Common keywords
-        keyword_tags = {
-            'surveillance': ['surveillance', 'monitor', 'camera', 'footage'],
-            'financial': ['lease', 'contract', 'bill', 'invoice', 'payment'],
-            'legal': ['legal', 'court', 'law', 'agreement'],
-            'evidence': ['evidence', 'proof', 'documentation'],
-            'media': ['photo', 'image', 'picture', 'video', 'recording']
-        }
-        
-        for tag_category, keywords in keyword_tags.items():
-            if any(keyword in filename_lower for keyword in keywords):
-                tags.append(tag_category)
-        
-        return tags
 
     def _calculate_checksum(self, file_path: str) -> str:
         """Calculate file checksum for integrity verification"""

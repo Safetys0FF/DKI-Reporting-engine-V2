@@ -1,28 +1,30 @@
 ﻿# Section CP Parsing Map (Cover Page)
 
 ## Purpose
-Summarise case identity, client and investigator credentials, and branding assets before the report enters approval.
+Generate the branded cover page containing case identifiers, client details, investigator credentials, and motto/branding elements exactly as defined in the master template.
 
 ## Data Inputs
-| Field | Origin | Notes |
-|-------|--------|-------|
-| client_info | `case_data.client_info`, `processed.metadata.client_info` | Intake and OCR-verified client contact details. |
-| client_profile | `case_data.client_profile`, toolkit metadata | Preferred branding, signatures, profile photo overrides. |
-| agency_profile | `toolkit_results.metadata.agency` | Agency licensing and contact information. |
-| contract_snapshot | `processed.contracts` | Contract terms used for case identifiers and verification. |
-| branding_assets | merged from profile & metadata | Logo, signature, photo paths for rendering. |
-| case_number | computed via `_compute_case_number` | Derived from client name and contract date. |
-| source_documents | `processed.contracts.keys()` | Tracks contract files backing the cover data. |
+| Field                                 | Source Path(s)                                                                                           | Notes |
+|---------------------------------------|----------------------------------------------------------------------------------------------------------|-------|
+| case_number (CLIENT LAST NAME - mm/yy)| `_compute_case_number(client_name, contract_date)`                                                       | Uses client last name + contract month to match template header. |
+| case_title / report name              | `case_data.case_name` (fallback “INVESTIGATION FINAL REPORT”)                                           | Uppercase title at top of cover page. |
+| agency contact details                | `case_data.agency_name`, `case_data.agency_license`, `case_data.agency_phone`, `case_data.agency_email` | Populates license line, phone, email. |
+| investigator credentials              | `case_data.assigned_investigator`, `case_data.investigator_license`                                      | Shown beneath agency details and reused in Section 9. |
+| client details                        | `case_data.client_name`, `case_data.client_address`, `case_data.client_phone`                            | Displayed before objectives. |
+| contract_date                         | `case_data.contract_date`                                                                                | Appears in client metadata and drives case number. |
+| motto / tagline                       | `config.templates.cover.motto` (defaults to “Truth Conquers ALL”)                                        | Fixed text block under contact details. |
+| branding assets                       | `case_data.branding.logo_path`, `case_data.branding.signature_path`, user profile overrides              | Ensures consistent logo/signature usage. |
+| source_documents reference            | `case_data.contract_type_details[].source`, `processed.contracts.keys()`                                 | Stored in manifest for audit and Section 5 cross-reference. |
 
 ## Toolkit & AI Triggers
-- OpenAI `contract_verification` (post_ocr) – compares OCR’d contract fields with intake data.
-- OpenAI `name_normalization` (pre_render) – enforces consistent presentation of names/titles.
+- OpenAI `contract_verification` (post_ocr) – compares contract fields with intake/cover data.
+- OpenAI `name_normalization` (pre_render) – enforces consistent formatting of names and titles.
 
 ## UI Checklist
-- Confirm client and investigator names.
-- Verify licensing/contact data are current.
-- Approve branding assets (logo, signature, photo).
+- Verify client/investigator names and licenses are current.
+- Confirm case number matches contract date and naming convention.
+- Approve logo, signature, and motto placement.
 
 ## Dependencies
-- Feeds: Sections DP and 9 reuse cover profile and case number.
-- Shares: `cover_profile`, `case_number`, `branding_assets`.
+- Disclosure, certification, and final report assembler reuse this cover profile and case number.
+- Librarian archive stores cover metadata for search and retrieval.

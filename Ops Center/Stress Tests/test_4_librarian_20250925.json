@@ -1,0 +1,11 @@
+{
+  "test_4": "Main Bus to Librarian Debrief Manager",
+  "librarian_components": {
+    "app_directory": "EXISTS",
+    "user_profile_manager": "EXISTS",
+    "session_manager": "EXISTS",
+    "admin_user_manager": "EXISTS",
+    "profile_api": "MISSING"
+  },
+  "librarian_cracks": 1
+}

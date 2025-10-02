@@ -1,0 +1,473 @@
+Starting GUI application...
+
+INFO:bus_core:Central Command Bus initialized
+INFO:ecosystem_controller:EcosystemController initialized with 12 section contracts
+INFO:gateway_controller:Gateway Controller initialized - DEFERS TO ECOSYSTEM CONTROLLER
+INFO:gateway_controller:Gateway orchestration capabilities enabled
+INFO:gateway_controller:OCR processing engines initialized
+INFO:gateway_controller:Evidence Locker tracking system initialized
+INFO:ecosystem_controller:Gateway Controller can run - operational
+INFO:gateway_controller:✅ Gateway validated by ECC - operational
+INFO:Warden:🏛️ Warden initialized - Central Command Control System
+INFO:Warden:✅ ECC (Ecosystem Controller) active
+INFO:Warden:✅ Gateway Controller active
+INFO:Warden:🚀 Starting Warden Central Command System...
+INFO:Warden:✅ ECC initialized
+INFO:Warden:✅ Gateway Controller initialized
+INFO:Warden:🏛️ Warden Central Command System active
+INFO:Warden:📡 Listening for signals and handoffs...
+INFO:bus_core:[BUS] Signal 'evidence.scan' bound to scan_file
+INFO:bus_core:[BUS] Signal 'evidence.classify' bound to classify_evidence
+INFO:bus_core:[BUS] Signal 'evidence.index' bound to index_evidence
+INFO:bus_core:[BUS] Signal 'evidence.process_comprehensive' bound to process_evidence_comprehensive
+INFO:evidence_locker_main:[EVIDENCE] Evidence Locker registered with Central Command Bus
+INFO:evidence_locker_main:[EVIDENCE] Evidence Locker initialized with Central Command architecture
+INFO:evidence_manager:EvidenceManager initialized
+INFO:ecosystem_controller:Registered ecosystem: section_1
+INFO:ecosystem_controller:Registered ecosystem: section_3
+INFO:ecosystem_controller:Registered ecosystem: section_5
+INFO:ecosystem_controller:Registered ecosystem: section_8
+INFO:ecosystem_controller:Registered ecosystem: section_cp
+INFO:ecosystem_controller:Registered ecosystem: section_dp
+INFO:ecosystem_controller:Registered ecosystem: section_toc
+INFO:ecosystem_controller:Notified section_toc of section_cp completion
+INFO:ecosystem_controller:Section section_cp marked complete by narrative_bootstrap
+INFO:ecosystem_controller:Notified section_1 of section_toc completion
+INFO:ecosystem_controller:Section section_toc marked complete by narrative_bootstrap
+INFO:bus_core:[BUS] Signal 'narrative.assemble' bound to _handle_narrative_assemble_signal
+INFO:bus_core:[BUS] Signal 'narrative.validate' bound to _handle_narrative_validate_signal
+INFO:bus_core:[BUS] Signal 'narrative.queue' bound to _handle_narrative_queue_signal
+INFO:bus_core:[BUS] Signal 'gateway.narrative_request' bound to _handle_gateway_narrative_request
+INFO:bus_core:[BUS] Signal 'ecc.narrative_ready' bound to _handle_ecc_narrative_ready
+INFO:bus_core:[BUS] Signal 'evidence_locker.narrative_data' bound to _handle_evidence_locker_narrative_data
+INFO:narrative_assembler:ðŸ“¡ Narrative Assembler registered with Central Command Bus
+INFO:bus_core:[BUS] Signal 'narrative.generate' bound to handle_generate
+INFO:narrative_assembler:NarrativeAssembler initialized as Bootstrap Component
+INFO:tools.template_system:Template system initialized
+INFO:document_processor:Document Processor initialized
+INFO:document_processor:OCR (Tesseract): Missing
+INFO:document_processor:PDF Processing: Available
+INFO:document_processor:Video Processing: Missing
+INFO:document_processor:Document Processing: Available
+INFO:document_processor:EXIF Metadata: Available
+INFO:document_processor:Document Processor initialized
+INFO:document_processor:OCR (Tesseract): Missing
+INFO:document_processor:PDF Processing: Available
+INFO:document_processor:Video Processing: Missing
+INFO:document_processor:Document Processing: Available
+INFO:document_processor:EXIF Metadata: Available
+INFO:osint_module:Loaded API keys from api_keys.json
+INFO:osint_module:OSINT Engine initialized
+INFO:report_generator:Report Generator initialized
+INFO:report_generator:DOCX Export: Available
+INFO:report_generator:PDF Export: Available
+INFO:tools.digital_signature_system:Loaded 0 certificates
+INFO:tools.digital_signature_system:Digital signature system initialized
+INFO:tools.watermark_system:Watermark system initialized
+INFO:tools.printing_system:Initialized 1 cross-platform printers
+INFO:tools.printing_system:Printing system initialized
+INFO:bus_core:[BUS] Signal 'mission_debrief.digital_sign' bound to _handle_digital_sign_signal
+INFO:bus_core:[BUS] Signal 'mission_debrief.print_report' bound to _handle_print_report_signal
+INFO:bus_core:[BUS] Signal 'mission_debrief.apply_template' bound to _handle_apply_template_signal
+INFO:bus_core:[BUS] Signal 'mission_debrief.add_watermark' bound to _handle_add_watermark_signal
+INFO:bus_core:[BUS] Signal 'mission_debrief.osint_lookup' bound to _handle_osint_lookup_signal
+INFO:bus_core:[BUS] Signal 'mission_debrief.process_report' bound to _handle_process_report_signal
+INFO:mission_debrief_manager:Mission Debrief Manager registered signals: mission_debrief.digital_sign, mission_debrief.print_report, mission_debrief.apply_template, mission_debrief.add_watermark, mission_debrief.osint_lookup, mission_debrief.process_report
+INFO:mission_debrief_manager:Mission Debrief Manager initialised as bootstrap component
+INFO:bus_core:[BUS][GUI] Enhanced GUI started
+INFO:enhanced_functional_gui:Enhanced DKI Central Command GUI initialized
+Loading existing profile picture on startup: E:/Personal Info/New Business Logo 4-25.png
+Successfully updated home screen profile picture: E:/Personal Info/New Business Logo 4-25.png
+WARNING:bus_core:[BUS] No handlers for signal: evidence_locker.call_out
+INFO:evidence_locker_main: Called out via bus for operation: scan_file
+INFO:evidence_locker_main:Waiting for ECC confirmation (scan_file) with timeout 30s
+INFO:evidence_locker_main:ECC confirmation received for scan_file - Request ID: auto_20250925_194021_396494
+WARNING:ecosystem_controller: Dependency section_7 not completed for section_8
+WARNING:evidence_locker_main:Section section_8 not yet cleared by ECC for evidence scanning; recording as pending
+INFO:evidence_locker_main:Queuing evidence E:/DKI Services Case Oct-Dec 24/.Completed Files/Samuel, Essence - IN PROGRESS/Screenshot_20241108_164728_Facebook.jpg for section section_8 while dependencies resolve
+INFO:evidence_locker_main:[SCAN] Scanning file: E:/DKI Services Case Oct-Dec 24/.Completed Files/Samuel, Essence - IN PROGRESS/Screenshot_20241108_164728_Facebook.jpg
+INFO:evidence_locker_main:[INDEX] Evidence evidence_0001 indexed to section_7 - Conclusion & Case Decision
+WARNING:bus_core:[BUS] No handlers for signal: evidence_locker.file_scanned
+INFO:evidence_locker_main: Sent message via bus: file_scanned
+WARNING:bus_core:[BUS] No handlers for signal: evidence_locker.accept
+INFO:evidence_locker_main:Sent accept signal via bus for operation: file_scan_complete
+INFO:evidence_locker_main:[HANDOFF] Completed file_scanning_handoff with status completed
+WARNING:bus_core:[BUS] No handlers for signal: evidence_locker.call_out
+INFO:evidence_locker_main: Called out via bus for operation: evidence_handoff
+INFO:evidence_locker_main:Waiting for ECC confirmation (evidence_handoff) with timeout 30s
+INFO:evidence_locker_main:ECC confirmation received for evidence_handoff - Request ID: auto_20250925_194021_398689
+WARNING:bus_core:[BUS] No handlers for signal: evidence_locker.evidence_handoff
+INFO:evidence_locker_main: Sent message via bus: evidence_handoff
+WARNING:bus_core:[BUS] No handlers for signal: evidence_locker.accept
+INFO:evidence_locker_main:Sent accept signal via bus for operation: evidence_handoff
+INFO:gateway_controller:🔄 Registered handoff: evidence_locker_main → gateway_controller
+INFO:gateway_controller:📦 Gateway received generic handoff: evidence_locker_processing_complete
+INFO:gateway_controller:📊 Evidence Locker module evidence_locker_main status: handoff_complete
+INFO:gateway_controller:✅ Processed handoff from evidence_locker_main
+INFO:evidence_locker_main:[HANDOFF] Completed evidence_handoff with status success
+INFO:evidence_locker_main:[HANDOFF] Evidence evidence_0001 handed to Gateway Controller (hint: section_8)
+WARNING:bus_core:[BUS] No handlers for signal: evidence.tagged
+INFO:evidence_locker_main:[EVIDENCE] File E:/DKI Services Case Oct-Dec 24/.Completed Files/Samuel, Essence - IN PROGRESS/Screenshot_20241108_164728_Facebook.jpg classified and indexed as evidence_0001 (section hint: section_8)
+WARNING:bus_core:[BUS] No handlers for signal: evidence_locker.call_out
+INFO:evidence_locker_main: Called out via bus for operation: scan_file
+INFO:evidence_locker_main:Waiting for ECC confirmation (scan_file) with timeout 30s
+INFO:evidence_locker_main:ECC confirmation received for scan_file - Request ID: auto_20250925_194021_400063
+WARNING:ecosystem_controller: Dependency section_7 not completed for section_8
+WARNING:evidence_locker_main:Section section_8 not yet cleared by ECC for evidence scanning; recording as pending
+INFO:evidence_locker_main:Queuing evidence E:/DKI Services Case Oct-Dec 24/.Completed Files/Samuel, Essence - IN PROGRESS/Signed Contract.jpeg for section section_8 while dependencies resolve
+INFO:evidence_locker_main:[SCAN] Scanning file: E:/DKI Services Case Oct-Dec 24/.Completed Files/Samuel, Essence - IN PROGRESS/Signed Contract.jpeg
+INFO:evidence_locker_main:[INDEX] Evidence evidence_0002 indexed to section_7 - Conclusion & Case Decision
+WARNING:bus_core:[BUS] No handlers for signal: evidence_locker.file_scanned
+INFO:evidence_locker_main: Sent message via bus: file_scanned
+WARNING:bus_core:[BUS] No handlers for signal: evidence_locker.accept
+INFO:evidence_locker_main:Sent accept signal via bus for operation: file_scan_complete
+INFO:evidence_locker_main:[HANDOFF] Completed file_scanning_handoff with status completed
+WARNING:bus_core:[BUS] No handlers for signal: evidence_locker.call_out
+INFO:evidence_locker_main: Called out via bus for operation: evidence_handoff
+INFO:evidence_locker_main:Waiting for ECC confirmation (evidence_handoff) with timeout 30s
+INFO:evidence_locker_main:ECC confirmation received for evidence_handoff - Request ID: auto_20250925_194021_400900
+WARNING:bus_core:[BUS] No handlers for signal: evidence_locker.evidence_handoff
+INFO:evidence_locker_main: Sent message via bus: evidence_handoff
+WARNING:bus_core:[BUS] No handlers for signal: evidence_locker.accept
+INFO:evidence_locker_main:Sent accept signal via bus for operation: evidence_handoff
+INFO:gateway_controller:🔄 Registered handoff: evidence_locker_main → gateway_controller
+INFO:gateway_controller:📦 Gateway received generic handoff: evidence_locker_processing_complete
+INFO:gateway_controller:📊 Evidence Locker module evidence_locker_main status: handoff_complete
+INFO:gateway_controller:✅ Processed handoff from evidence_locker_main
+INFO:evidence_locker_main:[HANDOFF] Completed evidence_handoff with status success
+INFO:evidence_locker_main:[HANDOFF] Evidence evidence_0002 handed to Gateway Controller (hint: section_8)
+WARNING:bus_core:[BUS] No handlers for signal: evidence.tagged
+INFO:evidence_locker_main:[EVIDENCE] File E:/DKI Services Case Oct-Dec 24/.Completed Files/Samuel, Essence - IN PROGRESS/Signed Contract.jpeg classified and indexed as evidence_0002 (section hint: section_8)
+WARNING:bus_core:[BUS] No handlers for signal: evidence_locker.call_out
+INFO:evidence_locker_main: Called out via bus for operation: scan_file
+INFO:evidence_locker_main:Waiting for ECC confirmation (scan_file) with timeout 30s
+INFO:evidence_locker_main:ECC confirmation received for scan_file - Request ID: auto_20250925_194021_401811
+WARNING:ecosystem_controller: Dependency section_4 not completed for section_5
+WARNING:evidence_locker_main:Section section_5 not yet cleared by ECC for evidence scanning; recording as pending
+INFO:evidence_locker_main:Queuing evidence E:/DKI Services Case Oct-Dec 24/.Completed Files/Samuel, Essence - IN PROGRESS/01Update DKI Services Case Notes.docx.pdf for section section_5 while dependencies resolve
+INFO:evidence_locker_main:[SCAN] Scanning file: E:/DKI Services Case Oct-Dec 24/.Completed Files/Samuel, Essence - IN PROGRESS/01Update DKI Services Case Notes.docx.pdf
+INFO:evidence_locker_main:[INDEX] Evidence evidence_0003 indexed to section_1 - Case Objectives & Intake
+WARNING:bus_core:[BUS] No handlers for signal: evidence_locker.file_scanned
+INFO:evidence_locker_main: Sent message via bus: file_scanned
+WARNING:bus_core:[BUS] No handlers for signal: evidence_locker.accept
+INFO:evidence_locker_main:Sent accept signal via bus for operation: file_scan_complete
+INFO:evidence_locker_main:[HANDOFF] Completed file_scanning_handoff with status completed
+WARNING:bus_core:[BUS] No handlers for signal: evidence_locker.call_out
+INFO:evidence_locker_main: Called out via bus for operation: evidence_handoff
+INFO:evidence_locker_main:Waiting for ECC confirmation (evidence_handoff) with timeout 30s
+INFO:evidence_locker_main:ECC confirmation received for evidence_handoff - Request ID: auto_20250925_194021_402647
+WARNING:bus_core:[BUS] No handlers for signal: evidence_locker.evidence_handoff
+INFO:evidence_locker_main: Sent message via bus: evidence_handoff
+WARNING:bus_core:[BUS] No handlers for signal: evidence_locker.accept
+INFO:evidence_locker_main:Sent accept signal via bus for operation: evidence_handoff
+INFO:gateway_controller:🔄 Registered handoff: evidence_locker_main → gateway_controller
+INFO:gateway_controller:📦 Gateway received generic handoff: evidence_locker_processing_complete
+INFO:gateway_controller:📊 Evidence Locker module evidence_locker_main status: handoff_complete
+INFO:gateway_controller:✅ Processed handoff from evidence_locker_main
+INFO:evidence_locker_main:[HANDOFF] Completed evidence_handoff with status success
+INFO:evidence_locker_main:[HANDOFF] Evidence evidence_0003 handed to Gateway Controller (hint: section_5)
+WARNING:bus_core:[BUS] No handlers for signal: evidence.tagged
+INFO:evidence_locker_main:[EVIDENCE] File E:/DKI Services Case Oct-Dec 24/.Completed Files/Samuel, Essence - IN PROGRESS/01Update DKI Services Case Notes.docx.pdf classified and indexed as evidence_0003 (section hint: section_5)
+WARNING:bus_core:[BUS] No handlers for signal: evidence_locker.call_out
+INFO:evidence_locker_main: Called out via bus for operation: scan_file
+INFO:evidence_locker_main:Waiting for ECC confirmation (scan_file) with timeout 30s
+INFO:evidence_locker_main:ECC confirmation received for scan_file - Request ID: auto_20250925_194021_403565
+WARNING:ecosystem_controller: Dependency section_4 not completed for section_5
+WARNING:evidence_locker_main:Section section_5 not yet cleared by ECC for evidence scanning; recording as pending
+INFO:evidence_locker_main:Queuing evidence E:/DKI Services Case Oct-Dec 24/.Completed Files/Samuel, Essence - IN PROGRESS/1 New Client Intake Form copy.docx for section section_5 while dependencies resolve
+INFO:evidence_locker_main:[SCAN] Scanning file: E:/DKI Services Case Oct-Dec 24/.Completed Files/Samuel, Essence - IN PROGRESS/1 New Client Intake Form copy.docx
+INFO:evidence_locker_main:[INDEX] Evidence evidence_0004 indexed to section_1 - Case Objectives & Intake
+WARNING:bus_core:[BUS] No handlers for signal: evidence_locker.file_scanned
+INFO:evidence_locker_main: Sent message via bus: file_scanned
+WARNING:bus_core:[BUS] No handlers for signal: evidence_locker.accept
+INFO:evidence_locker_main:Sent accept signal via bus for operation: file_scan_complete
+INFO:evidence_locker_main:[HANDOFF] Completed file_scanning_handoff with status completed
+WARNING:bus_core:[BUS] No handlers for signal: evidence_locker.call_out
+INFO:evidence_locker_main: Called out via bus for operation: evidence_handoff
+INFO:evidence_locker_main:Waiting for ECC confirmation (evidence_handoff) with timeout 30s
+INFO:evidence_locker_main:ECC confirmation received for evidence_handoff - Request ID: auto_20250925_194021_404691
+WARNING:bus_core:[BUS] No handlers for signal: evidence_locker.evidence_handoff
+INFO:evidence_locker_main: Sent message via bus: evidence_handoff
+WARNING:bus_core:[BUS] No handlers for signal: evidence_locker.accept
+INFO:evidence_locker_main:Sent accept signal via bus for operation: evidence_handoff
+INFO:gateway_controller:🔄 Registered handoff: evidence_locker_main → gateway_controller
+INFO:gateway_controller:📦 Gateway received generic handoff: evidence_locker_processing_complete
+INFO:gateway_controller:📊 Evidence Locker module evidence_locker_main status: handoff_complete
+INFO:gateway_controller:✅ Processed handoff from evidence_locker_main
+INFO:evidence_locker_main:[HANDOFF] Completed evidence_handoff with status success
+INFO:evidence_locker_main:[HANDOFF] Evidence evidence_0004 handed to Gateway Controller (hint: section_5)
+WARNING:bus_core:[BUS] No handlers for signal: evidence.tagged
+INFO:evidence_locker_main:[EVIDENCE] File E:/DKI Services Case Oct-Dec 24/.Completed Files/Samuel, Essence - IN PROGRESS/1 New Client Intake Form copy.docx classified and indexed as evidence_0004 (section hint: section_5)
+WARNING:bus_core:[BUS] No handlers for signal: evidence_locker.call_out
+INFO:evidence_locker_main: Called out via bus for operation: scan_file
+INFO:evidence_locker_main:Waiting for ECC confirmation (scan_file) with timeout 30s
+INFO:evidence_locker_main:ECC confirmation received for scan_file - Request ID: auto_20250925_194021_406028
+WARNING:ecosystem_controller: Dependency section_7 not completed for section_8
+WARNING:evidence_locker_main:Section section_8 not yet cleared by ECC for evidence scanning; recording as pending
+INFO:evidence_locker_main:Queuing evidence E:/DKI Services Case Oct-Dec 24/.Completed Files/Samuel, Essence - IN PROGRESS/12-13 front pic - Copy.png for section section_8 while dependencies resolve
+INFO:evidence_locker_main:[SCAN] Scanning file: E:/DKI Services Case Oct-Dec 24/.Completed Files/Samuel, Essence - IN PROGRESS/12-13 front pic - Copy.png
+INFO:evidence_locker_main:[INDEX] Evidence evidence_0005 indexed to section_7 - Conclusion & Case Decision
+WARNING:bus_core:[BUS] No handlers for signal: evidence_locker.file_scanned
+INFO:evidence_locker_main: Sent message via bus: file_scanned
+WARNING:bus_core:[BUS] No handlers for signal: evidence_locker.accept
+INFO:evidence_locker_main:Sent accept signal via bus for operation: file_scan_complete
+INFO:evidence_locker_main:[HANDOFF] Completed file_scanning_handoff with status completed
+WARNING:bus_core:[BUS] No handlers for signal: evidence_locker.call_out
+INFO:evidence_locker_main: Called out via bus for operation: evidence_handoff
+INFO:evidence_locker_main:Waiting for ECC confirmation (evidence_handoff) with timeout 30s
+INFO:evidence_locker_main:ECC confirmation received for evidence_handoff - Request ID: auto_20250925_194021_406997
+WARNING:bus_core:[BUS] No handlers for signal: evidence_locker.evidence_handoff
+INFO:evidence_locker_main: Sent message via bus: evidence_handoff
+WARNING:bus_core:[BUS] No handlers for signal: evidence_locker.accept
+INFO:evidence_locker_main:Sent accept signal via bus for operation: evidence_handoff
+INFO:gateway_controller:🔄 Registered handoff: evidence_locker_main → gateway_controller
+INFO:gateway_controller:📦 Gateway received generic handoff: evidence_locker_processing_complete
+INFO:gateway_controller:📊 Evidence Locker module evidence_locker_main status: handoff_complete
+INFO:gateway_controller:✅ Processed handoff from evidence_locker_main
+INFO:evidence_locker_main:[HANDOFF] Completed evidence_handoff with status success
+INFO:evidence_locker_main:[HANDOFF] Evidence evidence_0005 handed to Gateway Controller (hint: section_8)
+WARNING:bus_core:[BUS] No handlers for signal: evidence.tagged
+INFO:evidence_locker_main:[EVIDENCE] File E:/DKI Services Case Oct-Dec 24/.Completed Files/Samuel, Essence - IN PROGRESS/12-13 front pic - Copy.png classified and indexed as evidence_0005 (section hint: section_8)
+WARNING:bus_core:[BUS] No handlers for signal: evidence_locker.call_out
+INFO:evidence_locker_main: Called out via bus for operation: scan_file
+INFO:evidence_locker_main:Waiting for ECC confirmation (scan_file) with timeout 30s
+INFO:evidence_locker_main:ECC confirmation received for scan_file - Request ID: auto_20250925_194021_408042
+WARNING:ecosystem_controller: Dependency section_7 not completed for section_8
+WARNING:evidence_locker_main:Section section_8 not yet cleared by ECC for evidence scanning; recording as pending
+INFO:evidence_locker_main:Queuing evidence E:/DKI Services Case Oct-Dec 24/.Completed Files/Samuel, Essence - IN PROGRESS/12-13 front pic.png for section section_8 while dependencies resolve
+INFO:evidence_locker_main:[SCAN] Scanning file: E:/DKI Services Case Oct-Dec 24/.Completed Files/Samuel, Essence - IN PROGRESS/12-13 front pic.png
+INFO:evidence_locker_main:[INDEX] Evidence evidence_0006 indexed to section_7 - Conclusion & Case Decision
+WARNING:bus_core:[BUS] No handlers for signal: evidence_locker.file_scanned
+INFO:evidence_locker_main: Sent message via bus: file_scanned
+WARNING:bus_core:[BUS] No handlers for signal: evidence_locker.accept
+INFO:evidence_locker_main:Sent accept signal via bus for operation: file_scan_complete
+INFO:evidence_locker_main:[HANDOFF] Completed file_scanning_handoff with status completed
+WARNING:bus_core:[BUS] No handlers for signal: evidence_locker.call_out
+INFO:evidence_locker_main: Called out via bus for operation: evidence_handoff
+INFO:evidence_locker_main:Waiting for ECC confirmation (evidence_handoff) with timeout 30s
+INFO:evidence_locker_main:ECC confirmation received for evidence_handoff - Request ID: auto_20250925_194021_408858
+WARNING:bus_core:[BUS] No handlers for signal: evidence_locker.evidence_handoff
+INFO:evidence_locker_main: Sent message via bus: evidence_handoff
+WARNING:bus_core:[BUS] No handlers for signal: evidence_locker.accept
+INFO:evidence_locker_main:Sent accept signal via bus for operation: evidence_handoff
+INFO:gateway_controller:🔄 Registered handoff: evidence_locker_main → gateway_controller
+INFO:gateway_controller:📦 Gateway received generic handoff: evidence_locker_processing_complete
+INFO:gateway_controller:📊 Evidence Locker module evidence_locker_main status: handoff_complete
+INFO:gateway_controller:✅ Processed handoff from evidence_locker_main
+INFO:evidence_locker_main:[HANDOFF] Completed evidence_handoff with status success
+INFO:evidence_locker_main:[HANDOFF] Evidence evidence_0006 handed to Gateway Controller (hint: section_8)
+WARNING:bus_core:[BUS] No handlers for signal: evidence.tagged
+INFO:evidence_locker_main:[EVIDENCE] File E:/DKI Services Case Oct-Dec 24/.Completed Files/Samuel, Essence - IN PROGRESS/12-13 front pic.png classified and indexed as evidence_0006 (section hint: section_8)
+WARNING:bus_core:[BUS] No handlers for signal: evidence_locker.call_out
+INFO:evidence_locker_main: Called out via bus for operation: scan_file
+INFO:evidence_locker_main:Waiting for ECC confirmation (scan_file) with timeout 30s
+INFO:evidence_locker_main:ECC confirmation received for scan_file - Request ID: auto_20250925_194021_409897
+WARNING:ecosystem_controller: Dependency section_7 not completed for section_8
+WARNING:evidence_locker_main:Section section_8 not yet cleared by ECC for evidence scanning; recording as pending
+INFO:evidence_locker_main:Queuing evidence E:/DKI Services Case Oct-Dec 24/.Completed Files/Samuel, Essence - IN PROGRESS/20241111_103405440 2.jpeg for section section_8 while dependencies resolve
+INFO:evidence_locker_main:[SCAN] Scanning file: E:/DKI Services Case Oct-Dec 24/.Completed Files/Samuel, Essence - IN PROGRESS/20241111_103405440 2.jpeg
+INFO:evidence_locker_main:[INDEX] Evidence evidence_0007 indexed to section_7 - Conclusion & Case Decision
+WARNING:bus_core:[BUS] No handlers for signal: evidence_locker.file_scanned
+INFO:evidence_locker_main: Sent message via bus: file_scanned
+WARNING:bus_core:[BUS] No handlers for signal: evidence_locker.accept
+INFO:evidence_locker_main:Sent accept signal via bus for operation: file_scan_complete
+INFO:evidence_locker_main:[HANDOFF] Completed file_scanning_handoff with status completed
+WARNING:bus_core:[BUS] No handlers for signal: evidence_locker.call_out
+INFO:evidence_locker_main: Called out via bus for operation: evidence_handoff
+INFO:evidence_locker_main:Waiting for ECC confirmation (evidence_handoff) with timeout 30s
+INFO:evidence_locker_main:ECC confirmation received for evidence_handoff - Request ID: auto_20250925_194021_411125
+WARNING:bus_core:[BUS] No handlers for signal: evidence_locker.evidence_handoff
+INFO:evidence_locker_main: Sent message via bus: evidence_handoff
+WARNING:bus_core:[BUS] No handlers for signal: evidence_locker.accept
+INFO:evidence_locker_main:Sent accept signal via bus for operation: evidence_handoff
+INFO:gateway_controller:🔄 Registered handoff: evidence_locker_main → gateway_controller
+INFO:gateway_controller:📦 Gateway received generic handoff: evidence_locker_processing_complete
+INFO:gateway_controller:📊 Evidence Locker module evidence_locker_main status: handoff_complete
+INFO:gateway_controller:✅ Processed handoff from evidence_locker_main
+INFO:evidence_locker_main:[HANDOFF] Completed evidence_handoff with status success
+INFO:evidence_locker_main:[HANDOFF] Evidence evidence_0007 handed to Gateway Controller (hint: section_8)
+WARNING:bus_core:[BUS] No handlers for signal: evidence.tagged
+INFO:evidence_locker_main:[EVIDENCE] File E:/DKI Services Case Oct-Dec 24/.Completed Files/Samuel, Essence - IN PROGRESS/20241111_103405440 2.jpeg classified and indexed as evidence_0007 (section hint: section_8)
+WARNING:bus_core:[BUS] No handlers for signal: evidence_locker.call_out
+INFO:evidence_locker_main: Called out via bus for operation: scan_file
+INFO:evidence_locker_main:Waiting for ECC confirmation (scan_file) with timeout 30s
+INFO:evidence_locker_main:ECC confirmation received for scan_file - Request ID: auto_20250925_194021_412281
+WARNING:ecosystem_controller: Dependency section_7 not completed for section_8
+WARNING:evidence_locker_main:Section section_8 not yet cleared by ECC for evidence scanning; recording as pending
+INFO:evidence_locker_main:Queuing evidence E:/DKI Services Case Oct-Dec 24/.Completed Files/Samuel, Essence - IN PROGRESS/20241111_103539507 2.jpeg for section section_8 while dependencies resolve
+INFO:evidence_locker_main:[SCAN] Scanning file: E:/DKI Services Case Oct-Dec 24/.Completed Files/Samuel, Essence - IN PROGRESS/20241111_103539507 2.jpeg
+INFO:evidence_locker_main:[INDEX] Evidence evidence_0008 indexed to section_7 - Conclusion & Case Decision
+WARNING:bus_core:[BUS] No handlers for signal: evidence_locker.file_scanned
+INFO:evidence_locker_main: Sent message via bus: file_scanned
+WARNING:bus_core:[BUS] No handlers for signal: evidence_locker.accept
+INFO:evidence_locker_main:Sent accept signal via bus for operation: file_scan_complete
+INFO:evidence_locker_main:[HANDOFF] Completed file_scanning_handoff with status completed
+WARNING:bus_core:[BUS] No handlers for signal: evidence_locker.call_out
+INFO:evidence_locker_main: Called out via bus for operation: evidence_handoff
+INFO:evidence_locker_main:Waiting for ECC confirmation (evidence_handoff) with timeout 30s
+INFO:evidence_locker_main:ECC confirmation received for evidence_handoff - Request ID: auto_20250925_194021_413098
+WARNING:bus_core:[BUS] No handlers for signal: evidence_locker.evidence_handoff
+INFO:evidence_locker_main: Sent message via bus: evidence_handoff
+WARNING:bus_core:[BUS] No handlers for signal: evidence_locker.accept
+INFO:evidence_locker_main:Sent accept signal via bus for operation: evidence_handoff
+INFO:gateway_controller:🔄 Registered handoff: evidence_locker_main → gateway_controller
+INFO:gateway_controller:📦 Gateway received generic handoff: evidence_locker_processing_complete
+INFO:gateway_controller:📊 Evidence Locker module evidence_locker_main status: handoff_complete
+INFO:gateway_controller:✅ Processed handoff from evidence_locker_main
+INFO:evidence_locker_main:[HANDOFF] Completed evidence_handoff with status success
+INFO:evidence_locker_main:[HANDOFF] Evidence evidence_0008 handed to Gateway Controller (hint: section_8)
+WARNING:bus_core:[BUS] No handlers for signal: evidence.tagged
+INFO:evidence_locker_main:[EVIDENCE] File E:/DKI Services Case Oct-Dec 24/.Completed Files/Samuel, Essence - IN PROGRESS/20241111_103539507 2.jpeg classified and indexed as evidence_0008 (section hint: section_8)
+WARNING:bus_core:[BUS] No handlers for signal: evidence_locker.call_out
+INFO:evidence_locker_main: Called out via bus for operation: scan_file
+INFO:evidence_locker_main:Waiting for ECC confirmation (scan_file) with timeout 30s
+INFO:evidence_locker_main:ECC confirmation received for scan_file - Request ID: auto_20250925_194021_414577
+WARNING:ecosystem_controller: Dependency section_7 not completed for section_8
+WARNING:evidence_locker_main:Section section_8 not yet cleared by ECC for evidence scanning; recording as pending
+INFO:evidence_locker_main:Queuing evidence E:/DKI Services Case Oct-Dec 24/.Completed Files/Samuel, Essence - IN PROGRESS/20241111_170005615.jpeg for section section_8 while dependencies resolve
+INFO:evidence_locker_main:[SCAN] Scanning file: E:/DKI Services Case Oct-Dec 24/.Completed Files/Samuel, Essence - IN PROGRESS/20241111_170005615.jpeg
+INFO:evidence_locker_main:[INDEX] Evidence evidence_0009 indexed to section_7 - Conclusion & Case Decision
+WARNING:bus_core:[BUS] No handlers for signal: evidence_locker.file_scanned
+INFO:evidence_locker_main: Sent message via bus: file_scanned
+WARNING:bus_core:[BUS] No handlers for signal: evidence_locker.accept
+INFO:evidence_locker_main:Sent accept signal via bus for operation: file_scan_complete
+INFO:evidence_locker_main:[HANDOFF] Completed file_scanning_handoff with status completed
+WARNING:bus_core:[BUS] No handlers for signal: evidence_locker.call_out
+INFO:evidence_locker_main: Called out via bus for operation: evidence_handoff
+INFO:evidence_locker_main:Waiting for ECC confirmation (evidence_handoff) with timeout 30s
+INFO:evidence_locker_main:ECC confirmation received for evidence_handoff - Request ID: auto_20250925_194021_415441
+WARNING:bus_core:[BUS] No handlers for signal: evidence_locker.evidence_handoff
+INFO:evidence_locker_main: Sent message via bus: evidence_handoff
+WARNING:bus_core:[BUS] No handlers for signal: evidence_locker.accept
+INFO:evidence_locker_main:Sent accept signal via bus for operation: evidence_handoff
+INFO:gateway_controller:🔄 Registered handoff: evidence_locker_main → gateway_controller
+INFO:gateway_controller:📦 Gateway received generic handoff: evidence_locker_processing_complete
+INFO:gateway_controller:📊 Evidence Locker module evidence_locker_main status: handoff_complete
+INFO:gateway_controller:✅ Processed handoff from evidence_locker_main
+INFO:evidence_locker_main:[HANDOFF] Completed evidence_handoff with status success
+INFO:evidence_locker_main:[HANDOFF] Evidence evidence_0009 handed to Gateway Controller (hint: section_8)
+WARNING:bus_core:[BUS] No handlers for signal: evidence.tagged
+INFO:evidence_locker_main:[EVIDENCE] File E:/DKI Services Case Oct-Dec 24/.Completed Files/Samuel, Essence - IN PROGRESS/20241111_170005615.jpeg classified and indexed as evidence_0009 (section hint: section_8)
+WARNING:bus_core:[BUS] No handlers for signal: evidence_locker.call_out
+INFO:evidence_locker_main: Called out via bus for operation: scan_file
+INFO:evidence_locker_main:Waiting for ECC confirmation (scan_file) with timeout 30s
+INFO:evidence_locker_main:ECC confirmation received for scan_file - Request ID: auto_20250925_194021_416545
+WARNING:ecosystem_controller: Dependency section_7 not completed for section_8
+WARNING:evidence_locker_main:Section section_8 not yet cleared by ECC for evidence scanning; recording as pending
+INFO:evidence_locker_main:Queuing evidence E:/DKI Services Case Oct-Dec 24/.Completed Files/Samuel, Essence - IN PROGRESS/20241115_061313560 2.jpeg for section section_8 while dependencies resolve
+INFO:evidence_locker_main:[SCAN] Scanning file: E:/DKI Services Case Oct-Dec 24/.Completed Files/Samuel, Essence - IN PROGRESS/20241115_061313560 2.jpeg
+INFO:evidence_locker_main:[INDEX] Evidence evidence_0010 indexed to section_7 - Conclusion & Case Decision
+WARNING:bus_core:[BUS] No handlers for signal: evidence_locker.file_scanned
+INFO:evidence_locker_main: Sent message via bus: file_scanned
+WARNING:bus_core:[BUS] No handlers for signal: evidence_locker.accept
+INFO:evidence_locker_main:Sent accept signal via bus for operation: file_scan_complete
+INFO:evidence_locker_main:[HANDOFF] Completed file_scanning_handoff with status completed
+WARNING:bus_core:[BUS] No handlers for signal: evidence_locker.call_out
+INFO:evidence_locker_main: Called out via bus for operation: evidence_handoff
+INFO:evidence_locker_main:Waiting for ECC confirmation (evidence_handoff) with timeout 30s
+INFO:evidence_locker_main:ECC confirmation received for evidence_handoff - Request ID: auto_20250925_194021_417407
+WARNING:bus_core:[BUS] No handlers for signal: evidence_locker.evidence_handoff
+INFO:evidence_locker_main: Sent message via bus: evidence_handoff
+WARNING:bus_core:[BUS] No handlers for signal: evidence_locker.accept
+INFO:evidence_locker_main:Sent accept signal via bus for operation: evidence_handoff
+INFO:gateway_controller:🔄 Registered handoff: evidence_locker_main → gateway_controller
+INFO:gateway_controller:📦 Gateway received generic handoff: evidence_locker_processing_complete
+INFO:gateway_controller:📊 Evidence Locker module evidence_locker_main status: handoff_complete
+INFO:gateway_controller:✅ Processed handoff from evidence_locker_main
+INFO:evidence_locker_main:[HANDOFF] Completed evidence_handoff with status success
+INFO:evidence_locker_main:[HANDOFF] Evidence evidence_0010 handed to Gateway Controller (hint: section_8)
+WARNING:bus_core:[BUS] No handlers for signal: evidence.tagged
+INFO:evidence_locker_main:[EVIDENCE] File E:/DKI Services Case Oct-Dec 24/.Completed Files/Samuel, Essence - IN PROGRESS/20241115_061313560 2.jpeg classified and indexed as evidence_0010 (section hint: section_8)
+WARNING:bus_core:[BUS] No handlers for signal: evidence_locker.call_out
+INFO:evidence_locker_main: Called out via bus for operation: scan_file
+INFO:evidence_locker_main:Waiting for ECC confirmation (scan_file) with timeout 30s
+INFO:evidence_locker_main:ECC confirmation received for scan_file - Request ID: auto_20250925_194021_418851
+WARNING:ecosystem_controller: Dependency section_4 not completed for section_5
+WARNING:evidence_locker_main:Section section_5 not yet cleared by ECC for evidence scanning; recording as pending
+INFO:evidence_locker_main:Queuing evidence E:/DKI Services Case Oct-Dec 24/.Completed Files/Samuel, Essence - IN PROGRESS/Contract 2-DKI Investigation.docx (1).pdf for section section_5 while dependencies resolve
+INFO:evidence_locker_main:[SCAN] Scanning file: E:/DKI Services Case Oct-Dec 24/.Completed Files/Samuel, Essence - IN PROGRESS/Contract 2-DKI Investigation.docx (1).pdf
+INFO:evidence_locker_main:[INDEX] Evidence evidence_0011 indexed to section_5 - Supporting Documents Review
+WARNING:bus_core:[BUS] No handlers for signal: evidence_locker.file_scanned
+INFO:evidence_locker_main: Sent message via bus: file_scanned
+WARNING:bus_core:[BUS] No handlers for signal: evidence_locker.accept
+INFO:evidence_locker_main:Sent accept signal via bus for operation: file_scan_complete
+INFO:evidence_locker_main:[HANDOFF] Completed file_scanning_handoff with status completed
+WARNING:bus_core:[BUS] No handlers for signal: evidence_locker.call_out
+INFO:evidence_locker_main: Called out via bus for operation: evidence_handoff
+INFO:evidence_locker_main:Waiting for ECC confirmation (evidence_handoff) with timeout 30s
+INFO:evidence_locker_main:ECC confirmation received for evidence_handoff - Request ID: auto_20250925_194021_419775
+WARNING:bus_core:[BUS] No handlers for signal: evidence_locker.evidence_handoff
+INFO:evidence_locker_main: Sent message via bus: evidence_handoff
+WARNING:bus_core:[BUS] No handlers for signal: evidence_locker.accept
+INFO:evidence_locker_main:Sent accept signal via bus for operation: evidence_handoff
+INFO:gateway_controller:🔄 Registered handoff: evidence_locker_main → gateway_controller
+INFO:gateway_controller:📦 Gateway received generic handoff: evidence_locker_processing_complete
+INFO:gateway_controller:📊 Evidence Locker module evidence_locker_main status: handoff_complete
+INFO:gateway_controller:✅ Processed handoff from evidence_locker_main
+INFO:evidence_locker_main:[HANDOFF] Completed evidence_handoff with status success
+INFO:evidence_locker_main:[HANDOFF] Evidence evidence_0011 handed to Gateway Controller (hint: section_5)
+WARNING:bus_core:[BUS] No handlers for signal: evidence.tagged
+INFO:evidence_locker_main:[EVIDENCE] File E:/DKI Services Case Oct-Dec 24/.Completed Files/Samuel, Essence - IN PROGRESS/Contract 2-DKI Investigation.docx (1).pdf classified and indexed as evidence_0011 (section hint: section_5)
+WARNING:bus_core:[BUS] No handlers for signal: evidence_locker.call_out
+INFO:evidence_locker_main: Called out via bus for operation: scan_file
+INFO:evidence_locker_main:Waiting for ECC confirmation (scan_file) with timeout 30s
+INFO:evidence_locker_main:ECC confirmation received for scan_file - Request ID: auto_20250925_194021_420958
+WARNING:ecosystem_controller: Dependency section_7 not completed for section_8
+WARNING:evidence_locker_main:Section section_8 not yet cleared by ECC for evidence scanning; recording as pending
+INFO:evidence_locker_main:Queuing evidence E:/DKI Services Case Oct-Dec 24/.Completed Files/Samuel, Essence - IN PROGRESS/IMG_5640.jpg for section section_8 while dependencies resolve
+INFO:evidence_locker_main:[SCAN] Scanning file: E:/DKI Services Case Oct-Dec 24/.Completed Files/Samuel, Essence - IN PROGRESS/IMG_5640.jpg
+INFO:evidence_locker_main:[INDEX] Evidence evidence_0012 indexed to section_7 - Conclusion & Case Decision
+WARNING:bus_core:[BUS] No handlers for signal: evidence_locker.file_scanned
+INFO:evidence_locker_main: Sent message via bus: file_scanned
+WARNING:bus_core:[BUS] No handlers for signal: evidence_locker.accept
+INFO:evidence_locker_main:Sent accept signal via bus for operation: file_scan_complete
+INFO:evidence_locker_main:[HANDOFF] Completed file_scanning_handoff with status completed
+WARNING:bus_core:[BUS] No handlers for signal: evidence_locker.call_out
+INFO:evidence_locker_main: Called out via bus for operation: evidence_handoff
+INFO:evidence_locker_main:Waiting for ECC confirmation (evidence_handoff) with timeout 30s
+INFO:evidence_locker_main:ECC confirmation received for evidence_handoff - Request ID: auto_20250925_194021_421765
+WARNING:bus_core:[BUS] No handlers for signal: evidence_locker.evidence_handoff
+INFO:evidence_locker_main: Sent message via bus: evidence_handoff
+WARNING:bus_core:[BUS] No handlers for signal: evidence_locker.accept
+INFO:evidence_locker_main:Sent accept signal via bus for operation: evidence_handoff
+INFO:gateway_controller:🔄 Registered handoff: evidence_locker_main → gateway_controller
+INFO:gateway_controller:📦 Gateway received generic handoff: evidence_locker_processing_complete
+INFO:gateway_controller:📊 Evidence Locker module evidence_locker_main status: handoff_complete
+INFO:gateway_controller:✅ Processed handoff from evidence_locker_main
+INFO:evidence_locker_main:[HANDOFF] Completed evidence_handoff with status success
+INFO:evidence_locker_main:[HANDOFF] Evidence evidence_0012 handed to Gateway Controller (hint: section_8)
+WARNING:bus_core:[BUS] No handlers for signal: evidence.tagged
+INFO:evidence_locker_main:[EVIDENCE] File E:/DKI Services Case Oct-Dec 24/.Completed Files/Samuel, Essence - IN PROGRESS/IMG_5640.jpg classified and indexed as evidence_0012 (section hint: section_8)
+WARNING:bus_core:[BUS] No handlers for signal: evidence_locker.call_out
+INFO:evidence_locker_main: Called out via bus for operation: scan_file
+INFO:evidence_locker_main:Waiting for ECC confirmation (scan_file) with timeout 30s
+INFO:evidence_locker_main:ECC confirmation received for scan_file - Request ID: auto_20250925_194021_423129
+WARNING:ecosystem_controller: Dependency section_7 not completed for section_8
+WARNING:evidence_locker_main:Section section_8 not yet cleared by ECC for evidence scanning; recording as pending
+INFO:evidence_locker_main:Queuing evidence E:/DKI Services Case Oct-Dec 24/.Completed Files/Samuel, Essence - IN PROGRESS/IMG_5641.jpg for section section_8 while dependencies resolve
+INFO:evidence_locker_main:[SCAN] Scanning file: E:/DKI Services Case Oct-Dec 24/.Completed Files/Samuel, Essence - IN PROGRESS/IMG_5641.jpg
+INFO:evidence_locker_main:[INDEX] Evidence evidence_0013 indexed to section_7 - Conclusion & Case Decision
+WARNING:bus_core:[BUS] No handlers for signal: evidence_locker.file_scanned
+INFO:evidence_locker_main: Sent message via bus: file_scanned
+WARNING:bus_core:[BUS] No handlers for signal: evidence_locker.accept
+INFO:evidence_locker_main:Sent accept signal via bus for operation: file_scan_complete
+INFO:evidence_locker_main:[HANDOFF] Completed file_scanning_handoff with status completed
+WARNING:bus_core:[BUS] No handlers for signal: evidence_locker.call_out
+INFO:evidence_locker_main: Called out via bus for operation: evidence_handoff
+INFO:evidence_locker_main:Waiting for ECC confirmation (evidence_handoff) with timeout 30s
+INFO:evidence_locker_main:ECC confirmation received for evidence_handoff - Request ID: auto_20250925_194021_423917
+WARNING:bus_core:[BUS] No handlers for signal: evidence_locker.evidence_handoff
+INFO:evidence_locker_main: Sent message via bus: evidence_handoff
+WARNING:bus_core:[BUS] No handlers for signal: evidence_locker.accept
+INFO:evidence_locker_main:Sent accept signal via bus for operation: evidence_handoff
+INFO:gateway_controller:🔄 Registered handoff: evidence_locker_main → gateway_controller
+INFO:gateway_controller:📦 Gateway received generic handoff: evidence_locker_processing_complete
+INFO:gateway_controller:📊 Evidence Locker module evidence_locker_main status: handoff_complete
+INFO:gateway_controller:✅ Processed handoff from evidence_locker_main
+INFO:evidence_locker_main:[HANDOFF] Completed evidence_handoff with status success
+INFO:evidence_locker_main:[HANDOFF] Evidence evidence_0013 handed to Gateway Controller (hint: section_8)
+WARNING:bus_core:[BUS] No handlers for signal: evidence.tagged
+INFO:evidence_locker_main:[EVIDENCE] File E:/DKI Services Case Oct-Dec 24/.Completed Files/Samuel, Essence - IN PROGRESS/IMG_5641.jpg classified and indexed as evidence_0013 (section hint: section_8)
+
+Central Command session ended.
+Press any key to continue . . .

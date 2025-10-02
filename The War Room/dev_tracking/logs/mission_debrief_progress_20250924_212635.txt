@@ -1,0 +1,19 @@
+
+Mission Debrief Integration Progress
+=================================
+Timestamp: 2025-09-24T21:26:35.244025
+
+Summary:
+- MissionDebriefManager now generates full deposition bundles (final report, billing summary, evidence manifest, print version, export log) inside ROOT_INSTALL_DIRECTORY/DKI_Exports/Depositions with dedicated helpers and structured logging.
+- Added pytest-based unit coverage exercising deposition catalog creation and export-log metadata using stubbed adapters; pytest currently unavailable on this workstation, so execution is pending on a host with pytest installed.
+- Professional Case Manager profile window now exposes a Depositions tab that lists exported artefacts, refreshes on demand, and opens the exports directory.
+
+Work Location:
+- F:\The Central Command\Command Center\Mission Debrief\Debrief\README\mission_debrief_manager.py
+- F:\The Central Command\Command Center\Mission Debrief\Tests\test_deposition_exports.py
+- F:\The Central Command\Command Center\UI\professional_case_manager.py
+
+Next Steps:
+1. Run pytest suite once the command is available to validate new unit coverage.
+2. Expand ArchiveManager to capture deposition catalogue metadata for retrieval workflows.
+3. Consider adding per-case filtering and download shortcuts to the UI Depositions tab.
