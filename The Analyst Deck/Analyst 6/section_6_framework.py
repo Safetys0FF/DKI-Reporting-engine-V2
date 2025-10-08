@@ -65,6 +65,7 @@ class OrderContract:
 
 class SectionFramework:
     SECTION_ID: str = ""
+    BUS_SECTION_ID: Optional[str] = None
     MAX_RERUNS: int = 3
     STAGES: Tuple[StageDefinition, ...] = ()
     COMMUNICATION: Optional[CommunicationContract] = None
@@ -96,6 +97,58 @@ class SectionFramework:
 
     def publish(self, payload: Dict[str, Any]) -> Dict[str, Any]:
         raise NotImplementedError
+
+    @classmethod
+    def bus_section_id(cls) -> Optional[str]:
+        if getattr(cls, "BUS_SECTION_ID", None):
+            return cls.BUS_SECTION_ID
+        section_id = getattr(cls, "SECTION_ID", "")
+        if section_id.startswith("section_"):
+            parts = section_id.split("_")
+            if len(parts) >= 2:
+                return f"section_{parts[1]}"
+        return section_id or None
+
+    def _get_latest_bus_state(self) -> Dict[str, Any]:
+        bus_id = self.bus_section_id()
+        get_state = getattr(self.gateway, "get_bus_state", None) if hasattr(self, "gateway") else None
+        if not bus_id or not callable(get_state):
+            return {}
+        try:
+            state = get_state(bus_id) or {}
+            return state
+        except Exception as exc:
+            self.logger.warning("Failed to fetch bus state for %s: %s", bus_id, exc)
+            return {}
+
+    def _augment_with_bus_context(self, inputs: Dict[str, Any]) -> Dict[str, Any]:
+        bus_state = self._get_latest_bus_state()
+        if not bus_state:
+            return inputs
+        enriched: Dict[str, Any] = dict(inputs)
+        enriched.setdefault("bus_state", bus_state)
+        payload = bus_state.get("payload") or {}
+        if isinstance(payload, dict):
+            enriched.setdefault("section_payload", payload.get("structured_data") or payload)
+            manifest_context = payload.get("manifest") or bus_state.get("manifest")
+            if manifest_context is not None:
+                enriched.setdefault("manifest_context", manifest_context)
+            for key, value in payload.items():
+                enriched.setdefault(key, value)
+        else:
+            manifest_context = bus_state.get("manifest")
+            if manifest_context is not None:
+                enriched.setdefault("manifest_context", manifest_context)
+        if bus_state.get("needs") is not None:
+            enriched.setdefault("section_needs", bus_state.get("needs"))
+        if bus_state.get("evidence") is not None:
+            enriched.setdefault("section_evidence", bus_state.get("evidence"))
+        case_id = enriched.get("case_id") or bus_state.get("case_id")
+        if not case_id and isinstance(payload, dict):
+            case_id = payload.get("case_id")
+        if case_id and "case_id" not in enriched:
+            enriched["case_id"] = case_id
+        return enriched
 
     def _guard_execution(self, operation: str) -> None:
         if self.ecc and not self.ecc.can_run(self.SECTION_ID):
@@ -1326,307 +1379,328 @@ STANDARD_RATES = {
 }
 
 
-    class Section6Framework(SectionFramework):
-        SECTION_ID = "section_6_billing"
-        MAX_RERUNS = 2
-        STAGES = (
-            StageDefinition(
-                name="intake",
-                description="Pull billing bundle, confirm upstream hashes, and load contract terms.",
-                checkpoint="s6_intake_logged",
-                guardrails=("order_lock", "async_queue", "persistence_snapshot"),
-                inputs=("case_metadata", "contract_terms", "planning_manifest", "surveillance_manifest"),
-                outputs=("intake_context",),
-            ),
-            StageDefinition(
-                name="aggregate",
-                description="Compute hours, mileage, subcontractor, and preparation costs.",
-                checkpoint="s6_aggregate_complete",
-                guardrails=("schema_validation", "mileage_validation", "cochran_check"),
-                inputs=("surveillance_manifest", "mileage_data", "toolkit_results"),
-                outputs=("aggregated_totals",),
-            ),
-            StageDefinition(
-                name="validate",
-                description="Apply contract rules, scope compliance, and QA checks.",
-                checkpoint="s6_validated",
-                guardrails=("manual_queue_routes", "risk_threshold", "immutability_precheck"),
-                inputs=("aggregated_totals", "document_references"),
-                outputs=("validated_billing",),
-            ),
-            StageDefinition(
-                name="publish",
-                description="Publish billing payload, emit billing signal, and persist audit log.",
-                checkpoint="section_6_completed",
-                guardrails=("durable_persistence", "signal_emission", "immutability"),
-                inputs=("validated_billing",),
-                outputs=("gateway_handoff",),
-            ),
-            StageDefinition(
-                name="monitor",
-                description="Handle revisions and manual adjustments within rerun limits.",
-                checkpoint="s6_revision_processed",
-                guardrails=("max_reruns", "revision_depth_cap", "fact_graph_consistency"),
-            ),
-        )
-        COMMUNICATION = CommunicationContract(
-            prepare_signal="section_3_logs.completed",
-            input_channels=(
-                "case_metadata",
-                "contract_terms",
-                "planning_manifest",
-                "surveillance_manifest",
-                "mileage_data",
-                "toolkit_results",
-                "document_references",
-                "manual_annotations",
-            ),
-            output_signal="section_6_billing.completed",
-            revision_signal="billing_revision_requested",
-        )
-        ORDER = OrderContract(
-            execution_after=("section_3_logs", "section_2_planning", "section_1_profile", "section_5_documents"),
-            export_after=("section_7", "section_fr", "section_finance"),
-            export_priority=60,
-        )
+class Section6Framework(SectionFramework):
+    SECTION_ID = "section_6_billing"
+    BUS_SECTION_ID = "section_6"
+    MAX_RERUNS = 2
+    STAGES = (
+        StageDefinition(
+            name="intake",
+            description="Pull billing bundle, confirm upstream hashes, and load contract terms.",
+            checkpoint="s6_intake_logged",
+            guardrails=("order_lock", "async_queue", "persistence_snapshot"),
+            inputs=("case_metadata", "contract_terms", "planning_manifest", "surveillance_manifest"),
+            outputs=("intake_context",),
+        ),
+        StageDefinition(
+            name="aggregate",
+            description="Compute hours, mileage, subcontractor, and preparation costs.",
+            checkpoint="s6_aggregate_complete",
+            guardrails=("schema_validation", "mileage_validation", "cochran_check"),
+            inputs=("surveillance_manifest", "mileage_data", "toolkit_results"),
+            outputs=("aggregated_totals",),
+        ),
+        StageDefinition(
+            name="validate",
+            description="Apply contract rules, scope compliance, and QA checks.",
+            checkpoint="s6_validated",
+            guardrails=("manual_queue_routes", "risk_threshold", "immutability_precheck"),
+            inputs=("aggregated_totals", "document_references"),
+            outputs=("validated_billing",),
+        ),
+        StageDefinition(
+            name="publish",
+            description="Publish billing payload, emit billing signal, and persist audit log.",
+            checkpoint="section_6_completed",
+            guardrails=("durable_persistence", "signal_emission", "immutability"),
+            inputs=("validated_billing",),
+            outputs=("gateway_handoff",),
+        ),
+        StageDefinition(
+            name="monitor",
+            description="Handle revisions and manual adjustments within rerun limits.",
+            checkpoint="s6_revision_processed",
+            guardrails=("max_reruns", "revision_depth_cap", "fact_graph_consistency"),
+        ),
+    )
+    COMMUNICATION = CommunicationContract(
+        prepare_signal="section_3_logs.completed",
+        input_channels=(
+            "case_metadata",
+            "contract_terms",
+            "planning_manifest",
+            "surveillance_manifest",
+            "mileage_data",
+            "toolkit_results",
+            "document_references",
+            "manual_annotations",
+        ),
+        output_signal="section_6_billing.completed",
+        revision_signal="billing_revision_requested",
+    )
+    ORDER = OrderContract(
+        execution_after=("section_3_logs", "section_2_planning", "section_1_profile", "section_5_documents"),
+        export_after=("section_7", "section_fr", "section_finance"),
+        export_priority=60,
+    )
 
-        def __init__(self, gateway: Any, ecc: Optional[Any] = None) -> None:
-            super().__init__(gateway=gateway, ecc=ecc)
-            self._last_context: Dict[str, Any] = {}
-            self.timestamp_engine = TimestampAdjustmentEngine()
+    def __init__(self, gateway: Any, ecc: Optional[Any] = None) -> None:
+        super().__init__(gateway=gateway, ecc=ecc)
+        self._last_context: Dict[str, Any] = {}
+        self.timestamp_engine = TimestampAdjustmentEngine()
 
-        def load_inputs(self) -> Dict[str, Any]:
-            try:
-                self._guard_execution("input loading")
-                bundle = self.gateway.get_section_inputs("section_6") if self.gateway else {}
-                context = {
-                    "raw_inputs": bundle,
-                    "case_metadata": bundle.get("case_metadata", {}),
-                    "contract_terms": bundle.get("contract_terms", {}),
-                    "planning_manifest": bundle.get("planning_manifest", {}),
-                    "surveillance_manifest": bundle.get("surveillance_manifest", {}),
-                    "mileage_data": bundle.get("mileage_data", {}),
-                    "toolkit_results": bundle.get("toolkit_results", {}),
-                    "document_references": bundle.get("document_references", {}),
-                    "manual_annotations": bundle.get("manual_annotations", []),
-                }
-                sessions = context.get("surveillance_manifest", {}).get("sessions") or []
-                if isinstance(sessions, dict):
-                    sessions = list(sessions.values())
-                context["surveillance_manifest"]["sessions"] = sessions
-                context["basic_stats"] = {
-                    "session_count": len(sessions),
-                    "contract_total": context.get("contract_terms", {}).get("contract_total"),
-                }
-                self.logger.debug("Section 6 inputs loaded: %s", context["basic_stats"])
-                self._last_context = context
-                return context
-            except Exception as exc:
-                self.logger.exception("Failed to load inputs for %s: %s", self.SECTION_ID, exc)
-                return {}
-
-        def build_payload(self, context: Dict[str, Any]) -> Dict[str, Any]:
-            try:
-                self._guard_execution("payload building")
-                self._last_context = context
-                
-                # Get contract-based report configuration
-                contract_history = context.get("case_metadata", {}).get("contracts", [])
-                report_config = get_report_config(contract_history)
-                report_type = report_config["report_type"]
-                contract_config = report_config["config"]
-                
-                # Determine active components based on contract and ECC whitelist
-                ecc_whitelist = getattr(self.ecc, 'whitelist', []) if self.ecc else []
-                modules_config = contract_config.get("modules", {})
-                active_modules = modules_config.get("active", [])
-                
-                # Apply whitelist filtering
-                active_components = []
-                for module in active_modules:
-                    if not ecc_whitelist or module in ecc_whitelist:
-                        active_components.append(module)
-                
-                # Apply hide effects
-                hide_effects = contract_config.get("effects", {}).get("hide", [])
-                if "field_operations" in hide_effects:
-                    active_components = [comp for comp in active_components if "surveillance" not in comp.lower()]
-                
-                case_mode = self._determine_case_mode(context)
-                billing_data, meta = self._aggregate_billing(context, case_mode)
-                notes = self._compose_notes(case_mode, context, meta)
-                tool_results = self._run_inline_tools(context, billing_data)
-                qa_flags = set(meta.get("qa_flags", []))
-                qa_flags.update(tool_results.get("qa_flags", []))
-                
-                payload: Dict[str, Any] = {
-                    "section_heading": contract_config.get("label", self._case_heading(case_mode)),
-                    "report_type": report_type,
-                    "whitelist_applied": active_components,
-                    "contract_config": contract_config,
-                    "active_components": active_components,
-                    "contract_total": billing_data.get("contract_total"),
-                    "prep_cost": billing_data.get("prep_cost"),
-                    "subcontractor_cost": billing_data.get("subcontractor_cost"),
-                    "billing_data": billing_data,
-                    "report_meta": {"report_type": case_mode.capitalize()},
-                    "qa_flags": sorted(qa_flags),
-                    "notes": notes,
-                    "tool_results": tool_results,
-                    "manual_queue": meta.get("manual_queue", []),
-                }
-                return payload
-            except Exception as exc:
-                self.logger.exception("Failed to build payload for %s: %s", self.SECTION_ID, exc)
-                return {"error": str(exc)}
-
-        def publish(self, payload: Dict[str, Any]) -> Dict[str, Any]:
-            try:
-                self._guard_execution("publishing")
-                renderer = Section6BillingRenderer()
-                case_sources = self._build_renderer_sources(self._last_context)
-                model = renderer.render_model(payload, case_sources)
-                narrative_lines: List[str] = []
-                for block in model["render_tree"]:
-                    if block["type"] == "field":
-                        narrative_lines.append(f"{block['label']}: {block['value']}")
-                    elif block["type"] == "header":
-                        narrative_lines.append(block["text"])
-                    else:
-                        narrative_lines.append(str(block.get("text", "")))
-                narrative = "
-".join(filter(None, narrative_lines))
-                result = {
-                    "payload": payload,
-                    "manifest": model["manifest"],
-                    "render_tree": model["render_tree"],
-                    "narrative": narrative,
-                    "status": "completed",
-                }
-                if self.gateway:
-                    self.gateway.publish_section_result("section_6", result)
-                    self.gateway.emit("billing_ready", model["manifest"])
-                return {
-                    "status": "published",
-                    "narrative": narrative,
-                    "manifest": model["manifest"],
-                }
-            except Exception as exc:
-                self.logger.exception("Failed to publish for %s: %s", self.SECTION_ID, exc)
-                return {"error": str(exc)}
-
-        def _case_heading(self, case_mode: str) -> str:
-            if case_mode == "investigative":
-                return INVESTIGATIVE_HEADING
-            if case_mode == "field":
-                return FIELD_HEADING
-            if case_mode == "hybrid":
-                return HYBRID_HEADING
-            return FIELD_HEADING
-
-        def _determine_case_mode(self, context: Dict[str, Any]) -> str:
-            case_meta = context.get("case_metadata", {})
-            planning = context.get("planning_manifest", {})
-            report_type = (
-                case_meta.get("report_type")
-                or planning.get("report_type")
-                or case_meta.get("case_type")
-                or case_meta.get("contract_type")
-                or ""
-            ).lower()
-            mapping = {
-                "investigative": "investigative",
-                "investigation": "investigative",
-                "investigative_report": "investigative",
-                "field": "field",
-                "surveillance": "field",
-                "hybrid": "hybrid",
-                "mixed": "hybrid",
+    def load_inputs(self) -> Dict[str, Any]:
+        try:
+            self._guard_execution("input loading")
+            bundle = self.gateway.get_section_inputs("section_6") if self.gateway else {}
+            context = {
+                "raw_inputs": bundle,
+                "case_metadata": bundle.get("case_metadata", {}),
+                "contract_terms": bundle.get("contract_terms", {}),
+                "planning_manifest": bundle.get("planning_manifest", {}),
+                "surveillance_manifest": bundle.get("surveillance_manifest", {}),
+                "mileage_data": bundle.get("mileage_data", {}),
+                "toolkit_results": bundle.get("toolkit_results", {}),
+                "document_references": bundle.get("document_references", {}),
+                "manual_annotations": bundle.get("manual_annotations", []),
             }
-            if report_type in mapping:
-                return mapping[report_type]
-            contracts = context.get("contract_terms", {}).get("contracts") or []
-            has_field = any((c.get("type") or "").lower() in {"field", "surveillance"} for c in contracts)
-            has_investigative = any((c.get("type") or "").lower() in {"investigative", "analysis"} for c in contracts)
-            if has_field and has_investigative:
-                return "hybrid"
-            if has_field:
-                return "field"
-            if has_investigative:
-                return "investigative"
-            return "field"
+            sessions = context.get("surveillance_manifest", {}).get("sessions") or []
+            if isinstance(sessions, dict):
+                sessions = list(sessions.values())
+            context["surveillance_manifest"]["sessions"] = sessions
+            context["basic_stats"] = {
+                "session_count": len(sessions),
+                "contract_total": context.get("contract_terms", {}).get("contract_total"),
+            }
+            context = self._augment_with_bus_context(context)
+            self.logger.debug("Section 6 inputs loaded: %s", context["basic_stats"])
+            self._last_context = context
+            return context
+        except Exception as exc:
+            self.logger.exception("Failed to load inputs for %s: %s", self.SECTION_ID, exc)
+            return {}
 
-        def _aggregate_billing(self, context: Dict[str, Any], case_mode: str) -> Tuple[Dict[str, Any], Dict[str, Any]]:
-            contract_terms = context.get("contract_terms", {})
-            contract_total = float(contract_terms.get("contract_total") or contract_terms.get("contract_value") or 3000.0)
-            planning_budget = STANDARD_RATES['planning_budget']
-            hourly_rate = STANDARD_RATES['hourly_rate']
-            documentation_fee = STANDARD_RATES['documentation_fee']
-
-            planning_manifest = context.get("planning_manifest", {})
-            surveillance_manifest = context.get("surveillance_manifest", {})
-            toolkit_results = context.get("toolkit_results", {})
-            mileage_data = context.get("mileage_data", {})
-
-            sessions = surveillance_manifest.get("sessions") or []
-            total_minutes = 0.0
-            adjusted_sessions = []
+    def build_payload(self, context: Dict[str, Any]) -> Dict[str, Any]:
+        try:
+            self._guard_execution("payload building")
+            self._last_context = context
             
-            for session in sessions:
-                if not isinstance(session, dict):
-                    continue
+            # Get contract-based report configuration
+            contract_history = context.get("case_metadata", {}).get("contracts", [])
+            report_config = get_report_config(contract_history)
+            report_type = report_config["report_type"]
+            contract_config = report_config["config"]
+            
+            # Determine active components based on contract and ECC whitelist
+            ecc_whitelist = getattr(self.ecc, 'whitelist', []) if self.ecc else []
+            modules_config = contract_config.get("modules", {})
+            active_modules = modules_config.get("active", [])
+            
+            # Apply whitelist filtering
+            active_components = []
+            for module in active_modules:
+                if not ecc_whitelist or module in ecc_whitelist:
+                    active_components.append(module)
+            
+            # Apply hide effects
+            hide_effects = contract_config.get("effects", {}).get("hide", [])
+            if "field_operations" in hide_effects:
+                active_components = [comp for comp in active_components if "surveillance" not in comp.lower()]
+            
+            case_mode = self._determine_case_mode(context)
+            billing_data, meta = self._aggregate_billing(context, case_mode)
+            notes = self._compose_notes(case_mode, context, meta)
+            tool_results = self._run_inline_tools(context, billing_data)
+            qa_flags = set(meta.get("qa_flags", []))
+            qa_flags.update(tool_results.get("qa_flags", []))
+            
+            payload: Dict[str, Any] = {
+                "section_heading": contract_config.get("label", self._case_heading(case_mode)),
+                "report_type": report_type,
+                "whitelist_applied": active_components,
+                "contract_config": contract_config,
+                "active_components": active_components,
+                "contract_total": billing_data.get("contract_total"),
+                "prep_cost": billing_data.get("prep_cost"),
+                "subcontractor_cost": billing_data.get("subcontractor_cost"),
+                "billing_data": billing_data,
+                "report_meta": {"report_type": case_mode.capitalize()},
+                "qa_flags": sorted(qa_flags),
+                "notes": notes,
+                "tool_results": tool_results,
+                "manual_queue": meta.get("manual_queue", []),
+            }
+            if context.get("bus_state") is not None:
+                payload.setdefault("bus_state", context.get("bus_state"))
+            if context.get("section_evidence") is not None:
+                payload.setdefault("section_evidence", context.get("section_evidence"))
+            if context.get("section_needs") is not None:
+                payload.setdefault("section_needs", context.get("section_needs"))
+            if context.get("manifest_context") is not None:
+                payload.setdefault("manifest_context", context.get("manifest_context"))
+            section_bus_id = self.bus_section_id()
+            if section_bus_id:
+                payload.setdefault("section_id", section_bus_id)
+            case_id = context.get("case_id") or context.get("bus_state", {}).get("case_id")
+            if case_id:
+                payload.setdefault("case_id", case_id)
+            return payload
+        except Exception as exc:
+            self.logger.exception("Failed to build payload for %s: %s", self.SECTION_ID, exc)
+            return {"error": str(exc)}
+
+    def publish(self, payload: Dict[str, Any]) -> Dict[str, Any]:
+        self.ensure_section_available("publish")
+
+        narrative = None
+        manifest: Dict[str, Any] = {}
+
+        if Section6BillingRenderer:
+            try:
+                renderer = Section6BillingRenderer()
+                model = renderer.render_model(payload, case_sources={})
+                manifest = model.get("manifest", {})
+                narrative = self._render_narrative(model)
+            except Exception:
+                self.logger.exception("Section 6 renderer failed; falling back to summary")
+
+        if narrative is None:
+            narrative = self._fallback_narrative(payload)
+
+        section_bus_id = self.bus_section_id() or "section_6"
+        timestamp = datetime.now().isoformat()
+        summary = narrative.splitlines()[0] if narrative else ""
+        summary = summary[:320]
+
+        result = {
+            "section_id": section_bus_id,
+            "case_id": payload.get("case_id"),
+            "payload": payload,
+            "manifest": manifest or payload,
+            "narrative": narrative,
+            "summary": summary,
+            "metadata": {"published_at": timestamp, "section": self.SECTION_ID},
+            "source": "section_6_framework",
+        }
+
+        try:
+            if hasattr(self.gateway, "publish_section_result"):
+                self.gateway.publish_section_result(section_bus_id, result)
+            if hasattr(self.gateway, "emit"):
+                emit_payload = dict(result)
+                emit_payload.setdefault("published_at", timestamp)
+                if self.COMMUNICATION and self.COMMUNICATION.output_signal:
+                    self.gateway.emit(self.COMMUNICATION.output_signal, emit_payload)
+                self.gateway.emit("billing_ready", manifest or payload)
+        except Exception:
+            self.logger.exception("Gateway publish for section_6 failed")
+
+        if self.ecc:
+            try:
+                self.ecc.mark_complete(self.SECTION_ID)
+            except Exception:
+                self.logger.exception("ECC completion for section_6 failed")
+
+        return {"status": "published", "narrative": narrative, "manifest": manifest or payload}
+    def _case_heading(self, case_mode: str) -> str:
+        if case_mode == "investigative":
+            return INVESTIGATIVE_HEADING
+        if case_mode == "field":
+            return FIELD_HEADING
+        if case_mode == "hybrid":
+            return HYBRID_HEADING
+        return FIELD_HEADING
+
+    def _determine_case_mode(self, context: Dict[str, Any]) -> str:
+        case_meta = context.get("case_metadata", {})
+        planning = context.get("planning_manifest", {})
+        report_type = (
+            case_meta.get("report_type")
+            or planning.get("report_type")
+            or case_meta.get("case_type")
+            or case_meta.get("contract_type")
+            or ""
+        ).lower()
+        mapping = {
+            "investigative": "investigative",
+            "investigation": "investigative",
+            "investigative_report": "investigative",
+            "field": "field",
+            "surveillance": "field",
+            "hybrid": "hybrid",
+            "mixed": "hybrid",
+        }
+        if report_type in mapping:
+            return mapping[report_type]
+        contracts = context.get("contract_terms", {}).get("contracts") or []
+        has_field = any((c.get("type") or "").lower() in {"field", "surveillance"} for c in contracts)
+        has_investigative = any((c.get("type") or "").lower() in {"investigative", "analysis"} for c in contracts)
+        if has_field and has_investigative:
+            return "hybrid"
+        if has_field:
+            return "field"
+        if has_investigative:
+            return "investigative"
+        return "field"
+
+    def _aggregate_billing(self, context: Dict[str, Any], case_mode: str) -> Tuple[Dict[str, Any], Dict[str, Any]]:
+        contract_terms = context.get("contract_terms", {})
+        contract_total = float(contract_terms.get("contract_total") or contract_terms.get("contract_value") or 3000.0)
+        planning_budget = STANDARD_RATES['planning_budget']
+        hourly_rate = STANDARD_RATES['hourly_rate']
+        documentation_fee = STANDARD_RATES['documentation_fee']
+
+        planning_manifest = context.get("planning_manifest", {})
+        surveillance_manifest = context.get("surveillance_manifest", {})
+        toolkit_results = context.get("toolkit_results", {})
+        mileage_data = context.get("mileage_data", {})
+
+        sessions = surveillance_manifest.get("sessions") or []
+        total_minutes = 0.0
+        adjusted_sessions = []
+        
+        for session in sessions:
+            if not isinstance(session, dict):
+                continue
+            
+            # Convert timestamps to 24hr format and apply travel buffer
+            start_time = session.get("start_time") or session.get("time_in")
+            end_time = session.get("end_time") or session.get("time_out")
+            
+            if start_time and end_time:
+                # Apply +/- 30 minute travel buffer
+                adjusted_times = self.timestamp_engine.apply_travel_buffer(
+                    start_time, end_time, "surveillance"
+                )
                 
-                # Convert timestamps to 24hr format and apply travel buffer
-                start_time = session.get("start_time") or session.get("time_in")
-                end_time = session.get("end_time") or session.get("time_out")
-                
-                if start_time and end_time:
-                    # Apply +/- 30 minute travel buffer
-                    adjusted_times = self.timestamp_engine.apply_travel_buffer(
-                        start_time, end_time, "surveillance"
-                    )
+                if adjusted_times.get("adjustment_applied"):
+                    # Use adjusted times for billing calculation
+                    adjusted_start = adjusted_times["start_time"]
+                    adjusted_end = adjusted_times["end_time"]
                     
-                    if adjusted_times.get("adjustment_applied"):
-                        # Use adjusted times for billing calculation
-                        adjusted_start = adjusted_times["start_time"]
-                        adjusted_end = adjusted_times["end_time"]
-                        
-                        # Calculate duration using adjusted times
-                        start_dt = datetime.strptime(adjusted_start, "%H:%M")
-                        end_dt = datetime.strptime(adjusted_end, "%H:%M")
-                        
-                        # Handle overnight sessions
-                        if end_dt < start_dt:
-                            end_dt += timedelta(days=1)
-                        
-                        session_minutes = (end_dt - start_dt).total_seconds() / 60
-                        total_minutes += session_minutes
-                        
-                        # Store adjusted session data
-                        adjusted_session = session.copy()
-                        adjusted_session.update({
-                            "original_start_time": start_time,
-                            "original_end_time": end_time,
-                            "billed_start_time": adjusted_start,
-                            "billed_end_time": adjusted_end,
-                            "travel_buffer_applied": True
-                        })
-                        adjusted_sessions.append(adjusted_session)
-                    else:
-                        # Fallback to original calculation if adjustment fails
-                        duration = (
-                            session.get("billed_minutes")
-                            or session.get("duration_minutes")
-                            or session.get("minutes")
-                        )
-                        if duration is None and session.get("billed_hours") is not None:
-                            duration = float(session.get("billed_hours")) * 60
-                        if isinstance(duration, (int, float)):
-                            total_minutes += float(duration)
-                        
-                        adjusted_sessions.append(session)
+                    # Calculate duration using adjusted times
+                    start_dt = datetime.strptime(adjusted_start, "%H:%M")
+                    end_dt = datetime.strptime(adjusted_end, "%H:%M")
+                    
+                    # Handle overnight sessions
+                    if end_dt < start_dt:
+                        end_dt += timedelta(days=1)
+                    
+                    session_minutes = (end_dt - start_dt).total_seconds() / 60
+                    total_minutes += session_minutes
+                    
+                    # Store adjusted session data
+                    adjusted_session = session.copy()
+                    adjusted_session.update({
+                        "original_start_time": start_time,
+                        "original_end_time": end_time,
+                        "billed_start_time": adjusted_start,
+                        "billed_end_time": adjusted_end,
+                        "travel_buffer_applied": True
+                    })
+                    adjusted_sessions.append(adjusted_session)
                 else:
-                    # Use existing duration calculation
+                    # Fallback to original calculation if adjustment fails
                     duration = (
                         session.get("billed_minutes")
                         or session.get("duration_minutes")
@@ -1638,225 +1712,236 @@ STANDARD_RATES = {
                         total_minutes += float(duration)
                     
                     adjusted_sessions.append(session)
-            
-            field_hours = round(total_minutes / 60.0, 2)
-
-            authorized_hours = float(planning_manifest.get("authorized_hours") or planning_manifest.get("max_field_hours") or 0)
-            qa_flags: List[str] = []
-            manual_queue: List[str] = []
-            if authorized_hours and field_hours > authorized_hours + 0.5:
-                qa_flags.append("field_hours_exceed_scope")
-                manual_queue.append("Review field hour overage")
-
-            subcontractor_cost = float(toolkit_results.get("subcontractor_cost") or toolkit_results.get("subcontractor_totals") or 0.0)
-            prep_cost = float(toolkit_results.get("prep_cost") or planning_manifest.get("planning_cost") or planning_budget)
-            documentation_cost = documentation_fee
-
-            mileage_miles = float(mileage_data.get("total_miles") or 0.0)
-            mileage_cost_internal = mileage_miles * STANDARD_RATES['mileage_rate']
-
-            surveillance_cost = field_hours * hourly_rate
-
-            billing_sections: List[Dict[str, Any]] = []
-            if case_mode == "investigative":
-                billing_sections.append({
-                    "category": "Investigative Services",
-                    "amount": prep_cost,
-                    "description": "Investigative preparation and research activities."
-                })
-                billing_sections.append({
-                    "category": "Documentation & Compliance",
-                    "amount": documentation_cost,
-                    "description": "Compilation of supporting documents and compliance review."
-                })
-            elif case_mode == "field":
-                billing_sections.append({
-                    "category": "Surveillance Operations",
-                    "amount": surveillance_cost,
-                    "description": f"Billed field hours ({field_hours:.2f} @ ${hourly_rate:.2f}/hr)."
-                })
-                billing_sections.append({
-                    "category": "Planning Allocation",
-                    "amount": prep_cost,
-                    "description": "Surveillance planning allocation per contract."
-                })
-                billing_sections.append({
-                    "category": "Documentation Fee",
-                    "amount": documentation_cost,
-                    "description": "Report documentation and delivery fee."
-                })
-            else:  # hybrid
-                billing_sections.append({
-                    "category": "Investigative Services",
-                    "amount": prep_cost,
-                    "description": "Investigative phase charges as authorized."
-                })
-                billing_sections.append({
-                    "category": "Surveillance Operations",
-                    "amount": surveillance_cost,
-                    "description": f"Field operations ({field_hours:.2f} hrs @ ${hourly_rate:.2f}/hr)."
-                })
-                billing_sections.append({
-                    "category": "Documentation Fee",
-                    "amount": documentation_cost,
-                    "description": "Final documentation and compliance review."
-                })
-
-            if subcontractor_cost:
-                billing_sections.append({
-                    "category": "Subcontractor Services",
-                    "amount": subcontractor_cost,
-                    "description": "Approved subcontractor billing passed through to client."
-                })
-
-            if mileage_cost_internal:
-                billing_sections.append({
-                    "category": "Mileage (Internal)",
-                    "amount": 0.0,
-                    "description": "Mileage tracked internally; waived as professional courtesy."
-                })
-
-            remaining_ops_budget = contract_total - prep_cost - subcontractor_cost
-            total_costs = prep_cost + subcontractor_cost
-            internal_margin = remaining_ops_budget - total_costs if remaining_ops_budget > total_costs else 0.0
-
-            # Verify timestamp consistency between sections
-            section3_times = context.get("section3_times", [])
-            section4_times = context.get("section4_times", [])
-            timestamp_verification = self.timestamp_engine.verify_timestamp_consistency(
-                section3_times, section4_times
-            )
-            
-            billing_data = {
-                "contract_total": contract_total,
-                "prep_cost": prep_cost,
-                "subcontractor_cost": subcontractor_cost,
-                "remaining_ops_budget": remaining_ops_budget,
-                "total_costs": total_costs,
-                "internal_margin": internal_margin,
-                "billing_sections": billing_sections,
-                "field_hours": field_hours,
-                "authorized_hours": authorized_hours,
-                "documentation_fee": documentation_cost,
-                "mileage_miles": mileage_miles,
-                "mileage_statement": "Mileage was tracked internally and waived as a professional courtesy.",
-                "adjusted_sessions": adjusted_sessions,
-                "timestamp_verification": timestamp_verification,
-                "travel_buffer_applied": any(session.get("travel_buffer_applied") for session in adjusted_sessions),
-            }
-
-            meta = {
-                "qa_flags": qa_flags,
-                "manual_queue": manual_queue,
-            }
-            return billing_data, meta
-
-        def _compose_notes(self, case_mode: str, context: Dict[str, Any], meta: Dict[str, Any]) -> str:
-            notes: List[str] = []
-            contract_terms = context.get("contract_terms", {})
-            if contract_terms.get("po_number"):
-                notes.append(f"PO Reference: {contract_terms['po_number']}")
-            if meta.get("manual_queue"):
-                notes.append("Manual review required for one or more billing items.")
-            manual_annotations = context.get("manual_annotations", [])
-            notes.extend(str(entry).strip() for entry in manual_annotations if str(entry).strip())
-            if case_mode == "investigative":
-                notes.append("Billing reflects investigative services only; no field operations billed.")
-            elif case_mode == "field":
-                notes.append("Billing reflects field operations verified against surveillance logs.")
             else:
-                notes.append("Hybrid billing combines investigative and field operations in accordance with contract scope.")
-            if not notes:
-                return "Billing generated with no additional remarks."
-            return "
-".join(dict.fromkeys(notes))
+                # Use existing duration calculation
+                duration = (
+                    session.get("billed_minutes")
+                    or session.get("duration_minutes")
+                    or session.get("minutes")
+                )
+                if duration is None and session.get("billed_hours") is not None:
+                    duration = float(session.get("billed_hours")) * 60
+                if isinstance(duration, (int, float)):
+                    total_minutes += float(duration)
+                
+                adjusted_sessions.append(session)
+        
+        field_hours = round(total_minutes / 60.0, 2)
 
-        def _run_inline_tools(self, context: Dict[str, Any], billing_data: Dict[str, Any]) -> Dict[str, Any]:
-            toolkit_results = context.get("toolkit_results", {})
-            mileage_audit = MileageToolV2.audit_mileage()
-            continuity_notes = toolkit_results.get("continuity") or []
-            qa_flags: List[str] = []
-            if isinstance(continuity_notes, str):
-                continuity_notes = [continuity_notes]
-            reverse_tool = ReverseContinuityTool()
-            planning_summary = json.dumps(context.get("planning_manifest", {}), default=str)
-            surveillance_summary = json.dumps(context.get("surveillance_manifest", {}), default=str)
-            text_blob = "\n".join([
-                f"Contract Total: {billing_data['contract_total']}",
-                f"Field Hours: {billing_data['field_hours']}",
-            ])
-            reverse_ok, reverse_log = reverse_tool.run_validation(
-                text_blob,
-                [planning_summary],
-                [surveillance_summary],
-            )
-            if not reverse_ok:
-                qa_flags.append("reverse_continuity_manual_review")
-            if mileage_audit.get("status") == "COMPLETED":
-                for entry in mileage_audit.get("entries", []):
-                    if entry.get("issues"):
-                        qa_flags.append("mileage_issue_detected")
-                        break
-            metadata_zip = context.get("contract_terms", {}).get("metadata_zip")
-            metadata_result = (
-                MetadataToolV5.process_zip(metadata_zip, context.get("metadata_output_dir", "./metadata_out"))
-                if metadata_zip
-                else {"status": "SKIPPED"}
-            )
-            if metadata_result.get("status") == "ERROR":
-                qa_flags.append("metadata_extraction_failure")
-            # Add timestamp verification results
-            timestamp_verification = billing_data.get("timestamp_verification", {})
-            if not timestamp_verification.get("consistent", True):
-                qa_flags.append("timestamp_inconsistency_detected")
-            
-            # Add adjustment log
-            adjustment_log = self.timestamp_engine.get_adjustment_log()
-            
-            return {
-                "reverse_continuity": {"ok": bool(reverse_ok), "log": reverse_log},
-                "mileage_audit": mileage_audit,
-                "metadata_audit": metadata_result,
-                "timestamp_verification": timestamp_verification,
-                "adjustment_log": adjustment_log,
-                "qa_flags": qa_flags,
-            }
+        authorized_hours = float(planning_manifest.get("authorized_hours") or planning_manifest.get("max_field_hours") or 0)
+        qa_flags: List[str] = []
+        manual_queue: List[str] = []
+        if authorized_hours and field_hours > authorized_hours + 0.5:
+            qa_flags.append("field_hours_exceed_scope")
+            manual_queue.append("Review field hour overage")
 
-        def _build_renderer_sources(self, context: Dict[str, Any]) -> Dict[str, Dict[str, Any]]:
-            return {
-                "report_type": context.get("case_metadata", {}).get("report_type"),
-            }
+        subcontractor_cost = float(toolkit_results.get("subcontractor_cost") or toolkit_results.get("subcontractor_totals") or 0.0)
+        prep_cost = float(toolkit_results.get("prep_cost") or planning_manifest.get("planning_cost") or planning_budget)
+        documentation_cost = documentation_fee
 
-        def _safe_join(self, items: Iterable[Any], default: str, separator: str = "
-") -> str:
-            values = [str(item).strip() for item in items if str(item).strip()]
-            if not values:
-                return default
-            return separator.join(values)
+        mileage_miles = float(mileage_data.get("total_miles") or 0.0)
+        mileage_cost_internal = mileage_miles * STANDARD_RATES['mileage_rate']
 
-        def _first_nonempty(self, *candidates: Any) -> Optional[str]:
-            for candidate in candidates:
-                if candidate is None:
-                    continue
-                text = str(candidate).strip()
-                if text:
-                    return text
-            return None
+        surveillance_cost = field_hours * hourly_rate
+
+        billing_sections: List[Dict[str, Any]] = []
+        if case_mode == "investigative":
+            billing_sections.append({
+                "category": "Investigative Services",
+                "amount": prep_cost,
+                "description": "Investigative preparation and research activities."
+            })
+            billing_sections.append({
+                "category": "Documentation & Compliance",
+                "amount": documentation_cost,
+                "description": "Compilation of supporting documents and compliance review."
+            })
+        elif case_mode == "field":
+            billing_sections.append({
+                "category": "Surveillance Operations",
+                "amount": surveillance_cost,
+                "description": f"Billed field hours ({field_hours:.2f} @ ${hourly_rate:.2f}/hr)."
+            })
+            billing_sections.append({
+                "category": "Planning Allocation",
+                "amount": prep_cost,
+                "description": "Surveillance planning allocation per contract."
+            })
+            billing_sections.append({
+                "category": "Documentation Fee",
+                "amount": documentation_cost,
+                "description": "Report documentation and delivery fee."
+            })
+        else:  # hybrid
+            billing_sections.append({
+                "category": "Investigative Services",
+                "amount": prep_cost,
+                "description": "Investigative phase charges as authorized."
+            })
+            billing_sections.append({
+                "category": "Surveillance Operations",
+                "amount": surveillance_cost,
+                "description": f"Field operations ({field_hours:.2f} hrs @ ${hourly_rate:.2f}/hr)."
+            })
+            billing_sections.append({
+                "category": "Documentation Fee",
+                "amount": documentation_cost,
+                "description": "Final documentation and compliance review."
+            })
+
+        if subcontractor_cost:
+            billing_sections.append({
+                "category": "Subcontractor Services",
+                "amount": subcontractor_cost,
+                "description": "Approved subcontractor billing passed through to client."
+            })
+
+        if mileage_cost_internal:
+            billing_sections.append({
+                "category": "Mileage (Internal)",
+                "amount": 0.0,
+                "description": "Mileage tracked internally; waived as professional courtesy."
+            })
+
+        remaining_ops_budget = contract_total - prep_cost - subcontractor_cost
+        total_costs = prep_cost + subcontractor_cost
+        internal_margin = remaining_ops_budget - total_costs if remaining_ops_budget > total_costs else 0.0
+
+        # Verify timestamp consistency between sections
+        section3_times = context.get("section3_times", [])
+        section4_times = context.get("section4_times", [])
+        timestamp_verification = self.timestamp_engine.verify_timestamp_consistency(
+            section3_times, section4_times
+        )
+        
+        billing_data = {
+            "contract_total": contract_total,
+            "prep_cost": prep_cost,
+            "subcontractor_cost": subcontractor_cost,
+            "remaining_ops_budget": remaining_ops_budget,
+            "total_costs": total_costs,
+            "internal_margin": internal_margin,
+            "billing_sections": billing_sections,
+            "field_hours": field_hours,
+            "authorized_hours": authorized_hours,
+            "documentation_fee": documentation_cost,
+            "mileage_miles": mileage_miles,
+            "mileage_statement": "Mileage was tracked internally and waived as a professional courtesy.",
+            "adjusted_sessions": adjusted_sessions,
+            "timestamp_verification": timestamp_verification,
+            "travel_buffer_applied": any(session.get("travel_buffer_applied") for session in adjusted_sessions),
+        }
+
+        meta = {
+            "qa_flags": qa_flags,
+            "manual_queue": manual_queue,
+        }
+        return billing_data, meta
+
+    def _compose_notes(self, case_mode: str, context: Dict[str, Any], meta: Dict[str, Any]) -> str:
+        notes: List[str] = []
+        contract_terms = context.get("contract_terms", {})
+        if contract_terms.get("po_number"):
+            notes.append(f"PO Reference: {contract_terms['po_number']}")
+        if meta.get("manual_queue"):
+            notes.append("Manual review required for one or more billing items.")
+        manual_annotations = context.get("manual_annotations", [])
+        notes.extend(str(entry).strip() for entry in manual_annotations if str(entry).strip())
+        if case_mode == "investigative":
+            notes.append("Billing reflects investigative services only; no field operations billed.")
+        elif case_mode == "field":
+            notes.append("Billing reflects field operations verified against surveillance logs.")
+        else:
+            notes.append("Hybrid billing combines investigative and field operations in accordance with contract scope.")
+        if not notes:
+            return "Billing generated with no additional remarks."
+        return "\n".join(dict.fromkeys(notes))
+
+    def _run_inline_tools(self, context: Dict[str, Any], billing_data: Dict[str, Any]) -> Dict[str, Any]:
+        toolkit_results = context.get("toolkit_results", {})
+        mileage_audit = MileageToolV2.audit_mileage()
+        continuity_notes = toolkit_results.get("continuity") or []
+        qa_flags: List[str] = []
+        if isinstance(continuity_notes, str):
+            continuity_notes = [continuity_notes]
+        reverse_tool = ReverseContinuityTool()
+        planning_summary = json.dumps(context.get("planning_manifest", {}), default=str)
+        surveillance_summary = json.dumps(context.get("surveillance_manifest", {}), default=str)
+        text_blob = "\n".join([
+            f"Contract Total: {billing_data['contract_total']}",
+            f"Field Hours: {billing_data['field_hours']}",
+        ])
+        reverse_ok, reverse_log = reverse_tool.run_validation(
+            text_blob,
+            [planning_summary],
+            [surveillance_summary],
+        )
+        if not reverse_ok:
+            qa_flags.append("reverse_continuity_manual_review")
+        if mileage_audit.get("status") == "COMPLETED":
+            for entry in mileage_audit.get("entries", []):
+                if entry.get("issues"):
+                    qa_flags.append("mileage_issue_detected")
+                    break
+        metadata_zip = context.get("contract_terms", {}).get("metadata_zip")
+        metadata_result = (
+            MetadataToolV5.process_zip(metadata_zip, context.get("metadata_output_dir", "./metadata_out"))
+            if metadata_zip
+            else {"status": "SKIPPED"}
+        )
+        if metadata_result.get("status") == "ERROR":
+            qa_flags.append("metadata_extraction_failure")
+        # Add timestamp verification results
+        timestamp_verification = billing_data.get("timestamp_verification", {})
+        if not timestamp_verification.get("consistent", True):
+            qa_flags.append("timestamp_inconsistency_detected")
+        
+        # Add adjustment log
+        adjustment_log = self.timestamp_engine.get_adjustment_log()
+        
+        return {
+            "reverse_continuity": {"ok": bool(reverse_ok), "log": reverse_log},
+            "mileage_audit": mileage_audit,
+            "metadata_audit": metadata_result,
+            "timestamp_verification": timestamp_verification,
+            "adjustment_log": adjustment_log,
+            "qa_flags": qa_flags,
+        }
+
+    def _build_renderer_sources(self, context: Dict[str, Any]) -> Dict[str, Dict[str, Any]]:
+        return {
+            "report_type": context.get("case_metadata", {}).get("report_type"),
+        }
+
+    def _safe_join(self, items: Iterable[Any], default: str, separator: str = "\n") -> str:
+        values = [str(item).strip() for item in items if str(item).strip()]
+        if not values:
+            return default
+        return separator.join(values)
+
+    def _first_nonempty(self, *candidates: Any) -> Optional[str]:
+        for candidate in candidates:
+            if candidate is None:
+                continue
+            text = str(candidate).strip()
+            if text:
+                return text
+        return None
 
 
 __all__ = [
-    "Section6Framework",
-    "StageDefinition",
-    "CommunicationContract",
-    "FactGraphContract",
-    "PersistenceContract",
-    "OrderContract",
-    "BodyTextSwitchboard",
-    "ToolInjectionLogic",
-    "TimestampAdjustmentEngine",
-    "get_report_config",
-    "extract_text_from_pdf",
-    "extract_text_from_image",
-    "easyocr_text",
+"Section6Framework",
+"StageDefinition",
+"CommunicationContract",
+"FactGraphContract",
+"PersistenceContract",
+"OrderContract",
+"BodyTextSwitchboard",
+"ToolInjectionLogic",
+"TimestampAdjustmentEngine",
+"get_report_config",
+"extract_text_from_pdf",
+"extract_text_from_image",
+"easyocr_text",
 ]
 

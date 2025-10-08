@@ -1,0 +1,119 @@
+{
+  "test_plan": {
+    "system_name": "Universal Communicator Subsystem",
+    "system_address": "Bus-1.1",
+    "parent_system": "Bus Core (Bus-1)",
+    "test_type": "smoke_test",
+    "version": "1.0",
+    "created": "2025-10-05",
+    "description": "Basic functionality validation for Universal Communicator subsystem",
+    "test_data_location": "./test_data/",
+    "expected_results_location": "./expected_results/",
+    "test_vectors": [
+      {
+        "test_id": "UC_SMOKE_001",
+        "test_name": "Subsystem Initialization",
+        "description": "Verify Universal Communicator can initialize independently",
+        "test_method": "initialize_universal_communicator",
+        "input_parameters": {
+          "communication_protocol": "universal",
+          "radio_codes": ["10-4", "10-6", "10-8", "10-9", "10-10"]
+        },
+        "expected_result": {
+          "status": "SUCCESS",
+          "universal_communicator_initialized": true,
+          "communication_protocol_active": true,
+          "radio_codes_loaded": true
+        },
+        "timeout_seconds": 3,
+        "retry_count": 3,
+        "critical": true
+      },
+      {
+        "test_id": "UC_SMOKE_002",
+        "test_name": "Signal Transmission",
+        "description": "Test basic signal transmission functionality",
+        "test_method": "transmit_signal",
+        "input_parameters": {
+          "signal_data": {
+            "target_address": "1-1",
+            "radio_code": "10-4",
+            "message": "Test signal transmission",
+            "payload": {"test": "data"}
+          }
+        },
+        "expected_result": {
+          "status": "SUCCESS",
+          "signal_transmitted": true,
+          "target_reached": true,
+          "radio_code_sent": true,
+          "payload_delivered": true
+        },
+        "timeout_seconds": 5,
+        "retry_count": 2,
+        "critical": true
+      },
+      {
+        "test_id": "UC_SMOKE_003",
+        "test_name": "Radio Code Validation",
+        "description": "Test radio code validation and processing",
+        "test_method": "validate_radio_codes",
+        "input_parameters": {
+          "radio_code_tests": [
+            {"code": "10-4", "expected_meaning": "acknowledged"},
+            {"code": "10-6", "expected_meaning": "evidence_received"},
+            {"code": "10-8", "expected_meaning": "operation_complete"},
+            {"code": "10-9", "expected_meaning": "repeat_message"},
+            {"code": "10-10", "expected_meaning": "transmission_complete"}
+          ]
+        },
+        "expected_result": {
+          "status": "SUCCESS",
+          "all_radio_codes_validated": true,
+          "meanings_correct": true,
+          "code_processing_working": true
+        },
+        "timeout_seconds": 3,
+        "retry_count": 2,
+        "critical": true
+      },
+      {
+        "test_id": "UC_SMOKE_004",
+        "test_name": "Communication Logging",
+        "description": "Test communication logging functionality",
+        "test_method": "test_communication_logging",
+        "input_parameters": {
+          "logging_test": {
+            "log_entries": 5,
+            "log_types": ["signal_transmission", "radio_code", "payload_data"]
+          }
+        },
+        "expected_result": {
+          "status": "SUCCESS",
+          "communication_logged": true,
+          "log_entries_created": true,
+          "log_format_valid": true,
+          "log_retrieval_working": true
+        },
+        "timeout_seconds": 3,
+        "retry_count": 2,
+        "critical": false
+      }
+    ],
+    "performance_metrics": {
+      "initialization_time_max_ms": 3000,
+      "signal_transmission_time_max_ms": 5000,
+      "radio_code_validation_time_max_ms": 3000,
+      "communication_logging_time_max_ms": 3000,
+      "memory_usage_max_mb": 50,
+      "cpu_usage_max_percent": 10
+    },
+    "test_environment": {
+      "required_files": [],
+      "required_directories": [
+        "./test_data/",
+        "./expected_results/"
+      ]
+    }
+  }
+}

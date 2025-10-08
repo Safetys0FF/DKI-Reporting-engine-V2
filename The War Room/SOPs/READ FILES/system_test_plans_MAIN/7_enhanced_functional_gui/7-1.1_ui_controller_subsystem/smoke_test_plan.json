@@ -1,0 +1,120 @@
+{
+  "test_plan": {
+    "system_name": "UI Controller Subsystem",
+    "system_address": "7-1.1",
+    "parent_system": "Enhanced Functional GUI (7-1)",
+    "test_type": "smoke_test",
+    "version": "1.0",
+    "created": "2025-10-05",
+    "description": "Basic functionality validation for UI Controller subsystem",
+    "test_data_location": "./test_data/",
+    "expected_results_location": "./expected_results/",
+    "test_vectors": [
+      {
+        "test_id": "UIC_SMOKE_001",
+        "test_name": "Subsystem Initialization",
+        "description": "Verify UI Controller can initialize independently",
+        "test_method": "initialize_ui_controller",
+        "input_parameters": {
+          "controller_modes": ["window_management", "event_handling", "user_input", "display_control"],
+          "ui_framework": "tkinter",
+          "display_resolution": "1920x1080"
+        },
+        "expected_result": {
+          "status": "SUCCESS",
+          "ui_controller_initialized": true,
+          "controller_modes_configured": true,
+          "ui_framework_loaded": true,
+          "display_resolution_set": true
+        },
+        "timeout_seconds": 8,
+        "retry_count": 3,
+        "critical": true
+      },
+      {
+        "test_id": "UIC_SMOKE_002",
+        "test_name": "Window Management",
+        "description": "Test window management functionality",
+        "test_method": "manage_windows",
+        "input_parameters": {
+          "window_data": {
+            "window_operations": ["create", "show", "hide", "close"],
+            "window_type": "main_window",
+            "window_properties": {"title": "Test Window", "size": "800x600"}
+          }
+        },
+        "expected_result": {
+          "status": "SUCCESS",
+          "windows_managed": true,
+          "window_operations_executed": true,
+          "window_type_created": true,
+          "window_properties_applied": true
+        },
+        "timeout_seconds": 5,
+        "retry_count": 2,
+        "critical": true
+      },
+      {
+        "test_id": "UIC_SMOKE_003",
+        "test_name": "Event Handling",
+        "description": "Test event handling functionality",
+        "test_method": "handle_events",
+        "input_parameters": {
+          "event_data": {
+            "event_types": ["button_click", "key_press", "mouse_move", "window_resize"],
+            "event_routing": "centralized",
+            "event_processing": "asynchronous"
+          }
+        },
+        "expected_result": {
+          "status": "SUCCESS",
+          "events_handled": true,
+          "event_types_processed": true,
+          "event_routing_functional": true,
+          "event_processing_effective": true
+        },
+        "timeout_seconds": 5,
+        "retry_count": 2,
+        "critical": true
+      },
+      {
+        "test_id": "UIC_SMOKE_004",
+        "test_name": "User Input Processing",
+        "description": "Test user input processing functionality",
+        "test_method": "process_user_input",
+        "input_parameters": {
+          "input_data": {
+            "input_types": ["keyboard", "mouse", "touch", "voice"],
+            "input_validation": true,
+            "input_processing": "real_time"
+          }
+        },
+        "expected_result": {
+          "status": "SUCCESS",
+          "user_input_processed": true,
+          "input_types_supported": true,
+          "input_validation_functional": true,
+          "input_processing_real_time": true
+        },
+        "timeout_seconds": 3,
+        "retry_count": 2,
+        "critical": false
+      }
+    ],
+    "performance_metrics": {
+      "initialization_time_max_ms": 8000,
+      "window_management_time_max_ms": 5000,
+      "event_handling_time_max_ms": 5000,
+      "user_input_processing_time_max_ms": 3000,
+      "memory_usage_max_mb": 100,
+      "cpu_usage_max_percent": 20
+    },
+    "test_environment": {
+      "required_files": [],
+      "required_directories": [
+        "./test_data/",
+        "./expected_results/"
+      ]
+    }
+  }
+}

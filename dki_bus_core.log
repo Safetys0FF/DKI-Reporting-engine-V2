@@ -5,3 +5,221 @@
 2025-09-30 21:33:44,236 - bus_core - INFO - [BUS] Signal 'evidence.stored' bound to _handle_evidence_stored_signal
 2025-09-30 21:33:44,236 - bus_core - INFO - [BUS] Signal 'evidence_locker.call_out' bound to _handle_evidence_call_out_signal
 2025-09-30 21:33:44,236 - bus_core - INFO - [BUS] Signal 'evidence_locker.accept' bound to _handle_evidence_accept_signal
+2025-10-02 22:52:24,939 - bus_core - INFO - Central Command Bus initialized
+2025-10-02 22:52:24,942 - bus_core - INFO - [BUS] Signal 'case_create' bound to _handle_case_create_signal
+2025-10-02 22:52:24,942 - bus_core - INFO - [BUS] Signal 'files_add' bound to _handle_files_add_signal
+2025-10-02 22:52:24,942 - bus_core - INFO - [BUS] Signal 'evidence.new' bound to _handle_evidence_new_signal
+2025-10-02 22:52:24,942 - bus_core - INFO - [BUS] Signal 'evidence.annotated' bound to _handle_evidence_annotated_signal
+2025-10-02 22:52:24,942 - bus_core - INFO - [BUS] Signal 'evidence.request' bound to _handle_evidence_request_signal
+2025-10-02 22:52:24,942 - bus_core - INFO - [BUS] Signal 'evidence.deliver' bound to _handle_evidence_deliver_signal
+2025-10-02 22:52:24,942 - bus_core - INFO - [BUS] Signal 'evidence.updated' bound to _handle_evidence_updated_signal
+2025-10-02 22:52:24,942 - bus_core - INFO - [BUS] Signal 'evidence.tagged' bound to _handle_evidence_tagged_signal
+2025-10-02 22:52:24,942 - bus_core - INFO - [BUS] Signal 'evidence.stored' bound to _handle_evidence_stored_signal
+2025-10-02 22:52:24,942 - bus_core - INFO - [BUS] Signal 'evidence_locker.call_out' bound to _handle_evidence_call_out_signal
+2025-10-02 22:52:24,942 - bus_core - INFO - [BUS] Signal 'evidence_locker.accept' bound to _handle_evidence_accept_signal
+2025-10-02 22:52:24,942 - bus_core - INFO - [BUS] Signal 'section.needs' bound to _handle_section_needs_signal
+2025-10-02 22:52:24,942 - bus_core - INFO - [BUS] Signal 'case.snapshot' bound to _handle_case_snapshot_signal
+2025-10-02 22:52:24,942 - bus_core - INFO - [BUS] Signal 'gateway.status' bound to _handle_gateway_status_signal
+2025-10-02 22:52:24,942 - bus_core - INFO - [BUS] Signal 'locker.status' bound to _handle_locker_status_signal
+2025-10-02 22:52:24,943 - bus_core - INFO - [BUS] Signal 'mission.status' bound to _handle_mission_status_signal
+2025-10-02 22:52:24,943 - bus_core - INFO - [BUS] Signal 'narrative.assembled' bound to _handle_narrative_assembled_signal
+2025-10-02 22:52:24,943 - bus_core - INFO - [BUS] Signal 'narrative.assemble' bound to _handle_narrative_assemble_signal
+2025-10-02 22:52:24,943 - bus_core - INFO - [BUS] Signal 'narrative.validate' bound to _handle_narrative_validate_signal
+2025-10-02 22:52:24,943 - bus_core - INFO - [BUS] Signal 'narrative.queue' bound to _handle_narrative_queue_signal
+2025-10-02 22:52:24,943 - bus_core - INFO - [BUS] Signal 'gateway.narrative_request' bound to _handle_gateway_narrative_request
+2025-10-02 22:52:24,943 - bus_core - INFO - [BUS] Signal 'ecc.narrative_ready' bound to _handle_ecc_narrative_ready
+2025-10-02 22:52:24,943 - bus_core - INFO - [BUS] Signal 'evidence_locker.narrative_data' bound to _handle_evidence_locker_narrative_data
+2025-10-02 22:52:24,943 - bus_core - INFO - [BUS] Signal 'evidence.updated' bound to _handle_evidence_updated_signal
+2025-10-02 22:52:24,943 - bus_core - INFO - [BUS] Signal 'case.snapshot' bound to _handle_case_snapshot_signal
+2025-10-02 22:52:24,943 - bus_core - INFO - [BUS] Signal 'section.data.updated' bound to _handle_section_data_updated_signal
+2025-10-02 22:52:24,943 - bus_core - INFO - [BUS] Signal 'gateway.section.complete' bound to _handle_gateway_section_complete_signal
+2025-10-02 22:52:24,943 - narrative_assembler - INFO - Bus registration: Narrative Assembler registered with Central Command Bus
+2025-10-02 22:52:24,943 - bus_core - INFO - [BUS] Signal 'narrative.generate' bound to handle_generate
+2025-10-02 22:52:24,943 - narrative_assembler - INFO - NarrativeAssembler initialized as Bootstrap Component
+2025-10-02 22:52:24,944 - tools.template_system - INFO - Template system initialized
+2025-10-02 22:52:24,944 - document_processor - INFO - Document Processor initialized
+2025-10-02 22:52:42,927 - document_processor - INFO - OCR (Tesseract): Available
+2025-10-02 22:52:42,928 - document_processor - INFO - PDF Processing: Available
+2025-10-02 22:52:42,928 - document_processor - INFO - Video Processing: Missing
+2025-10-02 22:52:42,928 - document_processor - INFO - Document Processing: Available
+2025-10-02 22:52:42,928 - document_processor - INFO - EXIF Metadata: Available
+2025-10-02 22:52:42,928 - document_processor - INFO - Document Processor initialized
+2025-10-02 22:52:42,928 - document_processor - INFO - OCR (Tesseract): Available
+2025-10-02 22:52:42,928 - document_processor - INFO - PDF Processing: Available
+2025-10-02 22:52:42,928 - document_processor - INFO - Video Processing: Missing
+2025-10-02 22:52:42,928 - document_processor - INFO - Document Processing: Available
+2025-10-02 22:52:42,928 - document_processor - INFO - EXIF Metadata: Available
+2025-10-02 22:52:42,929 - osint_module - INFO - Loaded API keys from api_keys.json
+2025-10-02 22:52:42,929 - osint_module - INFO - OSINT Engine initialized
+2025-10-02 22:52:42,929 - report_generator - INFO - Report Generator initialized
+2025-10-02 22:52:42,929 - report_generator - INFO - DOCX Export: Available
+2025-10-02 22:52:42,929 - report_generator - INFO - PDF Export: Available
+2025-10-02 22:52:42,929 - tools.digital_signature_system - INFO - Loaded 0 certificates
+2025-10-02 22:52:42,929 - tools.digital_signature_system - INFO - Digital signature system initialized
+2025-10-02 22:52:42,930 - tools.watermark_system - INFO - Watermark system initialized
+2025-10-02 22:52:42,930 - tools.printing_system - INFO - Initialized 1 cross-platform printers
+2025-10-02 22:52:42,930 - tools.printing_system - INFO - Printing system initialized
+2025-10-02 22:52:42,931 - bus_core - INFO - [BUS] Signal 'mission_debrief.digital_sign' bound to _handle_digital_sign_signal
+2025-10-02 22:52:42,931 - bus_core - INFO - [BUS] Signal 'mission_debrief.print_report' bound to _handle_print_report_signal
+2025-10-02 22:52:42,931 - bus_core - INFO - [BUS] Signal 'mission_debrief.apply_template' bound to _handle_apply_template_signal
+2025-10-02 22:52:42,931 - bus_core - INFO - [BUS] Signal 'mission_debrief.add_watermark' bound to _handle_add_watermark_signal
+2025-10-02 22:52:42,931 - bus_core - INFO - [BUS] Signal 'mission_debrief.osint_lookup' bound to _handle_osint_lookup_signal
+2025-10-02 22:52:42,931 - bus_core - INFO - [BUS] Signal 'mission_debrief.process_report' bound to _handle_process_report_signal
+2025-10-02 22:52:42,931 - bus_core - INFO - [BUS] Signal 'narrative.assembled' bound to _handle_narrative_assembled_signal
+2025-10-02 22:52:42,931 - bus_core - INFO - [BUS] Signal 'section.data.updated' bound to _handle_section_data_updated_signal
+2025-10-02 22:52:42,931 - bus_core - INFO - [BUS] Signal 'gateway.section.complete' bound to _handle_gateway_section_complete_signal
+2025-10-02 22:52:42,931 - mission_debrief_manager - INFO - Mission Debrief Manager registered signals: mission_debrief.digital_sign, mission_debrief.print_report, mission_debrief.apply_template, mission_debrief.add_watermark, mission_debrief.osint_lookup, mission_debrief.process_report, narrative.assembled, section.data.updated, gateway.section.complete
+2025-10-02 22:52:42,931 - mission_debrief_manager - INFO - Mission Debrief Manager initialised as bootstrap component
+2025-10-02 22:52:42,932 - narrative_assembler - INFO - Narrative queued for section_cp (priority: high)
+2025-10-02 22:52:42,932 - narrative_assembler - INFO - Assembled narrative for section_cp
+2025-10-02 22:52:42,932 - bus_core - INFO - [BUS][bus.narrative] Narrative assembled for section_cp
+2025-10-02 22:52:42,965 - mission_debrief_manager - INFO - Narrative draft cached for section_cp
+2025-10-02 22:52:42,965 - bus_core - WARNING - [BUS] No handlers for signal: mission_debrief.section.draft
+2025-10-02 22:52:42,965 - bus_core - INFO - [BUS][NarrativeAssembler] Narrative generated for CASE123
+2025-10-02 22:52:42,965 - narrative_assembler - INFO - Narrative assembled for section_cp
+2025-10-02 22:52:42,966 - bus_core - WARNING - [BUS] No handlers for signal: mission_debrief.artifact.updated
+2025-10-02 23:00:08,532 - bus_core - INFO - Central Command Bus initialized
+2025-10-02 23:00:08,532 - bus_core - INFO - [BUS] Signal 'case_create' bound to _handle_case_create_signal
+2025-10-02 23:00:08,532 - bus_core - INFO - [BUS] Signal 'files_add' bound to _handle_files_add_signal
+2025-10-02 23:00:08,532 - bus_core - INFO - [BUS] Signal 'evidence.new' bound to _handle_evidence_new_signal
+2025-10-02 23:00:08,532 - bus_core - INFO - [BUS] Signal 'evidence.annotated' bound to _handle_evidence_annotated_signal
+2025-10-02 23:00:08,532 - bus_core - INFO - [BUS] Signal 'evidence.request' bound to _handle_evidence_request_signal
+2025-10-02 23:00:08,533 - bus_core - INFO - [BUS] Signal 'evidence.deliver' bound to _handle_evidence_deliver_signal
+2025-10-02 23:00:08,533 - bus_core - INFO - [BUS] Signal 'evidence.updated' bound to _handle_evidence_updated_signal
+2025-10-02 23:00:08,533 - bus_core - INFO - [BUS] Signal 'evidence.tagged' bound to _handle_evidence_tagged_signal
+2025-10-02 23:00:08,533 - bus_core - INFO - [BUS] Signal 'evidence.stored' bound to _handle_evidence_stored_signal
+2025-10-02 23:00:08,533 - bus_core - INFO - [BUS] Signal 'evidence_locker.call_out' bound to _handle_evidence_call_out_signal
+2025-10-02 23:00:08,533 - bus_core - INFO - [BUS] Signal 'evidence_locker.accept' bound to _handle_evidence_accept_signal
+2025-10-02 23:00:08,533 - bus_core - INFO - [BUS] Signal 'section.needs' bound to _handle_section_needs_signal
+2025-10-02 23:00:08,533 - bus_core - INFO - [BUS] Signal 'case.snapshot' bound to _handle_case_snapshot_signal
+2025-10-02 23:00:08,533 - bus_core - INFO - [BUS] Signal 'gateway.status' bound to _handle_gateway_status_signal
+2025-10-02 23:00:08,533 - bus_core - INFO - [BUS] Signal 'locker.status' bound to _handle_locker_status_signal
+2025-10-02 23:00:08,533 - bus_core - INFO - [BUS] Signal 'mission.status' bound to _handle_mission_status_signal
+2025-10-02 23:00:08,533 - bus_core - INFO - [BUS] Signal 'narrative.assembled' bound to _handle_narrative_assembled_signal
+2025-10-02 23:00:08,533 - bus_core - INFO - [BUS] Signal 'narrative.assemble' bound to _handle_narrative_assemble_signal
+2025-10-02 23:00:08,533 - bus_core - INFO - [BUS] Signal 'narrative.validate' bound to _handle_narrative_validate_signal
+2025-10-02 23:00:08,533 - bus_core - INFO - [BUS] Signal 'narrative.queue' bound to _handle_narrative_queue_signal
+2025-10-02 23:00:08,533 - bus_core - INFO - [BUS] Signal 'gateway.narrative_request' bound to _handle_gateway_narrative_request
+2025-10-02 23:00:08,533 - bus_core - INFO - [BUS] Signal 'ecc.narrative_ready' bound to _handle_ecc_narrative_ready
+2025-10-02 23:00:08,534 - bus_core - INFO - [BUS] Signal 'evidence_locker.narrative_data' bound to _handle_evidence_locker_narrative_data
+2025-10-02 23:00:08,534 - bus_core - INFO - [BUS] Signal 'evidence.updated' bound to _handle_evidence_updated_signal
+2025-10-02 23:00:08,534 - bus_core - INFO - [BUS] Signal 'case.snapshot' bound to _handle_case_snapshot_signal
+2025-10-02 23:00:08,534 - bus_core - INFO - [BUS] Signal 'section.data.updated' bound to _handle_section_data_updated_signal
+2025-10-02 23:00:08,534 - bus_core - INFO - [BUS] Signal 'gateway.section.complete' bound to _handle_gateway_section_complete_signal
+2025-10-02 23:00:08,534 - narrative_assembler - INFO - Bus registration: Narrative Assembler registered with Central Command Bus
+2025-10-02 23:00:08,534 - bus_core - INFO - [BUS] Signal 'narrative.generate' bound to handle_generate
+2025-10-02 23:00:08,534 - narrative_assembler - INFO - NarrativeAssembler initialized as Bootstrap Component
+2025-10-02 23:00:08,535 - tools.template_system - INFO - Template system initialized
+2025-10-02 23:00:08,535 - document_processor - INFO - Document Processor initialized
+2025-10-02 23:00:19,249 - document_processor - INFO - OCR (Tesseract): Available
+2025-10-02 23:00:19,249 - document_processor - INFO - PDF Processing: Available
+2025-10-02 23:00:19,249 - document_processor - INFO - Video Processing: Missing
+2025-10-02 23:00:19,249 - document_processor - INFO - Document Processing: Available
+2025-10-02 23:00:19,249 - document_processor - INFO - EXIF Metadata: Available
+2025-10-02 23:00:19,250 - document_processor - INFO - Document Processor initialized
+2025-10-02 23:00:19,250 - document_processor - INFO - OCR (Tesseract): Available
+2025-10-02 23:00:19,250 - document_processor - INFO - PDF Processing: Available
+2025-10-02 23:00:19,250 - document_processor - INFO - Video Processing: Missing
+2025-10-02 23:00:19,250 - document_processor - INFO - Document Processing: Available
+2025-10-02 23:00:19,250 - document_processor - INFO - EXIF Metadata: Available
+2025-10-02 23:00:19,250 - osint_module - INFO - Loaded API keys from api_keys.json
+2025-10-02 23:00:19,250 - osint_module - INFO - OSINT Engine initialized
+2025-10-02 23:00:19,250 - report_generator - INFO - Report Generator initialized
+2025-10-02 23:00:19,250 - report_generator - INFO - DOCX Export: Available
+2025-10-02 23:00:19,251 - report_generator - INFO - PDF Export: Available
+2025-10-02 23:00:19,251 - tools.digital_signature_system - INFO - Loaded 0 certificates
+2025-10-02 23:00:19,251 - tools.digital_signature_system - INFO - Digital signature system initialized
+2025-10-02 23:00:19,251 - tools.watermark_system - INFO - Watermark system initialized
+2025-10-02 23:00:19,251 - tools.printing_system - INFO - Initialized 1 cross-platform printers
+2025-10-02 23:00:19,252 - tools.printing_system - INFO - Printing system initialized
+2025-10-02 23:00:19,252 - bus_core - INFO - [BUS] Signal 'mission_debrief.digital_sign' bound to _handle_digital_sign_signal
+2025-10-02 23:00:19,252 - bus_core - INFO - [BUS] Signal 'mission_debrief.print_report' bound to _handle_print_report_signal
+2025-10-02 23:00:19,252 - bus_core - INFO - [BUS] Signal 'mission_debrief.apply_template' bound to _handle_apply_template_signal
+2025-10-02 23:00:19,252 - bus_core - INFO - [BUS] Signal 'mission_debrief.add_watermark' bound to _handle_add_watermark_signal
+2025-10-02 23:00:19,252 - bus_core - INFO - [BUS] Signal 'mission_debrief.osint_lookup' bound to _handle_osint_lookup_signal
+2025-10-02 23:00:19,252 - bus_core - INFO - [BUS] Signal 'mission_debrief.process_report' bound to _handle_process_report_signal
+2025-10-02 23:00:19,252 - bus_core - INFO - [BUS] Signal 'narrative.assembled' bound to _handle_narrative_assembled_signal
+2025-10-02 23:00:19,252 - bus_core - INFO - [BUS] Signal 'section.data.updated' bound to _handle_section_data_updated_signal
+2025-10-02 23:00:19,252 - bus_core - INFO - [BUS] Signal 'mission_debrief.section.draft' bound to _handle_section_draft_signal
+2025-10-02 23:00:19,252 - bus_core - INFO - [BUS] Signal 'mission_debrief.artifact.updated' bound to _handle_artifact_updated_signal
+2025-10-02 23:00:19,252 - bus_core - INFO - [BUS] Signal 'gateway.section.complete' bound to _handle_gateway_section_complete_signal
+2025-10-02 23:00:19,252 - mission_debrief_manager - INFO - Mission Debrief Manager registered signals: mission_debrief.digital_sign, mission_debrief.print_report, mission_debrief.apply_template, mission_debrief.add_watermark, mission_debrief.osint_lookup, mission_debrief.process_report, narrative.assembled, section.data.updated, mission_debrief.section.draft, mission_debrief.artifact.updated, gateway.section.complete
+2025-10-02 23:00:19,253 - mission_debrief_manager - INFO - Mission Debrief Manager initialised as bootstrap component
+2025-10-02 23:00:19,253 - narrative_assembler - INFO - Narrative queued for section_cp (priority: high)
+2025-10-02 23:00:19,253 - narrative_assembler - INFO - Assembled narrative for section_cp
+2025-10-02 23:00:19,256 - bus_core - INFO - [BUS][bus.narrative] Narrative assembled for section_cp
+2025-10-02 23:00:19,256 - mission_debrief_manager - INFO - Narrative draft cached for section_cp
+2025-10-02 23:00:19,256 - bus_core - INFO - [BUS][NarrativeAssembler] Narrative generated for CASE-TEST
+2025-10-02 23:00:19,256 - narrative_assembler - INFO - Narrative assembled for section_cp
+2025-10-02 23:00:19,256 - narrative_assembler - INFO - Narrative queued for section_toc (priority: high)
+2025-10-02 23:00:19,256 - narrative_assembler - INFO - Assembled narrative for section_toc
+2025-10-02 23:00:19,256 - bus_core - INFO - [BUS][bus.narrative] Narrative assembled for section_toc
+2025-10-02 23:00:19,256 - mission_debrief_manager - INFO - Narrative draft cached for section_toc
+2025-10-02 23:00:19,256 - bus_core - INFO - [BUS][NarrativeAssembler] Narrative generated for CASE-TEST
+2025-10-02 23:00:19,256 - narrative_assembler - INFO - Narrative assembled for section_toc
+2025-10-02 23:00:19,256 - narrative_assembler - INFO - Narrative queued for section_dp (priority: high)
+2025-10-02 23:00:19,257 - narrative_assembler - INFO - Assembled narrative for section_dp
+2025-10-02 23:00:19,257 - bus_core - INFO - [BUS][bus.narrative] Narrative assembled for section_dp
+2025-10-02 23:00:19,257 - mission_debrief_manager - INFO - Narrative draft cached for section_dp
+2025-10-02 23:00:19,257 - bus_core - INFO - [BUS][NarrativeAssembler] Narrative generated for CASE-TEST
+2025-10-02 23:00:19,257 - narrative_assembler - INFO - Narrative assembled for section_dp
+2025-10-02 23:00:19,257 - narrative_assembler - INFO - Processed 0 narratives, 0 failed
+2025-10-04 00:20:20,392 - bus_core - INFO - Central Command Bus initialized
+2025-10-04 00:20:20,394 - bus_core - INFO - [BUS] Signal 'case_create' bound to _handle_case_create_signal
+2025-10-04 00:20:20,395 - bus_core - INFO - [BUS] Signal 'files_add' bound to _handle_files_add_signal
+2025-10-04 00:20:20,395 - bus_core - INFO - [BUS] Signal 'evidence.new' bound to _handle_evidence_new_signal
+2025-10-04 00:20:20,395 - bus_core - INFO - [BUS] Signal 'evidence.annotated' bound to _handle_evidence_annotated_signal
+2025-10-04 00:20:20,395 - bus_core - INFO - [BUS] Signal 'evidence.request' bound to _handle_evidence_request_signal
+2025-10-04 00:20:20,395 - bus_core - INFO - [BUS] Signal 'evidence.deliver' bound to _handle_evidence_deliver_signal
+2025-10-04 00:20:20,395 - bus_core - INFO - [BUS] Signal 'evidence.updated' bound to _handle_evidence_updated_signal
+2025-10-04 00:20:20,395 - bus_core - INFO - [BUS] Signal 'evidence.tagged' bound to _handle_evidence_tagged_signal
+2025-10-04 00:20:20,395 - bus_core - INFO - [BUS] Signal 'evidence.stored' bound to _handle_evidence_stored_signal
+2025-10-04 00:20:20,395 - bus_core - INFO - [BUS] Signal 'evidence_locker.call_out' bound to _handle_evidence_call_out_signal
+2025-10-04 00:20:20,395 - bus_core - INFO - [BUS] Signal 'evidence_locker.accept' bound to _handle_evidence_accept_signal
+2025-10-04 00:20:20,395 - bus_core - INFO - [BUS] Signal 'section.needs' bound to _handle_section_needs_signal
+2025-10-04 00:20:20,395 - bus_core - INFO - [BUS] Signal 'case.snapshot' bound to _handle_case_snapshot_signal
+2025-10-04 00:20:20,395 - bus_core - INFO - [BUS] Signal 'gateway.status' bound to _handle_gateway_status_signal
+2025-10-04 00:20:20,395 - bus_core - INFO - [BUS] Signal 'locker.status' bound to _handle_locker_status_signal
+2025-10-04 00:20:20,396 - bus_core - INFO - [BUS] Signal 'mission.status' bound to _handle_mission_status_signal
+2025-10-04 00:20:20,396 - bus_core - INFO - [BUS] Signal 'narrative.assembled' bound to _handle_narrative_assembled_signal
+2025-10-04 00:20:20,396 - bus_core - INFO - [BUS] Signal 'narrative.assemble' bound to _handle_narrative_assemble_signal
+2025-10-04 00:20:20,396 - bus_core - INFO - [BUS] Signal 'narrative.validate' bound to _handle_narrative_validate_signal
+2025-10-04 00:20:20,396 - bus_core - INFO - [BUS] Signal 'narrative.queue' bound to _handle_narrative_queue_signal
+2025-10-04 00:20:20,396 - bus_core - INFO - [BUS] Signal 'gateway.narrative_request' bound to _handle_gateway_narrative_request
+2025-10-04 00:20:20,396 - bus_core - INFO - [BUS] Signal 'ecc.narrative_ready' bound to _handle_ecc_narrative_ready
+2025-10-04 00:20:20,396 - bus_core - INFO - [BUS] Signal 'evidence_locker.narrative_data' bound to _handle_evidence_locker_narrative_data
+2025-10-04 00:20:20,396 - bus_core - INFO - [BUS] Signal 'evidence.updated' bound to _handle_evidence_updated_signal
+2025-10-04 00:20:20,396 - bus_core - INFO - [BUS] Signal 'case.snapshot' bound to _handle_case_snapshot_signal
+2025-10-04 00:20:20,396 - bus_core - INFO - [BUS] Signal 'section.data.updated' bound to _handle_section_data_updated_signal
+2025-10-04 00:20:20,396 - bus_core - INFO - [BUS] Signal 'gateway.section.complete' bound to _handle_gateway_section_complete_signal
+2025-10-04 00:20:20,396 - narrative_assembler - INFO - Bus registration: Narrative Assembler registered with Central Command Bus
+2025-10-04 00:20:20,396 - bus_core - INFO - [BUS] Signal 'narrative.generate' bound to handle_generate
+2025-10-04 00:20:20,396 - narrative_assembler - INFO - NarrativeAssembler initialized as Bootstrap Component
+2025-10-04 00:20:20,397 - bus_core - INFO - [BUS][bus.narrative] Narrative assembled for section_3
+2025-10-04 00:20:20,397 - bus_core - INFO - [BUS][NarrativeAssembler] Narrative generated for CASE-AUTO
+2025-10-04 00:20:20,397 - narrative_assembler - INFO - Narrative assembled for section_3
+2025-10-04 01:08:53,988 - bus_core - INFO - Central Command Bus initialized
+2025-10-04 01:08:53,992 - bus_core - INFO - [BUS] Signal 'case_create' bound to _handle_case_create_signal
+2025-10-04 01:08:53,992 - bus_core - INFO - [BUS] Signal 'files_add' bound to _handle_files_add_signal
+2025-10-04 01:08:53,992 - bus_core - INFO - [BUS] Signal 'evidence.new' bound to _handle_evidence_new_signal
+2025-10-04 01:08:53,992 - bus_core - INFO - [BUS] Signal 'evidence.annotated' bound to _handle_evidence_annotated_signal
+2025-10-04 01:08:53,992 - bus_core - INFO - [BUS] Signal 'evidence.request' bound to _handle_evidence_request_signal
+2025-10-04 01:08:53,992 - bus_core - INFO - [BUS] Signal 'evidence.deliver' bound to _handle_evidence_deliver_signal
+2025-10-04 01:08:53,992 - bus_core - INFO - [BUS] Signal 'evidence.updated' bound to _handle_evidence_updated_signal
+2025-10-04 01:08:53,992 - bus_core - INFO - [BUS] Signal 'evidence.tagged' bound to _handle_evidence_tagged_signal
+2025-10-04 01:08:53,992 - bus_core - INFO - [BUS] Signal 'evidence.stored' bound to _handle_evidence_stored_signal
+2025-10-04 01:08:53,992 - bus_core - INFO - [BUS] Signal 'evidence_locker.call_out' bound to _handle_evidence_call_out_signal
+2025-10-04 01:08:53,992 - bus_core - INFO - [BUS] Signal 'evidence_locker.accept' bound to _handle_evidence_accept_signal
+2025-10-04 01:08:53,992 - bus_core - INFO - [BUS] Signal 'section.needs' bound to _handle_section_needs_signal
+2025-10-04 01:08:53,992 - bus_core - INFO - [BUS] Signal 'case.snapshot' bound to _handle_case_snapshot_signal
+2025-10-04 01:08:53,992 - bus_core - INFO - [BUS] Signal 'gateway.status' bound to _handle_gateway_status_signal
+2025-10-04 01:08:53,992 - bus_core - INFO - [BUS] Signal 'locker.status' bound to _handle_locker_status_signal
+2025-10-04 01:08:53,993 - bus_core - INFO - [BUS] Signal 'mission.status' bound to _handle_mission_status_signal
+2025-10-04 01:08:53,993 - bus_core - INFO - [BUS] Signal 'narrative.assembled' bound to _handle_narrative_assembled_signal
+2025-10-04 01:08:53,993 - bus_core - INFO - [BUS] Signal 'narrative.assemble' bound to _handle_narrative_assemble_signal
+2025-10-04 01:08:53,993 - bus_core - INFO - [BUS] Signal 'narrative.validate' bound to _handle_narrative_validate_signal
+2025-10-04 01:08:53,993 - bus_core - INFO - [BUS] Signal 'narrative.queue' bound to _handle_narrative_queue_signal
+2025-10-04 01:08:53,993 - narrative_assembler - ERROR - Failed to register with bus: 'NarrativeAssembler' object has no attribute '_handle_gateway_narrative_request'
+2025-10-04 01:08:53,993 - narrative_assembler - WARNING - Could not subscribe to narrative.generate: 'NarrativeAssembler' object has no attribute 'handle_generate'
+2025-10-04 01:08:53,993 - narrative_assembler - INFO - NarrativeAssembler initialized as Bootstrap Component
+2025-10-04 01:08:53,993 - bus_core - WARNING - [BUS] No handlers for signal: narrative.assemble_and_broadcast

@@ -1,0 +1,124 @@
+{
+  "test_plan": {
+    "system_name": "OCR Processor Subsystem",
+    "system_address": "1-1.8",
+    "parent_system": "Evidence Locker Main (1-1)",
+    "test_type": "smoke_test",
+    "version": "1.0",
+    "created": "2025-10-05",
+    "description": "Basic functionality validation for OCR Processor subsystem",
+    "test_data_location": "./test_data/",
+    "expected_results_location": "./expected_results/",
+    "test_vectors": [
+      {
+        "test_id": "OCR_SMOKE_001",
+        "test_name": "Subsystem Initialization",
+        "description": "Verify OCR Processor can initialize with language models",
+        "test_method": "initialize_ocr_processor",
+        "input_parameters": {
+          "languages": ["en", "es", "fr"],
+          "confidence_threshold": 0.8,
+          "engine_type": "tesseract"
+        },
+        "expected_result": {
+          "status": "SUCCESS",
+          "ocr_processor_initialized": true,
+          "language_models_loaded": true,
+          "confidence_threshold_set": true,
+          "engine_ready": true
+        },
+        "timeout_seconds": 10,
+        "retry_count": 3,
+        "critical": true
+      },
+      {
+        "test_id": "OCR_SMOKE_002",
+        "test_name": "Document OCR Processing",
+        "description": "Test OCR processing on sample document",
+        "test_method": "process_document_ocr",
+        "input_parameters": {
+          "document_data": {
+            "file_path": "./test_data/sample_document.pdf",
+            "language": "en",
+            "expected_text": "Sample Test Document"
+          }
+        },
+        "expected_result": {
+          "status": "SUCCESS",
+          "ocr_processing_complete": true,
+          "text_extracted": true,
+          "confidence_score": ">=0.8",
+          "extracted_text_accurate": true
+        },
+        "timeout_seconds": 15,
+        "retry_count": 2,
+        "critical": true
+      },
+      {
+        "test_id": "OCR_SMOKE_003",
+        "test_name": "Image OCR Processing",
+        "description": "Test OCR processing on image with text",
+        "test_method": "process_image_ocr",
+        "input_parameters": {
+          "image_data": {
+            "file_path": "./test_data/sample_text_image.jpg",
+            "language": "en",
+            "expected_text": "extractable text"
+          }
+        },
+        "expected_result": {
+          "status": "SUCCESS",
+          "ocr_processing_complete": true,
+          "text_extracted": true,
+          "confidence_score": ">=0.7",
+          "extracted_text_accurate": true
+        },
+        "timeout_seconds": 12,
+        "retry_count": 2,
+        "critical": true
+      },
+      {
+        "test_id": "OCR_SMOKE_004",
+        "test_name": "Multi-Language OCR",
+        "description": "Test OCR processing with multiple languages",
+        "test_method": "process_multilang_ocr",
+        "input_parameters": {
+          "multilang_data": {
+            "file_path": "./test_data/multilang_document.pdf",
+            "languages": ["en", "es"],
+            "auto_detect": true
+          }
+        },
+        "expected_result": {
+          "status": "SUCCESS",
+          "multilang_processing_complete": true,
+          "language_detection_working": true,
+          "text_extracted": true,
+          "confidence_acceptable": true
+        },
+        "timeout_seconds": 20,
+        "retry_count": 2,
+        "critical": false
+      }
+    ],
+    "performance_metrics": {
+      "initialization_time_max_ms": 10000,
+      "document_ocr_time_max_ms": 15000,
+      "image_ocr_time_max_ms": 12000,
+      "multilang_ocr_time_max_ms": 20000,
+      "memory_usage_max_mb": 200,
+      "cpu_usage_max_percent": 25
+    },
+    "test_environment": {
+      "required_files": [
+        "./test_data/sample_document.pdf",
+        "./test_data/sample_text_image.jpg",
+        "./test_data/multilang_document.pdf"
+      ],
+      "required_directories": [
+        "./test_data/",
+        "./expected_results/"
+      ]
+    }
+  }
+}

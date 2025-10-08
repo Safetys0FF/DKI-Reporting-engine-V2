@@ -1,0 +1,125 @@
+{
+  "test_plan": {
+    "system_name": "Case Management Interface Subsystem",
+    "system_address": "7-1.2",
+    "parent_system": "Enhanced Functional GUI (7-1)",
+    "test_type": "smoke_test",
+    "version": "1.0",
+    "created": "2025-10-05",
+    "description": "Basic functionality validation for Case Management Interface subsystem",
+    "test_data_location": "./test_data/",
+    "expected_results_location": "./expected_results/",
+    "test_vectors": [
+      {
+        "test_id": "CMI_SMOKE_001",
+        "test_name": "Subsystem Initialization",
+        "description": "Verify Case Management Interface can initialize independently",
+        "test_method": "initialize_case_management_interface",
+        "input_parameters": {
+          "interface_modes": ["case_creation", "case_viewing", "case_editing", "case_search"],
+          "display_format": "table_view",
+          "user_permissions": ["read", "write", "admin"]
+        },
+        "expected_result": {
+          "status": "SUCCESS",
+          "case_management_interface_initialized": true,
+          "interface_modes_configured": true,
+          "display_format_set": true,
+          "user_permissions_loaded": true
+        },
+        "timeout_seconds": 5,
+        "retry_count": 3,
+        "critical": true
+      },
+      {
+        "test_id": "CMI_SMOKE_002",
+        "test_name": "Case Creation Interface",
+        "description": "Test case creation interface functionality",
+        "test_method": "create_case_interface",
+        "input_parameters": {
+          "creation_data": {
+            "case_form_fields": ["case_id", "case_title", "case_type", "assigned_analyst", "priority"],
+            "form_validation": true,
+            "auto_save": true,
+            "template_selection": true
+          }
+        },
+        "expected_result": {
+          "status": "SUCCESS",
+          "case_creation_interface_loaded": true,
+          "form_fields_displayed": true,
+          "form_validation_active": true,
+          "auto_save_functional": true,
+          "template_selection_available": true
+        },
+        "timeout_seconds": 5,
+        "retry_count": 2,
+        "critical": true
+      },
+      {
+        "test_id": "CMI_SMOKE_003",
+        "test_name": "Case Search Interface",
+        "description": "Test case search interface functionality",
+        "test_method": "search_case_interface",
+        "input_parameters": {
+          "search_data": {
+            "search_criteria": ["case_id", "case_title", "case_type", "date_range", "status"],
+            "search_filters": ["active", "closed", "pending"],
+            "search_results_format": "detailed_list",
+            "search_highlighting": true
+          }
+        },
+        "expected_result": {
+          "status": "SUCCESS",
+          "case_search_interface_loaded": true,
+          "search_criteria_available": true,
+          "search_filters_functional": true,
+          "search_results_displayed": true,
+          "search_highlighting_active": true
+        },
+        "timeout_seconds": 5,
+        "retry_count": 2,
+        "critical": true
+      },
+      {
+        "test_id": "CMI_SMOKE_004",
+        "test_name": "Case Details Interface",
+        "description": "Test case details interface functionality",
+        "test_method": "display_case_details",
+        "input_parameters": {
+          "details_data": {
+            "case_id": "CMI_TEST_CASE_001",
+            "detail_sections": ["overview", "timeline", "evidence", "notes", "documents"],
+            "detail_format": "tabbed_interface",
+            "edit_mode": "inline_editing"
+          }
+        },
+        "expected_result": {
+          "status": "SUCCESS",
+          "case_details_displayed": true,
+          "detail_sections_loaded": true,
+          "tabbed_interface_functional": true,
+          "inline_editing_available": true
+        },
+        "timeout_seconds": 5,
+        "retry_count": 2,
+        "critical": false
+      }
+    ],
+    "performance_metrics": {
+      "initialization_time_max_ms": 5000,
+      "case_creation_interface_time_max_ms": 5000,
+      "case_search_interface_time_max_ms": 5000,
+      "case_details_interface_time_max_ms": 5000,
+      "memory_usage_max_mb": 75,
+      "cpu_usage_max_percent": 15
+    },
+    "test_environment": {
+      "required_files": [],
+      "required_directories": [
+        "./test_data/",
+        "./expected_results/"
+      ]
+    }
+  }
+}

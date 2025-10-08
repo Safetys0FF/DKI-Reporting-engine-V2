@@ -1,0 +1,118 @@
+{
+  "test_plan": {
+    "system_name": "Narrative Assembler Subsystem",
+    "system_address": "3-1.1",
+    "parent_system": "Mission Debrief (3-1)",
+    "test_type": "smoke_test",
+    "version": "1.0",
+    "created": "2025-10-05",
+    "description": "Basic functionality validation for Narrative Assembler subsystem",
+    "test_data_location": "./test_data/",
+    "expected_results_location": "./expected_results/",
+    "test_vectors": [
+      {
+        "test_id": "NA_SMOKE_001",
+        "test_name": "Subsystem Initialization",
+        "description": "Verify Narrative Assembler can initialize independently",
+        "test_method": "initialize_narrative_assembler",
+        "input_parameters": {
+          "assembly_mode": "standard",
+          "broadcast_enabled": true
+        },
+        "expected_result": {
+          "status": "SUCCESS",
+          "narrative_assembler_initialized": true,
+          "assembly_mode_active": true,
+          "broadcast_system_ready": true
+        },
+        "timeout_seconds": 5,
+        "retry_count": 3,
+        "critical": true
+      },
+      {
+        "test_id": "NA_SMOKE_002",
+        "test_name": "Basic Narrative Assembly",
+        "description": "Test basic narrative assembly functionality",
+        "test_method": "assemble_narrative",
+        "input_parameters": {
+          "narrative_data": {
+            "section_id": "NA_TEST_SECTION_001",
+            "content": "Test narrative content for assembly",
+            "evidence_references": ["EVIDENCE_001", "EVIDENCE_002"],
+            "format": "standard"
+          }
+        },
+        "expected_result": {
+          "status": "SUCCESS",
+          "narrative_assembled": true,
+          "content_processed": true,
+          "evidence_references_validated": true,
+          "format_applied": true
+        },
+        "timeout_seconds": 8,
+        "retry_count": 2,
+        "critical": true
+      },
+      {
+        "test_id": "NA_SMOKE_003",
+        "test_name": "Narrative Broadcasting",
+        "description": "Test narrative broadcasting functionality",
+        "test_method": "broadcast_narrative",
+        "input_parameters": {
+          "broadcast_data": {
+            "narrative_id": "NA_TEST_NARRATIVE_001",
+            "target_systems": ["2-1", "Bus-1"],
+            "broadcast_format": "standard"
+          }
+        },
+        "expected_result": {
+          "status": "SUCCESS",
+          "narrative_broadcast": true,
+          "target_systems_reached": true,
+          "broadcast_format_valid": true,
+          "delivery_confirmed": true
+        },
+        "timeout_seconds": 10,
+        "retry_count": 2,
+        "critical": true
+      },
+      {
+        "test_id": "NA_SMOKE_004",
+        "test_name": "Content Validation",
+        "description": "Test narrative content validation",
+        "test_method": "validate_narrative_content",
+        "input_parameters": {
+          "validation_data": {
+            "narrative_content": "Test narrative with evidence references",
+            "validation_rules": ["content_completeness", "evidence_references", "format_compliance"]
+          }
+        },
+        "expected_result": {
+          "status": "SUCCESS",
+          "content_validated": true,
+          "validation_rules_passed": true,
+          "content_quality": "acceptable",
+          "validation_report_generated": true
+        },
+        "timeout_seconds": 5,
+        "retry_count": 2,
+        "critical": false
+      }
+    ],
+    "performance_metrics": {
+      "initialization_time_max_ms": 5000,
+      "narrative_assembly_time_max_ms": 8000,
+      "broadcasting_time_max_ms": 10000,
+      "content_validation_time_max_ms": 5000,
+      "memory_usage_max_mb": 100,
+      "cpu_usage_max_percent": 15
+    },
+    "test_environment": {
+      "required_files": [],
+      "required_directories": [
+        "./test_data/",
+        "./expected_results/"
+      ]
+    }
+  }
+}

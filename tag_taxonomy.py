@@ -1,10 +1,11 @@
-﻿"""Evidence tag taxonomy shared across Central Command components.
+"""Evidence tag taxonomy shared across Central Command components.
 
 Provides helper utilities so the GUI, Evidence Locker, SectionBusAdapter,
 and Gateway can agree on normalized tags and their section affinities.
 """
 from __future__ import annotations
 
+import json
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Dict, Iterable, List, Optional, Sequence, Set, Tuple
@@ -27,6 +28,29 @@ class TagProfile:
         values.update(self.aliases)
         return {normalize_tag(value) for value in values if value}
 
+
+
+
+NORMALIZE_TAGS_MAP = {
+    'supporting_documents': 'supporting-documents',
+    'evidence_index': 'media-photo',
+    'intakeform': 'intake-form',
+    'dailylog': 'daily-log',
+}
+
+
+def normalize_tags(tags: Iterable[str]) -> List[str]:
+    normalized_list: List[str] = []
+    seen: Set[str] = set()
+    for tag in tags or []:
+        if not tag:
+            continue
+        normalized = normalize_tag(tag)
+        mapped = NORMALIZE_TAGS_MAP.get(normalized, normalized)
+        if mapped and mapped not in seen:
+            seen.add(mapped)
+            normalized_list.append(mapped)
+    return normalized_list
 
 TAG_TAXONOMY: Dict[str, TagProfile] = {
     "intake": TagProfile(
@@ -135,6 +159,97 @@ TAG_TAXONOMY: Dict[str, TagProfile] = {
     ),
 }
 
+SECTION_TAG_MAP_PATH = Path(__file__).resolve().parent / "The Warden" / "section_tag_map.json"
+
+def _humanize_tag(value: str) -> str:
+    tokens = [token for token in value.replace('_', ' ').replace('-', ' ').split() if token]
+    return " ".join(token.capitalize() for token in tokens) if tokens else value
+
+def _load_section_tag_map(path: Path) -> Dict[str, List[str]]:
+    try:
+        raw_data = json.loads(path.read_text(encoding='utf-8'))
+    except Exception:
+        return {}
+    section_map: Dict[str, List[str]] = {}
+    if isinstance(raw_data, dict):
+        for section_id, tags in raw_data.items():
+            if not isinstance(tags, (list, tuple, set)):
+                continue
+            cleaned = [str(tag).strip() for tag in tags if isinstance(tag, str) and tag.strip()]
+            if cleaned:
+                section_map[str(section_id)] = cleaned
+    return section_map
+
+def _build_registry_profiles(section_map: Dict[str, List[str]]) -> Dict[str, TagProfile]:
+    aggregated: Dict[str, Dict[str, object]] = {}
+    for section_id, tags in section_map.items():
+        for raw_tag in tags:
+            slug = normalize_tag(raw_tag)
+            if not slug:
+                continue
+            entry = aggregated.setdefault(
+                slug,
+                {
+                    "label": _humanize_tag(raw_tag),
+                    "tags": set(),
+                    "aliases": set(),
+                    "primary_section": section_id,
+                    "sections": set(),
+                },
+            )
+            if entry["primary_section"] is None:
+                entry["primary_section"] = section_id
+            entry["sections"].add(section_id)
+            tag_variants = {
+                raw_tag,
+                raw_tag.replace('_', '-'),
+                raw_tag.replace('-', '_'),
+                slug,
+            }
+            entry["tags"].update({variant for variant in tag_variants if variant and not variant.startswith('#')})
+            alias_variants = {variant for variant in tag_variants if variant}
+            alias_variants.update(f"#{variant}" for variant in tag_variants if variant)
+            entry["aliases"].update(alias_variants)
+    profiles: Dict[str, TagProfile] = {}
+    for slug, data in aggregated.items():
+        primary = data["primary_section"]
+        related = sorted({section for section in data["sections"] if section != primary})
+        profiles[slug] = TagProfile(
+            slug=slug,
+            label=data["label"],
+            tags=tuple(sorted(data["tags"])),
+            aliases=tuple(sorted(data["aliases"])),
+            primary_section=primary,
+            related_sections=tuple(related),
+        )
+    return profiles
+
+def _merge_taxonomy(
+    base: Dict[str, TagProfile],
+    updates: Dict[str, TagProfile],
+) -> Dict[str, TagProfile]:
+    merged = dict(base)
+    for slug, incoming in updates.items():
+        existing = merged.get(slug)
+        if existing:
+            tags = tuple(sorted(set(existing.tags) | set(incoming.tags)))
+            aliases = tuple(sorted(set(existing.aliases) | set(incoming.aliases)))
+            primary = existing.primary_section or incoming.primary_section
+            related = set(existing.related_sections) | set(incoming.related_sections)
+            if primary:
+                related.discard(primary)
+            merged_profile = TagProfile(
+                slug=slug,
+                label=existing.label or incoming.label,
+                tags=tags,
+                aliases=aliases,
+                primary_section=primary,
+                related_sections=tuple(sorted(related)),
+            )
+        else:
+            merged_profile = incoming
+        merged[slug] = merged_profile
+    return merged
 
 EXTENSION_DEFAULT_CATEGORIES: Dict[str, str] = {
     ".csv": "billing",
@@ -186,6 +301,13 @@ def normalize_tag(value: Optional[str]) -> str:
         normalized = normalized.replace("__", "_")
     return normalized.strip("_")
 
+
+_SECTION_TAG_MAP = _load_section_tag_map(SECTION_TAG_MAP_PATH)
+if _SECTION_TAG_MAP:
+    TAG_TAXONOMY = _merge_taxonomy(
+        TAG_TAXONOMY,
+        _build_registry_profiles(_SECTION_TAG_MAP),
+    )
 
 def _lookup_category(candidate: Optional[str], tags: Iterable[str]) -> Optional[TagProfile]:
     normalized_candidate = normalize_tag(candidate)
@@ -261,5 +383,8 @@ __all__ = [
     "TagProfile",
     "resolve_tags",
     "normalize_tag",
+    "normalize_tags",
     "candidate_categories_from_tags",
 ]
+
+

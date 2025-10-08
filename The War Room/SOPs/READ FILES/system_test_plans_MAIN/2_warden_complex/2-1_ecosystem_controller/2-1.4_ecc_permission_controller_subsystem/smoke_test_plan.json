@@ -1,0 +1,119 @@
+{
+  "test_plan": {
+    "system_name": "ECC Permission Controller Subsystem",
+    "system_address": "2-1.4",
+    "parent_system": "ECC (2-1)",
+    "test_type": "smoke_test",
+    "version": "1.0",
+    "created": "2025-10-05",
+    "description": "Basic functionality validation for ECC Permission Controller subsystem",
+    "test_data_location": "./test_data/",
+    "expected_results_location": "./expected_results/",
+    "test_vectors": [
+      {
+        "test_id": "EPC_SMOKE_001",
+        "test_name": "Subsystem Initialization",
+        "description": "Verify ECC Permission Controller can initialize independently",
+        "test_method": "initialize_ecc_permission_controller",
+        "input_parameters": {
+          "permission_levels": ["read", "write", "execute", "admin"],
+          "user_roles": ["analyst", "admin", "viewer", "operator"]
+        },
+        "expected_result": {
+          "status": "SUCCESS",
+          "permission_controller_initialized": true,
+          "permission_levels_configured": true,
+          "user_roles_loaded": true
+        },
+        "timeout_seconds": 5,
+        "retry_count": 3,
+        "critical": true
+      },
+      {
+        "test_id": "EPC_SMOKE_002",
+        "test_name": "Permission Validation",
+        "description": "Test permission validation functionality",
+        "test_method": "validate_permission",
+        "input_parameters": {
+          "validation_data": {
+            "user_id": "test_user_001",
+            "user_role": "analyst",
+            "requested_action": "read_evidence",
+            "target_resource": "1-1"
+          }
+        },
+        "expected_result": {
+          "status": "SUCCESS",
+          "permission_validated": true,
+          "access_granted": true,
+          "validation_accurate": true,
+          "access_logged": true
+        },
+        "timeout_seconds": 3,
+        "retry_count": 2,
+        "critical": true
+      },
+      {
+        "test_id": "EPC_SMOKE_003",
+        "test_name": "Role-Based Access Control",
+        "description": "Test role-based access control functionality",
+        "test_method": "check_role_access",
+        "input_parameters": {
+          "access_data": {
+            "user_role": "admin",
+            "requested_operations": ["create_case", "delete_evidence", "modify_system"],
+            "access_matrix": "role_permission_matrix"
+          }
+        },
+        "expected_result": {
+          "status": "SUCCESS",
+          "role_access_checked": true,
+          "access_matrix_valid": true,
+          "operations_authorized": true,
+          "access_decision_logged": true
+        },
+        "timeout_seconds": 3,
+        "retry_count": 2,
+        "critical": true
+      },
+      {
+        "test_id": "EPC_SMOKE_004",
+        "test_name": "Permission Audit",
+        "description": "Test permission audit functionality",
+        "test_method": "audit_permissions",
+        "input_parameters": {
+          "audit_data": {
+            "audit_scope": "all_users",
+            "audit_period": "last_24_hours",
+            "audit_criteria": ["access_attempts", "permission_changes", "security_violations"]
+          }
+        },
+        "expected_result": {
+          "status": "SUCCESS",
+          "permissions_audited": true,
+          "audit_complete": true,
+          "violations_detected": false,
+          "audit_report_generated": true
+        },
+        "timeout_seconds": 5,
+        "retry_count": 2,
+        "critical": false
+      }
+    ],
+    "performance_metrics": {
+      "initialization_time_max_ms": 5000,
+      "permission_validation_time_max_ms": 3000,
+      "role_access_check_time_max_ms": 3000,
+      "permission_audit_time_max_ms": 5000,
+      "memory_usage_max_mb": 50,
+      "cpu_usage_max_percent": 10
+    },
+    "test_environment": {
+      "required_files": [],
+      "required_directories": [
+        "./test_data/",
+        "./expected_results/"
+      ]
+    }
+  }
+}

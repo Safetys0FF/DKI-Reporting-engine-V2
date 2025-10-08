@@ -1,0 +1,152 @@
+{
+  "test_plan": {
+    "system_name": "Analyst Deck",
+    "system_address": "4-1",
+    "test_type": "smoke_test",
+    "version": "1.0",
+    "created": "2025-10-05",
+    "description": "Basic functionality validation for Analyst Deck system",
+    "test_data_location": "./test_data/",
+    "expected_results_location": "./expected_results/",
+    "test_vectors": [
+      {
+        "test_id": "AD_SMOKE_001",
+        "test_name": "System Initialization",
+        "description": "Verify Analyst Deck can initialize with all sections",
+        "test_method": "initialize_analyst_deck",
+        "input_parameters": {
+          "sections_to_initialize": ["section_1", "section_2", "section_3", "section_4", "section_5", "section_6", "section_7", "section_8"],
+          "bus_connection": true
+        },
+        "expected_result": {
+          "status": "SUCCESS",
+          "analyst_deck_initialized": true,
+          "all_sections_loaded": true,
+          "section_controllers_active": true,
+          "bus_connected": true
+        },
+        "timeout_seconds": 15,
+        "retry_count": 3,
+        "critical": true
+      },
+      {
+        "test_id": "AD_SMOKE_002",
+        "test_name": "Section 1 - Executive Summary",
+        "description": "Test Section 1 executive summary processing",
+        "test_method": "process_section_1",
+        "input_parameters": {
+          "section_data": {
+            "section_id": "section_1",
+            "content_type": "executive_summary",
+            "input_data": {
+              "case_summary": "Test case summary for executive summary",
+              "key_findings": ["finding_1", "finding_2", "finding_3"],
+              "recommendations": ["recommendation_1", "recommendation_2"]
+            }
+          }
+        },
+        "expected_result": {
+          "status": "SUCCESS",
+          "section_processed": true,
+          "executive_summary_generated": true,
+          "key_findings_included": true,
+          "recommendations_included": true
+        },
+        "timeout_seconds": 10,
+        "retry_count": 2,
+        "critical": true
+      },
+      {
+        "test_id": "AD_SMOKE_003",
+        "test_name": "Section 2 - Evidence Analysis",
+        "description": "Test Section 2 evidence analysis processing",
+        "test_method": "process_section_2",
+        "input_parameters": {
+          "section_data": {
+            "section_id": "section_2",
+            "content_type": "evidence_analysis",
+            "input_data": {
+              "evidence_list": ["evidence_001", "evidence_002", "evidence_003"],
+              "analysis_type": "forensic_analysis",
+              "technical_details": true
+            }
+          }
+        },
+        "expected_result": {
+          "status": "SUCCESS",
+          "section_processed": true,
+          "evidence_analyzed": true,
+          "technical_details_included": true,
+          "analysis_complete": true
+        },
+        "timeout_seconds": 15,
+        "retry_count": 2,
+        "critical": true
+      },
+      {
+        "test_id": "AD_SMOKE_004",
+        "test_name": "Section 3 - Methodology",
+        "description": "Test Section 3 methodology documentation",
+        "test_method": "process_section_3",
+        "input_parameters": {
+          "section_data": {
+            "section_id": "section_3",
+            "content_type": "methodology",
+            "input_data": {
+              "analysis_methods": ["method_1", "method_2", "method_3"],
+              "procedures": ["procedure_1", "procedure_2"],
+              "standards_compliance": true
+            }
+          }
+        },
+        "expected_result": {
+          "status": "SUCCESS",
+          "section_processed": true,
+          "methodology_documented": true,
+          "procedures_included": true,
+          "standards_compliance_verified": true
+        },
+        "timeout_seconds": 10,
+        "retry_count": 2,
+        "critical": false
+      },
+      {
+        "test_id": "AD_SMOKE_005",
+        "test_name": "Section Status Reporting",
+        "description": "Test section status reporting and communication",
+        "test_method": "report_section_status",
+        "input_parameters": {
+          "status_request": {
+            "request_all_sections": true,
+            "include_processing_status": true,
+            "include_completion_percentage": true
+          }
+        },
+        "expected_result": {
+          "status": "SUCCESS",
+          "all_sections_reported": true,
+          "processing_status_accurate": true,
+          "completion_percentage_valid": true,
+          "communication_successful": true
+        },
+        "timeout_seconds": 8,
+        "retry_count": 2,
+        "critical": false
+      }
+    ],
+    "performance_metrics": {
+      "initialization_time_max_ms": 15000,
+      "section_processing_time_max_ms": 15000,
+      "status_reporting_time_max_ms": 8000,
+      "memory_usage_max_mb": 250,
+      "cpu_usage_max_percent": 30
+    },
+    "test_environment": {
+      "required_files": [],
+      "required_directories": [
+        "./test_data/",
+        "./expected_results/"
+      ]
+    }
+  }
+}

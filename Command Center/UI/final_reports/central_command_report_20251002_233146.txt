@@ -1,0 +1,9 @@
+Central Command Report
+Generated at: 2025-10-02T23:31:46.233409
+Case ID: CASE-TEST
+
+## Client & Subject Details
+SECTION 1 - INVESTIGATION OBJECTIVES / CASE INFO\nClient: [Client Name] | Phone: [Client Phone]\nAddress: [Client Address]\nDate of Contract: [Contract Date]\nLocation of Investigation: [Location]\n\nAssigned Investigator: [Investigator] (License 0163814-C000480)\nAgency: DKI Services LLC | License 0200812-IA000307\n.
+
+## Cover Page
+INVESTIGATION FINAL REPORT\nCase Number: [Case Number]\nPrepared by DKI Services LLC\nOklahoma Agency License #: 0200812-IA000307\nOklahoma Investigator License #: 0163814-C000480\nPhone: 918-882-5539\nEmail: david@dkiservicesok. Com\n\n"Truth Conquers ALL".

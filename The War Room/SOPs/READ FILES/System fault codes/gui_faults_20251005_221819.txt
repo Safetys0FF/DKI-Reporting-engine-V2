@@ -1,0 +1,6 @@
+GUI FAULT CODE RESULTS
+==================================================
+Test Date: 2025-10-05T22:18:19.631848
+Total Faults: 1
+
+ 1. 7-1-01-26 - Import error: No module named 'enhanced_functional_gui'

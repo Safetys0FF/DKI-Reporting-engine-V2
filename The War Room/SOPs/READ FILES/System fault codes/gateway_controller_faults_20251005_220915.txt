@@ -1,0 +1,15 @@
+GATEWAY CONTROLLER FAULT CODE RESULTS
+==================================================
+Test Date: 2025-10-05T22:09:15.914703
+Total Faults: 10
+
+ 1. 2-2-30-47 - Process evidence error: 'GatewayController' object has no attribute 'process_evidence'
+ 2. 2-2-31-55 - Invalid evidence data: 'GatewayController' object has no attribute 'process_evidence'
+ 3. 2-2-32-63 - Validate section error: 'GatewayController' object has no attribute 'validate_section'
+ 4. 2-2-33-71 - Process files error: 'GatewayController' object has no attribute 'process_files'
+ 5. 2-2-50-79 - Get section status error: 'GatewayController' object has no attribute 'get_section_status'
+ 6. 2-2-51-87 - Generate section error: 'GatewayController' object has no attribute 'generate_section'
+ 7. 2-2-52-95 - OCR processing error: 'GatewayController' object has no attribute 'process_ocr'
+ 8. 2-2-53-103 - Evidence classification error: 'GatewayController' object has no attribute 'classify_evidence'
+ 9. 2-2-54-111 - Route evidence error: 'GatewayController' object has no attribute 'route_evidence'
+10. 2-2-55-119 - Get processing status error: 'GatewayController' object has no attribute 'get_processing_status'

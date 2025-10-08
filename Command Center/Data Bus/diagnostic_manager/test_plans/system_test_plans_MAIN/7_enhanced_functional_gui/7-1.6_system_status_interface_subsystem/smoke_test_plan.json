@@ -1,0 +1,123 @@
+{
+  "test_plan": {
+    "system_name": "System Status Interface Subsystem",
+    "system_address": "7-1.6",
+    "parent_system": "Enhanced Functional GUI (7-1)",
+    "test_type": "smoke_test",
+    "version": "1.0",
+    "created": "2025-10-05",
+    "description": "Basic functionality validation for System Status Interface subsystem",
+    "test_data_location": "./test_data/",
+    "expected_results_location": "./expected_results/",
+    "test_vectors": [
+      {
+        "test_id": "SSI_SMOKE_001",
+        "test_name": "Subsystem Initialization",
+        "description": "Verify System Status Interface can initialize independently",
+        "test_method": "initialize_system_status_interface",
+        "input_parameters": {
+          "status_display_modes": ["dashboard", "detailed_view", "alert_panel", "historical_view"],
+          "monitored_systems": ["1-1", "2-1", "2-2", "3-1", "4-1", "5-1", "Bus-1"],
+          "status_update_interval": 30
+        },
+        "expected_result": {
+          "status": "SUCCESS",
+          "system_status_interface_initialized": true,
+          "status_display_modes_configured": true,
+          "monitored_systems_registered": true,
+          "status_update_interval_set": true
+        },
+        "timeout_seconds": 5,
+        "retry_count": 3,
+        "critical": true
+      },
+      {
+        "test_id": "SSI_SMOKE_002",
+        "test_name": "Status Dashboard Display",
+        "description": "Test status dashboard display functionality",
+        "test_method": "display_status_dashboard",
+        "input_parameters": {
+          "dashboard_data": {
+            "dashboard_layout": "grid_view",
+            "status_indicators": ["system_health", "performance_metrics", "alert_count", "uptime"],
+            "color_coding": "status_based",
+            "dashboard_refresh": "automatic"
+          }
+        },
+        "expected_result": {
+          "status": "SUCCESS",
+          "status_dashboard_displayed": true,
+          "dashboard_layout_configured": true,
+          "status_indicators_functional": true,
+          "color_coding_applied": true,
+          "dashboard_refresh_working": true
+        },
+        "timeout_seconds": 5,
+        "retry_count": 2,
+        "critical": true
+      },
+      {
+        "test_id": "SSI_SMOKE_003",
+        "test_name": "Detailed Status View",
+        "description": "Test detailed status view functionality",
+        "test_method": "display_detailed_status",
+        "input_parameters": {
+          "detailed_data": {
+            "system_id": "2-1",
+            "detailed_metrics": ["cpu_usage", "memory_usage", "response_time", "error_rate"],
+            "detailed_history": "last_24_hours",
+            "detailed_alerts": "active_alerts"
+          }
+        },
+        "expected_result": {
+          "status": "SUCCESS",
+          "detailed_status_displayed": true,
+          "detailed_metrics_shown": true,
+          "detailed_history_available": true,
+          "detailed_alerts_displayed": true
+        },
+        "timeout_seconds": 5,
+        "retry_count": 2,
+        "critical": true
+      },
+      {
+        "test_id": "SSI_SMOKE_004",
+        "test_name": "Alert Management Interface",
+        "description": "Test alert management interface functionality",
+        "test_method": "manage_alerts",
+        "input_parameters": {
+          "alert_data": {
+            "alert_types": ["system_down", "performance_degradation", "error_threshold", "maintenance_required"],
+            "alert_priorities": ["critical", "high", "medium", "low"],
+            "alert_actions": ["acknowledge", "dismiss", "escalate", "investigate"]
+          }
+        },
+        "expected_result": {
+          "status": "SUCCESS",
+          "alert_management_loaded": true,
+          "alert_types_displayed": true,
+          "alert_priorities_functional": true,
+          "alert_actions_available": true
+        },
+        "timeout_seconds": 5,
+        "retry_count": 2,
+        "critical": false
+      }
+    ],
+    "performance_metrics": {
+      "initialization_time_max_ms": 5000,
+      "status_dashboard_time_max_ms": 5000,
+      "detailed_status_view_time_max_ms": 5000,
+      "alert_management_time_max_ms": 5000,
+      "memory_usage_max_mb": 75,
+      "cpu_usage_max_percent": 15
+    },
+    "test_environment": {
+      "required_files": [],
+      "required_directories": [
+        "./test_data/",
+        "./expected_results/"
+      ]
+    }
+  }
+}

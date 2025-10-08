@@ -1,0 +1,133 @@
+{
+  "meta": {
+    "id": "fault-code-protocol-core",
+    "schema_version": "1.0.0",
+    "protocol_version": "1.0.0",
+    "issued_at": "2025-10-06T00:00:00Z",
+    "expires_at": "2025-11-05T00:00:00Z",
+    "issuer": "Central Command / DIAG-1",
+    "content_hash_alg": "sha256",
+    "content_hash": "<fill-at-publish>",
+    "signature_alg": "rsa-pss-sha256",
+    "signature": "<base64-signature>"
+  },
+
+  "distribution": {
+    "file_path": "F:/The Central Command/The War Room/SOPs/READ FILES/diagnostics_protocols/fault_code_protocol_core.json",
+    "bus_topics": {
+      "announce": "protocol.update.announce",
+      "fetch": "protocol.update.fetch",
+      "ack": "protocol.update.ack"
+    }
+  },
+
+  "subscription": {
+    "auto_subscribe": true,
+    "handshake": {
+      "require_ack": true,
+      "ack_timeout_sec": 30,
+      "fields_required": ["module_address", "module_name", "version", "capabilities"],
+      "heartbeat_interval_sec": 60,
+      "idle_activation_minutes": 10
+    },
+    "rate_limits": {
+      "fault_reports_per_min": 120,
+      "signals_per_sec": 20,
+      "burst": 100
+    }
+  },
+
+  "language": {
+    "signal_types": ["communication", "response", "sos_fault", "rollcall", "radio_check", "status_request"],
+    "radio_codes": {
+      "standard": ["10-4","10-6","10-8","10-9","10-10"],
+      "emergency": ["SOS","MAYDAY"],
+      "status": ["STATUS","ROLLCALL","RADIO_CHECK"]
+    },
+    "schemas": {
+      "signal_required_fields": [
+        "signal_id","caller_address","target_address","bus_address","signal_type","radio_code","message","payload","response_expected","timeout"
+      ],
+      "response_required_fields": [
+        "signal_id","caller_address","target_address","signal_type","radio_code","payload.timestamp","payload.status"
+      ]
+    }
+  },
+
+  "validation": {
+    "system_address_regex": "^(Bus-\\d+|\\d+(?:-[0-9A-Za-z\\.]+)?)$",
+    "fault_code_regex": "^\\[([A-Za-z0-9-]+)-(\\d{2})-([A-Za-z0-9_-]+)\\]$",
+    "allowed_radio_codes": ["10-4","10-6","10-8","10-9","10-10","SOS","MAYDAY","STATUS","ROLLCALL","RADIO_CHECK"],
+    "max_payload_size_bytes": 10485760,
+    "unknown_code_policy": {
+      "map_to_code": "99",
+      "store_payload": true,
+      "raise_compliance_fault": true
+    }
+  },
+
+  "fault_protocols": {
+    "families": {
+      "SyntaxConfiguration": { "codes": { "01":"Syntax error in configuration file","02":"Missing required configuration parameter","03":"Invalid configuration value","04":"Configuration file corrupted","05":"Configuration file not found" } },
+      "Initialization":       { "codes": { "10":"Failed to initialize component","11":"Initialization timeout","12":"Missing initialization dependency","13":"Initialization resource unavailable","14":"Initialization permission denied" } },
+      "Communication":        { "codes": { "20":"Communication timeout","21":"Communication connection lost","22":"Communication protocol error","23":"Communication signal not received","24":"Communication address not found" } },
+      "DataProcessing":       { "codes": { "30":"Data processing error","31":"Data validation failed","32":"Data corruption detected","33":"Data format unsupported","34":"Data parsing error" } },
+      "Resource":             { "codes": { "40":"Resource unavailable","41":"Resource exhausted","42":"Resource permission denied","43":"Resource locked by another process","44":"Resource disk space insufficient" } },
+      "BusinessLogic":        { "codes": { "50":"Business rule validation failed","51":"Workflow state invalid","52":"Operation not allowed in current state","53":"Dependency not satisfied" } },
+      "ExternalService":      { "codes": { "60":"External service unavailable","61":"External service timeout","62":"External service authentication failed","63":"External service rate limit exceeded" } },
+      "FileSystem":           { "codes": { "70":"File not found","71":"File access denied","72":"File locked by another process","73":"File system full","74":"File system corruption" } },
+      "Database":             { "codes": { "80":"Database connection failed","81":"Database query timeout","82":"Database transaction failed","83":"Database constraint violation" } },
+      "CriticalSystem":       { "codes": { "90":"System crash","91":"System out of memory","92":"System disk full","93":"System network failure","94":"System hardware failure","99":"Unknown critical system failure" } }
+    },
+    "severity_map": [
+      { "range": "01-49", "severity": "ERROR" },
+      { "range": "50-89", "severity": "FAILURE" },
+      { "range": "90-99", "severity": "CRITICAL" }
+    ]
+  },
+
+  "inheritance": {
+    "apply_families_to_systems": [
+      { "match": "1-1.*",     "families": ["SyntaxConfiguration","Initialization","DataProcessing","FileSystem","Resource"] },
+      { "match": "2-1.*",     "families": ["Initialization","BusinessLogic","Resource","Database","Communication"] },
+      { "match": "2-2.*",     "families": ["Communication","ExternalService","Resource","Initialization"] },
+      { "match": "3-1.*",     "families": ["Initialization","BusinessLogic","DataProcessing","FileSystem"] },
+      { "match": "3-2.*",     "families": ["DataProcessing","FileSystem","ExternalService"] },
+      { "match": "4-.*|4-CP|4-TOC|4-DP", "families": ["SyntaxConfiguration","DataProcessing","FileSystem"] },
+      { "match": "5-.*",      "families": ["Communication","Resource","BusinessLogic"] },
+      { "match": "6-.*",      "families": ["Resource","FileSystem"] },
+      { "match": "7-1.*",     "families": ["Communication","Initialization","Resource","DataProcessing"] },
+      { "match": "Bus-.*",    "families": ["Communication","Resource"] }
+    ]
+  },
+
+  "compliance": {
+    "enforcement": {
+      "validate_fault_code_format": true,
+      "require_subscription": true,
+      "require_signal_ack": true,
+      "non_compliance_escalation": [
+        { "violation": "INVALID_FAULT_CODE_FORMAT", "action": "raise_compliance_fault", "code": "98", "after_occurrences": 1 },
+        { "violation": "NO_DIAGNOSTIC_RESPONSE",    "action": "raise_compliance_fault", "code": "97", "after_occurrences": 1 },
+        { "violation": "REPEATED_NON_COMPLIANCE",   "action": "isolate_system",         "after_occurrences": 3 },
+        { "violation": "CRITICAL_NON_COMPLIANCE",   "action": "forced_shutdown",        "after_occurrences": 1 }
+      ]
+    },
+    "actions": {
+      "raise_compliance_fault": { "radio_code": "10-4", "log": true, "vault": true },
+      "isolate_system":         { "radio_code": "STATUS", "log": true, "vault": true, "mark_status": "ISOLATED" },
+      "forced_shutdown":        { "radio_code": "SOS", "log": true, "vault": true, "mark_status": "FORCED_SHUTDOWN" }
+    }
+  },
+
+  "module_registration": {
+    "required_fields": ["address","name","handler","parent","version","capabilities","location"],
+    "capabilities_examples": ["fault.report","fault.sos","error.report","status.respond","rollcall.respond"],
+    "heartbeat": { "interval_sec": 60, "timeout_sec": 180 }
+  },
+
+  "telemetry": {
+    "metrics_required": ["cpu_pct","mem_mb","queue_depth","last_signal_iso","error_count","fault_count"],
+    "report_interval_sec": 60
+  }
+}

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from typing import Any, Dict
+from datetime import datetime
 
 from .section_framework_base import (
     CommunicationContract,
@@ -15,6 +16,7 @@ from .section_framework_base import (
 
 class Section1Framework(SectionFramework):
     SECTION_ID = "section_1_profile"
+    BUS_SECTION_ID = "section_1"
     MAX_RERUNS = 2
     STAGES = (
         StageDefinition(
@@ -104,10 +106,10 @@ class Section1Framework(SectionFramework):
                 **evidence_data
             }
             
-            return combined_inputs
+            return self._augment_with_bus_context(combined_inputs)
         except Exception as e:
             self.logger.error(f"Failed to load inputs for {self.SECTION_ID}: {e}")
-            return {}
+            return self._augment_with_bus_context({})
 
     def build_payload(self, context: Dict[str, Any]) -> Dict[str, Any]:
         """Build payload with all Section 1 tools - ENFORCES SECTION-AWARE EXECUTION"""
@@ -220,6 +222,18 @@ class Section1Framework(SectionFramework):
             except ImportError:
                 payload["mileage_audit"] = {"error": "Mileage tool not available"}
 
+            case_id = context.get("case_id") or context.get("bus_state", {}).get("case_id")
+            if case_id:
+                payload["case_id"] = case_id
+            payload["section_id"] = self.bus_section_id() or "section_1"
+            if context.get("manifest_context") is not None:
+                payload.setdefault("manifest_context", context.get("manifest_context"))
+            if context.get("section_needs") is not None:
+                payload.setdefault("section_needs", context.get("section_needs"))
+            if context.get("evidence") is not None:
+                payload.setdefault("section_evidence", context.get("evidence"))
+            if context.get("bus_state") is not None:
+                payload.setdefault("bus_state", context.get("bus_state"))
             return payload
 
         except Exception as e:
@@ -249,15 +263,26 @@ class Section1Framework(SectionFramework):
                 narrative = f"Section 1 Profile: {payload.get('client_name', 'Unknown Client')}"
 
             # Publish to Gateway
+            section_bus_id = self.bus_section_id() or "section_1"
+            timestamp = datetime.now().isoformat()
+            summary = narrative.splitlines()[0] if narrative else ""
+            summary = summary[:320]
             result = {
+                "section_id": section_bus_id,
+                "case_id": payload.get("case_id"),
                 "payload": payload,
                 "manifest": payload,
                 "narrative": narrative,
-                "status": "completed"
+                "summary": summary,
+                "metadata": {"published_at": timestamp, "section": self.SECTION_ID},
+                "source": "section_1_framework",
             }
-            
-            self.gateway.publish_section_result("section_1", result)
-            self.gateway.emit("case_metadata_ready", payload)
+
+            self.gateway.publish_section_result(section_bus_id, result)
+            emit_payload = dict(payload)
+            emit_payload.setdefault("published_at", timestamp)
+            emit_payload.setdefault("section_id", section_bus_id)
+            self.gateway.emit("case_metadata_ready", emit_payload)
 
             return {"status": "published", "narrative": narrative, "manifest": payload}
 

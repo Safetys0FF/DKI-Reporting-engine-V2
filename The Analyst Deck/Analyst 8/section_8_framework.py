@@ -64,6 +64,7 @@ class OrderContract:
 
 class SectionFramework:
     SECTION_ID: str = ""
+    BUS_SECTION_ID: Optional[str] = None
     MAX_RERUNS: int = 3
     STAGES: Tuple[StageDefinition, ...] = ()
     COMMUNICATION: Optional[CommunicationContract] = None
@@ -95,6 +96,58 @@ class SectionFramework:
 
     def publish(self, payload: Dict[str, Any]) -> Dict[str, Any]:
         raise NotImplementedError
+
+    @classmethod
+    def bus_section_id(cls) -> Optional[str]:
+        if getattr(cls, "BUS_SECTION_ID", None):
+            return cls.BUS_SECTION_ID
+        section_id = getattr(cls, "SECTION_ID", "")
+        if section_id.startswith("section_"):
+            parts = section_id.split("_")
+            if len(parts) >= 2:
+                return f"section_{parts[1]}"
+        return section_id or None
+
+    def _get_latest_bus_state(self) -> Dict[str, Any]:
+        bus_id = self.bus_section_id()
+        get_state = getattr(self.gateway, "get_bus_state", None) if hasattr(self, "gateway") else None
+        if not bus_id or not callable(get_state):
+            return {}
+        try:
+            state = get_state(bus_id) or {}
+            return state
+        except Exception as exc:
+            self.logger.warning("Failed to fetch bus state for %s: %s", bus_id, exc)
+            return {}
+
+    def _augment_with_bus_context(self, inputs: Dict[str, Any]) -> Dict[str, Any]:
+        bus_state = self._get_latest_bus_state()
+        if not bus_state:
+            return inputs
+        enriched: Dict[str, Any] = dict(inputs)
+        enriched.setdefault("bus_state", bus_state)
+        payload = bus_state.get("payload") or {}
+        if isinstance(payload, dict):
+            enriched.setdefault("section_payload", payload.get("structured_data") or payload)
+            manifest_context = payload.get("manifest") or bus_state.get("manifest")
+            if manifest_context is not None:
+                enriched.setdefault("manifest_context", manifest_context)
+            for key, value in payload.items():
+                enriched.setdefault(key, value)
+        else:
+            manifest_context = bus_state.get("manifest")
+            if manifest_context is not None:
+                enriched.setdefault("manifest_context", manifest_context)
+        if bus_state.get("needs") is not None:
+            enriched.setdefault("section_needs", bus_state.get("needs"))
+        if bus_state.get("evidence") is not None:
+            enriched.setdefault("section_evidence", bus_state.get("evidence"))
+        case_id = enriched.get("case_id") or bus_state.get("case_id")
+        if not case_id and isinstance(payload, dict):
+            case_id = payload.get("case_id")
+        if case_id and "case_id" not in enriched:
+            enriched["case_id"] = case_id
+        return enriched
 
     def _guard_execution(self, operation: str) -> None:
         if self.ecc and not self.ecc.can_run(self.SECTION_ID):
@@ -1099,400 +1152,437 @@ FIELD_HEADING = "SECTION 8 - PHOTO / EVIDENCE INDEX (FIELD OPERATIONS)"
 HYBRID_HEADING = "SECTION 8 - PHOTO / EVIDENCE INDEX (HYBRID)"
 
 
-    class Section8Framework(SectionFramework):
-        SECTION_ID = "section_8_evidence"
-        MAX_RERUNS = 2
-        STAGES = (
-            StageDefinition(
-                name="intake",
-                description="Load media archive, confirm upstream hashes, and gather manifest references.",
-                checkpoint="s8_intake_logged",
-                guardrails=("order_lock", "async_queue", "persistence_snapshot"),
-                inputs=(
-                    "case_metadata",
-                    "media_index",
-                    "section_manifests",
-                    "toolkit_results",
-                ),
-                outputs=("intake_context",),
-            ),
-            StageDefinition(
-                name="filter",
-                description="Validate media quality, deduplicate, and align with surveillance timeline.",
-                checkpoint="s8_media_filtered",
-                guardrails=("quality_threshold", "continuity_checks", "metadata_capture"),
-                inputs=("media_index", "section_manifests"),
-                outputs=("filtered_media",),
-            ),
-            StageDefinition(
-                name="validate",
-                description="Apply chain-of-custody rules and assemble evidence manifest.",
-                checkpoint="s8_validated",
-                guardrails=("manual_queue_routes", "immutability_precheck"),
-                inputs=("filtered_media", "toolkit_results"),
-                outputs=("validated_media",),
-            ),
-            StageDefinition(
-                name="publish",
-                description="Publish evidence index, emit media-ready signal, and persist provenance.",
-                checkpoint="section_8_completed",
-                guardrails=("durable_persistence", "signal_emission", "immutability"),
-                inputs=("validated_media",),
-                outputs=("gateway_handoff",),
-            ),
-            StageDefinition(
-                name="monitor",
-                description="Handle media revisions while enforcing rerun guardrails.",
-                checkpoint="s8_revision_processed",
-                guardrails=("max_reruns", "revision_depth_cap", "fact_graph_consistency"),
-            ),
-        )
-        COMMUNICATION = CommunicationContract(
-            prepare_signal="section_4_review.completed",
-            input_channels=(
+class Section8Framework(SectionFramework):
+    SECTION_ID = "section_8_evidence"
+    BUS_SECTION_ID = "section_8"
+    MAX_RERUNS = 2
+    STAGES = (
+        StageDefinition(
+            name="intake",
+            description="Load media archive, confirm upstream hashes, and gather manifest references.",
+            checkpoint="s8_intake_logged",
+            guardrails=("order_lock", "async_queue", "persistence_snapshot"),
+            inputs=(
                 "case_metadata",
                 "media_index",
                 "section_manifests",
                 "toolkit_results",
-                "manual_annotations",
-                "api_keys",
             ),
-            output_signal="section_8_evidence.completed",
-            revision_signal="evidence_revision_requested",
-        )
-        ORDER = OrderContract(
-            execution_after=("section_4", "section_3_logs", "section_5_documents"),
-            export_after=("section_9", "section_fr"),
-            export_priority=80,
-        )
+            outputs=("intake_context",),
+        ),
+        StageDefinition(
+            name="filter",
+            description="Validate media quality, deduplicate, and align with surveillance timeline.",
+            checkpoint="s8_media_filtered",
+            guardrails=("quality_threshold", "continuity_checks", "metadata_capture"),
+            inputs=("media_index", "section_manifests"),
+            outputs=("filtered_media",),
+        ),
+        StageDefinition(
+            name="validate",
+            description="Apply chain-of-custody rules and assemble evidence manifest.",
+            checkpoint="s8_validated",
+            guardrails=("manual_queue_routes", "immutability_precheck"),
+            inputs=("filtered_media", "toolkit_results"),
+            outputs=("validated_media",),
+        ),
+        StageDefinition(
+            name="publish",
+            description="Publish evidence index, emit media-ready signal, and persist provenance.",
+            checkpoint="section_8_completed",
+            guardrails=("durable_persistence", "signal_emission", "immutability"),
+            inputs=("validated_media",),
+            outputs=("gateway_handoff",),
+        ),
+        StageDefinition(
+            name="monitor",
+            description="Handle media revisions while enforcing rerun guardrails.",
+            checkpoint="s8_revision_processed",
+            guardrails=("max_reruns", "revision_depth_cap", "fact_graph_consistency"),
+        ),
+    )
+    COMMUNICATION = CommunicationContract(
+        prepare_signal="section_4_review.completed",
+        input_channels=(
+            "case_metadata",
+            "media_index",
+            "section_manifests",
+            "toolkit_results",
+            "manual_annotations",
+            "api_keys",
+        ),
+        output_signal="section_8_evidence.completed",
+        revision_signal="evidence_revision_requested",
+    )
+    ORDER = OrderContract(
+        execution_after=("section_4", "section_3_logs", "section_5_documents"),
+        export_after=("section_9", "section_fr"),
+        export_priority=80,
+    )
 
-        def __init__(self, gateway: Any, ecc: Optional[Any] = None) -> None:
-            super().__init__(gateway=gateway, ecc=ecc)
-            self._last_context: Dict[str, Any] = {}
+    def __init__(self, gateway: Any, ecc: Optional[Any] = None) -> None:
+        super().__init__(gateway=gateway, ecc=ecc)
+        self._last_context: Dict[str, Any] = {}
 
-        def load_inputs(self) -> Dict[str, Any]:
-            try:
-                self._guard_execution("input loading")
-                bundle = self.gateway.get_section_inputs("section_8") if self.gateway else {}
-                context = {
-                    "raw_inputs": bundle,
-                    "case_metadata": bundle.get("case_metadata", {}),
-                    "media_index": bundle.get("media_index", {}),
-                    "section_manifests": bundle.get("section_manifests", {}),
-                    "toolkit_results": bundle.get("toolkit_results", {}),
-                    "manual_annotations": bundle.get("manual_annotations", []),
-                    "api_keys": bundle.get("api_keys", {}),
-                }
-                media_index = context.get("media_index") or {}
-                image_count = len(media_index.get("images") or {})
-                video_count = len(media_index.get("videos") or {})
-                audio_count = len(media_index.get("audio") or {})
-                context["basic_stats"] = {
-                    "images": image_count,
-                    "videos": video_count,
-                    "audio": audio_count,
-                }
-                self.logger.debug("Section 8 inputs loaded: %s", context["basic_stats"])
-                self._last_context = context
-                return context
-            except Exception as exc:
-                self.logger.exception("Failed to load inputs for %s: %s", self.SECTION_ID, exc)
-                return {}
-
-        def build_payload(self, context: Dict[str, Any]) -> Dict[str, Any]:
-            try:
-                self._guard_execution("payload building")
-                self._last_context = context
-                
-                # Get contract-based configuration
-                contract_history = context.get("case_metadata", {}).get("contract_history", [])
-                report_config = get_report_config(contract_history)
-                
-                # Determine active components based on ECC whitelist
-                ecc_whitelist = context.get("ecc_whitelist", [])
-                active_components = []
-                for component in report_config.get("forced_render_order", []):
-                    if component in ecc_whitelist or not ecc_whitelist:
-                        if not report_config.get("hide", {}).get(component, False):
-                            active_components.append(component)
-                
-                case_mode = self._determine_case_mode(context)
-                media_payload, meta = self._build_media_payload(context)
-                notes = self._compose_notes(context, meta)
-                
-                payload: Dict[str, Any] = {
-                    "section_heading": report_config.get("label", "SECTION 8 - PHOTO / EVIDENCE INDEX"),
-                    "report_type": report_config.get("report_type", "Investigative"),
-                    "whitelist_applied": ecc_whitelist,
-                    "contract_config": report_config,
-                    "active_components": active_components,
-                    **media_payload,
-                    "qa_flags": sorted(meta.get("qa_flags", [])),
-                    "notes": notes,
-                    "data_policies": context.get("toolkit_results", {}).get("data_policies"),
-                    "manual_notes": meta.get("manual_notes", {}),
-                    "api_keys": context.get("api_keys", {}),
-                }
-                return payload
-            except Exception as exc:
-                self.logger.exception("Failed to build payload for %s: %s", self.SECTION_ID, exc)
-                return {"error": str(exc)}
-
-        def publish(self, payload: Dict[str, Any]) -> Dict[str, Any]:
-            try:
-                self._guard_execution("publishing")
-                renderer = Section8Renderer()
-                case_sources = self._build_renderer_sources(self._last_context)
-                model = renderer.render_model(payload, case_sources)
-                narrative_lines: List[str] = []
-                for block in model["render_tree"]:
-                    if block.get('type') == 'header':
-                        narrative_lines.append(block.get('text', ''))
-                    elif block.get('type') == 'paragraph':
-                        narrative_lines.append(block.get('text', ''))
-                narrative = "
-".join(filter(None, narrative_lines))
-                result = {
-                    "payload": payload,
-                    "manifest": model["manifest"],
-                    "render_tree": model["render_tree"],
-                    "narrative": narrative,
-                    "status": "completed",
-                }
-                if self.gateway:
-                    self.gateway.publish_section_result("section_8", result)
-                    self.gateway.emit("evidence_ready", model["manifest"])
-                return {
-                    "status": "published",
-                    "narrative": narrative,
-                    "manifest": model["manifest"],
-                }
-            except Exception as exc:
-                self.logger.exception("Failed to publish for %s: %s", self.SECTION_ID, exc)
-                return {"error": str(exc)}
-
-        def _case_heading(self, case_mode: str) -> str:
-            if case_mode == "investigative":
-                return INVESTIGATIVE_HEADING
-            if case_mode == "field":
-                return FIELD_HEADING
-            if case_mode == "hybrid":
-                return HYBRID_HEADING
-            return FIELD_HEADING
-
-        def _determine_case_mode(self, context: Dict[str, Any]) -> str:
-            case_meta = context.get("case_metadata", {})
-            report_type = (case_meta.get("report_type") or case_meta.get("case_type") or "").lower()
-            mapping = {
-                "investigative": "investigative",
-                "investigation": "investigative",
-                "field": "field",
-                "surveillance": "field",
-                "hybrid": "hybrid",
-                "mixed": "hybrid",
+    def load_inputs(self) -> Dict[str, Any]:
+        try:
+            self._guard_execution("input loading")
+            bundle = self.gateway.get_section_inputs("section_8") if self.gateway else {}
+            context = {
+                "raw_inputs": bundle,
+                "case_metadata": bundle.get("case_metadata", {}),
+                "media_index": bundle.get("media_index", {}),
+                "section_manifests": bundle.get("section_manifests", {}),
+                "toolkit_results": bundle.get("toolkit_results", {}),
+                "manual_annotations": bundle.get("manual_annotations", []),
+                "api_keys": bundle.get("api_keys", {}),
             }
-            return mapping.get(report_type, "field")
-
-        def _build_media_payload(self, context: Dict[str, Any]) -> Tuple[Dict[str, Any], Dict[str, Any]]:
             media_index = context.get("media_index") or {}
-            manifests = context.get("section_manifests") or {}
-            toolkit = context.get("toolkit_results") or {}
-            manual_annotations = context.get("manual_annotations", [])
-            images = media_index.get("images") or {}
-            videos = media_index.get("videos") or {}
-            audio = media_index.get("audio") or {}
-            normalized_images = {mid: self._normalize_media_record(mid, record, 'image') for mid, record in images.items()}
-            normalized_videos = {mid: self._normalize_media_record(mid, record, 'video') for mid, record in videos.items()}
-            normalized_audio = {mid: self._normalize_media_record(mid, record, 'audio') for mid, record in audio.items()}
-            qa_flags: List[str] = []
-            manual_notes = {f"note_{i}": ann for i, ann in enumerate(manual_annotations, start=1)}
-            if not normalized_images and not normalized_videos:
-                qa_flags.append("no_media_available")
-            previous_sections = {
-                'section_3': manifests.get('section_3'),
-                'section_4': manifests.get('section_4'),
+            image_count = len(media_index.get("images") or {})
+            video_count = len(media_index.get("videos") or {})
+            audio_count = len(media_index.get("audio") or {})
+            context["basic_stats"] = {
+                "images": image_count,
+                "videos": video_count,
+                "audio": audio_count,
             }
-            media_payload = {
-                "images": normalized_images,
-                "videos": normalized_videos,
-                "audio": normalized_audio,
-                "previous_sections": previous_sections,
-                "toolkit_results": toolkit,
-                "manual_notes": manual_notes,
-            }
-            meta = {
-                "qa_flags": qa_flags,
-                "manual_notes": manual_notes,
-            }
-            return media_payload, meta
+            context = self._augment_with_bus_context(context)
+            self.logger.debug("Section 8 inputs loaded: %s", context["basic_stats"])
+            self._last_context = context
+            return context
+        except Exception as exc:
+            self.logger.exception("Failed to load inputs for %s: %s", self.SECTION_ID, exc)
+            return {}
 
-        def _normalize_media_record(self, media_id: str, record: Dict[str, Any], kind: str) -> Dict[str, Any]:
-            normalized: Dict[str, Any] = dict(record or {})
-            normalized['kind'] = kind
-            normalized.setdefault('media_id', media_id)
-            captured_at = normalized.get('captured_at') or normalized.get('timestamp')
-            if captured_at:
+    def build_payload(self, context: Dict[str, Any]) -> Dict[str, Any]:
+        try:
+            self._guard_execution("payload building")
+            self._last_context = context
+            
+            # Get contract-based configuration
+            contract_history = context.get("case_metadata", {}).get("contract_history", [])
+            report_config = get_report_config(contract_history)
+            
+            # Determine active components based on ECC whitelist
+            ecc_whitelist = context.get("ecc_whitelist", [])
+            active_components = []
+            for component in report_config.get("forced_render_order", []):
+                if component in ecc_whitelist or not ecc_whitelist:
+                    if not report_config.get("hide", {}).get(component, False):
+                        active_components.append(component)
+            
+            case_mode = self._determine_case_mode(context)
+            media_payload, meta = self._build_media_payload(context)
+            notes = self._compose_notes(context, meta)
+            
+            payload: Dict[str, Any] = {
+                "section_heading": report_config.get("label", "SECTION 8 - PHOTO / EVIDENCE INDEX"),
+                "report_type": report_config.get("report_type", "Investigative"),
+                "whitelist_applied": ecc_whitelist,
+                "contract_config": report_config,
+                "active_components": active_components,
+                **media_payload,
+                "qa_flags": sorted(meta.get("qa_flags", [])),
+                "notes": notes,
+                "data_policies": context.get("toolkit_results", {}).get("data_policies"),
+                "manual_notes": meta.get("manual_notes", {}),
+                "api_keys": context.get("api_keys", {}),
+            }
+            if context.get("bus_state") is not None:
+                payload.setdefault("bus_state", context.get("bus_state"))
+            if context.get("section_evidence") is not None:
+                payload.setdefault("section_evidence", context.get("section_evidence"))
+            if context.get("section_needs") is not None:
+                payload.setdefault("section_needs", context.get("section_needs"))
+            if context.get("manifest_context") is not None:
+                payload.setdefault("manifest_context", context.get("manifest_context"))
+            section_bus_id = self.bus_section_id() or "section_8"
+            payload.setdefault("section_id", section_bus_id)
+            case_id = context.get("case_id") or context.get("bus_state", {}).get("case_id")
+            if case_id:
+                payload.setdefault("case_id", case_id)
+            return payload
+        except Exception as exc:
+            self.logger.exception("Failed to build payload for %s: %s", self.SECTION_ID, exc)
+            return {"error": str(exc)}
+
+    def publish(self, payload: Dict[str, Any]) -> Dict[str, Any]:
+        try:
+            self._guard_execution("publishing")
+
+            renderer = Section8Renderer()
+            case_sources = self._build_renderer_sources(self._last_context)
+            model = renderer.render_model(payload, case_sources)
+            narrative_lines: List[str] = []
+            for block in model["render_tree"]:
+                block_type = block.get("type")
+                if block_type == "field":
+                    label = str(block.get('label', '')).strip()
+                    value = str(block.get('value', '')).strip()
+                    narrative_lines.append(f"{label}: {value}")
+                elif block_type in {"title", "header", "paragraph"}:
+                    narrative_lines.append(str(block.get("text", "")))
+            narrative = "\n".join(filter(None, narrative_lines))
+
+            section_bus_id = self.bus_section_id() or "section_8"
+            timestamp = datetime.now().isoformat()
+            summary = narrative.splitlines()[0] if narrative else ""
+            summary = summary[:320]
+
+            result = {
+                "section_id": section_bus_id,
+                "case_id": payload.get("case_id"),
+                "payload": payload,
+                "manifest": model.get("manifest", {}) or payload,
+                "render_tree": model.get("render_tree", []),
+                "narrative": narrative,
+                "summary": summary,
+                "metadata": {"published_at": timestamp, "section": self.SECTION_ID},
+                "source": "section_8_framework",
+            }
+
+            try:
+                if hasattr(self.gateway, "publish_section_result"):
+                    self.gateway.publish_section_result(section_bus_id, result)
+                if hasattr(self.gateway, "emit"):
+                    emit_payload = dict(result)
+                    emit_payload.setdefault("published_at", timestamp)
+                    if self.COMMUNICATION and self.COMMUNICATION.output_signal:
+                        self.gateway.emit(self.COMMUNICATION.output_signal, emit_payload)
+                    self.gateway.emit("section_8_ready", result["manifest"])
+            except Exception:
+                self.logger.exception("Gateway publish for section_8 failed")
+
+            if self.ecc:
                 try:
-                    normalized['captured_at'] = datetime.fromisoformat(str(captured_at)).isoformat()
+                    self.ecc.mark_complete(self.SECTION_ID)
                 except Exception:
-                    normalized['captured_at'] = str(captured_at)
-            processing_ts = normalized.get('processing_timestamp')
-            if processing_ts:
-                try:
-                    normalized['processing_timestamp'] = datetime.fromisoformat(str(processing_ts)).isoformat()
-                except Exception:
-                    normalized['processing_timestamp'] = str(processing_ts)
-            label = normalized.get('label') or normalized.get('description') or normalized.get('title')
-            if label:
-                normalized['label'] = str(label)
-            location = normalized.get('location') or normalized.get('geo_hint')
-            if location:
-                normalized['location'] = str(location)
-            return normalized
+                    self.logger.exception("ECC completion for section_8 failed")
 
-        def _compose_notes(self, context: Dict[str, Any], meta: Dict[str, Any]) -> str:
-            notes: List[str] = []
-            if meta.get("qa_flags"):
-                notes.append("Evidence index contains outstanding QA flags requiring review.")
-            manual_annotations = context.get("manual_annotations", [])
-            notes.extend(str(entry).strip() for entry in manual_annotations if str(entry).strip())
-            if not notes:
-                return "Evidence index prepared with available media assets and continuity alignment."
-            return '
-'.join(dict.fromkeys(notes))
+            return {"status": "published", "narrative": narrative, "manifest": result["manifest"]}
+        except Exception as exc:
+            self.logger.exception("Failed to publish for %s: %s", self.SECTION_ID, exc)
+            return {"error": str(exc)}
+    def _case_heading(self, case_mode: str) -> str:
+        if case_mode == "investigative":
+            return INVESTIGATIVE_HEADING
+        if case_mode == "field":
+            return FIELD_HEADING
+        if case_mode == "hybrid":
+            return HYBRID_HEADING
+        return FIELD_HEADING
 
-        def _build_renderer_sources(self, context: Dict[str, Any]) -> Dict[str, Any]:
-            manifests = context.get("section_manifests", {}) or {}
-            return {
-                "notes": {
-                    "location": manifests.get("section_3", {}).get("primary_location"),
-                }
+    def _determine_case_mode(self, context: Dict[str, Any]) -> str:
+        case_meta = context.get("case_metadata", {})
+        report_type = (case_meta.get("report_type") or case_meta.get("case_type") or "").lower()
+        mapping = {
+            "investigative": "investigative",
+            "investigation": "investigative",
+            "field": "field",
+            "surveillance": "field",
+            "hybrid": "hybrid",
+            "mixed": "hybrid",
+        }
+        return mapping.get(report_type, "field")
+
+    def _build_media_payload(self, context: Dict[str, Any]) -> Tuple[Dict[str, Any], Dict[str, Any]]:
+        media_index = context.get("media_index") or {}
+        manifests = context.get("section_manifests") or {}
+        toolkit = context.get("toolkit_results") or {}
+        manual_annotations = context.get("manual_annotations", [])
+        images = media_index.get("images") or {}
+        videos = media_index.get("videos") or {}
+        audio = media_index.get("audio") or {}
+        normalized_images = {mid: self._normalize_media_record(mid, record, 'image') for mid, record in images.items()}
+        normalized_videos = {mid: self._normalize_media_record(mid, record, 'video') for mid, record in videos.items()}
+        normalized_audio = {mid: self._normalize_media_record(mid, record, 'audio') for mid, record in audio.items()}
+        qa_flags: List[str] = []
+        manual_notes = {f"note_{i}": ann for i, ann in enumerate(manual_annotations, start=1)}
+        if not normalized_images and not normalized_videos:
+            qa_flags.append("no_media_available")
+        previous_sections = {
+            'section_3': manifests.get('section_3'),
+            'section_4': manifests.get('section_4'),
+        }
+        media_payload = {
+            "images": normalized_images,
+            "videos": normalized_videos,
+            "audio": normalized_audio,
+            "previous_sections": previous_sections,
+            "toolkit_results": toolkit,
+            "manual_notes": manual_notes,
+        }
+        meta = {
+            "qa_flags": qa_flags,
+            "manual_notes": manual_notes,
+        }
+        return media_payload, meta
+
+    def _normalize_media_record(self, media_id: str, record: Dict[str, Any], kind: str) -> Dict[str, Any]:
+        normalized: Dict[str, Any] = dict(record or {})
+        normalized['kind'] = kind
+        normalized.setdefault('media_id', media_id)
+        captured_at = normalized.get('captured_at') or normalized.get('timestamp')
+        if captured_at:
+            try:
+                normalized['captured_at'] = datetime.fromisoformat(str(captured_at)).isoformat()
+            except Exception:
+                normalized['captured_at'] = str(captured_at)
+        processing_ts = normalized.get('processing_timestamp')
+        if processing_ts:
+            try:
+                normalized['processing_timestamp'] = datetime.fromisoformat(str(processing_ts)).isoformat()
+            except Exception:
+                normalized['processing_timestamp'] = str(processing_ts)
+        label = normalized.get('label') or normalized.get('description') or normalized.get('title')
+        if label:
+            normalized['label'] = str(label)
+        location = normalized.get('location') or normalized.get('geo_hint')
+        if location:
+            normalized['location'] = str(location)
+        return normalized
+
+    def _compose_notes(self, context: Dict[str, Any], meta: Dict[str, Any]) -> str:
+        notes: List[str] = []
+        if meta.get("qa_flags"):
+            notes.append("Evidence index contains outstanding QA flags requiring review.")
+        manual_annotations = context.get("manual_annotations", [])
+        notes.extend(str(entry).strip() for entry in manual_annotations if str(entry).strip())
+        if not notes:
+            return "Evidence index prepared with available media assets and continuity alignment."
+        return "\n".join(dict.fromkeys(notes))
+
+    def _build_renderer_sources(self, context: Dict[str, Any]) -> Dict[str, Any]:
+        manifests = context.get("section_manifests", {}) or {}
+        return {
+            "notes": {
+                "location": manifests.get("section_3", {}).get("primary_location"),
             }
+        }
 
-        def _safe_join(self, items: Iterable[Any], default: str, separator: str = '
-') -> str:
-            values = [str(item).strip() for item in items if str(item).strip()]
-            if not values:
-                return default
-            return separator.join(values)
+    def _safe_join(self, items: Iterable[Any], default: str, separator: str = '\n') -> str:
+        values = [str(item).strip() for item in items if str(item).strip()]
+        if not values:
+            return default
+        return separator.join(values)
 
-        def _run_inline_tools(self, context: Dict[str, Any]) -> Dict[str, Any]:
-            """Run embedded tools for Section 8."""
-            toolkit_results = {}
-            
-            # Northstar Protocol Tool
-            try:
-                assets = context.get("case_metadata", {}).get("assets", [])
-                northstar_result = NorthstarProtocolTool.process_assets(assets)
-                toolkit_results["northstar_classification"] = northstar_result
-            except Exception as e:
-                self.logger.warning(f"Northstar tool failed: {e}")
-                toolkit_results["northstar_classification"] = {"error": str(e)}
-            
-            # Cochran Match Tool
-            try:
-                subjects = context.get("case_metadata", {}).get("subjects", [])
-                candidates = context.get("case_metadata", {}).get("candidates", [])
-                cochran_results = []
-                for subject in subjects:
-                    for candidate in candidates:
-                        result = CochranMatchTool.verify_identity(subject, candidate)
-                        cochran_results.append(result)
-                toolkit_results["cochran_verification"] = cochran_results
-            except Exception as e:
-                self.logger.warning(f"Cochran tool failed: {e}")
-                toolkit_results["cochran_verification"] = {"error": str(e)}
-            
-            # Reverse Continuity Tool
-            try:
-                narratives = context.get("surveillance_narratives", [])
-                documents = context.get("document_references", [])
-                assets = context.get("case_metadata", {}).get("assets", [])
-                
-                continuity_tool = ReverseContinuityTool()
-                continuity_results = []
-                for narrative in narratives:
-                    success, log = continuity_tool.run_validation(narrative, documents, assets)
-                    continuity_results.append({"success": success, "log": log})
-                
-                toolkit_results["continuity_check"] = continuity_results
-            except Exception as e:
-                self.logger.warning(f"Continuity tool failed: {e}")
-                toolkit_results["continuity_check"] = {"error": str(e)}
-            
-            # Metadata Tool
-            try:
-                metadata_zip = context.get("case_metadata", {}).get("metadata_zip")
-                if metadata_zip:
-                    metadata_result = MetadataToolV5.process_zip(metadata_zip, "./temp/metadata")
-                    toolkit_results["metadata_processing"] = metadata_result
-                else:
-                    toolkit_results["metadata_processing"] = {"status": "SKIPPED", "reason": "No metadata zip provided"}
-            except Exception as e:
-                self.logger.warning(f"Metadata tool failed: {e}")
-                toolkit_results["metadata_processing"] = {"error": str(e)}
-            
-            # Mileage Tool
-            try:
-                mileage_result = MileageToolV2.audit_mileage()
-                toolkit_results["mileage_audit"] = mileage_result
-            except Exception as e:
-                self.logger.warning(f"Mileage tool failed: {e}")
-                toolkit_results["mileage_audit"] = {"error": str(e)}
-            
-            # OCR Processing (if available)
-            if OCR_AVAILABLE:
-                try:
-                    ocr_results = self._process_ocr_documents(context)
-                    toolkit_results["ocr_results"] = ocr_results
-                except Exception as e:
-                    self.logger.warning(f"OCR processing failed: {e}")
-                    toolkit_results["ocr_processing_issues"] = str(e)
-            
-            return toolkit_results
+    def _run_inline_tools(self, context: Dict[str, Any]) -> Dict[str, Any]:
+        """Run embedded tools for Section 8."""
+        toolkit_results = {}
         
-        def _process_ocr_documents(self, context: Dict[str, Any]) -> Dict[str, Any]:
-            """Process documents using OCR for Section 8."""
-            ocr_results = {}
+        # Northstar Protocol Tool
+        try:
+            assets = context.get("case_metadata", {}).get("assets", [])
+            northstar_result = NorthstarProtocolTool.process_assets(assets)
+            toolkit_results["northstar_classification"] = northstar_result
+        except Exception as e:
+            self.logger.warning(f"Northstar tool failed: {e}")
+            toolkit_results["northstar_classification"] = {"error": str(e)}
+        
+        # Cochran Match Tool
+        try:
+            subjects = context.get("case_metadata", {}).get("subjects", [])
+            candidates = context.get("case_metadata", {}).get("candidates", [])
+            cochran_results = []
+            for subject in subjects:
+                for candidate in candidates:
+                    result = CochranMatchTool.verify_identity(subject, candidate)
+                    cochran_results.append(result)
+            toolkit_results["cochran_verification"] = cochran_results
+        except Exception as e:
+            self.logger.warning(f"Cochran tool failed: {e}")
+            toolkit_results["cochran_verification"] = {"error": str(e)}
+        
+        # Reverse Continuity Tool
+        try:
+            narratives = context.get("surveillance_narratives", [])
+            documents = context.get("document_references", [])
+            assets = context.get("case_metadata", {}).get("assets", [])
             
-            # Get media from case bundle
-            media_index = context.get("media_index", {})
-            images = media_index.get("images", {})
-            videos = media_index.get("videos", {})
+            continuity_tool = ReverseContinuityTool()
+            continuity_results = []
+            for narrative in narratives:
+                success, log = continuity_tool.run_validation(narrative, documents, assets)
+                continuity_results.append({"success": success, "log": log})
             
-            # Process images
-            for img_id, img_data in images.items():
-                try:
-                    img_path = img_data.get("file_info", {}).get("path")
-                    if img_path and os.path.exists(img_path):
-                        text = extract_text_from_image(img_path)
-                        if text:
-                            ocr_results[img_id] = {
-                                "type": "image",
-                                "text": text[:1000] + "..." if len(text) > 1000 else text,
-                                "status": "success"
-                            }
-                except Exception as e:
-                    ocr_results[img_id] = {
-                        "type": "image",
-                        "error": str(e),
-                        "status": "failed"
-                    }
-            
-            return ocr_results
+            toolkit_results["continuity_check"] = continuity_results
+        except Exception as e:
+            self.logger.warning(f"Continuity tool failed: {e}")
+            toolkit_results["continuity_check"] = {"error": str(e)}
+        
+        # Metadata Tool
+        try:
+            metadata_zip = context.get("case_metadata", {}).get("metadata_zip")
+            if metadata_zip:
+                metadata_result = MetadataToolV5.process_zip(metadata_zip, "./temp/metadata")
+                toolkit_results["metadata_processing"] = metadata_result
+            else:
+                toolkit_results["metadata_processing"] = {"status": "SKIPPED", "reason": "No metadata zip provided"}
+        except Exception as e:
+            self.logger.warning(f"Metadata tool failed: {e}")
+            toolkit_results["metadata_processing"] = {"error": str(e)}
+        
+        # Mileage Tool
+        try:
+            mileage_result = MileageToolV2.audit_mileage()
+            toolkit_results["mileage_audit"] = mileage_result
+        except Exception as e:
+            self.logger.warning(f"Mileage tool failed: {e}")
+            toolkit_results["mileage_audit"] = {"error": str(e)}
+        
+        # OCR Processing (if available)
+        if OCR_AVAILABLE:
+            try:
+                ocr_results = self._process_ocr_documents(context)
+                toolkit_results["ocr_results"] = ocr_results
+            except Exception as e:
+                self.logger.warning(f"OCR processing failed: {e}")
+                toolkit_results["ocr_processing_issues"] = str(e)
+        
+        return toolkit_results
+    
+    def _process_ocr_documents(self, context: Dict[str, Any]) -> Dict[str, Any]:
+        """Process documents using OCR for Section 8."""
+        ocr_results = {}
+        
+        # Get media from case bundle
+        media_index = context.get("media_index", {})
+        images = media_index.get("images", {})
+        videos = media_index.get("videos", {})
+        
+        # Process images
+        for img_id, img_data in images.items():
+            try:
+                img_path = img_data.get("file_info", {}).get("path")
+                if img_path and os.path.exists(img_path):
+                    text = extract_text_from_image(img_path)
+                    if text:
+                        ocr_results[img_id] = {
+                            "type": "image",
+                            "text": text[:1000] + "..." if len(text) > 1000 else text,
+                            "status": "success"
+                        }
+            except Exception as e:
+                ocr_results[img_id] = {
+                    "type": "image",
+                    "error": str(e),
+                    "status": "failed"
+                }
+        
+        return ocr_results
 
 
 __all__ = [
-    "Section8Framework",
-    "Section8Renderer",
-    "StageDefinition",
-    "CommunicationContract",
-    "FactGraphContract",
-    "PersistenceContract",
-    "OrderContract",
-    "get_report_config",
-    "extract_text_from_pdf",
-    "extract_text_from_image",
-    "easyocr_text",
+"Section8Framework",
+"Section8Renderer",
+"StageDefinition",
+"CommunicationContract",
+"FactGraphContract",
+"PersistenceContract",
+"OrderContract",
+"get_report_config",
+"extract_text_from_pdf",
+"extract_text_from_image",
+"easyocr_text",
 ]
 

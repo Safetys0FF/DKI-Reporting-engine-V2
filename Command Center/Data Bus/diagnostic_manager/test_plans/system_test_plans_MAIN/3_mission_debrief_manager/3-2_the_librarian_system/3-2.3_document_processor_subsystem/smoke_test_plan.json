@@ -1,0 +1,127 @@
+{
+  "test_plan": {
+    "system_name": "Document Processor Subsystem",
+    "system_address": "3-2.3",
+    "parent_system": "The Librarian (3-2)",
+    "test_type": "smoke_test",
+    "version": "1.0",
+    "created": "2025-10-05",
+    "description": "Basic functionality validation for Document Processor subsystem",
+    "test_data_location": "./test_data/",
+    "expected_results_location": "./expected_results/",
+    "test_vectors": [
+      {
+        "test_id": "DP_SMOKE_001",
+        "test_name": "Subsystem Initialization",
+        "description": "Verify Document Processor can initialize independently",
+        "test_method": "initialize_document_processor",
+        "input_parameters": {
+          "supported_formats": ["PDF", "DOCX", "HTML", "RTF", "TXT"],
+          "processing_modes": ["text_extraction", "metadata_extraction", "format_conversion"],
+          "ocr_engine": "tesseract"
+        },
+        "expected_result": {
+          "status": "SUCCESS",
+          "document_processor_initialized": true,
+          "supported_formats_loaded": true,
+          "processing_modes_configured": true,
+          "ocr_engine_ready": true
+        },
+        "timeout_seconds": 8,
+        "retry_count": 3,
+        "critical": true
+      },
+      {
+        "test_id": "DP_SMOKE_002",
+        "test_name": "Text Extraction",
+        "description": "Test text extraction functionality",
+        "test_method": "extract_text",
+        "input_parameters": {
+          "extraction_data": {
+            "document_path": "./test_data/sample_document.pdf",
+            "extraction_mode": "full_text",
+            "include_formatting": false,
+            "language": "en"
+          }
+        },
+        "expected_result": {
+          "status": "SUCCESS",
+          "text_extracted": true,
+          "extraction_accurate": true,
+          "text_content_complete": true,
+          "extraction_metadata_generated": true
+        },
+        "timeout_seconds": 10,
+        "retry_count": 2,
+        "critical": true
+      },
+      {
+        "test_id": "DP_SMOKE_003",
+        "test_name": "Metadata Extraction",
+        "description": "Test metadata extraction functionality",
+        "test_method": "extract_metadata",
+        "input_parameters": {
+          "metadata_data": {
+            "document_path": "./test_data/sample_document.pdf",
+            "metadata_types": ["creation_date", "author", "title", "page_count", "file_size"],
+            "extraction_depth": "complete"
+          }
+        },
+        "expected_result": {
+          "status": "SUCCESS",
+          "metadata_extracted": true,
+          "metadata_complete": true,
+          "extraction_accurate": true,
+          "metadata_structured": true
+        },
+        "timeout_seconds": 5,
+        "retry_count": 2,
+        "critical": true
+      },
+      {
+        "test_id": "DP_SMOKE_004",
+        "test_name": "Format Conversion",
+        "description": "Test format conversion functionality",
+        "test_method": "convert_format",
+        "input_parameters": {
+          "conversion_data": {
+            "source_document_path": "./test_data/sample_document.pdf",
+            "target_format": "HTML",
+            "conversion_options": {
+              "preserve_formatting": true,
+              "include_images": true,
+              "optimize_output": true
+            }
+          }
+        },
+        "expected_result": {
+          "status": "SUCCESS",
+          "format_converted": true,
+          "conversion_accurate": true,
+          "formatting_preserved": true,
+          "output_optimized": true
+        },
+        "timeout_seconds": 15,
+        "retry_count": 2,
+        "critical": false
+      }
+    ],
+    "performance_metrics": {
+      "initialization_time_max_ms": 8000,
+      "text_extraction_time_max_ms": 10000,
+      "metadata_extraction_time_max_ms": 5000,
+      "format_conversion_time_max_ms": 15000,
+      "memory_usage_max_mb": 150,
+      "cpu_usage_max_percent": 25
+    },
+    "test_environment": {
+      "required_files": [
+        "./test_data/sample_document.pdf"
+      ],
+      "required_directories": [
+        "./test_data/",
+        "./expected_results/"
+      ]
+    }
+  }
+}

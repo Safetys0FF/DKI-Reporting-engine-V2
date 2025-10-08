@@ -1,0 +1,125 @@
+{
+  "test_plan": {
+    "system_name": "Progress Monitoring Interface Subsystem",
+    "system_address": "7-1.8",
+    "parent_system": "Enhanced Functional GUI (7-1)",
+    "test_type": "smoke_test",
+    "version": "1.0",
+    "created": "2025-10-05",
+    "description": "Basic functionality validation for Progress Monitoring Interface subsystem",
+    "test_data_location": "./test_data/",
+    "expected_results_location": "./expected_results/",
+    "test_vectors": [
+      {
+        "test_id": "PMI_SMOKE_001",
+        "test_name": "Subsystem Initialization",
+        "description": "Verify Progress Monitoring Interface can initialize independently",
+        "test_method": "initialize_progress_monitoring_interface",
+        "input_parameters": {
+          "monitoring_modes": ["real_time_progress", "task_tracking", "milestone_monitoring", "performance_tracking"],
+          "progress_indicators": ["percentage", "progress_bar", "status_text", "estimated_time"],
+          "monitoring_interval": 5
+        },
+        "expected_result": {
+          "status": "SUCCESS",
+          "progress_monitoring_interface_initialized": true,
+          "monitoring_modes_configured": true,
+          "progress_indicators_loaded": true,
+          "monitoring_interval_set": true
+        },
+        "timeout_seconds": 5,
+        "retry_count": 3,
+        "critical": true
+      },
+      {
+        "test_id": "PMI_SMOKE_002",
+        "test_name": "Real-time Progress Display",
+        "description": "Test real-time progress display functionality",
+        "test_method": "display_real_time_progress",
+        "input_parameters": {
+          "progress_data": {
+            "task_id": "PMI_TEST_TASK_001",
+            "progress_components": ["current_step", "completion_percentage", "time_elapsed", "estimated_remaining"],
+            "progress_visualization": "progress_bar",
+            "progress_updates": "live_updates"
+          }
+        },
+        "expected_result": {
+          "status": "SUCCESS",
+          "real_time_progress_displayed": true,
+          "progress_components_shown": true,
+          "progress_visualization_functional": true,
+          "progress_updates_live": true
+        },
+        "timeout_seconds": 5,
+        "retry_count": 2,
+        "critical": true
+      },
+      {
+        "test_id": "PMI_SMOKE_003",
+        "test_name": "Task Tracking Interface",
+        "description": "Test task tracking interface functionality",
+        "test_method": "track_tasks",
+        "input_parameters": {
+          "tracking_data": {
+            "task_list": ["task_1", "task_2", "task_3", "task_4"],
+            "tracking_metrics": ["status", "progress", "assigned_to", "due_date"],
+            "tracking_view": "list_view",
+            "tracking_filters": ["by_status", "by_assignee", "by_priority"]
+          }
+        },
+        "expected_result": {
+          "status": "SUCCESS",
+          "task_tracking_loaded": true,
+          "task_list_displayed": true,
+          "tracking_metrics_shown": true,
+          "tracking_view_functional": true,
+          "tracking_filters_working": true
+        },
+        "timeout_seconds": 5,
+        "retry_count": 2,
+        "critical": true
+      },
+      {
+        "test_id": "PMI_SMOKE_004",
+        "test_name": "Milestone Monitoring Interface",
+        "description": "Test milestone monitoring interface functionality",
+        "test_method": "monitor_milestones",
+        "input_parameters": {
+          "milestone_data": {
+            "milestone_list": ["milestone_1", "milestone_2", "milestone_3"],
+            "milestone_indicators": ["completed", "in_progress", "overdue", "upcoming"],
+            "milestone_timeline": "gantt_view",
+            "milestone_alerts": "notification_enabled"
+          }
+        },
+        "expected_result": {
+          "status": "SUCCESS",
+          "milestone_monitoring_loaded": true,
+          "milestone_list_displayed": true,
+          "milestone_indicators_functional": true,
+          "milestone_timeline_working": true,
+          "milestone_alerts_active": true
+        },
+        "timeout_seconds": 5,
+        "retry_count": 2,
+        "critical": false
+      }
+    ],
+    "performance_metrics": {
+      "initialization_time_max_ms": 5000,
+      "real_time_progress_display_time_max_ms": 5000,
+      "task_tracking_interface_time_max_ms": 5000,
+      "milestone_monitoring_time_max_ms": 5000,
+      "memory_usage_max_mb": 75,
+      "cpu_usage_max_percent": 15
+    },
+    "test_environment": {
+      "required_files": [],
+      "required_directories": [
+        "./test_data/",
+        "./expected_results/"
+      ]
+    }
+  }
+}

@@ -1,0 +1,119 @@
+{
+  "test_plan": {
+    "system_name": "Evidence Identifier Subsystem",
+    "system_address": "1-1.2",
+    "parent_system": "Evidence Locker (1-1)",
+    "test_type": "smoke_test",
+    "version": "1.0",
+    "created": "2025-10-05",
+    "description": "Basic functionality validation for Evidence Identifier subsystem",
+    "test_data_location": "./test_data/",
+    "expected_results_location": "./expected_results/",
+    "test_vectors": [
+      {
+        "test_id": "EI_SMOKE_001",
+        "test_name": "Subsystem Initialization",
+        "description": "Verify Evidence Identifier can initialize independently",
+        "test_method": "initialize_evidence_identifier",
+        "input_parameters": {
+          "identification_models": ["file_signature", "metadata_analysis", "content_hash"],
+          "confidence_threshold": 0.8
+        },
+        "expected_result": {
+          "status": "SUCCESS",
+          "identifier_initialized": true,
+          "identification_models_loaded": true,
+          "confidence_threshold_set": true
+        },
+        "timeout_seconds": 5,
+        "retry_count": 3,
+        "critical": true
+      },
+      {
+        "test_id": "EI_SMOKE_002",
+        "test_name": "File Signature Identification",
+        "description": "Test file signature identification functionality",
+        "test_method": "identify_file_signature",
+        "input_parameters": {
+          "file_data": {
+            "file_path": "./test_data/sample_document.pdf",
+            "file_type": "PDF",
+            "expected_identification": "document"
+          }
+        },
+        "expected_result": {
+          "status": "SUCCESS",
+          "file_identified": true,
+          "identification_accurate": true,
+          "confidence_score": ">=0.8"
+        },
+        "timeout_seconds": 5,
+        "retry_count": 2,
+        "critical": true
+      },
+      {
+        "test_id": "EI_SMOKE_003",
+        "test_name": "Metadata Analysis",
+        "description": "Test metadata analysis identification",
+        "test_method": "analyze_metadata",
+        "input_parameters": {
+          "metadata_data": {
+            "file_metadata": {
+              "creation_date": "2025-10-05",
+              "author": "test_user",
+              "file_size": 1024,
+              "file_type": "PDF"
+            }
+          }
+        },
+        "expected_result": {
+          "status": "SUCCESS",
+          "metadata_analyzed": true,
+          "analysis_accurate": true,
+          "identification_complete": true
+        },
+        "timeout_seconds": 3,
+        "retry_count": 2,
+        "critical": true
+      },
+      {
+        "test_id": "EI_SMOKE_004",
+        "test_name": "Content Hash Generation",
+        "description": "Test content hash generation and identification",
+        "test_method": "generate_content_hash",
+        "input_parameters": {
+          "content_data": {
+            "file_content": "test content for hashing",
+            "hash_algorithm": "SHA256"
+          }
+        },
+        "expected_result": {
+          "status": "SUCCESS",
+          "hash_generated": true,
+          "hash_algorithm_correct": true,
+          "hash_unique": true
+        },
+        "timeout_seconds": 3,
+        "retry_count": 2,
+        "critical": false
+      }
+    ],
+    "performance_metrics": {
+      "initialization_time_max_ms": 5000,
+      "file_identification_time_max_ms": 5000,
+      "metadata_analysis_time_max_ms": 3000,
+      "hash_generation_time_max_ms": 3000,
+      "memory_usage_max_mb": 75,
+      "cpu_usage_max_percent": 15
+    },
+    "test_environment": {
+      "required_files": [
+        "./test_data/sample_document.pdf"
+      ],
+      "required_directories": [
+        "./test_data/",
+        "./expected_results/"
+      ]
+    }
+  }
+}

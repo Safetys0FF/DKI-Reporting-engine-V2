@@ -184,9 +184,7 @@ class EvidencePanel(ttk.Frame):
             return summary
         if isinstance(summary, dict):
             parts = [f'{key}: {value}' for key, value in summary.items()]
-            return 'Case Summary
-' + '
-'.join(parts)
+            return 'Case Summary\n' + '\n'.join(parts)
         return str(summary)
 
 

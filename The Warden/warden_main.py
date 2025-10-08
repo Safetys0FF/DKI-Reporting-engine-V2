@@ -57,6 +57,11 @@ class Warden:
         try:
             # Store reference
             self.evidence_locker = evidence_locker
+            if hasattr(self.gateway, 'attach_evidence_locker'):
+                try:
+                    self.gateway.attach_evidence_locker(evidence_locker)
+                except Exception as exc:
+                    logger.warning(f"Gateway attach evidence locker failed: {exc}")
             
             logger.info("🔐 Evidence Locker registered with Warden")
             return True

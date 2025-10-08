@@ -1,0 +1,129 @@
+{
+  "test_plan": {
+    "system_name": "Evidence Manager System",
+    "system_address": "5-2",
+    "parent_system": "Marshall Complex (5-x)",
+    "test_type": "smoke_test",
+    "version": "1.0",
+    "created": "2025-10-05",
+    "description": "Basic functionality validation for Evidence Manager system",
+    "test_data_location": "./test_data/",
+    "expected_results_location": "./expected_results/",
+    "test_vectors": [
+      {
+        "test_id": "EM_SMOKE_001",
+        "test_name": "System Initialization",
+        "description": "Verify Evidence Manager can initialize independently",
+        "test_method": "initialize_evidence_manager",
+        "input_parameters": {
+          "manager_modes": ["evidence_storage", "chain_of_custody", "metadata_management", "access_control"],
+          "storage_backend": "secure_storage",
+          "encryption_level": "high"
+        },
+        "expected_result": {
+          "status": "SUCCESS",
+          "evidence_manager_initialized": true,
+          "manager_modes_configured": true,
+          "storage_backend_connected": true,
+          "encryption_level_set": true
+        },
+        "timeout_seconds": 8,
+        "retry_count": 3,
+        "critical": true
+      },
+      {
+        "test_id": "EM_SMOKE_002",
+        "test_name": "Evidence Storage",
+        "description": "Test evidence storage functionality",
+        "test_method": "store_evidence",
+        "input_parameters": {
+          "storage_data": {
+            "evidence_id": "EM_TEST_EVIDENCE_001",
+            "evidence_file": "./test_data/sample_evidence.pdf",
+            "evidence_type": "document",
+            "metadata": {"source": "test", "classification": "confidential"},
+            "chain_of_custody": "initial_custodian"
+          }
+        },
+        "expected_result": {
+          "status": "SUCCESS",
+          "evidence_stored": true,
+          "evidence_type_categorized": true,
+          "metadata_recorded": true,
+          "chain_of_custody_initiated": true
+        },
+        "timeout_seconds": 8,
+        "retry_count": 2,
+        "critical": true
+      },
+      {
+        "test_id": "EM_SMOKE_003",
+        "test_name": "Chain of Custody",
+        "description": "Test chain of custody functionality",
+        "test_method": "manage_chain_of_custody",
+        "input_parameters": {
+          "custody_data": {
+            "evidence_id": "EM_TEST_EVIDENCE_001",
+            "custody_transfer": {
+              "from_custodian": "initial_custodian",
+              "to_custodian": "analyst_001",
+              "transfer_reason": "analysis",
+              "transfer_timestamp": "2025-10-05T22:00:00Z"
+            }
+          }
+        },
+        "expected_result": {
+          "status": "SUCCESS",
+          "chain_of_custody_managed": true,
+          "custody_transfer_recorded": true,
+          "transfer_details_logged": true,
+          "custody_integrity_maintained": true
+        },
+        "timeout_seconds": 5,
+        "retry_count": 2,
+        "critical": true
+      },
+      {
+        "test_id": "EM_SMOKE_004",
+        "test_name": "Evidence Retrieval",
+        "description": "Test evidence retrieval functionality",
+        "test_method": "retrieve_evidence",
+        "input_parameters": {
+          "retrieval_data": {
+            "evidence_id": "EM_TEST_EVIDENCE_001",
+            "requester": "analyst_001",
+            "retrieval_purpose": "analysis",
+            "access_level": "authorized"
+          }
+        },
+        "expected_result": {
+          "status": "SUCCESS",
+          "evidence_retrieved": true,
+          "requester_authorized": true,
+          "retrieval_logged": true,
+          "evidence_integrity_verified": true
+        },
+        "timeout_seconds": 5,
+        "retry_count": 2,
+        "critical": false
+      }
+    ],
+    "performance_metrics": {
+      "initialization_time_max_ms": 8000,
+      "evidence_storage_time_max_ms": 8000,
+      "chain_of_custody_time_max_ms": 5000,
+      "evidence_retrieval_time_max_ms": 5000,
+      "memory_usage_max_mb": 100,
+      "cpu_usage_max_percent": 20
+    },
+    "test_environment": {
+      "required_files": [
+        "./test_data/sample_evidence.pdf"
+      ],
+      "required_directories": [
+        "./test_data/",
+        "./expected_results/"
+      ]
+    }
+  }
+}

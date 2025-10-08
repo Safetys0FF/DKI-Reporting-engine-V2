@@ -1,0 +1,96 @@
+{
+  "ingestion": {
+    "input_directory": "F:/The Central Command/Evidence Locker/Input",
+    "output_directory": "F:/The Central Command/Evidence Locker/Processed",
+    "log_directory": "F:/The Central Command/Logs",
+    "accepted_extensions": [".pdf", ".jpg", ".jpeg", ".png", ".docx", ".xlsx", ".csv", ".txt"]
+  },
+
+  "routing": {
+    "pdf": {
+      "parser": "unstructured.partition.pdf.partition_pdf",
+      "strategy": "hi_res",
+      "ocr_fallback": true,
+      "ocr_engine": "tesseract"
+    },
+    "image": {
+      "parser": "unstructured.partition.image.partition_image",
+      "ocr_engine_priority": ["tesseract", "easyocr"],
+      "layout_detection": true,
+      "layout_model": "layoutparser/PubLayNet"
+    },
+    "docx": {
+      "parser": "unstructured.partition.docx.partition_docx"
+    },
+    "spreadsheet": {
+      "parser": "unstructured.partition.spreadsheet.partition_xlsx",
+      "extract_tables": true
+    },
+    "csv": {
+      "parser": "unstructured.partition.text.partition_text",
+      "encoding": "utf-8"
+    },
+    "txt": {
+      "parser": "unstructured.partition.text.partition_text"
+    }
+  },
+
+  "cleaning": {
+    "remove_double_spaces": true,
+    "remove_junk_characters": true,
+    "normalize_line_breaks": true,
+    "strip_headers_and_footers": true,
+    "regex_replacements": {
+      "\\s+": " ",
+      "[^0-9A-Za-z.,;:\\-\\'\"()/$%&\\s]": ""
+    }
+  },
+
+  "metadata": {
+    "enable_entity_extraction": true,
+    "entity_engine": "spacy/en_core_web_sm",
+    "entities_to_extract": [
+      "PERSON",
+      "ORG",
+      "GPE",
+      "DATE",
+      "MONEY",
+      "CARDINAL"
+    ],
+    "enable_language_detection": false,
+    "enable_layout_metadata": true
+  },
+
+  "output": {
+    "store_full_text": true,
+    "store_cleaned_text": true,
+    "store_entities": true,
+    "json_structure": {
+      "file_name": "",
+      "file_type": "",
+      "raw_text": "",
+      "cleaned_text": "",
+      "extracted_entities": {},
+      "metadata": {},
+      "summary": ""
+    }
+  },
+
+  "ocr_engines": {
+    "tesseract": {
+      "path": "C:/Program Files/Tesseract-OCR/tesseract.exe",
+      "languages": ["eng"],
+      "psm": 3
+    },
+    "easyocr": {
+      "languages": ["en"],
+      "gpu": false
+    }
+  },
+
+  "error_handling": {
+    "retry_attempts": 2,
+    "skip_corrupt_files": true,
+    "write_fail_log": true
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "cases": {
+    "CASE-TEST01": {
+      "approved_sections": 0,
+      "contract_signed": null,
+      "export_root": null,
+      "folder": "F:\\The Central Command\\The War Room\\case_dev\\CASE-TEST01",
+      "investigator": "Route-Logic-Check",
+      "last_saved": "2025-10-04T21:40:01.458326",
+      "status": "new",
+      "subcontractor": false,
+      "total_sections": 1
+    }
+  }
+}

@@ -12,8 +12,59 @@ from datetime import datetime
 from typing import Dict, List, Any, Optional, Set
 from enum import Enum
 from dataclasses import dataclass
+from pathlib import Path
+
+DEFAULT_REQUIRED = False
+
+SECTION_CONTRACTS = {
+    "section_1": True,
+    "section_2": True,
+    "section_3": True,
+    "section_4": False,
+    "section_5": True,
+    "section_6": True,
+    "section_7": False,
+    "section_8": False,
+    "section_9": False,
+    "section_cp": False,
+    "section_dp": False,
+    "section_toc": False,
+}
+
 
 logger = logging.getLogger(__name__)
+
+CONFIG_PATH = r"F:\The Central Command\The Warden\section_tag_map.json"
+
+try:
+    with open(CONFIG_PATH, 'r', encoding='utf-8') as config_file:
+        SECTION_TAGS = json.load(config_file)
+except (OSError, json.JSONDecodeError):
+    SECTION_TAGS = {}
+
+NORMALIZE_TAGS = {
+    "supporting_documents": "supporting-documents",
+    "evidence_index": "media-photo",
+    "intakeform": "intake-form",
+    "dailylog": "daily-log",
+}
+
+
+def normalize_tags(tags: List[str]) -> List[str]:
+    normalized = []
+    for tag in tags or []:
+        if not isinstance(tag, str):
+            continue
+        key = tag.strip().lower()
+        normalized.append(NORMALIZE_TAGS.get(key, key))
+    unique: List[str] = []
+    seen: Set[str] = set()
+    for tag in normalized:
+        if tag and tag not in seen:
+            seen.add(tag)
+            unique.append(tag)
+    return unique
+
 
 class EcosystemState(Enum):
     """Ecosystem execution states"""
@@ -102,6 +153,10 @@ class EcosystemController:
         self.logger.info(f"EcosystemController initialized with {len(self.section_contracts)} section contracts")
         self._attach_bus(bus)
     
+    def is_section_required(self, section_name: str) -> bool:
+        """Return True if the section is marked as required in the contracts."""
+        return SECTION_CONTRACTS.get(section_name, DEFAULT_REQUIRED)
+
     def inject_gateway(self, gateway_instance):
         """Inject Gateway reference for reverse calls"""
         self.gateway = gateway_instance
@@ -147,18 +202,191 @@ class EcosystemController:
         section_id = payload.get("section_id") or inner_payload.get("section_id")
         if not section_id:
             return
+        case_id_value = payload.get("case_id") or inner_payload.get("case_id")
+        timestamp = datetime.now().isoformat()
+        self._mark_section_complete(section_id, case_id_value, timestamp)
+        next_section = self._get_next_section(section_id)
+        if next_section and self.bus:
+            try:
+                self.bus.send("section.activate", {
+                    "section_id": next_section,
+                    "section": next_section,
+                    "case_id": case_id_value,
+                    "trigger": "auto_advance",
+                    "timestamp": timestamp,
+                })
+            except Exception as exc:
+                self.logger.warning("Failed to auto-activate %s: %s", next_section, exc)
+
+
+    def _mark_section_complete(self, section_id: str, case_id: Optional[str], timestamp: str) -> None:
         self.section_states[section_id] = "completed"
         self.completed_ecosystems.add(section_id)
         record = {
             "event": "gateway.section.complete",
             "section_id": section_id,
-            "case_id": payload.get("case_id") or inner_payload.get("case_id"),
-            "timestamp": datetime.now().isoformat(),
+            "case_id": case_id,
+            "timestamp": timestamp,
         }
         self.section_activity_log.append(record)
         if len(self.section_activity_log) > 100:
             self.section_activity_log = self.section_activity_log[-100:]
         self._emit_status_update(reason="gateway.section.complete", context=record)
+
+    def _get_ordered_sections(self) -> List[str]:
+        ordered = sorted(self.section_contracts.items(), key=lambda item: item[1].get('priority', 999))
+        return [key for key, _ in ordered]
+
+    def _get_next_section(self, section_id: str) -> Optional[str]:
+        ordered = self._get_ordered_sections()
+        if section_id not in ordered:
+            return None
+        try:
+            index = ordered.index(section_id)
+        except ValueError:
+            return None
+        for candidate in ordered[index + 1:]:
+            deps = self.section_contracts.get(candidate, {}).get('depends_on', [])
+            ready = True
+            for dep in deps:
+                if dep in self.completed_ecosystems:
+                    continue
+                if self.is_section_required(dep):
+                    ready = False
+                    break
+            if ready:
+                return candidate
+        return None
+
+    def _handle_bus_section_needs(self, payload: Dict[str, Any]) -> None:
+
+        if not isinstance(payload, dict):
+
+            return
+
+        section_id = payload.get("section_id") or payload.get("section") or payload.get("section_name")
+
+        if not section_id:
+
+            return
+
+        raw_needed = payload.get("tags") or payload.get("needed_tags") or payload.get("needs") or []
+
+        if isinstance(raw_needed, str):
+
+            raw_needed = [raw_needed]
+
+        needed_tags = normalize_tags([tag for tag in raw_needed if isinstance(tag, str)])
+
+
+
+        if not self.evidence_index:
+
+            self.logger.debug("Section needs received but evidence index is unavailable")
+
+            return
+
+
+
+        matched_records: Dict[str, Dict[str, Any]] = {}
+
+        try:
+
+            if needed_tags:
+
+                for tag in needed_tags:
+
+                    for record in self.evidence_index.get_evidence_by_tag(tag):
+
+                        evidence_id = record.get("evidence_id")
+
+                        if evidence_id:
+
+                            matched_records[evidence_id] = record
+
+        except Exception as exc:
+
+            self.logger.warning("Failed to fetch evidence by tag: %s", exc)
+
+
+
+        try:
+
+            for record in self.evidence_index.get_evidence_for_section(section_id):
+
+                evidence_id = record.get("evidence_id")
+
+                if evidence_id:
+
+                    matched_records[evidence_id] = record
+
+        except Exception as exc:
+
+            self.logger.warning("Failed to fetch evidence for section %s: %s", section_id, exc)
+
+
+
+        if not matched_records:
+
+            return
+
+
+
+        for evidence in matched_records.values():
+
+            evidence_id = evidence.get("evidence_id")
+
+            if not evidence_id:
+
+                continue
+
+            evidence_tags = normalize_tags(
+
+                evidence.get("tags")
+
+                or evidence.get("classification", {}).get("tags")
+
+                or []
+
+            )
+
+            section_hint = evidence.get("assigned_section") or evidence.get("section_hint")
+
+            if needed_tags and not set(evidence_tags).intersection(needed_tags):
+
+                if (section_hint or '').strip() != section_id:
+
+                    continue
+
+            summary_source = evidence.get("filename") or evidence.get("path") or evidence.get("file_path") or ""
+
+            summary = Path(summary_source).name if summary_source else evidence_id
+
+            message = {
+
+                "section": section_id,
+
+                "evidence_id": evidence_id,
+
+                "summary": summary,
+
+                "status": "delivered",
+
+            }
+
+            if self.bus and hasattr(self.bus, "emit"):
+
+                try:
+
+                    self.bus.emit("section.data.updated", message)
+
+                except Exception as exc:
+
+                    self.logger.warning("Failed to emit section.data.updated for %s: %s", evidence_id, exc)
+
+
+
+
 
     def _emit_status_update(self, *, reason: str, context: Optional[Dict[str, Any]] = None) -> None:
         if not self.bus:
@@ -321,8 +549,10 @@ class EcosystemController:
             dependencies = ecosystem_data['dependencies']
             for dep in dependencies:
                 if dep not in self.completed_ecosystems:
-                    self.logger.warning(f" Dependency {dep} not completed for {ecosystem_id}")
-                    return False
+                    if self.is_section_required(dep):
+                        self.logger.warning(f" Dependency {dep} not completed for {ecosystem_id}")
+                        return False
+                    self.logger.info(f" Dependency {dep} marked optional - skipping requirement for {ecosystem_id}.")
             
             # Update state
             ecosystem_data['state'] = EcosystemState.EXECUTING
@@ -480,8 +710,10 @@ class EcosystemController:
             
             for dep in dependencies:
                 if dep not in self.completed_ecosystems:
-                    self.logger.warning(f" Dependency {dep} not completed for {section_id}")
-                    return False
+                    if self.is_section_required(dep):
+                        self.logger.warning(f" Dependency {dep} not completed for {section_id}")
+                        return False
+                    self.logger.info(f" Dependency {dep} marked optional - skipping requirement for {section_id}.")
             
             # Check revision limits
             if ecosystem_data['revision_count'] >= ecosystem_data['max_reruns']:

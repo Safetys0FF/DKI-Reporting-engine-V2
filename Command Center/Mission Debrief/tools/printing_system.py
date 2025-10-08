@@ -14,6 +14,8 @@ import tkinter as tk
 from tkinter import ttk, messagebox, filedialog
 from datetime import datetime
 
+from .report_generator_adapter import ReportGeneratorAdapter
+
 # Platform-specific printing imports
 try:
     if sys.platform == "win32":
@@ -51,6 +53,11 @@ class PrintingSystem:
             'duplex': False,
             'copies': 1
         }
+        try:
+            self.report_adapter = ReportGeneratorAdapter()
+        except Exception as exc:
+            logger.error(f"Report generator adapter unavailable for printing: {exc}")
+            self.report_adapter = None
         self.initialize_printers()
         logger.info("Printing system initialized")
     
@@ -183,38 +190,26 @@ class PrintingSystem:
         """Create optimized PDF for printing"""
         
         try:
-            # Import report generator
-            from report_generator import ReportGenerator
-            
-            # Create temporary file
-            temp_dir = tempfile.gettempdir()
+            adapter = self.report_adapter or ReportGeneratorAdapter()
+            if not adapter.is_available():
+                raise RuntimeError("Report generator adapter is not available for printing")
+            temp_dir = Path(tempfile.gettempdir())
+            temp_dir.mkdir(parents=True, exist_ok=True)
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            temp_filename = f"dki_print_{timestamp}.pdf"
-            temp_path = os.path.join(temp_dir, temp_filename)
-            
-            # Generate print-optimized PDF
-            report_gen = ReportGenerator()
-            
-            # Apply print settings to report generation
-            original_settings = report_gen.export_settings.copy()
-            
-            # Optimize for printing
-            report_gen.export_settings.update({
-                'page_size': settings.get('paper_size', 'Letter'),
-                'orientation': settings.get('orientation', 'Portrait'),
-                'margins': settings.get('margins', {'top': 0.5, 'bottom': 0.5, 'left': 0.5, 'right': 0.5}),
-                'print_quality': True,
-                'optimize_images': True
-            })
-            
-            # Export to temporary PDF
-            report_gen.export_report(report_data, temp_path, 'pdf')
-            
-            # Restore original settings
-            report_gen.export_settings = original_settings
-            
+            temp_path = temp_dir / f"dki_print_{timestamp}.pdf"
+            source_payload = report_data if isinstance(report_data, dict) else {}
+            base_payload = source_payload if isinstance(source_payload, dict) else {}
+            sections_candidate = base_payload.get('sections') if isinstance(base_payload, dict) else None
+            if not sections_candidate:
+                metadata = base_payload.get('metadata') if isinstance(base_payload, dict) else None
+                report_type = metadata.get('report_type') if isinstance(metadata, dict) else ''
+                section_input = base_payload.get('sections') if isinstance(base_payload, dict) else None
+                if section_input is None:
+                    section_input = base_payload if isinstance(base_payload, dict) else {}
+                base_payload = adapter.generate(section_input or {}, report_type or 'Investigative')
+            adapter.export(base_payload, str(temp_path), 'PDF')
             logger.debug(f"Created print PDF: {temp_path}")
-            return temp_path
+            return str(temp_path)
             
         except Exception as e:
             logger.error(f"Failed to create print PDF: {e}")

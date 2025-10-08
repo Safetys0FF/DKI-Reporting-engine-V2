@@ -1,0 +1,10 @@
+{
+  "fault_id": "COMPLIANCE_FAULT_GEN-2.798_1759867170",
+  "system_address": "GEN-2.798",
+  "fault_code": "[GEN-2.798-98-COMPLIANCE_VIOLATION]",
+  "severity": "ERROR",
+  "description": "Compliance violation: NO_DIAGNOSTIC_RESPONSE",
+  "timestamp": "2025-10-07T14:59:30.920092",
+  "violation_type": "NO_DIAGNOSTIC_RESPONSE",
+  "punishment_level": "COMPLIANCE_FAULT"
+}

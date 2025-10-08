@@ -2,6 +2,7 @@
 """
 GatewayController - Core Gateway orchestration system
 Owns master evidence index, mediates section communication, manages data flow
+Enhanced with Universal Communication Protocol
 """
 
 import os
@@ -10,8 +11,12 @@ import uuid
 import json
 import logging
 from datetime import datetime
-from typing import Dict, List, Any, Optional, Set
+from typing import Dict, List, Any, Optional, Set, Iterable
 from enum import Enum
+
+# Universal Communication Protocol
+sys.path.append(os.path.join(os.path.dirname(os.path.dirname(__file__)), "Command Center", "Data Bus"))
+from universal_communicator import UniversalCommunicator
 
 # Ensure parsing dispatcher is reachable for section context building
 marshall_gateway_path = os.path.join(
@@ -80,6 +85,29 @@ except ImportError:
 
 logger = logging.getLogger(__name__)
 
+NORMALIZE_TAGS = {
+    "supporting_documents": "supporting-documents",
+    "evidence_index": "media-photo",
+    "intakeform": "intake-form",
+    "dailylog": "daily-log",
+}
+
+def normalize_tags(tags: List[str]) -> List[str]:
+    normalized = []
+    for tag in tags or []:
+        if not isinstance(tag, str):
+            continue
+        key = tag.strip().lower()
+        normalized.append(NORMALIZE_TAGS.get(key, key))
+    unique: List[str] = []
+    seen: Set[str] = set()
+    for tag in normalized:
+        if tag and tag not in seen:
+            seen.add(tag)
+            unique.append(tag)
+    return unique
+
+
 class SignalType(Enum):
     """Signal types for inter-section communication"""
     EXECUTE = "EXECUTE"
@@ -119,6 +147,8 @@ class GatewayController:
     DEFERS ALL SECTION EXECUTION PERMISSION TO ECOSYSTEM CONTROLLER"""
     
     def __init__(self, ecosystem_controller=None, bus=None):
+        # Initialize Universal Communication Protocol
+        self.communicator = UniversalCommunicator("2-2", bus_connection=bus)
         # Reference to Ecosystem Controller (ROOT BOOT NODE)
         self.ecosystem_controller = ecosystem_controller
         
@@ -184,16 +214,21 @@ class GatewayController:
             'persistence_path': 'gateway_data.json'
         }
 
-        self.bus = None
+        self.bus = bus
         self._bus_handlers_registered = False
+        self.evidence_locker = None
         self.section_outputs = {}
         self.section_drafts = {}
         self.section_needs_registry = {}
         self.pending_evidence_requests = {}
         self.evidence_catalog = {}
         self.case_snapshots = []
+        self.delivery_queue = []
         self._pending_section_outputs = {}
         self.toolkit_results_cache = {}
+
+        if self.bus:
+            self._register_bus_handlers()
 
         self.logger = logging.getLogger(__name__)
         self.logger.info("Gateway Controller initialized - DEFERS TO ECOSYSTEM CONTROLLER")
@@ -222,6 +257,7 @@ class GatewayController:
             return
         handler_map = {"evidence.new": self._handle_bus_evidence_new,
                        "evidence.updated": self._handle_bus_evidence_updated,
+                       "section.data.updated": self._handle_section_data_updated,
                        "section.needs": self._handle_bus_section_needs,
                        "case.snapshot": self._handle_bus_case_snapshot}
         for signal_name, handler in handler_map.items():
@@ -241,6 +277,104 @@ class GatewayController:
             self.bus.emit(signal, envelope)
         except Exception as exc:  # pragma: no cover - log and continue
             self.logger.warning("Failed to emit %s via bus: %s", signal, exc)
+
+    def attach_evidence_locker(self, locker: Any) -> None:
+        """Attach Evidence Locker reference for enriched updates."""
+        self.evidence_locker = locker
+
+    def emit(self, signal: str, payload: Dict[str, Any]) -> None:
+        """Expose bus emit for section frameworks."""
+        self._emit_bus_event(signal, payload)
+
+    def _normalize_section_id(self, section_id: Any) -> Optional[str]:
+        if section_id is None:
+            return None
+        section_id = str(section_id)
+        if section_id.startswith('section_'):
+            return section_id
+        return f'section_{section_id}'
+
+    def _gather_section_evidence(self, section_id: str) -> List[Dict[str, Any]]:
+        results: List[Dict[str, Any]] = []
+        for entry in self.evidence_catalog.values():
+            if not isinstance(entry, dict):
+                continue
+            candidate = entry.get('section_hint') or entry.get('assigned_section')
+            related = entry.get('related_sections') or entry.get('classification', {}).get('related_sections') or []
+            normalized_related = {str(item) for item in related if item}
+            if str(candidate) != section_id and section_id not in normalized_related:
+                continue
+            results.append(dict(entry))
+        return results
+
+    def _build_manifest_snapshot(self, section_id: str) -> Dict[str, Any]:
+        evidence = self._gather_section_evidence(section_id)
+        return {
+            'section_id': section_id,
+            'count': len(evidence),
+            'items': evidence,
+            'last_updated': datetime.now().isoformat(),
+        }
+
+    def get_section_inputs(self, section_id: str) -> Dict[str, Any]:
+        normalized = self._normalize_section_id(section_id)
+        if not normalized:
+            raise ValueError('section_id is required')
+        case_id = self._current_case_id()
+        needs = dict(self.section_needs_registry.get(normalized, {}))
+        manifest_snapshot = self._build_manifest_snapshot(normalized)
+        context = {
+            'case_id': case_id,
+            'section_id': normalized,
+            'section_needs': needs,
+            'manifest_context': manifest_snapshot,
+            'evidence': manifest_snapshot.get('items', []),
+            'bus_state': {
+                'case_id': case_id,
+                'needs': needs,
+                'manifest': manifest_snapshot,
+            },
+            'case_data': self.case_bundle.get('case_data', {}),
+            'previous_output': dict(self.section_outputs.get(normalized, {})),
+            'toolkit_cache': self.toolkit_results_cache.get(normalized, {}),
+        }
+        if self.case_snapshots:
+            context['case_snapshots'] = self.case_snapshots[-5:]
+        return context
+
+    def publish_section_result(self, section_id: str, result: Dict[str, Any]) -> Dict[str, Any]:
+        normalized = self._normalize_section_id(section_id)
+        if not normalized:
+            raise ValueError('section_id is required')
+        if not isinstance(result, dict):
+            raise ValueError('result must be a dictionary')
+        payload = dict(result.get('payload') or result)
+        payload.setdefault('section_id', normalized)
+        case_id = result.get('case_id') or payload.get('case_id') or self._current_case_id()
+        if case_id:
+            payload['case_id'] = case_id
+        metadata = dict(result.get('metadata') or {})
+        metadata.setdefault('published_at', datetime.now().isoformat())
+        record = {
+            'section_id': normalized,
+            'case_id': case_id,
+            'payload': payload,
+            'metadata': metadata,
+            'narrative': result.get('narrative'),
+            'summary': result.get('summary'),
+            'source': result.get('source', 'section_framework'),
+        }
+        self.section_outputs[normalized] = record
+        self.section_states[normalized] = SectionState.COMPLETED.value
+        self._finalize_section_output(normalized, payload, source='section_framework')
+        if getattr(self, 'evidence_locker', None) and hasattr(self.evidence_locker, 'record_enriched_section'):
+            try:
+                self.evidence_locker.record_enriched_section(normalized, record)
+            except Exception as exc:
+                self.logger.warning('Evidence locker enrichment failed for %s: %s', normalized, exc)
+        return record
+
+
 
     def _handle_bus_evidence_new(self, payload: Dict[str, Any]) -> None:
         if not isinstance(payload, dict):
@@ -274,6 +408,37 @@ class GatewayController:
             if pending.get("draft") and "draft" not in enriched_payload:
                 enriched_payload["draft"] = pending["draft"]
             self._finalize_section_output(section_id, enriched_payload, source="bus_evidence_updated")
+
+    def _handle_section_data_updated(self, payload: Dict[str, Any]) -> None:
+        if not isinstance(payload, dict):
+            return
+        inner = payload.get("payload") if isinstance(payload.get("payload"), dict) else None
+        section = (payload.get("section") or payload.get("section_id") or (inner or {}).get("section") or (inner or {}).get("section_id"))
+        evidence_id = (payload.get("evidence_id") or (inner or {}).get("evidence_id"))
+        if not section or not evidence_id:
+            return
+        section = str(section)
+        evidence_id = str(evidence_id)
+        self.delivery_queue.append((section, evidence_id))
+        if len(self.delivery_queue) > 200:
+            self.delivery_queue = self.delivery_queue[-200:]
+        summary = (payload.get("summary") or (inner or {}).get("summary") or
+                   payload.get("filename") or (inner or {}).get("filename") or
+                   payload.get("file_path") or (inner or {}).get("file_path") or evidence_id)
+        try:
+            from pathlib import Path as _Path
+            summary = _Path(str(summary)).name
+        except Exception:
+            summary = str(summary)
+        status = payload.get("status") or (inner or {}).get("status") or "delivered"
+        message = {
+            "section": section,
+            "evidence_id": evidence_id,
+            "summary": summary,
+            "status": status,
+        }
+        self._emit_bus_event("evidence.deliver", message)
+
 
     def _handle_bus_section_needs(self, payload: Dict[str, Any]) -> None:
         if not isinstance(payload, dict):
@@ -2178,6 +2343,95 @@ class GatewayController:
             'case_snapshots_count': len(self.case_snapshots),
             'signal_status': self.get_signal_status()
         }
+
+    # ------------------------------------------------------------------
+    # Universal Communication Protocol Methods
+    # ------------------------------------------------------------------
+    def process_evidence_with_communication(self, evidence_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Process evidence using universal communication protocol"""
+        try:
+            # Send evidence received signal
+            self.communicator.send_signal(
+                target_address="1-1",  # Evidence Locker
+                radio_code="10-6",
+                message="Evidence received for gateway processing",
+                payload={"evidence_data": evidence_data}
+            )
+            
+            # Process evidence
+            result = self.process_evidence(evidence_data)
+            
+            # Send evidence complete signal
+            self.communicator.send_signal(
+                target_address="1-1",  # Evidence Locker
+                radio_code="10-8",
+                message="Evidence processing complete",
+                payload={"result": result}
+            )
+            
+            return result
+            
+        except Exception as e:
+            # Send SOS fault with precise diagnostic code
+            fault_code = f"2-2-30-{self._get_line_number()}"
+            self.communicator.send_sos_fault(
+                fault_code=fault_code,
+                description=f"Gateway evidence processing error: {str(e)}",
+                details={"error": str(e), "evidence_data": evidence_data}
+            )
+            raise
+
+    def validate_section_with_communication(self, section_id: str) -> bool:
+        """Validate section using universal communication protocol"""
+        try:
+            # Send validation request to ECC
+            response = self.communicator.send_status_request("2-1")  # ECC
+            
+            if response and response.get("radio_code") == "10-4":
+                # Send validation complete signal
+                self.communicator.send_signal(
+                    target_address="2-1",  # ECC
+                    radio_code="10-8",
+                    message=f"Section {section_id} validation complete",
+                    payload={"section_id": section_id, "status": "validated"}
+                )
+                return True
+            else:
+                # Send SOS fault
+                fault_code = f"2-2-20-{self._get_line_number()}"
+                self.communicator.send_sos_fault(
+                    fault_code=fault_code,
+                    description=f"Section {section_id} validation failed",
+                    details={"section_id": section_id, "response": response}
+                )
+                return False
+                
+        except Exception as e:
+            # Send SOS fault
+            fault_code = f"2-2-30-{self._get_line_number()}"
+            self.communicator.send_sos_fault(
+                fault_code=fault_code,
+                description=f"Section validation error: {str(e)}",
+                details={"section_id": section_id, "error": str(e)}
+            )
+            raise
+
+    def get_communication_status(self) -> Dict[str, Any]:
+        """Get communication status for health monitoring"""
+        return {
+            "address": "2-2",
+            "status": "ACTIVE",
+            "last_check": self.communicator.get_module_status()["last_check"],
+            "communication_log_count": len(self.communicator.communication_log),
+            "active_signals_count": len(self.communicator.active_signals)
+        }
+
+    def _get_line_number(self) -> int:
+        """Get current line number for fault reporting"""
+        import inspect
+        frame = inspect.currentframe()
+        caller_frame = frame.f_back.f_back if frame.f_back else frame
+        return caller_frame.f_lineno
 
 
 

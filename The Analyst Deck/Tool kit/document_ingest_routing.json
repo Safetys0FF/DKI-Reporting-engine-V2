@@ -1,0 +1,53 @@
+
+How to Use in Python
+evidence handeling
+
+def assign_sections_by_role(evidence):
+    role = evidence.get("case_role", "")
+    if role == "cause":
+        evidence["primary_section"] = "section_1"
+        evidence["supporting_sections"] = ["section_2", "section_5"]
+    elif role == "source":
+        evidence["primary_section"] = "section_1"
+        evidence["supporting_sections"] = ["section_5"]
+    elif role == "supporting":
+        evidence["primary_section"] = "section_3"
+        evidence["supporting_sections"] = ["section_5"]
+    elif role == "finding":
+        evidence["primary_section"] = "section_4"
+        evidence["supporting_sections"] = ["section_5"]
+    return evidence
+
+
+You can load this config the same way you did with the classifier JSON:
+
+import json
+
+CONFIG_PATH = r"F:\The Central Command\The Warden\document_ingest_config.json"
+
+with open(CONFIG_PATH, "r") as f:
+    DOC_CONFIG = json.load(f)
+
+
+
+Then you can route and extract dynamically:
+
+from pathlib import Path
+from unstructured.partition.auto import partition
+
+def process_document(path):
+    ext = Path(path).suffix.lower().strip(".")
+    route = DOC_CONFIG["routing"].get(ext, DOC_CONFIG["routing"].get("txt"))
+
+    print(f"[INFO] Processing {path} as {ext.upper()}")
+
+    # Unstructured handles most routes automatically
+    elements = partition(filename=str(path))
+    text = "\n".join(e.text for e in elements if e.text)
+
+    # Cleaning step
+    import re
+    for pattern, repl in DOC_CONFIG["cleaning"]["regex_replacements"].items():
+        text = re.sub(pattern, repl, text)
+
+    return text

@@ -63,10 +63,12 @@
         - bing_search
     report_generation:
       adapter: mission_debrief.tools.report_generator_adapter.ReportGeneratorAdapter
-      upstream_module: "F:/The Central Command/The War Room/Processors/report generator/report_generator.py"
+      upstream_module: "F:/The Central Command/Command Center/Mission Debrief/report generator/report_generator.py"
       dependencies:
         - reportlab
+        - python-docx
       delivers:
+        - text_export
         - docx_export
         - pdf_export
     professional_tools:

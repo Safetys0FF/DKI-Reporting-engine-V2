@@ -1,0 +1,120 @@
+{
+  "test_plan": {
+    "system_name": "Gateway Signal Dispatcher Subsystem",
+    "system_address": "2-2.1",
+    "parent_system": "Gateway Controller (2-2)",
+    "test_type": "smoke_test",
+    "version": "1.0",
+    "created": "2025-10-05",
+    "description": "Basic functionality validation for Gateway Signal Dispatcher subsystem",
+    "test_data_location": "./test_data/",
+    "expected_results_location": "./expected_results/",
+    "test_vectors": [
+      {
+        "test_id": "GSD_SMOKE_001",
+        "test_name": "Subsystem Initialization",
+        "description": "Verify Gateway Signal Dispatcher can initialize independently",
+        "test_method": "initialize_gateway_signal_dispatcher",
+        "input_parameters": {
+          "dispatch_modes": ["broadcast", "unicast", "multicast"],
+          "signal_types": ["communication", "response", "sos_fault", "rollcall"]
+        },
+        "expected_result": {
+          "status": "SUCCESS",
+          "signal_dispatcher_initialized": true,
+          "dispatch_modes_configured": true,
+          "signal_types_loaded": true
+        },
+        "timeout_seconds": 5,
+        "retry_count": 3,
+        "critical": true
+      },
+      {
+        "test_id": "GSD_SMOKE_002",
+        "test_name": "Signal Broadcasting",
+        "description": "Test signal broadcasting functionality",
+        "test_method": "broadcast_signal",
+        "input_parameters": {
+          "broadcast_data": {
+            "signal_type": "communication",
+            "radio_code": "10-4",
+            "message": "Test broadcast signal",
+            "target_systems": ["1-1", "2-1", "3-1"]
+          }
+        },
+        "expected_result": {
+          "status": "SUCCESS",
+          "signal_broadcast": true,
+          "target_systems_reached": true,
+          "broadcast_delivered": true,
+          "delivery_confirmed": true
+        },
+        "timeout_seconds": 5,
+        "retry_count": 2,
+        "critical": true
+      },
+      {
+        "test_id": "GSD_SMOKE_003",
+        "test_name": "Signal Routing",
+        "description": "Test signal routing functionality",
+        "test_method": "route_signal",
+        "input_parameters": {
+          "routing_data": {
+            "signal_id": "GSD_TEST_001",
+            "source_address": "2-2",
+            "target_address": "1-1",
+            "routing_priority": "normal"
+          }
+        },
+        "expected_result": {
+          "status": "SUCCESS",
+          "signal_routed": true,
+          "target_reached": true,
+          "routing_efficient": true,
+          "delivery_tracked": true
+        },
+        "timeout_seconds": 3,
+        "retry_count": 2,
+        "critical": true
+      },
+      {
+        "test_id": "GSD_SMOKE_004",
+        "test_name": "Signal Queue Management",
+        "description": "Test signal queue management functionality",
+        "test_method": "manage_signal_queue",
+        "input_parameters": {
+          "queue_data": {
+            "queue_operations": ["enqueue", "dequeue", "priority_sort", "cleanup"],
+            "queue_size_limit": 1000,
+            "priority_levels": ["high", "normal", "low"]
+          }
+        },
+        "expected_result": {
+          "status": "SUCCESS",
+          "queue_managed": true,
+          "operations_successful": true,
+          "priority_sorting_working": true,
+          "queue_efficiency_maintained": true
+        },
+        "timeout_seconds": 5,
+        "retry_count": 2,
+        "critical": false
+      }
+    ],
+    "performance_metrics": {
+      "initialization_time_max_ms": 5000,
+      "signal_broadcast_time_max_ms": 5000,
+      "signal_routing_time_max_ms": 3000,
+      "queue_management_time_max_ms": 5000,
+      "memory_usage_max_mb": 75,
+      "cpu_usage_max_percent": 15
+    },
+    "test_environment": {
+      "required_files": [],
+      "required_directories": [
+        "./test_data/",
+        "./expected_results/"
+      ]
+    }
+  }
+}

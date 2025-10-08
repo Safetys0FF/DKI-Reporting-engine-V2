@@ -1,0 +1,121 @@
+{
+  "test_plan": {
+    "system_name": "Section 2 Framework Subsystem",
+    "system_address": "4-2",
+    "parent_system": "Analyst Deck (4-x)",
+    "test_type": "smoke_test",
+    "version": "1.0",
+    "created": "2025-10-05",
+    "description": "Basic functionality validation for Section 2 Framework (Investigation Planning) subsystem",
+    "test_data_location": "./test_data/",
+    "expected_results_location": "./expected_results/",
+    "test_vectors": [
+      {
+        "test_id": "S2F_SMOKE_001",
+        "test_name": "Subsystem Initialization",
+        "description": "Verify Section 2 Framework can initialize independently",
+        "test_method": "initialize_section_2_framework",
+        "input_parameters": {
+          "section_type": "investigation_planning",
+          "framework_mode": "standard",
+          "planning_templates": ["standard_investigation", "surveillance_plan", "evidence_collection"]
+        },
+        "expected_result": {
+          "status": "SUCCESS",
+          "section_2_framework_initialized": true,
+          "section_type_set": true,
+          "framework_mode_active": true,
+          "planning_templates_loaded": true
+        },
+        "timeout_seconds": 5,
+        "retry_count": 3,
+        "critical": true
+      },
+      {
+        "test_id": "S2F_SMOKE_002",
+        "test_name": "Investigation Planning",
+        "description": "Test investigation planning functionality",
+        "test_method": "create_investigation_plan",
+        "input_parameters": {
+          "planning_data": {
+            "case_id": "S2F_TEST_CASE_001",
+            "investigation_type": "surveillance",
+            "planning_scope": "comprehensive",
+            "planning_components": ["objectives", "timeline", "resources", "risks"]
+          }
+        },
+        "expected_result": {
+          "status": "SUCCESS",
+          "investigation_plan_created": true,
+          "planning_components_included": true,
+          "plan_structure_valid": true,
+          "planning_complete": true
+        },
+        "timeout_seconds": 8,
+        "retry_count": 2,
+        "critical": true
+      },
+      {
+        "test_id": "S2F_SMOKE_003",
+        "test_name": "Resource Allocation",
+        "description": "Test resource allocation functionality",
+        "test_method": "allocate_resources",
+        "input_parameters": {
+          "allocation_data": {
+            "resource_types": ["personnel", "equipment", "time", "budget"],
+            "allocation_method": "priority_based",
+            "constraints": ["budget_limit", "time_constraints", "personnel_availability"]
+          }
+        },
+        "expected_result": {
+          "status": "SUCCESS",
+          "resources_allocated": true,
+          "allocation_method_applied": true,
+          "constraints_respected": true,
+          "allocation_optimized": true
+        },
+        "timeout_seconds": 5,
+        "retry_count": 2,
+        "critical": true
+      },
+      {
+        "test_id": "S2F_SMOKE_004",
+        "test_name": "Timeline Management",
+        "description": "Test timeline management functionality",
+        "test_method": "manage_timeline",
+        "input_parameters": {
+          "timeline_data": {
+            "planning_phases": ["preparation", "execution", "analysis", "reporting"],
+            "timeline_constraints": ["deadline", "milestones", "dependencies"],
+            "timeline_optimization": true
+          }
+        },
+        "expected_result": {
+          "status": "SUCCESS",
+          "timeline_managed": true,
+          "phases_scheduled": true,
+          "constraints_applied": true,
+          "timeline_optimized": true
+        },
+        "timeout_seconds": 5,
+        "retry_count": 2,
+        "critical": false
+      }
+    ],
+    "performance_metrics": {
+      "initialization_time_max_ms": 5000,
+      "investigation_planning_time_max_ms": 8000,
+      "resource_allocation_time_max_ms": 5000,
+      "timeline_management_time_max_ms": 5000,
+      "memory_usage_max_mb": 75,
+      "cpu_usage_max_percent": 15
+    },
+    "test_environment": {
+      "required_files": [],
+      "required_directories": [
+        "./test_data/",
+        "./expected_results/"
+      ]
+    }
+  }
+}

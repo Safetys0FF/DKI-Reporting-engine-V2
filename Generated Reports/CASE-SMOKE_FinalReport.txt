@@ -1,0 +1,8 @@
+DKI SERVICES - FINAL REPORT
+Generated: 2025-10-04_10-38-38
+Case ID: CASE-SMOKE
+
+================================================================================
+
+[SECTION_1]
+Test narrative content

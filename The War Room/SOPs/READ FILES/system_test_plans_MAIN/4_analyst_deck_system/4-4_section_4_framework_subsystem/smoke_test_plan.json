@@ -1,0 +1,123 @@
+{
+  "test_plan": {
+    "system_name": "Section 4 Framework Subsystem",
+    "system_address": "4-4",
+    "parent_system": "Analyst Deck (4-x)",
+    "test_type": "smoke_test",
+    "version": "1.0",
+    "created": "2025-10-05",
+    "description": "Basic functionality validation for Section 4 Framework (Session Review) subsystem",
+    "test_data_location": "./test_data/",
+    "expected_results_location": "./expected_results/",
+    "test_vectors": [
+      {
+        "test_id": "S4F_SMOKE_001",
+        "test_name": "Subsystem Initialization",
+        "description": "Verify Section 4 Framework can initialize independently",
+        "test_method": "initialize_section_4_framework",
+        "input_parameters": {
+          "section_type": "session_review",
+          "framework_mode": "standard",
+          "review_types": ["surveillance_session", "investigation_session", "analysis_session"]
+        },
+        "expected_result": {
+          "status": "SUCCESS",
+          "section_4_framework_initialized": true,
+          "section_type_set": true,
+          "framework_mode_active": true,
+          "review_types_configured": true
+        },
+        "timeout_seconds": 5,
+        "retry_count": 3,
+        "critical": true
+      },
+      {
+        "test_id": "S4F_SMOKE_002",
+        "test_name": "Session Review Creation",
+        "description": "Test session review creation functionality",
+        "test_method": "create_session_review",
+        "input_parameters": {
+          "review_data": {
+            "session_id": "S4F_TEST_SESSION_001",
+            "session_type": "surveillance_session",
+            "review_scope": "comprehensive",
+            "review_components": ["performance", "objectives", "findings", "recommendations"]
+          }
+        },
+        "expected_result": {
+          "status": "SUCCESS",
+          "session_review_created": true,
+          "review_components_included": true,
+          "review_structure_valid": true,
+          "review_complete": true
+        },
+        "timeout_seconds": 8,
+        "retry_count": 2,
+        "critical": true
+      },
+      {
+        "test_id": "S4F_SMOKE_003",
+        "test_name": "Performance Analysis",
+        "description": "Test performance analysis functionality",
+        "test_method": "analyze_session_performance",
+        "input_parameters": {
+          "analysis_data": {
+            "session_id": "S4F_TEST_SESSION_001",
+            "performance_metrics": ["efficiency", "accuracy", "completeness", "timeliness"],
+            "analysis_method": "quantitative",
+            "benchmark_comparison": true
+          }
+        },
+        "expected_result": {
+          "status": "SUCCESS",
+          "performance_analyzed": true,
+          "metrics_calculated": true,
+          "analysis_method_applied": true,
+          "benchmark_comparison_complete": true
+        },
+        "timeout_seconds": 8,
+        "retry_count": 2,
+        "critical": true
+      },
+      {
+        "test_id": "S4F_SMOKE_004",
+        "test_name": "Review Documentation",
+        "description": "Test review documentation functionality",
+        "test_method": "document_session_review",
+        "input_parameters": {
+          "documentation_data": {
+            "review_id": "S4F_TEST_REVIEW_001",
+            "documentation_format": "structured_report",
+            "include_charts": true,
+            "include_recommendations": true
+          }
+        },
+        "expected_result": {
+          "status": "SUCCESS",
+          "review_documented": true,
+          "documentation_format_applied": true,
+          "charts_included": true,
+          "recommendations_documented": true
+        },
+        "timeout_seconds": 5,
+        "retry_count": 2,
+        "critical": false
+      }
+    ],
+    "performance_metrics": {
+      "initialization_time_max_ms": 5000,
+      "session_review_creation_time_max_ms": 8000,
+      "performance_analysis_time_max_ms": 8000,
+      "review_documentation_time_max_ms": 5000,
+      "memory_usage_max_mb": 75,
+      "cpu_usage_max_percent": 15
+    },
+    "test_environment": {
+      "required_files": [],
+      "required_directories": [
+        "./test_data/",
+        "./expected_results/"
+      ]
+    }
+  }
+}

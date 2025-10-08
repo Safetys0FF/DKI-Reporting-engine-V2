@@ -2,6 +2,7 @@
 """
 DKI Bus Core - Central Command Architecture
 100% new Central Command design - no old architecture
+Enhanced with Universal Communication Protocol
 """
 
 import os
@@ -11,13 +12,19 @@ from datetime import datetime
 import threading
 import logging
 from typing import Dict, List, Any, Optional, Callable
+from universal_communicator import UniversalCommunicator, CommunicationSignal
 
-# Configure logging
+# Configure logging - redirect to diagnostic system's system_logs directory
+import pathlib
+diagnostic_logs_path = pathlib.Path(__file__).parent.parent / "diagnostic_manager" / "Unified_diagnostic_system" / "library" / "system_logs"
+diagnostic_logs_path.mkdir(parents=True, exist_ok=True)
+bus_log_file = diagnostic_logs_path / "dki_bus_core.log"
+
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     handlers=[
-        logging.FileHandler('dki_bus_core.log'),
+        logging.FileHandler(bus_log_file),
         logging.StreamHandler(sys.stdout)
     ]
 )
@@ -25,7 +32,7 @@ logger = logging.getLogger(__name__)
 
 
 class DKIReportBus:
-    """Central Command Bus - Signal-based architecture"""
+    """Central Command Bus - Signal-based architecture with Universal Communication Protocol"""
 
     def __init__(self) -> None:
         self.signal_registry: Dict[str, List[Callable[[Dict[str, Any]], Optional[Any]]]] = {}
@@ -46,7 +53,13 @@ class DKIReportBus:
         self.latest_status: Dict[str, Any] = {}
         self.case_snapshots: List[Dict[str, Any]] = []
 
-        logger.info("Central Command Bus initialized")
+        # Universal Communication Protocol
+        self.communicator = UniversalCommunicator("Bus-1", bus_connection=self)
+        self.system_addresses: Dict[str, Dict[str, Any]] = {}
+        self.fault_log: List[Dict[str, Any]] = []
+        self.active_faults: Dict[str, Dict[str, Any]] = {}
+
+        logger.info("Central Command Bus initialized with Universal Communication Protocol")
 
         # Register default signal handlers for core events
         self._register_default_handlers()
@@ -70,6 +83,12 @@ class DKIReportBus:
             'gateway.status': self._handle_gateway_status_signal,
             'locker.status': self._handle_locker_status_signal,
             'mission.status': self._handle_mission_status_signal,
+            'narrative.assembled': self._handle_narrative_assembled_signal,
+            # Universal Communication Protocol handlers
+            'sos_fault': self._handle_sos_fault_signal,
+            'radio_check': self._handle_radio_check_signal,
+            'rollcall': self._handle_rollcall_signal,
+            'status_request': self._handle_status_request_signal,
         }
         for signal_name, handler in default_handlers.items():
             self.register_signal(signal_name, handler)
@@ -141,6 +160,19 @@ class DKIReportBus:
                 entry['last_updated'] = timestamp
                 self.evidence_manifest[evidence_id] = entry
         self.log_event('bus.evidence_deliver', f"Evidence {evidence_id or '<unknown>'} delivered to {recipient}")
+        try:
+            section_hint = payload.get('section_id') or payload.get('section_hint') or recipient
+            if section_hint:
+                request_payload = {
+                    'section_id': section_hint,
+                    'section': section_hint,
+                    'case_id': payload.get('case_id') or self.current_case_id,
+                    'evidence_id': evidence_id,
+                    'timestamp': timestamp,
+                }
+                self.send('narrative.generate', request_payload)
+        except Exception as exc:
+            logger.warning(f"Narrative request failed for evidence {evidence_id}: {exc}")
 
     def _handle_evidence_updated_signal(self, payload: Dict[str, Any]) -> None:
         evidence_id = payload.get('evidence_id') or payload.get('artifact_id') or payload.get('id')
@@ -228,7 +260,212 @@ class DKIReportBus:
         self._record_status('locker', payload)
 
     def _handle_mission_status_signal(self, payload: Dict[str, Any]) -> None:
+
         self._record_status('mission', payload)
+    def _handle_narrative_assembled_signal(self, payload: Dict[str, Any]) -> None:
+        if not isinstance(payload, dict):
+            return
+        section_id = payload.get('section_id')
+        if not section_id:
+            self.log_event('bus.narrative', 'narrative.assembled missing section_id', 'warning')
+            return
+        case_id = payload.get('case_id')
+        timestamp = payload.get('assembled_at') or payload.get('timestamp') or datetime.now().isoformat()
+        with self.lock:
+            existing = self.section_data.get(section_id) if isinstance(self.section_data, dict) else None
+            merged = dict(existing) if isinstance(existing, dict) else {'section_id': section_id}
+            structured = payload.get('structured_data')
+            if isinstance(structured, dict):
+                merged['structured_data'] = structured
+            narrative_text = payload.get('narrative')
+            if narrative_text is not None:
+                merged['narrative'] = narrative_text
+            draft_text = payload.get('draft') if payload.get('draft') is not None else narrative_text
+            if draft_text is not None:
+                merged['draft'] = draft_text
+            summary = payload.get('summary')
+            if summary is not None:
+                merged['narrative_summary'] = summary
+                if summary and not merged.get('summary'):
+                    merged['summary'] = summary
+            auto_narrative = payload.get('auto_narrative')
+            if auto_narrative is not None:
+                merged['auto_narrative'] = auto_narrative
+            merged['narrative_id'] = payload.get('narrative_id')
+            merged['case_id'] = case_id or merged.get('case_id') or self.current_case_id
+            merged['priority'] = payload.get('priority') or merged.get('priority')
+            merged['narrative_generated_at'] = timestamp
+            merged['draft_generated_at'] = payload.get('draft_generated_at') or timestamp
+            status = payload.get('status')
+            if status:
+                merged['status'] = status
+            elif narrative_text and not merged.get('status'):
+                merged['status'] = 'Draft Ready'
+            source = payload.get('source')
+            if source:
+                merged['source'] = source
+            self.section_data[section_id] = merged
+        self.log_event('bus.narrative', f"Narrative assembled for {section_id}")
+
+    # ------------------------------------------------------------------
+    # Universal Communication Protocol handlers
+    # ------------------------------------------------------------------
+    def _handle_sos_fault_signal(self, payload: Dict[str, Any]) -> None:
+        """Handle SOS fault signals"""
+        fault_code = payload.get('fault_code', 'UNKNOWN')
+        description = payload.get('description', 'Unknown fault')
+        reporting_address = payload.get('caller_address', 'UNKNOWN')
+        
+        # Log fault
+        fault_entry = {
+            'fault_code': fault_code,
+            'description': description,
+            'reporting_address': reporting_address,
+            'timestamp': datetime.now().isoformat(),
+            'status': 'active'
+        }
+        
+        with self.lock:
+            self.fault_log.append(fault_entry)
+            self.active_faults[reporting_address] = fault_entry
+        
+        # Route to GUI Error Display Interface
+        self.send('gui_error_alert', {
+            'fault_code': fault_code,
+            'description': description,
+            'reporting_address': reporting_address,
+            'timestamp': datetime.now().isoformat()
+        })
+        
+        self.log_event('bus.sos_fault', f"SOS fault from {reporting_address}: {fault_code} - {description}", 'error')
+
+    def _handle_radio_check_signal(self, payload: Dict[str, Any]) -> None:
+        """Handle radio check signals"""
+        target_address = payload.get('target_address', 'UNKNOWN')
+        caller_address = payload.get('caller_address', 'UNKNOWN')
+        
+        self.log_event('bus.radio_check', f"Radio check from {caller_address} to {target_address}")
+        
+        # Send acknowledgment response
+        self.send('radio_check_response', {
+            'target_address': caller_address,
+            'caller_address': target_address,
+            'radio_code': '10-4',
+            'message': f"Radio check acknowledged by {target_address}",
+            'timestamp': datetime.now().isoformat()
+        })
+
+    def _handle_rollcall_signal(self, payload: Dict[str, Any]) -> None:
+        """Handle rollcall signals"""
+        caller_address = payload.get('caller_address', 'UNKNOWN')
+        
+        self.log_event('bus.rollcall', f"Rollcall initiated by {caller_address}")
+        
+        # Send status response
+        self.send('rollcall_response', {
+            'target_address': caller_address,
+            'caller_address': 'Bus-1',
+            'radio_code': '10-4',
+            'message': 'Bus-1 operational',
+            'timestamp': datetime.now().isoformat()
+        })
+
+    def _handle_status_request_signal(self, payload: Dict[str, Any]) -> None:
+        """Handle status request signals"""
+        caller_address = payload.get('caller_address', 'UNKNOWN')
+        
+        self.log_event('bus.status_request', f"Status request from {caller_address}")
+        
+        # Send status response
+        self.send('status_response', {
+            'target_address': caller_address,
+            'caller_address': 'Bus-1',
+            'radio_code': '10-4',
+            'message': 'Bus-1 status: operational',
+            'timestamp': datetime.now().isoformat(),
+            'status': 'ACTIVE'
+        })
+
+    def route_signal(self, signal: CommunicationSignal) -> Dict[str, Any]:
+        """Route signal using universal communication protocol"""
+        try:
+            # Log signal
+            self.communicator.communication_log.append(signal)
+            
+            # Route to target
+            if signal.target_address == "Bus-1":
+                return self._handle_bus_signal(signal)
+            else:
+                return self._route_to_target(signal)
+                
+        except Exception as e:
+            # Send SOS fault
+            fault_code = f"Bus-1-20-{self._get_line_number()}"
+            self.communicator.send_sos_fault(
+                fault_code=fault_code,
+                description=f"Signal routing error: {str(e)}",
+                details={"signal": signal, "error": str(e)}
+            )
+            raise
+
+    def broadcast_rollcall(self) -> Dict[str, Any]:
+        """Broadcast rollcall to all systems"""
+        rollcall_results = {}
+        
+        for address in self.system_addresses.keys():
+            if address != "Bus-1":
+                response = self.communicator.send_signal(
+                    target_address=address,
+                    radio_code="ROLLCALL",
+                    message=f"Rollcall to {address}",
+                    payload={"operation": "rollcall"},
+                    timeout=60
+                )
+                rollcall_results[address] = response
+        
+        return rollcall_results
+
+    def register_system_address(self, address: str, system_info: Dict[str, Any]) -> None:
+        """Register system address for communication"""
+        with self.lock:
+            self.system_addresses[address] = system_info
+        self.log_event('bus.register_address', f"Registered system address: {address}")
+
+    def get_registered_addresses(self) -> List[str]:
+        """Get list of registered system addresses"""
+        with self.lock:
+            return list(self.system_addresses.keys())
+
+    def _get_line_number(self) -> int:
+        """Get current line number for fault reporting"""
+        import inspect
+        frame = inspect.currentframe()
+        caller_frame = frame.f_back.f_back if frame.f_back else frame
+        return caller_frame.f_lineno
+
+    def _handle_bus_signal(self, signal: CommunicationSignal) -> Dict[str, Any]:
+        """Handle signals directed to the bus itself"""
+        return {
+            "signal_id": f"response_{signal.signal_id}",
+            "caller_address": "Bus-1",
+            "target_address": signal.caller_address,
+            "radio_code": "10-4",
+            "message": "Bus-1 acknowledged",
+            "timestamp": datetime.now().isoformat()
+        }
+
+    def _route_to_target(self, signal: CommunicationSignal) -> Dict[str, Any]:
+        """Route signal to target system"""
+        # This would route to the actual target system
+        # For now, return a simulated response
+        return {
+            "signal_id": f"response_{signal.signal_id}",
+            "caller_address": signal.target_address,
+            "target_address": signal.caller_address,
+            "radio_code": "10-4",
+            "message": f"{signal.target_address} acknowledged",
+            "timestamp": datetime.now().isoformat()
+        }
 
     def _upsert_manifest(self, evidence_id: str, payload: Dict[str, Any], event: str, timestamp: str) -> None:
         with self.lock:
@@ -439,6 +676,15 @@ class DKIReportBus:
                 entry = self.evidence_manifest.get(evidence_id)
                 return dict(entry) if entry else {}
             return [dict(entry) for entry in self.evidence_manifest.values()]
+
+    def get_section_data(self, section_id: Optional[str] = None) -> Any:
+        with self.lock:
+            if section_id:
+                entry = self.section_data.get(section_id)
+                if isinstance(entry, dict):
+                    return dict(entry)
+                return entry
+            return {sid: (dict(data) if isinstance(data, dict) else data) for sid, data in self.section_data.items()}
 
     def get_section_interests(self) -> Dict[str, Any]:
         with self.lock:

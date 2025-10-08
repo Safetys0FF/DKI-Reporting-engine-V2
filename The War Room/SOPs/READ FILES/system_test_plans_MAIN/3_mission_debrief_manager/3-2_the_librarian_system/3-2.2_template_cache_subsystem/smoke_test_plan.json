@@ -1,0 +1,124 @@
+{
+  "test_plan": {
+    "system_name": "Template Cache Subsystem",
+    "system_address": "3-2.2",
+    "parent_system": "The Librarian (3-2)",
+    "test_type": "smoke_test",
+    "version": "1.0",
+    "created": "2025-10-05",
+    "description": "Basic functionality validation for Template Cache subsystem",
+    "test_data_location": "./test_data/",
+    "expected_results_location": "./expected_results/",
+    "test_vectors": [
+      {
+        "test_id": "TC_SMOKE_001",
+        "test_name": "Subsystem Initialization",
+        "description": "Verify Template Cache can initialize independently",
+        "test_method": "initialize_template_cache",
+        "input_parameters": {
+          "cache_size": 1000,
+          "cache_eviction_policy": "LRU",
+          "cache_persistence": true,
+          "template_types": ["HTML", "PDF", "DOCX", "RTF"]
+        },
+        "expected_result": {
+          "status": "SUCCESS",
+          "template_cache_initialized": true,
+          "cache_size_configured": true,
+          "eviction_policy_set": true,
+          "cache_persistence_active": true
+        },
+        "timeout_seconds": 5,
+        "retry_count": 3,
+        "critical": true
+      },
+      {
+        "test_id": "TC_SMOKE_002",
+        "test_name": "Template Caching",
+        "description": "Test template caching functionality",
+        "test_method": "cache_template",
+        "input_parameters": {
+          "caching_data": {
+            "template_id": "TC_TEST_001",
+            "template_content": "sample_template_content",
+            "template_type": "HTML",
+            "cache_priority": "high"
+          }
+        },
+        "expected_result": {
+          "status": "SUCCESS",
+          "template_cached": true,
+          "cache_entry_created": true,
+          "template_retrievable": true,
+          "cache_metadata_stored": true
+        },
+        "timeout_seconds": 3,
+        "retry_count": 2,
+        "critical": true
+      },
+      {
+        "test_id": "TC_SMOKE_003",
+        "test_name": "Template Retrieval",
+        "description": "Test template retrieval functionality",
+        "test_method": "retrieve_template",
+        "input_parameters": {
+          "retrieval_data": {
+            "template_id": "TC_TEST_001",
+            "retrieval_options": {
+              "include_metadata": true,
+              "validate_content": true
+            }
+          }
+        },
+        "expected_result": {
+          "status": "SUCCESS",
+          "template_retrieved": true,
+          "content_accurate": true,
+          "metadata_included": true,
+          "content_validated": true
+        },
+        "timeout_seconds": 2,
+        "retry_count": 2,
+        "critical": true
+      },
+      {
+        "test_id": "TC_SMOKE_004",
+        "test_name": "Cache Management",
+        "description": "Test cache management functionality",
+        "test_method": "manage_cache",
+        "input_parameters": {
+          "management_data": {
+            "management_operations": ["clear_expired", "optimize_cache", "update_statistics"],
+            "cache_maintenance": true,
+            "performance_monitoring": true
+          }
+        },
+        "expected_result": {
+          "status": "SUCCESS",
+          "cache_managed": true,
+          "expired_entries_cleared": true,
+          "cache_optimized": true,
+          "statistics_updated": true
+        },
+        "timeout_seconds": 5,
+        "retry_count": 2,
+        "critical": false
+      }
+    ],
+    "performance_metrics": {
+      "initialization_time_max_ms": 5000,
+      "template_caching_time_max_ms": 3000,
+      "template_retrieval_time_max_ms": 2000,
+      "cache_management_time_max_ms": 5000,
+      "memory_usage_max_mb": 100,
+      "cpu_usage_max_percent": 15
+    },
+    "test_environment": {
+      "required_files": [],
+      "required_directories": [
+        "./test_data/",
+        "./expected_results/"
+      ]
+    }
+  }
+}

@@ -1,0 +1,162 @@
+{
+  "test_plan": {
+    "system_name": "Bus Core",
+    "system_address": "Bus-1",
+    "parent_complex": "Bus System (Bus-x)",
+    "test_type": "smoke_test",
+    "version": "1.0",
+    "created": "2025-10-05",
+    "description": "Basic functionality validation for Bus Core system - Communication Hub",
+    "test_data_location": "./test_data/",
+    "expected_results_location": "./expected_results/",
+    "test_vectors": [
+      {
+        "test_id": "BUS_SMOKE_001",
+        "test_name": "System Initialization",
+        "description": "Verify Bus Core can initialize with Universal Communication Protocol",
+        "test_method": "initialize_bus",
+        "input_parameters": {
+          "communication_protocol": "universal",
+          "signal_handlers": true
+        },
+        "expected_result": {
+          "status": "SUCCESS",
+          "bus_initialized": true,
+          "communication_protocol_active": true,
+          "signal_handlers_registered": true,
+          "universal_communicator_ready": true
+        },
+        "timeout_seconds": 5,
+        "retry_count": 3,
+        "critical": true
+      },
+      {
+        "test_id": "BUS_SMOKE_002",
+        "test_name": "Signal Registration",
+        "description": "Test signal registration and handler binding",
+        "test_method": "register_signal",
+        "input_parameters": {
+          "signal_name": "test_signal",
+          "handler_function": "test_handler",
+          "signal_type": "system_test"
+        },
+        "expected_result": {
+          "status": "SUCCESS",
+          "signal_registered": true,
+          "handler_bound": true,
+          "registration_logged": true
+        },
+        "timeout_seconds": 3,
+        "retry_count": 2,
+        "critical": true
+      },
+      {
+        "test_id": "BUS_SMOKE_003",
+        "test_name": "Signal Routing",
+        "description": "Test signal routing between systems",
+        "test_method": "route_signal",
+        "input_parameters": {
+          "signal_data": {
+            "signal_name": "test_communication",
+            "source_address": "Bus-1",
+            "target_address": "1-1",
+            "payload": {"test": "data"},
+            "radio_code": "10-4"
+          }
+        },
+        "expected_result": {
+          "status": "SUCCESS",
+          "signal_routed": true,
+          "target_reached": true,
+          "routing_logged": true
+        },
+        "timeout_seconds": 5,
+        "retry_count": 2,
+        "critical": true
+      },
+      {
+        "test_id": "BUS_SMOKE_004",
+        "test_name": "Case Management",
+        "description": "Test case creation and management through bus",
+        "test_method": "new_case",
+        "input_parameters": {
+          "case_data": {
+            "case_id": "BUS_TEST_CASE_001",
+            "case_config": {
+              "name": "Bus Test Case",
+              "type": "system_test"
+            }
+          }
+        },
+        "expected_result": {
+          "status": "SUCCESS",
+          "case_created": true,
+          "case_signal_sent": true,
+          "case_management_active": true
+        },
+        "timeout_seconds": 5,
+        "retry_count": 2,
+        "critical": true
+      },
+      {
+        "test_id": "BUS_SMOKE_005",
+        "test_name": "File Processing",
+        "description": "Test file addition and processing through bus",
+        "test_method": "add_files",
+        "input_parameters": {
+          "file_list": [
+            "./test_data/sample_document.pdf"
+          ],
+          "processing_options": {
+            "auto_process": true,
+            "notification_enabled": true
+          }
+        },
+        "expected_result": {
+          "status": "SUCCESS",
+          "files_added": true,
+          "processing_initiated": true,
+          "file_signals_sent": true
+        },
+        "timeout_seconds": 10,
+        "retry_count": 2,
+        "critical": false
+      },
+      {
+        "test_id": "BUS_SMOKE_006",
+        "test_name": "System Reset",
+        "description": "Test system reset functionality",
+        "test_method": "reset_for_new_case",
+        "input_parameters": {},
+        "expected_result": {
+          "status": "SUCCESS",
+          "reset_complete": true,
+          "state_cleared": true,
+          "ready_for_new_case": true
+        },
+        "timeout_seconds": 3,
+        "retry_count": 2,
+        "critical": false
+      }
+    ],
+    "performance_metrics": {
+      "initialization_time_max_ms": 5000,
+      "signal_registration_time_max_ms": 1000,
+      "signal_routing_time_max_ms": 2000,
+      "case_creation_time_max_ms": 2000,
+      "file_processing_time_max_ms": 5000,
+      "reset_time_max_ms": 1000,
+      "memory_usage_max_mb": 100,
+      "cpu_usage_max_percent": 20
+    },
+    "test_environment": {
+      "required_files": [
+        "./test_data/sample_document.pdf"
+      ],
+      "required_directories": [
+        "./test_data/",
+        "./expected_results/"
+      ]
+    }
+  }
+}

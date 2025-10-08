@@ -2,13 +2,22 @@ from __future__ import annotations
 
 import sys
 from pathlib import Path
+import json
+
+CONFIG_PATH = r"F:\The Central Command\The Warden\section_tag_map.json"
+
+try:
+    with open(CONFIG_PATH, 'r', encoding='utf-8') as config_file:
+        SECTION_TAGS = json.load(config_file)
+except (OSError, json.JSONDecodeError):
+    SECTION_TAGS = {}
 
 ROOT_DIR = Path(__file__).resolve().parents[1]
 if str(ROOT_DIR) not in sys.path:
     sys.path.insert(0, str(ROOT_DIR))
 
 from datetime import datetime, timedelta
-from tag_taxonomy import resolve_tags
+from tag_taxonomy import resolve_tags, normalize_tags
 from typing import Any, Dict, Iterable, Optional, Tuple
 import threading
 
@@ -202,6 +211,15 @@ def inject_bus_extensions(cls) -> None:
                 entry["last_event"] = event
                 entry["last_updated"] = timestamp
                 self.evidence_manifest[evidence_id] = entry
+                if hasattr(self, "_update_common_pool_cache"):
+                    self._update_common_pool_cache(evidence_id, entry, already_locked=True, persist=True)
+                else:
+                    if hasattr(self, "evidence_index"):
+                        current = dict(self.evidence_index.get(evidence_id, {}))
+                        current.update(entry)
+                        self.evidence_index[evidence_id] = current
+                    if hasattr(self, "_persist_manifest"):
+                        self._persist_manifest(already_locked=True)
                 return existing is None
 
 

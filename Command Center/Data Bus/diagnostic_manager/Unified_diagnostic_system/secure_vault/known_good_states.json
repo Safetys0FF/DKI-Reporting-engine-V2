@@ -1,0 +1,6584 @@
+{
+  "1-1": [
+    {
+      "timestamp": "2025-10-07T16:49:58.845961",
+      "validation_result": {
+        "system_address": "1-1",
+        "overall_valid": true,
+        "file_integrity": {
+          "valid": true,
+          "details": [
+            "File checksum: 1f2a38311d3dac79372328f4ade629b6"
+          ],
+          "checksum": "1f2a38311d3dac79372328f4ade629b6",
+          "file_path": "F:\\The Central Command\\Evidence Locker\\evidence_class_builder.py"
+        },
+        "configuration": {
+          "valid": true,
+          "details": [
+            "No configuration files to validate"
+          ]
+        },
+        "dependencies": {
+          "valid": true,
+          "details": [
+            "Valid imports: 10",
+            "Invalid imports: 0"
+          ],
+          "imports": [
+            "os",
+            "uuid",
+            "json",
+            "logging",
+            "datetime",
+            "typing",
+            "dataclasses",
+            "enum",
+            "mimetypes",
+            "hashlib"
+          ],
+          "invalid_imports": []
+        },
+        "communication": {
+          "valid": true,
+          "details": [
+            "Communication test successful"
+          ],
+          "signal_id": "SIG-20251007_164958_845680"
+        },
+        "timestamp": "2025-10-07T16:49:58.641901"
+      },
+      "file_checksums": {
+        "handler": "1f2a38311d3dac79372328f4ade629b6"
+      },
+      "config_snapshots": {}
+    },
+    {
+      "timestamp": "2025-10-07T16:58:42.559188",
+      "validation_result": {
+        "system_address": "1-1",
+        "overall_valid": true,
+        "file_integrity": {
+          "valid": true,
+          "details": [
+            "File checksum: 1f2a38311d3dac79372328f4ade629b6"
+          ],
+          "checksum": "1f2a38311d3dac79372328f4ade629b6",
+          "file_path": "F:\\The Central Command\\Evidence Locker\\evidence_class_builder.py"
+        },
+        "configuration": {
+          "valid": true,
+          "details": [
+            "No configuration files to validate"
+          ]
+        },
+        "dependencies": {
+          "valid": true,
+          "details": [
+            "Valid imports: 10",
+            "Invalid imports: 0"
+          ],
+          "imports": [
+            "os",
+            "uuid",
+            "json",
+            "logging",
+            "datetime",
+            "typing",
+            "dataclasses",
+            "enum",
+            "mimetypes",
+            "hashlib"
+          ],
+          "invalid_imports": []
+        },
+        "communication": {
+          "valid": true,
+          "details": [
+            "Communication test successful"
+          ],
+          "signal_id": "SIG-20251007_165842_558443"
+        },
+        "timestamp": "2025-10-07T16:58:42.168588"
+      },
+      "file_checksums": {
+        "handler": "1f2a38311d3dac79372328f4ade629b6"
+      },
+      "config_snapshots": {}
+    },
+    {
+      "timestamp": "2025-10-07T17:08:50.147060",
+      "validation_result": {
+        "system_address": "1-1",
+        "overall_valid": true,
+        "file_integrity": {
+          "valid": true,
+          "details": [
+            "File checksum: 1f2a38311d3dac79372328f4ade629b6"
+          ],
+          "checksum": "1f2a38311d3dac79372328f4ade629b6",
+          "file_path": "F:\\The Central Command\\Evidence Locker\\evidence_class_builder.py"
+        },
+        "configuration": {
+          "valid": true,
+          "details": [
+            "No configuration files to validate"
+          ]
+        },
+        "dependencies": {
+          "valid": true,
+          "details": [
+            "Valid imports: 10",
+            "Invalid imports: 0"
+          ],
+          "imports": [
+            "os",
+            "uuid",
+            "json",
+            "logging",
+            "datetime",
+            "typing",
+            "dataclasses",
+            "enum",
+            "mimetypes",
+            "hashlib"
+          ],
+          "invalid_imports": []
+        },
+        "communication": {
+          "valid": true,
+          "details": [
+            "Communication test successful"
+          ],
+          "signal_id": "SIG-20251007_170850_146766"
+        },
+        "timestamp": "2025-10-07T17:08:50.120882"
+      },
+      "file_checksums": {
+        "handler": "1f2a38311d3dac79372328f4ade629b6"
+      },
+      "config_snapshots": {}
+    },
+    {
+      "timestamp": "2025-10-07T17:17:01.796520",
+      "validation_result": {
+        "system_address": "1-1",
+        "overall_valid": true,
+        "file_integrity": {
+          "valid": true,
+          "details": [
+            "File checksum: 1f2a38311d3dac79372328f4ade629b6"
+          ],
+          "checksum": "1f2a38311d3dac79372328f4ade629b6",
+          "file_path": "F:\\The Central Command\\Evidence Locker\\evidence_class_builder.py"
+        },
+        "configuration": {
+          "valid": true,
+          "details": [
+            "No configuration files to validate"
+          ]
+        },
+        "dependencies": {
+          "valid": true,
+          "details": [
+            "Valid imports: 10",
+            "Invalid imports: 0"
+          ],
+          "imports": [
+            "os",
+            "uuid",
+            "json",
+            "logging",
+            "datetime",
+            "typing",
+            "dataclasses",
+            "enum",
+            "mimetypes",
+            "hashlib"
+          ],
+          "invalid_imports": []
+        },
+        "communication": {
+          "valid": true,
+          "details": [
+            "Communication test successful"
+          ],
+          "signal_id": "SIG-20251007_171701_796244"
+        },
+        "timestamp": "2025-10-07T17:17:01.769700"
+      },
+      "file_checksums": {
+        "handler": "1f2a38311d3dac79372328f4ade629b6"
+      },
+      "config_snapshots": {}
+    },
+    {
+      "timestamp": "2025-10-07T17:21:51.180558",
+      "validation_result": {
+        "system_address": "1-1",
+        "overall_valid": true,
+        "file_integrity": {
+          "valid": true,
+          "details": [
+            "File checksum: 1f2a38311d3dac79372328f4ade629b6"
+          ],
+          "checksum": "1f2a38311d3dac79372328f4ade629b6",
+          "file_path": "F:\\The Central Command\\Evidence Locker\\evidence_class_builder.py"
+        },
+        "configuration": {
+          "valid": true,
+          "details": [
+            "No configuration files to validate"
+          ]
+        },
+        "dependencies": {
+          "valid": true,
+          "details": [
+            "Valid imports: 10",
+            "Invalid imports: 0"
+          ],
+          "imports": [
+            "os",
+            "uuid",
+            "json",
+            "logging",
+            "datetime",
+            "typing",
+            "dataclasses",
+            "enum",
+            "mimetypes",
+            "hashlib"
+          ],
+          "invalid_imports": []
+        },
+        "communication": {
+          "valid": true,
+          "details": [
+            "Communication test successful"
+          ],
+          "signal_id": "SIG-20251007_172151_180198"
+        },
+        "timestamp": "2025-10-07T17:21:51.152890"
+      },
+      "file_checksums": {
+        "handler": "1f2a38311d3dac79372328f4ade629b6"
+      },
+      "config_snapshots": {}
+    },
+    {
+      "timestamp": "2025-10-07T17:25:07.888300",
+      "validation_result": {
+        "system_address": "1-1",
+        "overall_valid": true,
+        "file_integrity": {
+          "valid": true,
+          "details": [
+            "File checksum: 1f2a38311d3dac79372328f4ade629b6"
+          ],
+          "checksum": "1f2a38311d3dac79372328f4ade629b6",
+          "file_path": "F:\\The Central Command\\Evidence Locker\\evidence_class_builder.py"
+        },
+        "configuration": {
+          "valid": true,
+          "details": [
+            "No configuration files to validate"
+          ]
+        },
+        "dependencies": {
+          "valid": true,
+          "details": [
+            "Valid imports: 10",
+            "Invalid imports: 0"
+          ],
+          "imports": [
+            "os",
+            "uuid",
+            "json",
+            "logging",
+            "datetime",
+            "typing",
+            "dataclasses",
+            "enum",
+            "mimetypes",
+            "hashlib"
+          ],
+          "invalid_imports": []
+        },
+        "communication": {
+          "valid": true,
+          "details": [
+            "Communication test successful"
+          ],
+          "signal_id": "SIG-20251007_172507_887970"
+        },
+        "timestamp": "2025-10-07T17:25:07.855422"
+      },
+      "file_checksums": {
+        "handler": "1f2a38311d3dac79372328f4ade629b6"
+      },
+      "config_snapshots": {}
+    },
+    {
+      "timestamp": "2025-10-07T17:32:50.744225",
+      "validation_result": {
+        "system_address": "1-1",
+        "overall_valid": true,
+        "file_integrity": {
+          "valid": true,
+          "details": [
+            "File checksum: 1f2a38311d3dac79372328f4ade629b6"
+          ],
+          "checksum": "1f2a38311d3dac79372328f4ade629b6",
+          "file_path": "F:\\The Central Command\\Evidence Locker\\evidence_class_builder.py"
+        },
+        "configuration": {
+          "valid": true,
+          "details": [
+            "No configuration files to validate"
+          ]
+        },
+        "dependencies": {
+          "valid": true,
+          "details": [
+            "Valid imports: 10",
+            "Invalid imports: 0"
+          ],
+          "imports": [
+            "os",
+            "uuid",
+            "json",
+            "logging",
+            "datetime",
+            "typing",
+            "dataclasses",
+            "enum",
+            "mimetypes",
+            "hashlib"
+          ],
+          "invalid_imports": []
+        },
+        "communication": {
+          "valid": true,
+          "details": [
+            "Communication test successful"
+          ],
+          "signal_id": "SIG-20251007_173250_743769"
+        },
+        "timestamp": "2025-10-07T17:32:50.708061"
+      },
+      "file_checksums": {
+        "handler": "1f2a38311d3dac79372328f4ade629b6"
+      },
+      "config_snapshots": {}
+    },
+    {
+      "timestamp": "2025-10-07T17:36:43.744688",
+      "validation_result": {
+        "system_address": "1-1",
+        "overall_valid": true,
+        "file_integrity": {
+          "valid": true,
+          "details": [
+            "File checksum: 1f2a38311d3dac79372328f4ade629b6"
+          ],
+          "checksum": "1f2a38311d3dac79372328f4ade629b6",
+          "file_path": "F:\\The Central Command\\Evidence Locker\\evidence_class_builder.py"
+        },
+        "configuration": {
+          "valid": true,
+          "details": [
+            "No configuration files to validate"
+          ]
+        },
+        "dependencies": {
+          "valid": true,
+          "details": [
+            "Valid imports: 10",
+            "Invalid imports: 0"
+          ],
+          "imports": [
+            "os",
+            "uuid",
+            "json",
+            "logging",
+            "datetime",
+            "typing",
+            "dataclasses",
+            "enum",
+            "mimetypes",
+            "hashlib"
+          ],
+          "invalid_imports": []
+        },
+        "communication": {
+          "valid": true,
+          "details": [
+            "Communication test successful"
+          ],
+          "signal_id": "SIG-20251007_173643_744426"
+        },
+        "timestamp": "2025-10-07T17:36:43.716549"
+      },
+      "file_checksums": {
+        "handler": "1f2a38311d3dac79372328f4ade629b6"
+      },
+      "config_snapshots": {}
+    },
+    {
+      "timestamp": "2025-10-07T17:40:22.303399",
+      "validation_result": {
+        "system_address": "1-1",
+        "overall_valid": true,
+        "file_integrity": {
+          "valid": true,
+          "details": [
+            "File checksum: 1f2a38311d3dac79372328f4ade629b6"
+          ],
+          "checksum": "1f2a38311d3dac79372328f4ade629b6",
+          "file_path": "F:\\The Central Command\\Evidence Locker\\evidence_class_builder.py"
+        },
+        "configuration": {
+          "valid": true,
+          "details": [
+            "No configuration files to validate"
+          ]
+        },
+        "dependencies": {
+          "valid": true,
+          "details": [
+            "Valid imports: 10",
+            "Invalid imports: 0"
+          ],
+          "imports": [
+            "os",
+            "uuid",
+            "json",
+            "logging",
+            "datetime",
+            "typing",
+            "dataclasses",
+            "enum",
+            "mimetypes",
+            "hashlib"
+          ],
+          "invalid_imports": []
+        },
+        "communication": {
+          "valid": true,
+          "details": [
+            "Communication test successful"
+          ],
+          "signal_id": "SIG-20251007_174022_303083"
+        },
+        "timestamp": "2025-10-07T17:40:22.275599"
+      },
+      "file_checksums": {
+        "handler": "1f2a38311d3dac79372328f4ade629b6"
+      },
+      "config_snapshots": {}
+    },
+    {
+      "timestamp": "2025-10-07T17:53:47.629944",
+      "validation_result": {
+        "system_address": "1-1",
+        "overall_valid": true,
+        "file_integrity": {
+          "valid": true,
+          "details": [
+            "File checksum: 1f2a38311d3dac79372328f4ade629b6"
+          ],
+          "checksum": "1f2a38311d3dac79372328f4ade629b6",
+          "file_path": "F:\\The Central Command\\Evidence Locker\\evidence_class_builder.py"
+        },
+        "configuration": {
+          "valid": true,
+          "details": [
+            "No configuration files to validate"
+          ]
+        },
+        "dependencies": {
+          "valid": true,
+          "details": [
+            "Valid imports: 10",
+            "Invalid imports: 0"
+          ],
+          "imports": [
+            "os",
+            "uuid",
+            "json",
+            "logging",
+            "datetime",
+            "typing",
+            "dataclasses",
+            "enum",
+            "mimetypes",
+            "hashlib"
+          ],
+          "invalid_imports": []
+        },
+        "communication": {
+          "valid": true,
+          "details": [
+            "Communication test successful"
+          ],
+          "signal_id": "SIG-20251007_175347_629616"
+        },
+        "timestamp": "2025-10-07T17:53:47.601268"
+      },
+      "file_checksums": {
+        "handler": "1f2a38311d3dac79372328f4ade629b6"
+      },
+      "config_snapshots": {}
+    }
+  ],
+  "Bus-1.1": [
+    {
+      "timestamp": "2025-10-07T16:49:58.848128",
+      "validation_result": {
+        "system_address": "Bus-1.1",
+        "overall_valid": true,
+        "file_integrity": {
+          "valid": true,
+          "details": [
+            "File checksum: 69f470310cd0489365600b5a4da6e6da"
+          ],
+          "checksum": "69f470310cd0489365600b5a4da6e6da",
+          "file_path": "F:\\The Central Command\\Command Center\\Data Bus\\diagnostic_manager\\SOP\\archives\\unified_diagnostic_system.py"
+        },
+        "configuration": {
+          "valid": true,
+          "details": [
+            "No configuration files to validate"
+          ]
+        },
+        "dependencies": {
+          "valid": true,
+          "details": [
+            "Valid imports: 0",
+            "Invalid imports: 0"
+          ],
+          "imports": [],
+          "invalid_imports": []
+        },
+        "communication": {
+          "valid": true,
+          "details": [
+            "Communication test successful"
+          ],
+          "signal_id": "SIG-20251007_164958_847919"
+        },
+        "timestamp": "2025-10-07T16:49:58.845967"
+      },
+      "file_checksums": {
+        "handler": "69f470310cd0489365600b5a4da6e6da"
+      },
+      "config_snapshots": {}
+    },
+    {
+      "timestamp": "2025-10-07T16:58:42.561913",
+      "validation_result": {
+        "system_address": "Bus-1.1",
+        "overall_valid": true,
+        "file_integrity": {
+          "valid": true,
+          "details": [
+            "File checksum: 69f470310cd0489365600b5a4da6e6da"
+          ],
+          "checksum": "69f470310cd0489365600b5a4da6e6da",
+          "file_path": "F:\\The Central Command\\Command Center\\Data Bus\\diagnostic_manager\\SOP\\archives\\unified_diagnostic_system.py"
+        },
+        "configuration": {
+          "valid": true,
+          "details": [
+            "No configuration files to validate"
+          ]
+        },
+        "dependencies": {
+          "valid": true,
+          "details": [
+            "Valid imports: 0",
+            "Invalid imports: 0"
+          ],
+          "imports": [],
+          "invalid_imports": []
+        },
+        "communication": {
+          "valid": true,
+          "details": [
+            "Communication test successful"
+          ],
+          "signal_id": "SIG-20251007_165842_561690"
+        },
+        "timestamp": "2025-10-07T16:58:42.559197"
+      },
+      "file_checksums": {
+        "handler": "69f470310cd0489365600b5a4da6e6da"
+      },
+      "config_snapshots": {}
+    },
+    {
+      "timestamp": "2025-10-07T17:08:50.149346",
+      "validation_result": {
+        "system_address": "Bus-1.1",
+        "overall_valid": true,
+        "file_integrity": {
+          "valid": true,
+          "details": [
+            "File checksum: 69f470310cd0489365600b5a4da6e6da"
+          ],
+          "checksum": "69f470310cd0489365600b5a4da6e6da",
+          "file_path": "F:\\The Central Command\\Command Center\\Data Bus\\diagnostic_manager\\SOP\\archives\\unified_diagnostic_system.py"
+        },
+        "configuration": {
+          "valid": true,
+          "details": [
+            "No configuration files to validate"
+          ]
+        },
+        "dependencies": {
+          "valid": true,
+          "details": [
+            "Valid imports: 0",
+            "Invalid imports: 0"
+          ],
+          "imports": [],
+          "invalid_imports": []
+        },
+        "communication": {
+          "valid": true,
+          "details": [
+            "Communication test successful"
+          ],
+          "signal_id": "SIG-20251007_170850_149126"
+        },
+        "timestamp": "2025-10-07T17:08:50.147069"
+      },
+      "file_checksums": {
+        "handler": "69f470310cd0489365600b5a4da6e6da"
+      },
+      "config_snapshots": {}
+    },
+    {
+      "timestamp": "2025-10-07T17:17:01.798718",
+      "validation_result": {
+        "system_address": "Bus-1.1",
+        "overall_valid": true,
+        "file_integrity": {
+          "valid": true,
+          "details": [
+            "File checksum: 69f470310cd0489365600b5a4da6e6da"
+          ],
+          "checksum": "69f470310cd0489365600b5a4da6e6da",
+          "file_path": "F:\\The Central Command\\Command Center\\Data Bus\\diagnostic_manager\\SOP\\archives\\unified_diagnostic_system.py"
+        },
+        "configuration": {
+          "valid": true,
+          "details": [
+            "No configuration files to validate"
+          ]
+        },
+        "dependencies": {
+          "valid": true,
+          "details": [
+            "Valid imports: 0",
+            "Invalid imports: 0"
+          ],
+          "imports": [],
+          "invalid_imports": []
+        },
+        "communication": {
+          "valid": true,
+          "details": [
+            "Communication test successful"
+          ],
+          "signal_id": "SIG-20251007_171701_798505"
+        },
+        "timestamp": "2025-10-07T17:17:01.796527"
+      },
+      "file_checksums": {
+        "handler": "69f470310cd0489365600b5a4da6e6da"
+      },
+      "config_snapshots": {}
+    },
+    {
+      "timestamp": "2025-10-07T17:21:51.182935",
+      "validation_result": {
+        "system_address": "Bus-1.1",
+        "overall_valid": true,
+        "file_integrity": {
+          "valid": true,
+          "details": [
+            "File checksum: 69f470310cd0489365600b5a4da6e6da"
+          ],
+          "checksum": "69f470310cd0489365600b5a4da6e6da",
+          "file_path": "F:\\The Central Command\\Command Center\\Data Bus\\diagnostic_manager\\SOP\\archives\\unified_diagnostic_system.py"
+        },
+        "configuration": {
+          "valid": true,
+          "details": [
+            "No configuration files to validate"
+          ]
+        },
+        "dependencies": {
+          "valid": true,
+          "details": [
+            "Valid imports: 0",
+            "Invalid imports: 0"
+          ],
+          "imports": [],
+          "invalid_imports": []
+        },
+        "communication": {
+          "valid": true,
+          "details": [
+            "Communication test successful"
+          ],
+          "signal_id": "SIG-20251007_172151_182682"
+        },
+        "timestamp": "2025-10-07T17:21:51.180565"
+      },
+      "file_checksums": {
+        "handler": "69f470310cd0489365600b5a4da6e6da"
+      },
+      "config_snapshots": {}
+    },
+    {
+      "timestamp": "2025-10-07T17:25:07.890725",
+      "validation_result": {
+        "system_address": "Bus-1.1",
+        "overall_valid": true,
+        "file_integrity": {
+          "valid": true,
+          "details": [
+            "File checksum: 69f470310cd0489365600b5a4da6e6da"
+          ],
+          "checksum": "69f470310cd0489365600b5a4da6e6da",
+          "file_path": "F:\\The Central Command\\Command Center\\Data Bus\\diagnostic_manager\\SOP\\archives\\unified_diagnostic_system.py"
+        },
+        "configuration": {
+          "valid": true,
+          "details": [
+            "No configuration files to validate"
+          ]
+        },
+        "dependencies": {
+          "valid": true,
+          "details": [
+            "Valid imports: 0",
+            "Invalid imports: 0"
+          ],
+          "imports": [],
+          "invalid_imports": []
+        },
+        "communication": {
+          "valid": true,
+          "details": [
+            "Communication test successful"
+          ],
+          "signal_id": "SIG-20251007_172507_890455"
+        },
+        "timestamp": "2025-10-07T17:25:07.888306"
+      },
+      "file_checksums": {
+        "handler": "69f470310cd0489365600b5a4da6e6da"
+      },
+      "config_snapshots": {}
+    },
+    {
+      "timestamp": "2025-10-07T17:32:50.747391",
+      "validation_result": {
+        "system_address": "Bus-1.1",
+        "overall_valid": true,
+        "file_integrity": {
+          "valid": true,
+          "details": [
+            "File checksum: 69f470310cd0489365600b5a4da6e6da"
+          ],
+          "checksum": "69f470310cd0489365600b5a4da6e6da",
+          "file_path": "F:\\The Central Command\\Command Center\\Data Bus\\diagnostic_manager\\SOP\\archives\\unified_diagnostic_system.py"
+        },
+        "configuration": {
+          "valid": true,
+          "details": [
+            "No configuration files to validate"
+          ]
+        },
+        "dependencies": {
+          "valid": true,
+          "details": [
+            "Valid imports: 0",
+            "Invalid imports: 0"
+          ],
+          "imports": [],
+          "invalid_imports": []
+        },
+        "communication": {
+          "valid": true,
+          "details": [
+            "Communication test successful"
+          ],
+          "signal_id": "SIG-20251007_173250_746960"
+        },
+        "timestamp": "2025-10-07T17:32:50.744234"
+      },
+      "file_checksums": {
+        "handler": "69f470310cd0489365600b5a4da6e6da"
+      },
+      "config_snapshots": {}
+    },
+    {
+      "timestamp": "2025-10-07T17:36:43.746860",
+      "validation_result": {
+        "system_address": "Bus-1.1",
+        "overall_valid": true,
+        "file_integrity": {
+          "valid": true,
+          "details": [
+            "File checksum: 69f470310cd0489365600b5a4da6e6da"
+          ],
+          "checksum": "69f470310cd0489365600b5a4da6e6da",
+          "file_path": "F:\\The Central Command\\Command Center\\Data Bus\\diagnostic_manager\\SOP\\archives\\unified_diagnostic_system.py"
+        },
+        "configuration": {
+          "valid": true,
+          "details": [
+            "No configuration files to validate"
+          ]
+        },
+        "dependencies": {
+          "valid": true,
+          "details": [
+            "Valid imports: 0",
+            "Invalid imports: 0"
+          ],
+          "imports": [],
+          "invalid_imports": []
+        },
+        "communication": {
+          "valid": true,
+          "details": [
+            "Communication test successful"
+          ],
+          "signal_id": "SIG-20251007_173643_746651"
+        },
+        "timestamp": "2025-10-07T17:36:43.744694"
+      },
+      "file_checksums": {
+        "handler": "69f470310cd0489365600b5a4da6e6da"
+      },
+      "config_snapshots": {}
+    },
+    {
+      "timestamp": "2025-10-07T17:40:22.305639",
+      "validation_result": {
+        "system_address": "Bus-1.1",
+        "overall_valid": true,
+        "file_integrity": {
+          "valid": true,
+          "details": [
+            "File checksum: 69f470310cd0489365600b5a4da6e6da"
+          ],
+          "checksum": "69f470310cd0489365600b5a4da6e6da",
+          "file_path": "F:\\The Central Command\\Command Center\\Data Bus\\diagnostic_manager\\SOP\\archives\\unified_diagnostic_system.py"
+        },
+        "configuration": {
+          "valid": true,
+          "details": [
+            "No configuration files to validate"
+          ]
+        },
+        "dependencies": {
+          "valid": true,
+          "details": [
+            "Valid imports: 0",
+            "Invalid imports: 0"
+          ],
+          "imports": [],
+          "invalid_imports": []
+        },
+        "communication": {
+          "valid": true,
+          "details": [
+            "Communication test successful"
+          ],
+          "signal_id": "SIG-20251007_174022_305355"
+        },
+        "timestamp": "2025-10-07T17:40:22.303405"
+      },
+      "file_checksums": {
+        "handler": "69f470310cd0489365600b5a4da6e6da"
+      },
+      "config_snapshots": {}
+    },
+    {
+      "timestamp": "2025-10-07T17:53:47.632159",
+      "validation_result": {
+        "system_address": "Bus-1.1",
+        "overall_valid": true,
+        "file_integrity": {
+          "valid": true,
+          "details": [
+            "File checksum: 69f470310cd0489365600b5a4da6e6da"
+          ],
+          "checksum": "69f470310cd0489365600b5a4da6e6da",
+          "file_path": "F:\\The Central Command\\Command Center\\Data Bus\\diagnostic_manager\\SOP\\archives\\unified_diagnostic_system.py"
+        },
+        "configuration": {
+          "valid": true,
+          "details": [
+            "No configuration files to validate"
+          ]
+        },
+        "dependencies": {
+          "valid": true,
+          "details": [
+            "Valid imports: 0",
+            "Invalid imports: 0"
+          ],
+          "imports": [],
+          "invalid_imports": []
+        },
+        "communication": {
+          "valid": true,
+          "details": [
+            "Communication test successful"
+          ],
+          "signal_id": "SIG-20251007_175347_631892"
+        },
+        "timestamp": "2025-10-07T17:53:47.629950"
+      },
+      "file_checksums": {
+        "handler": "69f470310cd0489365600b5a4da6e6da"
+      },
+      "config_snapshots": {}
+    }
+  ],
+  "Bus-1.2": [
+    {
+      "timestamp": "2025-10-07T16:49:58.848848",
+      "validation_result": {
+        "system_address": "Bus-1.2",
+        "overall_valid": true,
+        "file_integrity": {
+          "valid": true,
+          "details": [
+            "File checksum: None"
+          ],
+          "checksum": null,
+          "file_path": "F:\\The Central Command\\Command Center\\Data Bus"
+        },
+        "configuration": {
+          "valid": true,
+          "details": [
+            "No configuration files to validate"
+          ]
+        },
+        "dependencies": {
+          "valid": true,
+          "details": [
+            "Valid imports: 0",
+            "Invalid imports: 0"
+          ],
+          "imports": [],
+          "invalid_imports": []
+        },
+        "communication": {
+          "valid": true,
+          "details": [
+            "Communication test successful"
+          ],
+          "signal_id": "SIG-20251007_164958_848666"
+        },
+        "timestamp": "2025-10-07T16:49:58.848133"
+      },
+      "file_checksums": {},
+      "config_snapshots": {}
+    },
+    {
+      "timestamp": "2025-10-07T16:58:42.562653",
+      "validation_result": {
+        "system_address": "Bus-1.2",
+        "overall_valid": true,
+        "file_integrity": {
+          "valid": true,
+          "details": [
+            "File checksum: None"
+          ],
+          "checksum": null,
+          "file_path": "F:\\The Central Command\\Command Center\\Data Bus"
+        },
+        "configuration": {
+          "valid": true,
+          "details": [
+            "No configuration files to validate"
+          ]
+        },
+        "dependencies": {
+          "valid": true,
+          "details": [
+            "Valid imports: 0",
+            "Invalid imports: 0"
+          ],
+          "imports": [],
+          "invalid_imports": []
+        },
+        "communication": {
+          "valid": true,
+          "details": [
+            "Communication test successful"
+          ],
+          "signal_id": "SIG-20251007_165842_562471"
+        },
+        "timestamp": "2025-10-07T16:58:42.561919"
+      },
+      "file_checksums": {},
+      "config_snapshots": {}
+    },
+    {
+      "timestamp": "2025-10-07T17:08:50.150237",
+      "validation_result": {
+        "system_address": "Bus-1.2",
+        "overall_valid": true,
+        "file_integrity": {
+          "valid": true,
+          "details": [
+            "File checksum: None"
+          ],
+          "checksum": null,
+          "file_path": "F:\\The Central Command\\Command Center\\Data Bus"
+        },
+        "configuration": {
+          "valid": true,
+          "details": [
+            "No configuration files to validate"
+          ]
+        },
+        "dependencies": {
+          "valid": true,
+          "details": [
+            "Valid imports: 0",
+            "Invalid imports: 0"
+          ],
+          "imports": [],
+          "invalid_imports": []
+        },
+        "communication": {
+          "valid": true,
+          "details": [
+            "Communication test successful"
+          ],
+          "signal_id": "SIG-20251007_170850_150032"
+        },
+        "timestamp": "2025-10-07T17:08:50.149352"
+      },
+      "file_checksums": {},
+      "config_snapshots": {}
+    },
+    {
+      "timestamp": "2025-10-07T17:17:01.799450",
+      "validation_result": {
+        "system_address": "Bus-1.2",
+        "overall_valid": true,
+        "file_integrity": {
+          "valid": true,
+          "details": [
+            "File checksum: None"
+          ],
+          "checksum": null,
+          "file_path": "F:\\The Central Command\\Command Center\\Data Bus"
+        },
+        "configuration": {
+          "valid": true,
+          "details": [
+            "No configuration files to validate"
+          ]
+        },
+        "dependencies": {
+          "valid": true,
+          "details": [
+            "Valid imports: 0",
+            "Invalid imports: 0"
+          ],
+          "imports": [],
+          "invalid_imports": []
+        },
+        "communication": {
+          "valid": true,
+          "details": [
+            "Communication test successful"
+          ],
+          "signal_id": "SIG-20251007_171701_799265"
+        },
+        "timestamp": "2025-10-07T17:17:01.798723"
+      },
+      "file_checksums": {},
+      "config_snapshots": {}
+    },
+    {
+      "timestamp": "2025-10-07T17:21:51.183705",
+      "validation_result": {
+        "system_address": "Bus-1.2",
+        "overall_valid": true,
+        "file_integrity": {
+          "valid": true,
+          "details": [
+            "File checksum: None"
+          ],
+          "checksum": null,
+          "file_path": "F:\\The Central Command\\Command Center\\Data Bus"
+        },
+        "configuration": {
+          "valid": true,
+          "details": [
+            "No configuration files to validate"
+          ]
+        },
+        "dependencies": {
+          "valid": true,
+          "details": [
+            "Valid imports: 0",
+            "Invalid imports: 0"
+          ],
+          "imports": [],
+          "invalid_imports": []
+        },
+        "communication": {
+          "valid": true,
+          "details": [
+            "Communication test successful"
+          ],
+          "signal_id": "SIG-20251007_172151_183490"
+        },
+        "timestamp": "2025-10-07T17:21:51.182940"
+      },
+      "file_checksums": {},
+      "config_snapshots": {}
+    },
+    {
+      "timestamp": "2025-10-07T17:25:07.891525",
+      "validation_result": {
+        "system_address": "Bus-1.2",
+        "overall_valid": true,
+        "file_integrity": {
+          "valid": true,
+          "details": [
+            "File checksum: None"
+          ],
+          "checksum": null,
+          "file_path": "F:\\The Central Command\\Command Center\\Data Bus"
+        },
+        "configuration": {
+          "valid": true,
+          "details": [
+            "No configuration files to validate"
+          ]
+        },
+        "dependencies": {
+          "valid": true,
+          "details": [
+            "Valid imports: 0",
+            "Invalid imports: 0"
+          ],
+          "imports": [],
+          "invalid_imports": []
+        },
+        "communication": {
+          "valid": true,
+          "details": [
+            "Communication test successful"
+          ],
+          "signal_id": "SIG-20251007_172507_891306"
+        },
+        "timestamp": "2025-10-07T17:25:07.890731"
+      },
+      "file_checksums": {},
+      "config_snapshots": {}
+    },
+    {
+      "timestamp": "2025-10-07T17:32:50.748642",
+      "validation_result": {
+        "system_address": "Bus-1.2",
+        "overall_valid": true,
+        "file_integrity": {
+          "valid": true,
+          "details": [
+            "File checksum: None"
+          ],
+          "checksum": null,
+          "file_path": "F:\\The Central Command\\Command Center\\Data Bus"
+        },
+        "configuration": {
+          "valid": true,
+          "details": [
+            "No configuration files to validate"
+          ]
+        },
+        "dependencies": {
+          "valid": true,
+          "details": [
+            "Valid imports: 0",
+            "Invalid imports: 0"
+          ],
+          "imports": [],
+          "invalid_imports": []
+        },
+        "communication": {
+          "valid": true,
+          "details": [
+            "Communication test successful"
+          ],
+          "signal_id": "SIG-20251007_173250_748333"
+        },
+        "timestamp": "2025-10-07T17:32:50.747405"
+      },
+      "file_checksums": {},
+      "config_snapshots": {}
+    },
+    {
+      "timestamp": "2025-10-07T17:36:43.747592",
+      "validation_result": {
+        "system_address": "Bus-1.2",
+        "overall_valid": true,
+        "file_integrity": {
+          "valid": true,
+          "details": [
+            "File checksum: None"
+          ],
+          "checksum": null,
+          "file_path": "F:\\The Central Command\\Command Center\\Data Bus"
+        },
+        "configuration": {
+          "valid": true,
+          "details": [
+            "No configuration files to validate"
+          ]
+        },
+        "dependencies": {
+          "valid": true,
+          "details": [
+            "Valid imports: 0",
+            "Invalid imports: 0"
+          ],
+          "imports": [],
+          "invalid_imports": []
+        },
+        "communication": {
+          "valid": true,
+          "details": [
+            "Communication test successful"
+          ],
+          "signal_id": "SIG-20251007_173643_747397"
+        },
+        "timestamp": "2025-10-07T17:36:43.746865"
+      },
+      "file_checksums": {},
+      "config_snapshots": {}
+    },
+    {
+      "timestamp": "2025-10-07T17:40:22.306436",
+      "validation_result": {
+        "system_address": "Bus-1.2",
+        "overall_valid": true,
+        "file_integrity": {
+          "valid": true,
+          "details": [
+            "File checksum: None"
+          ],
+          "checksum": null,
+          "file_path": "F:\\The Central Command\\Command Center\\Data Bus"
+        },
+        "configuration": {
+          "valid": true,
+          "details": [
+            "No configuration files to validate"
+          ]
+        },
+        "dependencies": {
+          "valid": true,
+          "details": [
+            "Valid imports: 0",
+            "Invalid imports: 0"
+          ],
+          "imports": [],
+          "invalid_imports": []
+        },
+        "communication": {
+          "valid": true,
+          "details": [
+            "Communication test successful"
+          ],
+          "signal_id": "SIG-20251007_174022_306194"
+        },
+        "timestamp": "2025-10-07T17:40:22.305644"
+      },
+      "file_checksums": {},
+      "config_snapshots": {}
+    },
+    {
+      "timestamp": "2025-10-07T17:53:47.632943",
+      "validation_result": {
+        "system_address": "Bus-1.2",
+        "overall_valid": true,
+        "file_integrity": {
+          "valid": true,
+          "details": [
+            "File checksum: None"
+          ],
+          "checksum": null,
+          "file_path": "F:\\The Central Command\\Command Center\\Data Bus"
+        },
+        "configuration": {
+          "valid": true,
+          "details": [
+            "No configuration files to validate"
+          ]
+        },
+        "dependencies": {
+          "valid": true,
+          "details": [
+            "Valid imports: 0",
+            "Invalid imports: 0"
+          ],
+          "imports": [],
+          "invalid_imports": []
+        },
+        "communication": {
+          "valid": true,
+          "details": [
+            "Communication test successful"
+          ],
+          "signal_id": "SIG-20251007_175347_632699"
+        },
+        "timestamp": "2025-10-07T17:53:47.632165"
+      },
+      "file_checksums": {},
+      "config_snapshots": {}
+    }
+  ],
+  "Bus-1.3": [
+    {
+      "timestamp": "2025-10-07T16:49:58.849573",
+      "validation_result": {
+        "system_address": "Bus-1.3",
+        "overall_valid": true,
+        "file_integrity": {
+          "valid": true,
+          "details": [
+            "File checksum: None"
+          ],
+          "checksum": null,
+          "file_path": "F:\\The Central Command\\Command Center\\Data Bus\\Bus Core Design"
+        },
+        "configuration": {
+          "valid": true,
+          "details": [
+            "No configuration files to validate"
+          ]
+        },
+        "dependencies": {
+          "valid": true,
+          "details": [
+            "Valid imports: 0",
+            "Invalid imports: 0"
+          ],
+          "imports": [],
+          "invalid_imports": []
+        },
+        "communication": {
+          "valid": true,
+          "details": [
+            "Communication test successful"
+          ],
+          "signal_id": "SIG-20251007_164958_849382"
+        },
+        "timestamp": "2025-10-07T16:49:58.848852"
+      },
+      "file_checksums": {},
+      "config_snapshots": {}
+    },
+    {
+      "timestamp": "2025-10-07T16:58:42.563372",
+      "validation_result": {
+        "system_address": "Bus-1.3",
+        "overall_valid": true,
+        "file_integrity": {
+          "valid": true,
+          "details": [
+            "File checksum: None"
+          ],
+          "checksum": null,
+          "file_path": "F:\\The Central Command\\Command Center\\Data Bus\\Bus Core Design"
+        },
+        "configuration": {
+          "valid": true,
+          "details": [
+            "No configuration files to validate"
+          ]
+        },
+        "dependencies": {
+          "valid": true,
+          "details": [
+            "Valid imports: 0",
+            "Invalid imports: 0"
+          ],
+          "imports": [],
+          "invalid_imports": []
+        },
+        "communication": {
+          "valid": true,
+          "details": [
+            "Communication test successful"
+          ],
+          "signal_id": "SIG-20251007_165842_563190"
+        },
+        "timestamp": "2025-10-07T16:58:42.562657"
+      },
+      "file_checksums": {},
+      "config_snapshots": {}
+    },
+    {
+      "timestamp": "2025-10-07T17:08:50.151018",
+      "validation_result": {
+        "system_address": "Bus-1.3",
+        "overall_valid": true,
+        "file_integrity": {
+          "valid": true,
+          "details": [
+            "File checksum: None"
+          ],
+          "checksum": null,
+          "file_path": "F:\\The Central Command\\Command Center\\Data Bus\\Bus Core Design"
+        },
+        "configuration": {
+          "valid": true,
+          "details": [
+            "No configuration files to validate"
+          ]
+        },
+        "dependencies": {
+          "valid": true,
+          "details": [
+            "Valid imports: 0",
+            "Invalid imports: 0"
+          ],
+          "imports": [],
+          "invalid_imports": []
+        },
+        "communication": {
+          "valid": true,
+          "details": [
+            "Communication test successful"
+          ],
+          "signal_id": "SIG-20251007_170850_150824"
+        },
+        "timestamp": "2025-10-07T17:08:50.150241"
+      },
+      "file_checksums": {},
+      "config_snapshots": {}
+    },
+    {
+      "timestamp": "2025-10-07T17:17:01.800189",
+      "validation_result": {
+        "system_address": "Bus-1.3",
+        "overall_valid": true,
+        "file_integrity": {
+          "valid": true,
+          "details": [
+            "File checksum: None"
+          ],
+          "checksum": null,
+          "file_path": "F:\\The Central Command\\Command Center\\Data Bus\\Bus Core Design"
+        },
+        "configuration": {
+          "valid": true,
+          "details": [
+            "No configuration files to validate"
+          ]
+        },
+        "dependencies": {
+          "valid": true,
+          "details": [
+            "Valid imports: 0",
+            "Invalid imports: 0"
+          ],
+          "imports": [],
+          "invalid_imports": []
+        },
+        "communication": {
+          "valid": true,
+          "details": [
+            "Communication test successful"
+          ],
+          "signal_id": "SIG-20251007_171701_799998"
+        },
+        "timestamp": "2025-10-07T17:17:01.799454"
+      },
+      "file_checksums": {},
+      "config_snapshots": {}
+    },
+    {
+      "timestamp": "2025-10-07T17:21:51.184462",
+      "validation_result": {
+        "system_address": "Bus-1.3",
+        "overall_valid": true,
+        "file_integrity": {
+          "valid": true,
+          "details": [
+            "File checksum: None"
+          ],
+          "checksum": null,
+          "file_path": "F:\\The Central Command\\Command Center\\Data Bus\\Bus Core Design"
+        },
+        "configuration": {
+          "valid": true,
+          "details": [
+            "No configuration files to validate"
+          ]
+        },
+        "dependencies": {
+          "valid": true,
+          "details": [
+            "Valid imports: 0",
+            "Invalid imports: 0"
+          ],
+          "imports": [],
+          "invalid_imports": []
+        },
+        "communication": {
+          "valid": true,
+          "details": [
+            "Communication test successful"
+          ],
+          "signal_id": "SIG-20251007_172151_184242"
+        },
+        "timestamp": "2025-10-07T17:21:51.183709"
+      },
+      "file_checksums": {},
+      "config_snapshots": {}
+    },
+    {
+      "timestamp": "2025-10-07T17:25:07.892301",
+      "validation_result": {
+        "system_address": "Bus-1.3",
+        "overall_valid": true,
+        "file_integrity": {
+          "valid": true,
+          "details": [
+            "File checksum: None"
+          ],
+          "checksum": null,
+          "file_path": "F:\\The Central Command\\Command Center\\Data Bus\\Bus Core Design"
+        },
+        "configuration": {
+          "valid": true,
+          "details": [
+            "No configuration files to validate"
+          ]
+        },
+        "dependencies": {
+          "valid": true,
+          "details": [
+            "Valid imports: 0",
+            "Invalid imports: 0"
+          ],
+          "imports": [],
+          "invalid_imports": []
+        },
+        "communication": {
+          "valid": true,
+          "details": [
+            "Communication test successful"
+          ],
+          "signal_id": "SIG-20251007_172507_892083"
+        },
+        "timestamp": "2025-10-07T17:25:07.891529"
+      },
+      "file_checksums": {},
+      "config_snapshots": {}
+    },
+    {
+      "timestamp": "2025-10-07T17:32:50.749806",
+      "validation_result": {
+        "system_address": "Bus-1.3",
+        "overall_valid": true,
+        "file_integrity": {
+          "valid": true,
+          "details": [
+            "File checksum: None"
+          ],
+          "checksum": null,
+          "file_path": "F:\\The Central Command\\Command Center\\Data Bus\\Bus Core Design"
+        },
+        "configuration": {
+          "valid": true,
+          "details": [
+            "No configuration files to validate"
+          ]
+        },
+        "dependencies": {
+          "valid": true,
+          "details": [
+            "Valid imports: 0",
+            "Invalid imports: 0"
+          ],
+          "imports": [],
+          "invalid_imports": []
+        },
+        "communication": {
+          "valid": true,
+          "details": [
+            "Communication test successful"
+          ],
+          "signal_id": "SIG-20251007_173250_749445"
+        },
+        "timestamp": "2025-10-07T17:32:50.748648"
+      },
+      "file_checksums": {},
+      "config_snapshots": {}
+    },
+    {
+      "timestamp": "2025-10-07T17:36:43.748316",
+      "validation_result": {
+        "system_address": "Bus-1.3",
+        "overall_valid": true,
+        "file_integrity": {
+          "valid": true,
+          "details": [
+            "File checksum: None"
+          ],
+          "checksum": null,
+          "file_path": "F:\\The Central Command\\Command Center\\Data Bus\\Bus Core Design"
+        },
+        "configuration": {
+          "valid": true,
+          "details": [
+            "No configuration files to validate"
+          ]
+        },
+        "dependencies": {
+          "valid": true,
+          "details": [
+            "Valid imports: 0",
+            "Invalid imports: 0"
+          ],
+          "imports": [],
+          "invalid_imports": []
+        },
+        "communication": {
+          "valid": true,
+          "details": [
+            "Communication test successful"
+          ],
+          "signal_id": "SIG-20251007_173643_748134"
+        },
+        "timestamp": "2025-10-07T17:36:43.747596"
+      },
+      "file_checksums": {},
+      "config_snapshots": {}
+    },
+    {
+      "timestamp": "2025-10-07T17:40:22.307234",
+      "validation_result": {
+        "system_address": "Bus-1.3",
+        "overall_valid": true,
+        "file_integrity": {
+          "valid": true,
+          "details": [
+            "File checksum: None"
+          ],
+          "checksum": null,
+          "file_path": "F:\\The Central Command\\Command Center\\Data Bus\\Bus Core Design"
+        },
+        "configuration": {
+          "valid": true,
+          "details": [
+            "No configuration files to validate"
+          ]
+        },
+        "dependencies": {
+          "valid": true,
+          "details": [
+            "Valid imports: 0",
+            "Invalid imports: 0"
+          ],
+          "imports": [],
+          "invalid_imports": []
+        },
+        "communication": {
+          "valid": true,
+          "details": [
+            "Communication test successful"
+          ],
+          "signal_id": "SIG-20251007_174022_306980"
+        },
+        "timestamp": "2025-10-07T17:40:22.306440"
+      },
+      "file_checksums": {},
+      "config_snapshots": {}
+    },
+    {
+      "timestamp": "2025-10-07T17:53:47.633738",
+      "validation_result": {
+        "system_address": "Bus-1.3",
+        "overall_valid": true,
+        "file_integrity": {
+          "valid": true,
+          "details": [
+            "File checksum: None"
+          ],
+          "checksum": null,
+          "file_path": "F:\\The Central Command\\Command Center\\Data Bus\\Bus Core Design"
+        },
+        "configuration": {
+          "valid": true,
+          "details": [
+            "No configuration files to validate"
+          ]
+        },
+        "dependencies": {
+          "valid": true,
+          "details": [
+            "Valid imports: 0",
+            "Invalid imports: 0"
+          ],
+          "imports": [],
+          "invalid_imports": []
+        },
+        "communication": {
+          "valid": true,
+          "details": [
+            "Communication test successful"
+          ],
+          "signal_id": "SIG-20251007_175347_633488"
+        },
+        "timestamp": "2025-10-07T17:53:47.632947"
+      },
+      "file_checksums": {},
+      "config_snapshots": {}
+    }
+  ],
+  "Bus-1.4": [
+    {
+      "timestamp": "2025-10-07T16:49:58.850296",
+      "validation_result": {
+        "system_address": "Bus-1.4",
+        "overall_valid": true,
+        "file_integrity": {
+          "valid": true,
+          "details": [
+            "File checksum: None"
+          ],
+          "checksum": null,
+          "file_path": "F:\\The Central Command\\Command Center\\Data Bus\\diagnostic_manager\\dependencies"
+        },
+        "configuration": {
+          "valid": true,
+          "details": [
+            "No configuration files to validate"
+          ]
+        },
+        "dependencies": {
+          "valid": true,
+          "details": [
+            "Valid imports: 0",
+            "Invalid imports: 0"
+          ],
+          "imports": [],
+          "invalid_imports": []
+        },
+        "communication": {
+          "valid": true,
+          "details": [
+            "Communication test successful"
+          ],
+          "signal_id": "SIG-20251007_164958_850106"
+        },
+        "timestamp": "2025-10-07T16:49:58.849577"
+      },
+      "file_checksums": {},
+      "config_snapshots": {}
+    },
+    {
+      "timestamp": "2025-10-07T16:58:42.564098",
+      "validation_result": {
+        "system_address": "Bus-1.4",
+        "overall_valid": true,
+        "file_integrity": {
+          "valid": true,
+          "details": [
+            "File checksum: None"
+          ],
+          "checksum": null,
+          "file_path": "F:\\The Central Command\\Command Center\\Data Bus\\diagnostic_manager\\dependencies"
+        },
+        "configuration": {
+          "valid": true,
+          "details": [
+            "No configuration files to validate"
+          ]
+        },
+        "dependencies": {
+          "valid": true,
+          "details": [
+            "Valid imports: 0",
+            "Invalid imports: 0"
+          ],
+          "imports": [],
+          "invalid_imports": []
+        },
+        "communication": {
+          "valid": true,
+          "details": [
+            "Communication test successful"
+          ],
+          "signal_id": "SIG-20251007_165842_563902"
+        },
+        "timestamp": "2025-10-07T16:58:42.563376"
+      },
+      "file_checksums": {},
+      "config_snapshots": {}
+    },
+    {
+      "timestamp": "2025-10-07T17:08:50.151777",
+      "validation_result": {
+        "system_address": "Bus-1.4",
+        "overall_valid": true,
+        "file_integrity": {
+          "valid": true,
+          "details": [
+            "File checksum: None"
+          ],
+          "checksum": null,
+          "file_path": "F:\\The Central Command\\Command Center\\Data Bus\\diagnostic_manager\\dependencies"
+        },
+        "configuration": {
+          "valid": true,
+          "details": [
+            "No configuration files to validate"
+          ]
+        },
+        "dependencies": {
+          "valid": true,
+          "details": [
+            "Valid imports: 0",
+            "Invalid imports: 0"
+          ],
+          "imports": [],
+          "invalid_imports": []
+        },
+        "communication": {
+          "valid": true,
+          "details": [
+            "Communication test successful"
+          ],
+          "signal_id": "SIG-20251007_170850_151579"
+        },
+        "timestamp": "2025-10-07T17:08:50.151022"
+      },
+      "file_checksums": {},
+      "config_snapshots": {}
+    },
+    {
+      "timestamp": "2025-10-07T17:17:01.800925",
+      "validation_result": {
+        "system_address": "Bus-1.4",
+        "overall_valid": true,
+        "file_integrity": {
+          "valid": true,
+          "details": [
+            "File checksum: None"
+          ],
+          "checksum": null,
+          "file_path": "F:\\The Central Command\\Command Center\\Data Bus\\diagnostic_manager\\dependencies"
+        },
+        "configuration": {
+          "valid": true,
+          "details": [
+            "No configuration files to validate"
+          ]
+        },
+        "dependencies": {
+          "valid": true,
+          "details": [
+            "Valid imports: 0",
+            "Invalid imports: 0"
+          ],
+          "imports": [],
+          "invalid_imports": []
+        },
+        "communication": {
+          "valid": true,
+          "details": [
+            "Communication test successful"
+          ],
+          "signal_id": "SIG-20251007_171701_800727"
+        },
+        "timestamp": "2025-10-07T17:17:01.800193"
+      },
+      "file_checksums": {},
+      "config_snapshots": {}
+    },
+    {
+      "timestamp": "2025-10-07T17:21:51.185203",
+      "validation_result": {
+        "system_address": "Bus-1.4",
+        "overall_valid": true,
+        "file_integrity": {
+          "valid": true,
+          "details": [
+            "File checksum: None"
+          ],
+          "checksum": null,
+          "file_path": "F:\\The Central Command\\Command Center\\Data Bus\\diagnostic_manager\\dependencies"
+        },
+        "configuration": {
+          "valid": true,
+          "details": [
+            "No configuration files to validate"
+          ]
+        },
+        "dependencies": {
+          "valid": true,
+          "details": [
+            "Valid imports: 0",
+            "Invalid imports: 0"
+          ],
+          "imports": [],
+          "invalid_imports": []
+        },
+        "communication": {
+          "valid": true,
+          "details": [
+            "Communication test successful"
+          ],
+          "signal_id": "SIG-20251007_172151_184989"
+        },
+        "timestamp": "2025-10-07T17:21:51.184465"
+      },
+      "file_checksums": {},
+      "config_snapshots": {}
+    },
+    {
+      "timestamp": "2025-10-07T17:25:07.893053",
+      "validation_result": {
+        "system_address": "Bus-1.4",
+        "overall_valid": true,
+        "file_integrity": {
+          "valid": true,
+          "details": [
+            "File checksum: None"
+          ],
+          "checksum": null,
+          "file_path": "F:\\The Central Command\\Command Center\\Data Bus\\diagnostic_manager\\dependencies"
+        },
+        "configuration": {
+          "valid": true,
+          "details": [
+            "No configuration files to validate"
+          ]
+        },
+        "dependencies": {
+          "valid": true,
+          "details": [
+            "Valid imports: 0",
+            "Invalid imports: 0"
+          ],
+          "imports": [],
+          "invalid_imports": []
+        },
+        "communication": {
+          "valid": true,
+          "details": [
+            "Communication test successful"
+          ],
+          "signal_id": "SIG-20251007_172507_892833"
+        },
+        "timestamp": "2025-10-07T17:25:07.892305"
+      },
+      "file_checksums": {},
+      "config_snapshots": {}
+    },
+    {
+      "timestamp": "2025-10-07T17:32:50.750765",
+      "validation_result": {
+        "system_address": "Bus-1.4",
+        "overall_valid": true,
+        "file_integrity": {
+          "valid": true,
+          "details": [
+            "File checksum: None"
+          ],
+          "checksum": null,
+          "file_path": "F:\\The Central Command\\Command Center\\Data Bus\\diagnostic_manager\\dependencies"
+        },
+        "configuration": {
+          "valid": true,
+          "details": [
+            "No configuration files to validate"
+          ]
+        },
+        "dependencies": {
+          "valid": true,
+          "details": [
+            "Valid imports: 0",
+            "Invalid imports: 0"
+          ],
+          "imports": [],
+          "invalid_imports": []
+        },
+        "communication": {
+          "valid": true,
+          "details": [
+            "Communication test successful"
+          ],
+          "signal_id": "SIG-20251007_173250_750531"
+        },
+        "timestamp": "2025-10-07T17:32:50.749813"
+      },
+      "file_checksums": {},
+      "config_snapshots": {}
+    },
+    {
+      "timestamp": "2025-10-07T17:36:43.749030",
+      "validation_result": {
+        "system_address": "Bus-1.4",
+        "overall_valid": true,
+        "file_integrity": {
+          "valid": true,
+          "details": [
+            "File checksum: None"
+          ],
+          "checksum": null,
+          "file_path": "F:\\The Central Command\\Command Center\\Data Bus\\diagnostic_manager\\dependencies"
+        },
+        "configuration": {
+          "valid": true,
+          "details": [
+            "No configuration files to validate"
+          ]
+        },
+        "dependencies": {
+          "valid": true,
+          "details": [
+            "Valid imports: 0",
+            "Invalid imports: 0"
+          ],
+          "imports": [],
+          "invalid_imports": []
+        },
+        "communication": {
+          "valid": true,
+          "details": [
+            "Communication test successful"
+          ],
+          "signal_id": "SIG-20251007_173643_748840"
+        },
+        "timestamp": "2025-10-07T17:36:43.748320"
+      },
+      "file_checksums": {},
+      "config_snapshots": {}
+    },
+    {
+      "timestamp": "2025-10-07T17:40:22.308035",
+      "validation_result": {
+        "system_address": "Bus-1.4",
+        "overall_valid": true,
+        "file_integrity": {
+          "valid": true,
+          "details": [
+            "File checksum: None"
+          ],
+          "checksum": null,
+          "file_path": "F:\\The Central Command\\Command Center\\Data Bus\\diagnostic_manager\\dependencies"
+        },
+        "configuration": {
+          "valid": true,
+          "details": [
+            "No configuration files to validate"
+          ]
+        },
+        "dependencies": {
+          "valid": true,
+          "details": [
+            "Valid imports: 0",
+            "Invalid imports: 0"
+          ],
+          "imports": [],
+          "invalid_imports": []
+        },
+        "communication": {
+          "valid": true,
+          "details": [
+            "Communication test successful"
+          ],
+          "signal_id": "SIG-20251007_174022_307785"
+        },
+        "timestamp": "2025-10-07T17:40:22.307238"
+      },
+      "file_checksums": {},
+      "config_snapshots": {}
+    },
+    {
+      "timestamp": "2025-10-07T17:53:47.634535",
+      "validation_result": {
+        "system_address": "Bus-1.4",
+        "overall_valid": true,
+        "file_integrity": {
+          "valid": true,
+          "details": [
+            "File checksum: None"
+          ],
+          "checksum": null,
+          "file_path": "F:\\The Central Command\\Command Center\\Data Bus\\diagnostic_manager\\dependencies"
+        },
+        "configuration": {
+          "valid": true,
+          "details": [
+            "No configuration files to validate"
+          ]
+        },
+        "dependencies": {
+          "valid": true,
+          "details": [
+            "Valid imports: 0",
+            "Invalid imports: 0"
+          ],
+          "imports": [],
+          "invalid_imports": []
+        },
+        "communication": {
+          "valid": true,
+          "details": [
+            "Communication test successful"
+          ],
+          "signal_id": "SIG-20251007_175347_634280"
+        },
+        "timestamp": "2025-10-07T17:53:47.633743"
+      },
+      "file_checksums": {},
+      "config_snapshots": {}
+    }
+  ],
+  "Bus-1.5": [
+    {
+      "timestamp": "2025-10-07T16:49:58.851228",
+      "validation_result": {
+        "system_address": "Bus-1.5",
+        "overall_valid": true,
+        "file_integrity": {
+          "valid": true,
+          "details": [
+            "File checksum: None"
+          ],
+          "checksum": null,
+          "file_path": "F:\\The Central Command\\Command Center\\Data Bus\\diagnostic_manager\\SOP\\archives"
+        },
+        "configuration": {
+          "valid": true,
+          "details": [
+            "No configuration files to validate"
+          ]
+        },
+        "dependencies": {
+          "valid": true,
+          "details": [
+            "Valid imports: 0",
+            "Invalid imports: 0"
+          ],
+          "imports": [],
+          "invalid_imports": []
+        },
+        "communication": {
+          "valid": true,
+          "details": [
+            "Communication test successful"
+          ],
+          "signal_id": "SIG-20251007_164958_850965"
+        },
+        "timestamp": "2025-10-07T16:49:58.850300"
+      },
+      "file_checksums": {},
+      "config_snapshots": {}
+    },
+    {
+      "timestamp": "2025-10-07T16:58:42.564819",
+      "validation_result": {
+        "system_address": "Bus-1.5",
+        "overall_valid": true,
+        "file_integrity": {
+          "valid": true,
+          "details": [
+            "File checksum: None"
+          ],
+          "checksum": null,
+          "file_path": "F:\\The Central Command\\Command Center\\Data Bus\\diagnostic_manager\\SOP\\archives"
+        },
+        "configuration": {
+          "valid": true,
+          "details": [
+            "No configuration files to validate"
+          ]
+        },
+        "dependencies": {
+          "valid": true,
+          "details": [
+            "Valid imports: 0",
+            "Invalid imports: 0"
+          ],
+          "imports": [],
+          "invalid_imports": []
+        },
+        "communication": {
+          "valid": true,
+          "details": [
+            "Communication test successful"
+          ],
+          "signal_id": "SIG-20251007_165842_564631"
+        },
+        "timestamp": "2025-10-07T16:58:42.564102"
+      },
+      "file_checksums": {},
+      "config_snapshots": {}
+    },
+    {
+      "timestamp": "2025-10-07T17:08:50.152528",
+      "validation_result": {
+        "system_address": "Bus-1.5",
+        "overall_valid": true,
+        "file_integrity": {
+          "valid": true,
+          "details": [
+            "File checksum: None"
+          ],
+          "checksum": null,
+          "file_path": "F:\\The Central Command\\Command Center\\Data Bus\\diagnostic_manager\\SOP\\archives"
+        },
+        "configuration": {
+          "valid": true,
+          "details": [
+            "No configuration files to validate"
+          ]
+        },
+        "dependencies": {
+          "valid": true,
+          "details": [
+            "Valid imports: 0",
+            "Invalid imports: 0"
+          ],
+          "imports": [],
+          "invalid_imports": []
+        },
+        "communication": {
+          "valid": true,
+          "details": [
+            "Communication test successful"
+          ],
+          "signal_id": "SIG-20251007_170850_152335"
+        },
+        "timestamp": "2025-10-07T17:08:50.151781"
+      },
+      "file_checksums": {},
+      "config_snapshots": {}
+    },
+    {
+      "timestamp": "2025-10-07T17:17:01.801660",
+      "validation_result": {
+        "system_address": "Bus-1.5",
+        "overall_valid": true,
+        "file_integrity": {
+          "valid": true,
+          "details": [
+            "File checksum: None"
+          ],
+          "checksum": null,
+          "file_path": "F:\\The Central Command\\Command Center\\Data Bus\\diagnostic_manager\\SOP\\archives"
+        },
+        "configuration": {
+          "valid": true,
+          "details": [
+            "No configuration files to validate"
+          ]
+        },
+        "dependencies": {
+          "valid": true,
+          "details": [
+            "Valid imports: 0",
+            "Invalid imports: 0"
+          ],
+          "imports": [],
+          "invalid_imports": []
+        },
+        "communication": {
+          "valid": true,
+          "details": [
+            "Communication test successful"
+          ],
+          "signal_id": "SIG-20251007_171701_801467"
+        },
+        "timestamp": "2025-10-07T17:17:01.800929"
+      },
+      "file_checksums": {},
+      "config_snapshots": {}
+    },
+    {
+      "timestamp": "2025-10-07T17:21:51.185935",
+      "validation_result": {
+        "system_address": "Bus-1.5",
+        "overall_valid": true,
+        "file_integrity": {
+          "valid": true,
+          "details": [
+            "File checksum: None"
+          ],
+          "checksum": null,
+          "file_path": "F:\\The Central Command\\Command Center\\Data Bus\\diagnostic_manager\\SOP\\archives"
+        },
+        "configuration": {
+          "valid": true,
+          "details": [
+            "No configuration files to validate"
+          ]
+        },
+        "dependencies": {
+          "valid": true,
+          "details": [
+            "Valid imports: 0",
+            "Invalid imports: 0"
+          ],
+          "imports": [],
+          "invalid_imports": []
+        },
+        "communication": {
+          "valid": true,
+          "details": [
+            "Communication test successful"
+          ],
+          "signal_id": "SIG-20251007_172151_185721"
+        },
+        "timestamp": "2025-10-07T17:21:51.185207"
+      },
+      "file_checksums": {},
+      "config_snapshots": {}
+    },
+    {
+      "timestamp": "2025-10-07T17:25:07.893803",
+      "validation_result": {
+        "system_address": "Bus-1.5",
+        "overall_valid": true,
+        "file_integrity": {
+          "valid": true,
+          "details": [
+            "File checksum: None"
+          ],
+          "checksum": null,
+          "file_path": "F:\\The Central Command\\Command Center\\Data Bus\\diagnostic_manager\\SOP\\archives"
+        },
+        "configuration": {
+          "valid": true,
+          "details": [
+            "No configuration files to validate"
+          ]
+        },
+        "dependencies": {
+          "valid": true,
+          "details": [
+            "Valid imports: 0",
+            "Invalid imports: 0"
+          ],
+          "imports": [],
+          "invalid_imports": []
+        },
+        "communication": {
+          "valid": true,
+          "details": [
+            "Communication test successful"
+          ],
+          "signal_id": "SIG-20251007_172507_893583"
+        },
+        "timestamp": "2025-10-07T17:25:07.893057"
+      },
+      "file_checksums": {},
+      "config_snapshots": {}
+    },
+    {
+      "timestamp": "2025-10-07T17:32:50.751610",
+      "validation_result": {
+        "system_address": "Bus-1.5",
+        "overall_valid": true,
+        "file_integrity": {
+          "valid": true,
+          "details": [
+            "File checksum: None"
+          ],
+          "checksum": null,
+          "file_path": "F:\\The Central Command\\Command Center\\Data Bus\\diagnostic_manager\\SOP\\archives"
+        },
+        "configuration": {
+          "valid": true,
+          "details": [
+            "No configuration files to validate"
+          ]
+        },
+        "dependencies": {
+          "valid": true,
+          "details": [
+            "Valid imports: 0",
+            "Invalid imports: 0"
+          ],
+          "imports": [],
+          "invalid_imports": []
+        },
+        "communication": {
+          "valid": true,
+          "details": [
+            "Communication test successful"
+          ],
+          "signal_id": "SIG-20251007_173250_751305"
+        },
+        "timestamp": "2025-10-07T17:32:50.750769"
+      },
+      "file_checksums": {},
+      "config_snapshots": {}
+    },
+    {
+      "timestamp": "2025-10-07T17:36:43.749731",
+      "validation_result": {
+        "system_address": "Bus-1.5",
+        "overall_valid": true,
+        "file_integrity": {
+          "valid": true,
+          "details": [
+            "File checksum: None"
+          ],
+          "checksum": null,
+          "file_path": "F:\\The Central Command\\Command Center\\Data Bus\\diagnostic_manager\\SOP\\archives"
+        },
+        "configuration": {
+          "valid": true,
+          "details": [
+            "No configuration files to validate"
+          ]
+        },
+        "dependencies": {
+          "valid": true,
+          "details": [
+            "Valid imports: 0",
+            "Invalid imports: 0"
+          ],
+          "imports": [],
+          "invalid_imports": []
+        },
+        "communication": {
+          "valid": true,
+          "details": [
+            "Communication test successful"
+          ],
+          "signal_id": "SIG-20251007_173643_749550"
+        },
+        "timestamp": "2025-10-07T17:36:43.749034"
+      },
+      "file_checksums": {},
+      "config_snapshots": {}
+    },
+    {
+      "timestamp": "2025-10-07T17:40:22.309199",
+      "validation_result": {
+        "system_address": "Bus-1.5",
+        "overall_valid": true,
+        "file_integrity": {
+          "valid": true,
+          "details": [
+            "File checksum: None"
+          ],
+          "checksum": null,
+          "file_path": "F:\\The Central Command\\Command Center\\Data Bus\\diagnostic_manager\\SOP\\archives"
+        },
+        "configuration": {
+          "valid": true,
+          "details": [
+            "No configuration files to validate"
+          ]
+        },
+        "dependencies": {
+          "valid": true,
+          "details": [
+            "Valid imports: 0",
+            "Invalid imports: 0"
+          ],
+          "imports": [],
+          "invalid_imports": []
+        },
+        "communication": {
+          "valid": true,
+          "details": [
+            "Communication test successful"
+          ],
+          "signal_id": "SIG-20251007_174022_308855"
+        },
+        "timestamp": "2025-10-07T17:40:22.308039"
+      },
+      "file_checksums": {},
+      "config_snapshots": {}
+    },
+    {
+      "timestamp": "2025-10-07T17:53:47.635342",
+      "validation_result": {
+        "system_address": "Bus-1.5",
+        "overall_valid": true,
+        "file_integrity": {
+          "valid": true,
+          "details": [
+            "File checksum: None"
+          ],
+          "checksum": null,
+          "file_path": "F:\\The Central Command\\Command Center\\Data Bus\\diagnostic_manager\\SOP\\archives"
+        },
+        "configuration": {
+          "valid": true,
+          "details": [
+            "No configuration files to validate"
+          ]
+        },
+        "dependencies": {
+          "valid": true,
+          "details": [
+            "Valid imports: 0",
+            "Invalid imports: 0"
+          ],
+          "imports": [],
+          "invalid_imports": []
+        },
+        "communication": {
+          "valid": true,
+          "details": [
+            "Communication test successful"
+          ],
+          "signal_id": "SIG-20251007_175347_635098"
+        },
+        "timestamp": "2025-10-07T17:53:47.634539"
+      },
+      "file_checksums": {},
+      "config_snapshots": {}
+    }
+  ],
+  "GEN-2.97": [
+    {
+      "timestamp": "2025-10-07T16:49:58.852034",
+      "validation_result": {
+        "system_address": "GEN-2.97",
+        "overall_valid": true,
+        "file_integrity": {
+          "valid": true,
+          "details": [
+            "File checksum: None"
+          ],
+          "checksum": null,
+          "file_path": "F:\\The Central Command\\Command Center\\Plug-ins"
+        },
+        "configuration": {
+          "valid": true,
+          "details": [
+            "No configuration files to validate"
+          ]
+        },
+        "dependencies": {
+          "valid": true,
+          "details": [
+            "Valid imports: 0",
+            "Invalid imports: 0"
+          ],
+          "imports": [],
+          "invalid_imports": []
+        },
+        "communication": {
+          "valid": true,
+          "details": [
+            "Communication test successful"
+          ],
+          "signal_id": "SIG-20251007_164958_851835"
+        },
+        "timestamp": "2025-10-07T16:49:58.851234"
+      },
+      "file_checksums": {},
+      "config_snapshots": {}
+    },
+    {
+      "timestamp": "2025-10-07T16:58:42.565519",
+      "validation_result": {
+        "system_address": "GEN-2.97",
+        "overall_valid": true,
+        "file_integrity": {
+          "valid": true,
+          "details": [
+            "File checksum: None"
+          ],
+          "checksum": null,
+          "file_path": "F:\\The Central Command\\Command Center\\Plug-ins"
+        },
+        "configuration": {
+          "valid": true,
+          "details": [
+            "No configuration files to validate"
+          ]
+        },
+        "dependencies": {
+          "valid": true,
+          "details": [
+            "Valid imports: 0",
+            "Invalid imports: 0"
+          ],
+          "imports": [],
+          "invalid_imports": []
+        },
+        "communication": {
+          "valid": true,
+          "details": [
+            "Communication test successful"
+          ],
+          "signal_id": "SIG-20251007_165842_565331"
+        },
+        "timestamp": "2025-10-07T16:58:42.564823"
+      },
+      "file_checksums": {},
+      "config_snapshots": {}
+    },
+    {
+      "timestamp": "2025-10-07T17:08:50.153401",
+      "validation_result": {
+        "system_address": "GEN-2.97",
+        "overall_valid": true,
+        "file_integrity": {
+          "valid": true,
+          "details": [
+            "File checksum: None"
+          ],
+          "checksum": null,
+          "file_path": "F:\\The Central Command\\Command Center\\Plug-ins"
+        },
+        "configuration": {
+          "valid": true,
+          "details": [
+            "No configuration files to validate"
+          ]
+        },
+        "dependencies": {
+          "valid": true,
+          "details": [
+            "Valid imports: 0",
+            "Invalid imports: 0"
+          ],
+          "imports": [],
+          "invalid_imports": []
+        },
+        "communication": {
+          "valid": true,
+          "details": [
+            "Communication test successful"
+          ],
+          "signal_id": "SIG-20251007_170850_153197"
+        },
+        "timestamp": "2025-10-07T17:08:50.152532"
+      },
+      "file_checksums": {},
+      "config_snapshots": {}
+    },
+    {
+      "timestamp": "2025-10-07T17:17:01.802382",
+      "validation_result": {
+        "system_address": "GEN-2.97",
+        "overall_valid": true,
+        "file_integrity": {
+          "valid": true,
+          "details": [
+            "File checksum: None"
+          ],
+          "checksum": null,
+          "file_path": "F:\\The Central Command\\Command Center\\Plug-ins"
+        },
+        "configuration": {
+          "valid": true,
+          "details": [
+            "No configuration files to validate"
+          ]
+        },
+        "dependencies": {
+          "valid": true,
+          "details": [
+            "Valid imports: 0",
+            "Invalid imports: 0"
+          ],
+          "imports": [],
+          "invalid_imports": []
+        },
+        "communication": {
+          "valid": true,
+          "details": [
+            "Communication test successful"
+          ],
+          "signal_id": "SIG-20251007_171701_802194"
+        },
+        "timestamp": "2025-10-07T17:17:01.801663"
+      },
+      "file_checksums": {},
+      "config_snapshots": {}
+    },
+    {
+      "timestamp": "2025-10-07T17:21:51.186773",
+      "validation_result": {
+        "system_address": "GEN-2.97",
+        "overall_valid": true,
+        "file_integrity": {
+          "valid": true,
+          "details": [
+            "File checksum: None"
+          ],
+          "checksum": null,
+          "file_path": "F:\\The Central Command\\Command Center\\Plug-ins"
+        },
+        "configuration": {
+          "valid": true,
+          "details": [
+            "No configuration files to validate"
+          ]
+        },
+        "dependencies": {
+          "valid": true,
+          "details": [
+            "Valid imports: 0",
+            "Invalid imports: 0"
+          ],
+          "imports": [],
+          "invalid_imports": []
+        },
+        "communication": {
+          "valid": true,
+          "details": [
+            "Communication test successful"
+          ],
+          "signal_id": "SIG-20251007_172151_186449"
+        },
+        "timestamp": "2025-10-07T17:21:51.185939"
+      },
+      "file_checksums": {},
+      "config_snapshots": {}
+    },
+    {
+      "timestamp": "2025-10-07T17:25:07.894539",
+      "validation_result": {
+        "system_address": "GEN-2.97",
+        "overall_valid": true,
+        "file_integrity": {
+          "valid": true,
+          "details": [
+            "File checksum: None"
+          ],
+          "checksum": null,
+          "file_path": "F:\\The Central Command\\Command Center\\Plug-ins"
+        },
+        "configuration": {
+          "valid": true,
+          "details": [
+            "No configuration files to validate"
+          ]
+        },
+        "dependencies": {
+          "valid": true,
+          "details": [
+            "Valid imports: 0",
+            "Invalid imports: 0"
+          ],
+          "imports": [],
+          "invalid_imports": []
+        },
+        "communication": {
+          "valid": true,
+          "details": [
+            "Communication test successful"
+          ],
+          "signal_id": "SIG-20251007_172507_894320"
+        },
+        "timestamp": "2025-10-07T17:25:07.893807"
+      },
+      "file_checksums": {},
+      "config_snapshots": {}
+    },
+    {
+      "timestamp": "2025-10-07T17:32:50.752659",
+      "validation_result": {
+        "system_address": "GEN-2.97",
+        "overall_valid": true,
+        "file_integrity": {
+          "valid": true,
+          "details": [
+            "File checksum: None"
+          ],
+          "checksum": null,
+          "file_path": "F:\\The Central Command\\Command Center\\Plug-ins"
+        },
+        "configuration": {
+          "valid": true,
+          "details": [
+            "No configuration files to validate"
+          ]
+        },
+        "dependencies": {
+          "valid": true,
+          "details": [
+            "Valid imports: 0",
+            "Invalid imports: 0"
+          ],
+          "imports": [],
+          "invalid_imports": []
+        },
+        "communication": {
+          "valid": true,
+          "details": [
+            "Communication test successful"
+          ],
+          "signal_id": "SIG-20251007_173250_752321"
+        },
+        "timestamp": "2025-10-07T17:32:50.751615"
+      },
+      "file_checksums": {},
+      "config_snapshots": {}
+    },
+    {
+      "timestamp": "2025-10-07T17:36:43.750763",
+      "validation_result": {
+        "system_address": "GEN-2.97",
+        "overall_valid": true,
+        "file_integrity": {
+          "valid": true,
+          "details": [
+            "File checksum: None"
+          ],
+          "checksum": null,
+          "file_path": "F:\\The Central Command\\Command Center\\Plug-ins"
+        },
+        "configuration": {
+          "valid": true,
+          "details": [
+            "No configuration files to validate"
+          ]
+        },
+        "dependencies": {
+          "valid": true,
+          "details": [
+            "Valid imports: 0",
+            "Invalid imports: 0"
+          ],
+          "imports": [],
+          "invalid_imports": []
+        },
+        "communication": {
+          "valid": true,
+          "details": [
+            "Communication test successful"
+          ],
+          "signal_id": "SIG-20251007_173643_750501"
+        },
+        "timestamp": "2025-10-07T17:36:43.749735"
+      },
+      "file_checksums": {},
+      "config_snapshots": {}
+    },
+    {
+      "timestamp": "2025-10-07T17:40:22.310003",
+      "validation_result": {
+        "system_address": "GEN-2.97",
+        "overall_valid": true,
+        "file_integrity": {
+          "valid": true,
+          "details": [
+            "File checksum: None"
+          ],
+          "checksum": null,
+          "file_path": "F:\\The Central Command\\Command Center\\Plug-ins"
+        },
+        "configuration": {
+          "valid": true,
+          "details": [
+            "No configuration files to validate"
+          ]
+        },
+        "dependencies": {
+          "valid": true,
+          "details": [
+            "Valid imports: 0",
+            "Invalid imports: 0"
+          ],
+          "imports": [],
+          "invalid_imports": []
+        },
+        "communication": {
+          "valid": true,
+          "details": [
+            "Communication test successful"
+          ],
+          "signal_id": "SIG-20251007_174022_309752"
+        },
+        "timestamp": "2025-10-07T17:40:22.309204"
+      },
+      "file_checksums": {},
+      "config_snapshots": {}
+    },
+    {
+      "timestamp": "2025-10-07T17:53:47.636115",
+      "validation_result": {
+        "system_address": "GEN-2.97",
+        "overall_valid": true,
+        "file_integrity": {
+          "valid": true,
+          "details": [
+            "File checksum: None"
+          ],
+          "checksum": null,
+          "file_path": "F:\\The Central Command\\Command Center\\Plug-ins"
+        },
+        "configuration": {
+          "valid": true,
+          "details": [
+            "No configuration files to validate"
+          ]
+        },
+        "dependencies": {
+          "valid": true,
+          "details": [
+            "Valid imports: 0",
+            "Invalid imports: 0"
+          ],
+          "imports": [],
+          "invalid_imports": []
+        },
+        "communication": {
+          "valid": true,
+          "details": [
+            "Communication test successful"
+          ],
+          "signal_id": "SIG-20251007_175347_635869"
+        },
+        "timestamp": "2025-10-07T17:53:47.635346"
+      },
+      "file_checksums": {},
+      "config_snapshots": {}
+    }
+  ],
+  "3-1.3": [
+    {
+      "timestamp": "2025-10-07T16:49:58.852802",
+      "validation_result": {
+        "system_address": "3-1.3",
+        "overall_valid": true,
+        "file_integrity": {
+          "valid": true,
+          "details": [
+            "File checksum: None"
+          ],
+          "checksum": null,
+          "file_path": "F:\\The Central Command\\Command Center\\Mission Debrief\\tools"
+        },
+        "configuration": {
+          "valid": true,
+          "details": [
+            "No configuration files to validate"
+          ]
+        },
+        "dependencies": {
+          "valid": true,
+          "details": [
+            "Valid imports: 0",
+            "Invalid imports: 0"
+          ],
+          "imports": [],
+          "invalid_imports": []
+        },
+        "communication": {
+          "valid": true,
+          "details": [
+            "Communication test successful"
+          ],
+          "signal_id": "SIG-20251007_164958_852616"
+        },
+        "timestamp": "2025-10-07T16:49:58.852039"
+      },
+      "file_checksums": {},
+      "config_snapshots": {}
+    },
+    {
+      "timestamp": "2025-10-07T16:58:42.566236",
+      "validation_result": {
+        "system_address": "3-1.3",
+        "overall_valid": true,
+        "file_integrity": {
+          "valid": true,
+          "details": [
+            "File checksum: None"
+          ],
+          "checksum": null,
+          "file_path": "F:\\The Central Command\\Command Center\\Mission Debrief\\tools"
+        },
+        "configuration": {
+          "valid": true,
+          "details": [
+            "No configuration files to validate"
+          ]
+        },
+        "dependencies": {
+          "valid": true,
+          "details": [
+            "Valid imports: 0",
+            "Invalid imports: 0"
+          ],
+          "imports": [],
+          "invalid_imports": []
+        },
+        "communication": {
+          "valid": true,
+          "details": [
+            "Communication test successful"
+          ],
+          "signal_id": "SIG-20251007_165842_566044"
+        },
+        "timestamp": "2025-10-07T16:58:42.565523"
+      },
+      "file_checksums": {},
+      "config_snapshots": {}
+    },
+    {
+      "timestamp": "2025-10-07T17:08:50.154143",
+      "validation_result": {
+        "system_address": "3-1.3",
+        "overall_valid": true,
+        "file_integrity": {
+          "valid": true,
+          "details": [
+            "File checksum: None"
+          ],
+          "checksum": null,
+          "file_path": "F:\\The Central Command\\Command Center\\Mission Debrief\\tools"
+        },
+        "configuration": {
+          "valid": true,
+          "details": [
+            "No configuration files to validate"
+          ]
+        },
+        "dependencies": {
+          "valid": true,
+          "details": [
+            "Valid imports: 0",
+            "Invalid imports: 0"
+          ],
+          "imports": [],
+          "invalid_imports": []
+        },
+        "communication": {
+          "valid": true,
+          "details": [
+            "Communication test successful"
+          ],
+          "signal_id": "SIG-20251007_170850_153950"
+        },
+        "timestamp": "2025-10-07T17:08:50.153405"
+      },
+      "file_checksums": {},
+      "config_snapshots": {}
+    },
+    {
+      "timestamp": "2025-10-07T17:17:01.803107",
+      "validation_result": {
+        "system_address": "3-1.3",
+        "overall_valid": true,
+        "file_integrity": {
+          "valid": true,
+          "details": [
+            "File checksum: None"
+          ],
+          "checksum": null,
+          "file_path": "F:\\The Central Command\\Command Center\\Mission Debrief\\tools"
+        },
+        "configuration": {
+          "valid": true,
+          "details": [
+            "No configuration files to validate"
+          ]
+        },
+        "dependencies": {
+          "valid": true,
+          "details": [
+            "Valid imports: 0",
+            "Invalid imports: 0"
+          ],
+          "imports": [],
+          "invalid_imports": []
+        },
+        "communication": {
+          "valid": true,
+          "details": [
+            "Communication test successful"
+          ],
+          "signal_id": "SIG-20251007_171701_802917"
+        },
+        "timestamp": "2025-10-07T17:17:01.802386"
+      },
+      "file_checksums": {},
+      "config_snapshots": {}
+    },
+    {
+      "timestamp": "2025-10-07T17:21:51.187597",
+      "validation_result": {
+        "system_address": "3-1.3",
+        "overall_valid": true,
+        "file_integrity": {
+          "valid": true,
+          "details": [
+            "File checksum: None"
+          ],
+          "checksum": null,
+          "file_path": "F:\\The Central Command\\Command Center\\Mission Debrief\\tools"
+        },
+        "configuration": {
+          "valid": true,
+          "details": [
+            "No configuration files to validate"
+          ]
+        },
+        "dependencies": {
+          "valid": true,
+          "details": [
+            "Valid imports: 0",
+            "Invalid imports: 0"
+          ],
+          "imports": [],
+          "invalid_imports": []
+        },
+        "communication": {
+          "valid": true,
+          "details": [
+            "Communication test successful"
+          ],
+          "signal_id": "SIG-20251007_172151_187364"
+        },
+        "timestamp": "2025-10-07T17:21:51.186777"
+      },
+      "file_checksums": {},
+      "config_snapshots": {}
+    },
+    {
+      "timestamp": "2025-10-07T17:25:07.895289",
+      "validation_result": {
+        "system_address": "3-1.3",
+        "overall_valid": true,
+        "file_integrity": {
+          "valid": true,
+          "details": [
+            "File checksum: None"
+          ],
+          "checksum": null,
+          "file_path": "F:\\The Central Command\\Command Center\\Mission Debrief\\tools"
+        },
+        "configuration": {
+          "valid": true,
+          "details": [
+            "No configuration files to validate"
+          ]
+        },
+        "dependencies": {
+          "valid": true,
+          "details": [
+            "Valid imports: 0",
+            "Invalid imports: 0"
+          ],
+          "imports": [],
+          "invalid_imports": []
+        },
+        "communication": {
+          "valid": true,
+          "details": [
+            "Communication test successful"
+          ],
+          "signal_id": "SIG-20251007_172507_895068"
+        },
+        "timestamp": "2025-10-07T17:25:07.894543"
+      },
+      "file_checksums": {},
+      "config_snapshots": {}
+    },
+    {
+      "timestamp": "2025-10-07T17:32:50.753726",
+      "validation_result": {
+        "system_address": "3-1.3",
+        "overall_valid": true,
+        "file_integrity": {
+          "valid": true,
+          "details": [
+            "File checksum: None"
+          ],
+          "checksum": null,
+          "file_path": "F:\\The Central Command\\Command Center\\Mission Debrief\\tools"
+        },
+        "configuration": {
+          "valid": true,
+          "details": [
+            "No configuration files to validate"
+          ]
+        },
+        "dependencies": {
+          "valid": true,
+          "details": [
+            "Valid imports: 0",
+            "Invalid imports: 0"
+          ],
+          "imports": [],
+          "invalid_imports": []
+        },
+        "communication": {
+          "valid": true,
+          "details": [
+            "Communication test successful"
+          ],
+          "signal_id": "SIG-20251007_173250_753431"
+        },
+        "timestamp": "2025-10-07T17:32:50.752665"
+      },
+      "file_checksums": {},
+      "config_snapshots": {}
+    },
+    {
+      "timestamp": "2025-10-07T17:36:43.751804",
+      "validation_result": {
+        "system_address": "3-1.3",
+        "overall_valid": true,
+        "file_integrity": {
+          "valid": true,
+          "details": [
+            "File checksum: None"
+          ],
+          "checksum": null,
+          "file_path": "F:\\The Central Command\\Command Center\\Mission Debrief\\tools"
+        },
+        "configuration": {
+          "valid": true,
+          "details": [
+            "No configuration files to validate"
+          ]
+        },
+        "dependencies": {
+          "valid": true,
+          "details": [
+            "Valid imports: 0",
+            "Invalid imports: 0"
+          ],
+          "imports": [],
+          "invalid_imports": []
+        },
+        "communication": {
+          "valid": true,
+          "details": [
+            "Communication test successful"
+          ],
+          "signal_id": "SIG-20251007_173643_751556"
+        },
+        "timestamp": "2025-10-07T17:36:43.750770"
+      },
+      "file_checksums": {},
+      "config_snapshots": {}
+    },
+    {
+      "timestamp": "2025-10-07T17:40:22.310771",
+      "validation_result": {
+        "system_address": "3-1.3",
+        "overall_valid": true,
+        "file_integrity": {
+          "valid": true,
+          "details": [
+            "File checksum: None"
+          ],
+          "checksum": null,
+          "file_path": "F:\\The Central Command\\Command Center\\Mission Debrief\\tools"
+        },
+        "configuration": {
+          "valid": true,
+          "details": [
+            "No configuration files to validate"
+          ]
+        },
+        "dependencies": {
+          "valid": true,
+          "details": [
+            "Valid imports: 0",
+            "Invalid imports: 0"
+          ],
+          "imports": [],
+          "invalid_imports": []
+        },
+        "communication": {
+          "valid": true,
+          "details": [
+            "Communication test successful"
+          ],
+          "signal_id": "SIG-20251007_174022_310531"
+        },
+        "timestamp": "2025-10-07T17:40:22.310007"
+      },
+      "file_checksums": {},
+      "config_snapshots": {}
+    },
+    {
+      "timestamp": "2025-10-07T17:53:47.636957",
+      "validation_result": {
+        "system_address": "3-1.3",
+        "overall_valid": true,
+        "file_integrity": {
+          "valid": true,
+          "details": [
+            "File checksum: None"
+          ],
+          "checksum": null,
+          "file_path": "F:\\The Central Command\\Command Center\\Mission Debrief\\tools"
+        },
+        "configuration": {
+          "valid": true,
+          "details": [
+            "No configuration files to validate"
+          ]
+        },
+        "dependencies": {
+          "valid": true,
+          "details": [
+            "Valid imports: 0",
+            "Invalid imports: 0"
+          ],
+          "imports": [],
+          "invalid_imports": []
+        },
+        "communication": {
+          "valid": true,
+          "details": [
+            "Communication test successful"
+          ],
+          "signal_id": "SIG-20251007_175347_636651"
+        },
+        "timestamp": "2025-10-07T17:53:47.636119"
+      },
+      "file_checksums": {},
+      "config_snapshots": {}
+    }
+  ],
+  "7-1.4": [
+    {
+      "timestamp": "2025-10-07T16:49:58.853533",
+      "validation_result": {
+        "system_address": "7-1.4",
+        "overall_valid": true,
+        "file_integrity": {
+          "valid": true,
+          "details": [
+            "File checksum: None"
+          ],
+          "checksum": null,
+          "file_path": "F:\\The Central Command\\Command Center\\UI\\Test Plans\\gui support files"
+        },
+        "configuration": {
+          "valid": true,
+          "details": [
+            "No configuration files to validate"
+          ]
+        },
+        "dependencies": {
+          "valid": true,
+          "details": [
+            "Valid imports: 0",
+            "Invalid imports: 0"
+          ],
+          "imports": [],
+          "invalid_imports": []
+        },
+        "communication": {
+          "valid": true,
+          "details": [
+            "Communication test successful"
+          ],
+          "signal_id": "SIG-20251007_164958_853341"
+        },
+        "timestamp": "2025-10-07T16:49:58.852806"
+      },
+      "file_checksums": {},
+      "config_snapshots": {}
+    },
+    {
+      "timestamp": "2025-10-07T16:58:42.566952",
+      "validation_result": {
+        "system_address": "7-1.4",
+        "overall_valid": true,
+        "file_integrity": {
+          "valid": true,
+          "details": [
+            "File checksum: None"
+          ],
+          "checksum": null,
+          "file_path": "F:\\The Central Command\\Command Center\\UI\\Test Plans\\gui support files"
+        },
+        "configuration": {
+          "valid": true,
+          "details": [
+            "No configuration files to validate"
+          ]
+        },
+        "dependencies": {
+          "valid": true,
+          "details": [
+            "Valid imports: 0",
+            "Invalid imports: 0"
+          ],
+          "imports": [],
+          "invalid_imports": []
+        },
+        "communication": {
+          "valid": true,
+          "details": [
+            "Communication test successful"
+          ],
+          "signal_id": "SIG-20251007_165842_566769"
+        },
+        "timestamp": "2025-10-07T16:58:42.566240"
+      },
+      "file_checksums": {},
+      "config_snapshots": {}
+    },
+    {
+      "timestamp": "2025-10-07T17:08:50.154938",
+      "validation_result": {
+        "system_address": "7-1.4",
+        "overall_valid": true,
+        "file_integrity": {
+          "valid": true,
+          "details": [
+            "File checksum: None"
+          ],
+          "checksum": null,
+          "file_path": "F:\\The Central Command\\Command Center\\UI\\Test Plans\\gui support files"
+        },
+        "configuration": {
+          "valid": true,
+          "details": [
+            "No configuration files to validate"
+          ]
+        },
+        "dependencies": {
+          "valid": true,
+          "details": [
+            "Valid imports: 0",
+            "Invalid imports: 0"
+          ],
+          "imports": [],
+          "invalid_imports": []
+        },
+        "communication": {
+          "valid": true,
+          "details": [
+            "Communication test successful"
+          ],
+          "signal_id": "SIG-20251007_170850_154742"
+        },
+        "timestamp": "2025-10-07T17:08:50.154147"
+      },
+      "file_checksums": {},
+      "config_snapshots": {}
+    },
+    {
+      "timestamp": "2025-10-07T17:17:01.803839",
+      "validation_result": {
+        "system_address": "7-1.4",
+        "overall_valid": true,
+        "file_integrity": {
+          "valid": true,
+          "details": [
+            "File checksum: None"
+          ],
+          "checksum": null,
+          "file_path": "F:\\The Central Command\\Command Center\\UI\\Test Plans\\gui support files"
+        },
+        "configuration": {
+          "valid": true,
+          "details": [
+            "No configuration files to validate"
+          ]
+        },
+        "dependencies": {
+          "valid": true,
+          "details": [
+            "Valid imports: 0",
+            "Invalid imports: 0"
+          ],
+          "imports": [],
+          "invalid_imports": []
+        },
+        "communication": {
+          "valid": true,
+          "details": [
+            "Communication test successful"
+          ],
+          "signal_id": "SIG-20251007_171701_803649"
+        },
+        "timestamp": "2025-10-07T17:17:01.803111"
+      },
+      "file_checksums": {},
+      "config_snapshots": {}
+    },
+    {
+      "timestamp": "2025-10-07T17:21:51.188375",
+      "validation_result": {
+        "system_address": "7-1.4",
+        "overall_valid": true,
+        "file_integrity": {
+          "valid": true,
+          "details": [
+            "File checksum: None"
+          ],
+          "checksum": null,
+          "file_path": "F:\\The Central Command\\Command Center\\UI\\Test Plans\\gui support files"
+        },
+        "configuration": {
+          "valid": true,
+          "details": [
+            "No configuration files to validate"
+          ]
+        },
+        "dependencies": {
+          "valid": true,
+          "details": [
+            "Valid imports: 0",
+            "Invalid imports: 0"
+          ],
+          "imports": [],
+          "invalid_imports": []
+        },
+        "communication": {
+          "valid": true,
+          "details": [
+            "Communication test successful"
+          ],
+          "signal_id": "SIG-20251007_172151_188154"
+        },
+        "timestamp": "2025-10-07T17:21:51.187600"
+      },
+      "file_checksums": {},
+      "config_snapshots": {}
+    },
+    {
+      "timestamp": "2025-10-07T17:25:07.896038",
+      "validation_result": {
+        "system_address": "7-1.4",
+        "overall_valid": true,
+        "file_integrity": {
+          "valid": true,
+          "details": [
+            "File checksum: None"
+          ],
+          "checksum": null,
+          "file_path": "F:\\The Central Command\\Command Center\\UI\\Test Plans\\gui support files"
+        },
+        "configuration": {
+          "valid": true,
+          "details": [
+            "No configuration files to validate"
+          ]
+        },
+        "dependencies": {
+          "valid": true,
+          "details": [
+            "Valid imports: 0",
+            "Invalid imports: 0"
+          ],
+          "imports": [],
+          "invalid_imports": []
+        },
+        "communication": {
+          "valid": true,
+          "details": [
+            "Communication test successful"
+          ],
+          "signal_id": "SIG-20251007_172507_895824"
+        },
+        "timestamp": "2025-10-07T17:25:07.895293"
+      },
+      "file_checksums": {},
+      "config_snapshots": {}
+    },
+    {
+      "timestamp": "2025-10-07T17:32:50.754634",
+      "validation_result": {
+        "system_address": "7-1.4",
+        "overall_valid": true,
+        "file_integrity": {
+          "valid": true,
+          "details": [
+            "File checksum: None"
+          ],
+          "checksum": null,
+          "file_path": "F:\\The Central Command\\Command Center\\UI\\Test Plans\\gui support files"
+        },
+        "configuration": {
+          "valid": true,
+          "details": [
+            "No configuration files to validate"
+          ]
+        },
+        "dependencies": {
+          "valid": true,
+          "details": [
+            "Valid imports: 0",
+            "Invalid imports: 0"
+          ],
+          "imports": [],
+          "invalid_imports": []
+        },
+        "communication": {
+          "valid": true,
+          "details": [
+            "Communication test successful"
+          ],
+          "signal_id": "SIG-20251007_173250_754350"
+        },
+        "timestamp": "2025-10-07T17:32:50.753731"
+      },
+      "file_checksums": {},
+      "config_snapshots": {}
+    },
+    {
+      "timestamp": "2025-10-07T17:36:43.752571",
+      "validation_result": {
+        "system_address": "7-1.4",
+        "overall_valid": true,
+        "file_integrity": {
+          "valid": true,
+          "details": [
+            "File checksum: None"
+          ],
+          "checksum": null,
+          "file_path": "F:\\The Central Command\\Command Center\\UI\\Test Plans\\gui support files"
+        },
+        "configuration": {
+          "valid": true,
+          "details": [
+            "No configuration files to validate"
+          ]
+        },
+        "dependencies": {
+          "valid": true,
+          "details": [
+            "Valid imports: 0",
+            "Invalid imports: 0"
+          ],
+          "imports": [],
+          "invalid_imports": []
+        },
+        "communication": {
+          "valid": true,
+          "details": [
+            "Communication test successful"
+          ],
+          "signal_id": "SIG-20251007_173643_752387"
+        },
+        "timestamp": "2025-10-07T17:36:43.751808"
+      },
+      "file_checksums": {},
+      "config_snapshots": {}
+    },
+    {
+      "timestamp": "2025-10-07T17:40:22.311547",
+      "validation_result": {
+        "system_address": "7-1.4",
+        "overall_valid": true,
+        "file_integrity": {
+          "valid": true,
+          "details": [
+            "File checksum: None"
+          ],
+          "checksum": null,
+          "file_path": "F:\\The Central Command\\Command Center\\UI\\Test Plans\\gui support files"
+        },
+        "configuration": {
+          "valid": true,
+          "details": [
+            "No configuration files to validate"
+          ]
+        },
+        "dependencies": {
+          "valid": true,
+          "details": [
+            "Valid imports: 0",
+            "Invalid imports: 0"
+          ],
+          "imports": [],
+          "invalid_imports": []
+        },
+        "communication": {
+          "valid": true,
+          "details": [
+            "Communication test successful"
+          ],
+          "signal_id": "SIG-20251007_174022_311309"
+        },
+        "timestamp": "2025-10-07T17:40:22.310774"
+      },
+      "file_checksums": {},
+      "config_snapshots": {}
+    },
+    {
+      "timestamp": "2025-10-07T17:53:47.638082",
+      "validation_result": {
+        "system_address": "7-1.4",
+        "overall_valid": true,
+        "file_integrity": {
+          "valid": true,
+          "details": [
+            "File checksum: None"
+          ],
+          "checksum": null,
+          "file_path": "F:\\The Central Command\\Command Center\\UI\\Test Plans\\gui support files"
+        },
+        "configuration": {
+          "valid": true,
+          "details": [
+            "No configuration files to validate"
+          ]
+        },
+        "dependencies": {
+          "valid": true,
+          "details": [
+            "Valid imports: 0",
+            "Invalid imports: 0"
+          ],
+          "imports": [],
+          "invalid_imports": []
+        },
+        "communication": {
+          "valid": true,
+          "details": [
+            "Communication test successful"
+          ],
+          "signal_id": "SIG-20251007_175347_637706"
+        },
+        "timestamp": "2025-10-07T17:53:47.636963"
+      },
+      "file_checksums": {},
+      "config_snapshots": {}
+    }
+  ],
+  "GEN-2.798": [
+    {
+      "timestamp": "2025-10-07T16:49:58.854228",
+      "validation_result": {
+        "system_address": "GEN-2.798",
+        "overall_valid": true,
+        "file_integrity": {
+          "valid": true,
+          "details": [
+            "File checksum: None"
+          ],
+          "checksum": null,
+          "file_path": "F:\\The Central Command\\Command Center\\Plug-ins"
+        },
+        "configuration": {
+          "valid": true,
+          "details": [
+            "No configuration files to validate"
+          ]
+        },
+        "dependencies": {
+          "valid": true,
+          "details": [
+            "Valid imports: 0",
+            "Invalid imports: 0"
+          ],
+          "imports": [],
+          "invalid_imports": []
+        },
+        "communication": {
+          "valid": true,
+          "details": [
+            "Communication test successful"
+          ],
+          "signal_id": "SIG-20251007_164958_854047"
+        },
+        "timestamp": "2025-10-07T16:49:58.853537"
+      },
+      "file_checksums": {},
+      "config_snapshots": {}
+    },
+    {
+      "timestamp": "2025-10-07T16:58:42.567698",
+      "validation_result": {
+        "system_address": "GEN-2.798",
+        "overall_valid": true,
+        "file_integrity": {
+          "valid": true,
+          "details": [
+            "File checksum: None"
+          ],
+          "checksum": null,
+          "file_path": "F:\\The Central Command\\Command Center\\Plug-ins"
+        },
+        "configuration": {
+          "valid": true,
+          "details": [
+            "No configuration files to validate"
+          ]
+        },
+        "dependencies": {
+          "valid": true,
+          "details": [
+            "Valid imports: 0",
+            "Invalid imports: 0"
+          ],
+          "imports": [],
+          "invalid_imports": []
+        },
+        "communication": {
+          "valid": true,
+          "details": [
+            "Communication test successful"
+          ],
+          "signal_id": "SIG-20251007_165842_567455"
+        },
+        "timestamp": "2025-10-07T16:58:42.566955"
+      },
+      "file_checksums": {},
+      "config_snapshots": {}
+    },
+    {
+      "timestamp": "2025-10-07T17:08:50.155661",
+      "validation_result": {
+        "system_address": "GEN-2.798",
+        "overall_valid": true,
+        "file_integrity": {
+          "valid": true,
+          "details": [
+            "File checksum: None"
+          ],
+          "checksum": null,
+          "file_path": "F:\\The Central Command\\Command Center\\Plug-ins"
+        },
+        "configuration": {
+          "valid": true,
+          "details": [
+            "No configuration files to validate"
+          ]
+        },
+        "dependencies": {
+          "valid": true,
+          "details": [
+            "Valid imports: 0",
+            "Invalid imports: 0"
+          ],
+          "imports": [],
+          "invalid_imports": []
+        },
+        "communication": {
+          "valid": true,
+          "details": [
+            "Communication test successful"
+          ],
+          "signal_id": "SIG-20251007_170850_155468"
+        },
+        "timestamp": "2025-10-07T17:08:50.154942"
+      },
+      "file_checksums": {},
+      "config_snapshots": {}
+    },
+    {
+      "timestamp": "2025-10-07T17:17:01.804563",
+      "validation_result": {
+        "system_address": "GEN-2.798",
+        "overall_valid": true,
+        "file_integrity": {
+          "valid": true,
+          "details": [
+            "File checksum: None"
+          ],
+          "checksum": null,
+          "file_path": "F:\\The Central Command\\Command Center\\Plug-ins"
+        },
+        "configuration": {
+          "valid": true,
+          "details": [
+            "No configuration files to validate"
+          ]
+        },
+        "dependencies": {
+          "valid": true,
+          "details": [
+            "Valid imports: 0",
+            "Invalid imports: 0"
+          ],
+          "imports": [],
+          "invalid_imports": []
+        },
+        "communication": {
+          "valid": true,
+          "details": [
+            "Communication test successful"
+          ],
+          "signal_id": "SIG-20251007_171701_804373"
+        },
+        "timestamp": "2025-10-07T17:17:01.803843"
+      },
+      "file_checksums": {},
+      "config_snapshots": {}
+    },
+    {
+      "timestamp": "2025-10-07T17:21:51.189106",
+      "validation_result": {
+        "system_address": "GEN-2.798",
+        "overall_valid": true,
+        "file_integrity": {
+          "valid": true,
+          "details": [
+            "File checksum: None"
+          ],
+          "checksum": null,
+          "file_path": "F:\\The Central Command\\Command Center\\Plug-ins"
+        },
+        "configuration": {
+          "valid": true,
+          "details": [
+            "No configuration files to validate"
+          ]
+        },
+        "dependencies": {
+          "valid": true,
+          "details": [
+            "Valid imports: 0",
+            "Invalid imports: 0"
+          ],
+          "imports": [],
+          "invalid_imports": []
+        },
+        "communication": {
+          "valid": true,
+          "details": [
+            "Communication test successful"
+          ],
+          "signal_id": "SIG-20251007_172151_188892"
+        },
+        "timestamp": "2025-10-07T17:21:51.188378"
+      },
+      "file_checksums": {},
+      "config_snapshots": {}
+    },
+    {
+      "timestamp": "2025-10-07T17:25:07.896756",
+      "validation_result": {
+        "system_address": "GEN-2.798",
+        "overall_valid": true,
+        "file_integrity": {
+          "valid": true,
+          "details": [
+            "File checksum: None"
+          ],
+          "checksum": null,
+          "file_path": "F:\\The Central Command\\Command Center\\Plug-ins"
+        },
+        "configuration": {
+          "valid": true,
+          "details": [
+            "No configuration files to validate"
+          ]
+        },
+        "dependencies": {
+          "valid": true,
+          "details": [
+            "Valid imports: 0",
+            "Invalid imports: 0"
+          ],
+          "imports": [],
+          "invalid_imports": []
+        },
+        "communication": {
+          "valid": true,
+          "details": [
+            "Communication test successful"
+          ],
+          "signal_id": "SIG-20251007_172507_896548"
+        },
+        "timestamp": "2025-10-07T17:25:07.896042"
+      },
+      "file_checksums": {},
+      "config_snapshots": {}
+    },
+    {
+      "timestamp": "2025-10-07T17:32:50.755500",
+      "validation_result": {
+        "system_address": "GEN-2.798",
+        "overall_valid": true,
+        "file_integrity": {
+          "valid": true,
+          "details": [
+            "File checksum: None"
+          ],
+          "checksum": null,
+          "file_path": "F:\\The Central Command\\Command Center\\Plug-ins"
+        },
+        "configuration": {
+          "valid": true,
+          "details": [
+            "No configuration files to validate"
+          ]
+        },
+        "dependencies": {
+          "valid": true,
+          "details": [
+            "Valid imports: 0",
+            "Invalid imports: 0"
+          ],
+          "imports": [],
+          "invalid_imports": []
+        },
+        "communication": {
+          "valid": true,
+          "details": [
+            "Communication test successful"
+          ],
+          "signal_id": "SIG-20251007_173250_755239"
+        },
+        "timestamp": "2025-10-07T17:32:50.754641"
+      },
+      "file_checksums": {},
+      "config_snapshots": {}
+    },
+    {
+      "timestamp": "2025-10-07T17:36:43.753274",
+      "validation_result": {
+        "system_address": "GEN-2.798",
+        "overall_valid": true,
+        "file_integrity": {
+          "valid": true,
+          "details": [
+            "File checksum: None"
+          ],
+          "checksum": null,
+          "file_path": "F:\\The Central Command\\Command Center\\Plug-ins"
+        },
+        "configuration": {
+          "valid": true,
+          "details": [
+            "No configuration files to validate"
+          ]
+        },
+        "dependencies": {
+          "valid": true,
+          "details": [
+            "Valid imports: 0",
+            "Invalid imports: 0"
+          ],
+          "imports": [],
+          "invalid_imports": []
+        },
+        "communication": {
+          "valid": true,
+          "details": [
+            "Communication test successful"
+          ],
+          "signal_id": "SIG-20251007_173643_753093"
+        },
+        "timestamp": "2025-10-07T17:36:43.752576"
+      },
+      "file_checksums": {},
+      "config_snapshots": {}
+    },
+    {
+      "timestamp": "2025-10-07T17:40:22.312302",
+      "validation_result": {
+        "system_address": "GEN-2.798",
+        "overall_valid": true,
+        "file_integrity": {
+          "valid": true,
+          "details": [
+            "File checksum: None"
+          ],
+          "checksum": null,
+          "file_path": "F:\\The Central Command\\Command Center\\Plug-ins"
+        },
+        "configuration": {
+          "valid": true,
+          "details": [
+            "No configuration files to validate"
+          ]
+        },
+        "dependencies": {
+          "valid": true,
+          "details": [
+            "Valid imports: 0",
+            "Invalid imports: 0"
+          ],
+          "imports": [],
+          "invalid_imports": []
+        },
+        "communication": {
+          "valid": true,
+          "details": [
+            "Communication test successful"
+          ],
+          "signal_id": "SIG-20251007_174022_312064"
+        },
+        "timestamp": "2025-10-07T17:40:22.311551"
+      },
+      "file_checksums": {},
+      "config_snapshots": {}
+    },
+    {
+      "timestamp": "2025-10-07T17:53:47.639063",
+      "validation_result": {
+        "system_address": "GEN-2.798",
+        "overall_valid": true,
+        "file_integrity": {
+          "valid": true,
+          "details": [
+            "File checksum: None"
+          ],
+          "checksum": null,
+          "file_path": "F:\\The Central Command\\Command Center\\Plug-ins"
+        },
+        "configuration": {
+          "valid": true,
+          "details": [
+            "No configuration files to validate"
+          ]
+        },
+        "dependencies": {
+          "valid": true,
+          "details": [
+            "Valid imports: 0",
+            "Invalid imports: 0"
+          ],
+          "imports": [],
+          "invalid_imports": []
+        },
+        "communication": {
+          "valid": true,
+          "details": [
+            "Communication test successful"
+          ],
+          "signal_id": "SIG-20251007_175347_638813"
+        },
+        "timestamp": "2025-10-07T17:53:47.638089"
+      },
+      "file_checksums": {},
+      "config_snapshots": {}
+    }
+  ],
+  "GEN-2.973": [
+    {
+      "timestamp": "2025-10-07T16:49:58.855050",
+      "validation_result": {
+        "system_address": "GEN-2.973",
+        "overall_valid": true,
+        "file_integrity": {
+          "valid": true,
+          "details": [
+            "File checksum: None"
+          ],
+          "checksum": null,
+          "file_path": "F:\\The Central Command\\Command Center\\Plug-ins"
+        },
+        "configuration": {
+          "valid": true,
+          "details": [
+            "No configuration files to validate"
+          ]
+        },
+        "dependencies": {
+          "valid": true,
+          "details": [
+            "Valid imports: 0",
+            "Invalid imports: 0"
+          ],
+          "imports": [],
+          "invalid_imports": []
+        },
+        "communication": {
+          "valid": true,
+          "details": [
+            "Communication test successful"
+          ],
+          "signal_id": "SIG-20251007_164958_854840"
+        },
+        "timestamp": "2025-10-07T16:49:58.854231"
+      },
+      "file_checksums": {},
+      "config_snapshots": {}
+    },
+    {
+      "timestamp": "2025-10-07T16:58:42.568440",
+      "validation_result": {
+        "system_address": "GEN-2.973",
+        "overall_valid": true,
+        "file_integrity": {
+          "valid": true,
+          "details": [
+            "File checksum: None"
+          ],
+          "checksum": null,
+          "file_path": "F:\\The Central Command\\Command Center\\Plug-ins"
+        },
+        "configuration": {
+          "valid": true,
+          "details": [
+            "No configuration files to validate"
+          ]
+        },
+        "dependencies": {
+          "valid": true,
+          "details": [
+            "Valid imports: 0",
+            "Invalid imports: 0"
+          ],
+          "imports": [],
+          "invalid_imports": []
+        },
+        "communication": {
+          "valid": true,
+          "details": [
+            "Communication test successful"
+          ],
+          "signal_id": "SIG-20251007_165842_568255"
+        },
+        "timestamp": "2025-10-07T16:58:42.567702"
+      },
+      "file_checksums": {},
+      "config_snapshots": {}
+    },
+    {
+      "timestamp": "2025-10-07T17:08:50.156385",
+      "validation_result": {
+        "system_address": "GEN-2.973",
+        "overall_valid": true,
+        "file_integrity": {
+          "valid": true,
+          "details": [
+            "File checksum: None"
+          ],
+          "checksum": null,
+          "file_path": "F:\\The Central Command\\Command Center\\Plug-ins"
+        },
+        "configuration": {
+          "valid": true,
+          "details": [
+            "No configuration files to validate"
+          ]
+        },
+        "dependencies": {
+          "valid": true,
+          "details": [
+            "Valid imports: 0",
+            "Invalid imports: 0"
+          ],
+          "imports": [],
+          "invalid_imports": []
+        },
+        "communication": {
+          "valid": true,
+          "details": [
+            "Communication test successful"
+          ],
+          "signal_id": "SIG-20251007_170850_156196"
+        },
+        "timestamp": "2025-10-07T17:08:50.155665"
+      },
+      "file_checksums": {},
+      "config_snapshots": {}
+    },
+    {
+      "timestamp": "2025-10-07T17:17:01.805266",
+      "validation_result": {
+        "system_address": "GEN-2.973",
+        "overall_valid": true,
+        "file_integrity": {
+          "valid": true,
+          "details": [
+            "File checksum: None"
+          ],
+          "checksum": null,
+          "file_path": "F:\\The Central Command\\Command Center\\Plug-ins"
+        },
+        "configuration": {
+          "valid": true,
+          "details": [
+            "No configuration files to validate"
+          ]
+        },
+        "dependencies": {
+          "valid": true,
+          "details": [
+            "Valid imports: 0",
+            "Invalid imports: 0"
+          ],
+          "imports": [],
+          "invalid_imports": []
+        },
+        "communication": {
+          "valid": true,
+          "details": [
+            "Communication test successful"
+          ],
+          "signal_id": "SIG-20251007_171701_805078"
+        },
+        "timestamp": "2025-10-07T17:17:01.804567"
+      },
+      "file_checksums": {},
+      "config_snapshots": {}
+    },
+    {
+      "timestamp": "2025-10-07T17:21:51.189901",
+      "validation_result": {
+        "system_address": "GEN-2.973",
+        "overall_valid": true,
+        "file_integrity": {
+          "valid": true,
+          "details": [
+            "File checksum: None"
+          ],
+          "checksum": null,
+          "file_path": "F:\\The Central Command\\Command Center\\Plug-ins"
+        },
+        "configuration": {
+          "valid": true,
+          "details": [
+            "No configuration files to validate"
+          ]
+        },
+        "dependencies": {
+          "valid": true,
+          "details": [
+            "Valid imports: 0",
+            "Invalid imports: 0"
+          ],
+          "imports": [],
+          "invalid_imports": []
+        },
+        "communication": {
+          "valid": true,
+          "details": [
+            "Communication test successful"
+          ],
+          "signal_id": "SIG-20251007_172151_189616"
+        },
+        "timestamp": "2025-10-07T17:21:51.189110"
+      },
+      "file_checksums": {},
+      "config_snapshots": {}
+    },
+    {
+      "timestamp": "2025-10-07T17:25:07.897487",
+      "validation_result": {
+        "system_address": "GEN-2.973",
+        "overall_valid": true,
+        "file_integrity": {
+          "valid": true,
+          "details": [
+            "File checksum: None"
+          ],
+          "checksum": null,
+          "file_path": "F:\\The Central Command\\Command Center\\Plug-ins"
+        },
+        "configuration": {
+          "valid": true,
+          "details": [
+            "No configuration files to validate"
+          ]
+        },
+        "dependencies": {
+          "valid": true,
+          "details": [
+            "Valid imports: 0",
+            "Invalid imports: 0"
+          ],
+          "imports": [],
+          "invalid_imports": []
+        },
+        "communication": {
+          "valid": true,
+          "details": [
+            "Communication test successful"
+          ],
+          "signal_id": "SIG-20251007_172507_897269"
+        },
+        "timestamp": "2025-10-07T17:25:07.896760"
+      },
+      "file_checksums": {},
+      "config_snapshots": {}
+    },
+    {
+      "timestamp": "2025-10-07T17:32:50.756346",
+      "validation_result": {
+        "system_address": "GEN-2.973",
+        "overall_valid": true,
+        "file_integrity": {
+          "valid": true,
+          "details": [
+            "File checksum: None"
+          ],
+          "checksum": null,
+          "file_path": "F:\\The Central Command\\Command Center\\Plug-ins"
+        },
+        "configuration": {
+          "valid": true,
+          "details": [
+            "No configuration files to validate"
+          ]
+        },
+        "dependencies": {
+          "valid": true,
+          "details": [
+            "Valid imports: 0",
+            "Invalid imports: 0"
+          ],
+          "imports": [],
+          "invalid_imports": []
+        },
+        "communication": {
+          "valid": true,
+          "details": [
+            "Communication test successful"
+          ],
+          "signal_id": "SIG-20251007_173250_756079"
+        },
+        "timestamp": "2025-10-07T17:32:50.755505"
+      },
+      "file_checksums": {},
+      "config_snapshots": {}
+    },
+    {
+      "timestamp": "2025-10-07T17:36:43.753994",
+      "validation_result": {
+        "system_address": "GEN-2.973",
+        "overall_valid": true,
+        "file_integrity": {
+          "valid": true,
+          "details": [
+            "File checksum: None"
+          ],
+          "checksum": null,
+          "file_path": "F:\\The Central Command\\Command Center\\Plug-ins"
+        },
+        "configuration": {
+          "valid": true,
+          "details": [
+            "No configuration files to validate"
+          ]
+        },
+        "dependencies": {
+          "valid": true,
+          "details": [
+            "Valid imports: 0",
+            "Invalid imports: 0"
+          ],
+          "imports": [],
+          "invalid_imports": []
+        },
+        "communication": {
+          "valid": true,
+          "details": [
+            "Communication test successful"
+          ],
+          "signal_id": "SIG-20251007_173643_753797"
+        },
+        "timestamp": "2025-10-07T17:36:43.753278"
+      },
+      "file_checksums": {},
+      "config_snapshots": {}
+    },
+    {
+      "timestamp": "2025-10-07T17:40:22.313039",
+      "validation_result": {
+        "system_address": "GEN-2.973",
+        "overall_valid": true,
+        "file_integrity": {
+          "valid": true,
+          "details": [
+            "File checksum: None"
+          ],
+          "checksum": null,
+          "file_path": "F:\\The Central Command\\Command Center\\Plug-ins"
+        },
+        "configuration": {
+          "valid": true,
+          "details": [
+            "No configuration files to validate"
+          ]
+        },
+        "dependencies": {
+          "valid": true,
+          "details": [
+            "Valid imports: 0",
+            "Invalid imports: 0"
+          ],
+          "imports": [],
+          "invalid_imports": []
+        },
+        "communication": {
+          "valid": true,
+          "details": [
+            "Communication test successful"
+          ],
+          "signal_id": "SIG-20251007_174022_312803"
+        },
+        "timestamp": "2025-10-07T17:40:22.312306"
+      },
+      "file_checksums": {},
+      "config_snapshots": {}
+    },
+    {
+      "timestamp": "2025-10-07T17:53:47.639830",
+      "validation_result": {
+        "system_address": "GEN-2.973",
+        "overall_valid": true,
+        "file_integrity": {
+          "valid": true,
+          "details": [
+            "File checksum: None"
+          ],
+          "checksum": null,
+          "file_path": "F:\\The Central Command\\Command Center\\Plug-ins"
+        },
+        "configuration": {
+          "valid": true,
+          "details": [
+            "No configuration files to validate"
+          ]
+        },
+        "dependencies": {
+          "valid": true,
+          "details": [
+            "Valid imports: 0",
+            "Invalid imports: 0"
+          ],
+          "imports": [],
+          "invalid_imports": []
+        },
+        "communication": {
+          "valid": true,
+          "details": [
+            "Communication test successful"
+          ],
+          "signal_id": "SIG-20251007_175347_639588"
+        },
+        "timestamp": "2025-10-07T17:53:47.639068"
+      },
+      "file_checksums": {},
+      "config_snapshots": {}
+    }
+  ],
+  "GEN-2.908": [
+    {
+      "timestamp": "2025-10-07T16:49:58.855745",
+      "validation_result": {
+        "system_address": "GEN-2.908",
+        "overall_valid": true,
+        "file_integrity": {
+          "valid": true,
+          "details": [
+            "File checksum: None"
+          ],
+          "checksum": null,
+          "file_path": "F:\\The Central Command\\Command Center\\Plug-ins"
+        },
+        "configuration": {
+          "valid": true,
+          "details": [
+            "No configuration files to validate"
+          ]
+        },
+        "dependencies": {
+          "valid": true,
+          "details": [
+            "Valid imports: 0",
+            "Invalid imports: 0"
+          ],
+          "imports": [],
+          "invalid_imports": []
+        },
+        "communication": {
+          "valid": true,
+          "details": [
+            "Communication test successful"
+          ],
+          "signal_id": "SIG-20251007_164958_855566"
+        },
+        "timestamp": "2025-10-07T16:49:58.855054"
+      },
+      "file_checksums": {},
+      "config_snapshots": {}
+    },
+    {
+      "timestamp": "2025-10-07T16:58:42.569128",
+      "validation_result": {
+        "system_address": "GEN-2.908",
+        "overall_valid": true,
+        "file_integrity": {
+          "valid": true,
+          "details": [
+            "File checksum: None"
+          ],
+          "checksum": null,
+          "file_path": "F:\\The Central Command\\Command Center\\Plug-ins"
+        },
+        "configuration": {
+          "valid": true,
+          "details": [
+            "No configuration files to validate"
+          ]
+        },
+        "dependencies": {
+          "valid": true,
+          "details": [
+            "Valid imports: 0",
+            "Invalid imports: 0"
+          ],
+          "imports": [],
+          "invalid_imports": []
+        },
+        "communication": {
+          "valid": true,
+          "details": [
+            "Communication test successful"
+          ],
+          "signal_id": "SIG-20251007_165842_568947"
+        },
+        "timestamp": "2025-10-07T16:58:42.568444"
+      },
+      "file_checksums": {},
+      "config_snapshots": {}
+    },
+    {
+      "timestamp": "2025-10-07T17:08:50.157134",
+      "validation_result": {
+        "system_address": "GEN-2.908",
+        "overall_valid": true,
+        "file_integrity": {
+          "valid": true,
+          "details": [
+            "File checksum: None"
+          ],
+          "checksum": null,
+          "file_path": "F:\\The Central Command\\Command Center\\Plug-ins"
+        },
+        "configuration": {
+          "valid": true,
+          "details": [
+            "No configuration files to validate"
+          ]
+        },
+        "dependencies": {
+          "valid": true,
+          "details": [
+            "Valid imports: 0",
+            "Invalid imports: 0"
+          ],
+          "imports": [],
+          "invalid_imports": []
+        },
+        "communication": {
+          "valid": true,
+          "details": [
+            "Communication test successful"
+          ],
+          "signal_id": "SIG-20251007_170850_156932"
+        },
+        "timestamp": "2025-10-07T17:08:50.156388"
+      },
+      "file_checksums": {},
+      "config_snapshots": {}
+    },
+    {
+      "timestamp": "2025-10-07T17:17:01.805968",
+      "validation_result": {
+        "system_address": "GEN-2.908",
+        "overall_valid": true,
+        "file_integrity": {
+          "valid": true,
+          "details": [
+            "File checksum: None"
+          ],
+          "checksum": null,
+          "file_path": "F:\\The Central Command\\Command Center\\Plug-ins"
+        },
+        "configuration": {
+          "valid": true,
+          "details": [
+            "No configuration files to validate"
+          ]
+        },
+        "dependencies": {
+          "valid": true,
+          "details": [
+            "Valid imports: 0",
+            "Invalid imports: 0"
+          ],
+          "imports": [],
+          "invalid_imports": []
+        },
+        "communication": {
+          "valid": true,
+          "details": [
+            "Communication test successful"
+          ],
+          "signal_id": "SIG-20251007_171701_805777"
+        },
+        "timestamp": "2025-10-07T17:17:01.805270"
+      },
+      "file_checksums": {},
+      "config_snapshots": {}
+    },
+    {
+      "timestamp": "2025-10-07T17:21:51.190924",
+      "validation_result": {
+        "system_address": "GEN-2.908",
+        "overall_valid": true,
+        "file_integrity": {
+          "valid": true,
+          "details": [
+            "File checksum: None"
+          ],
+          "checksum": null,
+          "file_path": "F:\\The Central Command\\Command Center\\Plug-ins"
+        },
+        "configuration": {
+          "valid": true,
+          "details": [
+            "No configuration files to validate"
+          ]
+        },
+        "dependencies": {
+          "valid": true,
+          "details": [
+            "Valid imports: 0",
+            "Invalid imports: 0"
+          ],
+          "imports": [],
+          "invalid_imports": []
+        },
+        "communication": {
+          "valid": true,
+          "details": [
+            "Communication test successful"
+          ],
+          "signal_id": "SIG-20251007_172151_190590"
+        },
+        "timestamp": "2025-10-07T17:21:51.189906"
+      },
+      "file_checksums": {},
+      "config_snapshots": {}
+    },
+    {
+      "timestamp": "2025-10-07T17:25:07.898205",
+      "validation_result": {
+        "system_address": "GEN-2.908",
+        "overall_valid": true,
+        "file_integrity": {
+          "valid": true,
+          "details": [
+            "File checksum: None"
+          ],
+          "checksum": null,
+          "file_path": "F:\\The Central Command\\Command Center\\Plug-ins"
+        },
+        "configuration": {
+          "valid": true,
+          "details": [
+            "No configuration files to validate"
+          ]
+        },
+        "dependencies": {
+          "valid": true,
+          "details": [
+            "Valid imports: 0",
+            "Invalid imports: 0"
+          ],
+          "imports": [],
+          "invalid_imports": []
+        },
+        "communication": {
+          "valid": true,
+          "details": [
+            "Communication test successful"
+          ],
+          "signal_id": "SIG-20251007_172507_897990"
+        },
+        "timestamp": "2025-10-07T17:25:07.897491"
+      },
+      "file_checksums": {},
+      "config_snapshots": {}
+    },
+    {
+      "timestamp": "2025-10-07T17:32:50.757252",
+      "validation_result": {
+        "system_address": "GEN-2.908",
+        "overall_valid": true,
+        "file_integrity": {
+          "valid": true,
+          "details": [
+            "File checksum: None"
+          ],
+          "checksum": null,
+          "file_path": "F:\\The Central Command\\Command Center\\Plug-ins"
+        },
+        "configuration": {
+          "valid": true,
+          "details": [
+            "No configuration files to validate"
+          ]
+        },
+        "dependencies": {
+          "valid": true,
+          "details": [
+            "Valid imports: 0",
+            "Invalid imports: 0"
+          ],
+          "imports": [],
+          "invalid_imports": []
+        },
+        "communication": {
+          "valid": true,
+          "details": [
+            "Communication test successful"
+          ],
+          "signal_id": "SIG-20251007_173250_756986"
+        },
+        "timestamp": "2025-10-07T17:32:50.756350"
+      },
+      "file_checksums": {},
+      "config_snapshots": {}
+    },
+    {
+      "timestamp": "2025-10-07T17:36:43.754686",
+      "validation_result": {
+        "system_address": "GEN-2.908",
+        "overall_valid": true,
+        "file_integrity": {
+          "valid": true,
+          "details": [
+            "File checksum: None"
+          ],
+          "checksum": null,
+          "file_path": "F:\\The Central Command\\Command Center\\Plug-ins"
+        },
+        "configuration": {
+          "valid": true,
+          "details": [
+            "No configuration files to validate"
+          ]
+        },
+        "dependencies": {
+          "valid": true,
+          "details": [
+            "Valid imports: 0",
+            "Invalid imports: 0"
+          ],
+          "imports": [],
+          "invalid_imports": []
+        },
+        "communication": {
+          "valid": true,
+          "details": [
+            "Communication test successful"
+          ],
+          "signal_id": "SIG-20251007_173643_754505"
+        },
+        "timestamp": "2025-10-07T17:36:43.753998"
+      },
+      "file_checksums": {},
+      "config_snapshots": {}
+    },
+    {
+      "timestamp": "2025-10-07T17:40:22.313770",
+      "validation_result": {
+        "system_address": "GEN-2.908",
+        "overall_valid": true,
+        "file_integrity": {
+          "valid": true,
+          "details": [
+            "File checksum: None"
+          ],
+          "checksum": null,
+          "file_path": "F:\\The Central Command\\Command Center\\Plug-ins"
+        },
+        "configuration": {
+          "valid": true,
+          "details": [
+            "No configuration files to validate"
+          ]
+        },
+        "dependencies": {
+          "valid": true,
+          "details": [
+            "Valid imports: 0",
+            "Invalid imports: 0"
+          ],
+          "imports": [],
+          "invalid_imports": []
+        },
+        "communication": {
+          "valid": true,
+          "details": [
+            "Communication test successful"
+          ],
+          "signal_id": "SIG-20251007_174022_313535"
+        },
+        "timestamp": "2025-10-07T17:40:22.313043"
+      },
+      "file_checksums": {},
+      "config_snapshots": {}
+    },
+    {
+      "timestamp": "2025-10-07T17:53:47.640582",
+      "validation_result": {
+        "system_address": "GEN-2.908",
+        "overall_valid": true,
+        "file_integrity": {
+          "valid": true,
+          "details": [
+            "File checksum: None"
+          ],
+          "checksum": null,
+          "file_path": "F:\\The Central Command\\Command Center\\Plug-ins"
+        },
+        "configuration": {
+          "valid": true,
+          "details": [
+            "No configuration files to validate"
+          ]
+        },
+        "dependencies": {
+          "valid": true,
+          "details": [
+            "Valid imports: 0",
+            "Invalid imports: 0"
+          ],
+          "imports": [],
+          "invalid_imports": []
+        },
+        "communication": {
+          "valid": true,
+          "details": [
+            "Communication test successful"
+          ],
+          "signal_id": "SIG-20251007_175347_640341"
+        },
+        "timestamp": "2025-10-07T17:53:47.639835"
+      },
+      "file_checksums": {},
+      "config_snapshots": {}
+    }
+  ],
+  "GEN-2.381": [
+    {
+      "timestamp": "2025-10-07T16:49:58.856437",
+      "validation_result": {
+        "system_address": "GEN-2.381",
+        "overall_valid": true,
+        "file_integrity": {
+          "valid": true,
+          "details": [
+            "File checksum: None"
+          ],
+          "checksum": null,
+          "file_path": "F:\\The Central Command\\Command Center\\Plug-ins"
+        },
+        "configuration": {
+          "valid": true,
+          "details": [
+            "No configuration files to validate"
+          ]
+        },
+        "dependencies": {
+          "valid": true,
+          "details": [
+            "Valid imports: 0",
+            "Invalid imports: 0"
+          ],
+          "imports": [],
+          "invalid_imports": []
+        },
+        "communication": {
+          "valid": true,
+          "details": [
+            "Communication test successful"
+          ],
+          "signal_id": "SIG-20251007_164958_856250"
+        },
+        "timestamp": "2025-10-07T16:49:58.855749"
+      },
+      "file_checksums": {},
+      "config_snapshots": {}
+    },
+    {
+      "timestamp": "2025-10-07T16:58:42.569828",
+      "validation_result": {
+        "system_address": "GEN-2.381",
+        "overall_valid": true,
+        "file_integrity": {
+          "valid": true,
+          "details": [
+            "File checksum: None"
+          ],
+          "checksum": null,
+          "file_path": "F:\\The Central Command\\Command Center\\Plug-ins"
+        },
+        "configuration": {
+          "valid": true,
+          "details": [
+            "No configuration files to validate"
+          ]
+        },
+        "dependencies": {
+          "valid": true,
+          "details": [
+            "Valid imports: 0",
+            "Invalid imports: 0"
+          ],
+          "imports": [],
+          "invalid_imports": []
+        },
+        "communication": {
+          "valid": true,
+          "details": [
+            "Communication test successful"
+          ],
+          "signal_id": "SIG-20251007_165842_569644"
+        },
+        "timestamp": "2025-10-07T16:58:42.569132"
+      },
+      "file_checksums": {},
+      "config_snapshots": {}
+    },
+    {
+      "timestamp": "2025-10-07T17:08:50.157956",
+      "validation_result": {
+        "system_address": "GEN-2.381",
+        "overall_valid": true,
+        "file_integrity": {
+          "valid": true,
+          "details": [
+            "File checksum: None"
+          ],
+          "checksum": null,
+          "file_path": "F:\\The Central Command\\Command Center\\Plug-ins"
+        },
+        "configuration": {
+          "valid": true,
+          "details": [
+            "No configuration files to validate"
+          ]
+        },
+        "dependencies": {
+          "valid": true,
+          "details": [
+            "Valid imports: 0",
+            "Invalid imports: 0"
+          ],
+          "imports": [],
+          "invalid_imports": []
+        },
+        "communication": {
+          "valid": true,
+          "details": [
+            "Communication test successful"
+          ],
+          "signal_id": "SIG-20251007_170850_157762"
+        },
+        "timestamp": "2025-10-07T17:08:50.157139"
+      },
+      "file_checksums": {},
+      "config_snapshots": {}
+    },
+    {
+      "timestamp": "2025-10-07T17:17:01.806747",
+      "validation_result": {
+        "system_address": "GEN-2.381",
+        "overall_valid": true,
+        "file_integrity": {
+          "valid": true,
+          "details": [
+            "File checksum: None"
+          ],
+          "checksum": null,
+          "file_path": "F:\\The Central Command\\Command Center\\Plug-ins"
+        },
+        "configuration": {
+          "valid": true,
+          "details": [
+            "No configuration files to validate"
+          ]
+        },
+        "dependencies": {
+          "valid": true,
+          "details": [
+            "Valid imports: 0",
+            "Invalid imports: 0"
+          ],
+          "imports": [],
+          "invalid_imports": []
+        },
+        "communication": {
+          "valid": true,
+          "details": [
+            "Communication test successful"
+          ],
+          "signal_id": "SIG-20251007_171701_806556"
+        },
+        "timestamp": "2025-10-07T17:17:01.805972"
+      },
+      "file_checksums": {},
+      "config_snapshots": {}
+    },
+    {
+      "timestamp": "2025-10-07T17:21:51.191834",
+      "validation_result": {
+        "system_address": "GEN-2.381",
+        "overall_valid": true,
+        "file_integrity": {
+          "valid": true,
+          "details": [
+            "File checksum: None"
+          ],
+          "checksum": null,
+          "file_path": "F:\\The Central Command\\Command Center\\Plug-ins"
+        },
+        "configuration": {
+          "valid": true,
+          "details": [
+            "No configuration files to validate"
+          ]
+        },
+        "dependencies": {
+          "valid": true,
+          "details": [
+            "Valid imports: 0",
+            "Invalid imports: 0"
+          ],
+          "imports": [],
+          "invalid_imports": []
+        },
+        "communication": {
+          "valid": true,
+          "details": [
+            "Communication test successful"
+          ],
+          "signal_id": "SIG-20251007_172151_191618"
+        },
+        "timestamp": "2025-10-07T17:21:51.190929"
+      },
+      "file_checksums": {},
+      "config_snapshots": {}
+    },
+    {
+      "timestamp": "2025-10-07T17:25:07.898911",
+      "validation_result": {
+        "system_address": "GEN-2.381",
+        "overall_valid": true,
+        "file_integrity": {
+          "valid": true,
+          "details": [
+            "File checksum: None"
+          ],
+          "checksum": null,
+          "file_path": "F:\\The Central Command\\Command Center\\Plug-ins"
+        },
+        "configuration": {
+          "valid": true,
+          "details": [
+            "No configuration files to validate"
+          ]
+        },
+        "dependencies": {
+          "valid": true,
+          "details": [
+            "Valid imports: 0",
+            "Invalid imports: 0"
+          ],
+          "imports": [],
+          "invalid_imports": []
+        },
+        "communication": {
+          "valid": true,
+          "details": [
+            "Communication test successful"
+          ],
+          "signal_id": "SIG-20251007_172507_898704"
+        },
+        "timestamp": "2025-10-07T17:25:07.898208"
+      },
+      "file_checksums": {},
+      "config_snapshots": {}
+    },
+    {
+      "timestamp": "2025-10-07T17:32:50.757994",
+      "validation_result": {
+        "system_address": "GEN-2.381",
+        "overall_valid": true,
+        "file_integrity": {
+          "valid": true,
+          "details": [
+            "File checksum: None"
+          ],
+          "checksum": null,
+          "file_path": "F:\\The Central Command\\Command Center\\Plug-ins"
+        },
+        "configuration": {
+          "valid": true,
+          "details": [
+            "No configuration files to validate"
+          ]
+        },
+        "dependencies": {
+          "valid": true,
+          "details": [
+            "Valid imports: 0",
+            "Invalid imports: 0"
+          ],
+          "imports": [],
+          "invalid_imports": []
+        },
+        "communication": {
+          "valid": true,
+          "details": [
+            "Communication test successful"
+          ],
+          "signal_id": "SIG-20251007_173250_757776"
+        },
+        "timestamp": "2025-10-07T17:32:50.757256"
+      },
+      "file_checksums": {},
+      "config_snapshots": {}
+    },
+    {
+      "timestamp": "2025-10-07T17:36:43.755375",
+      "validation_result": {
+        "system_address": "GEN-2.381",
+        "overall_valid": true,
+        "file_integrity": {
+          "valid": true,
+          "details": [
+            "File checksum: None"
+          ],
+          "checksum": null,
+          "file_path": "F:\\The Central Command\\Command Center\\Plug-ins"
+        },
+        "configuration": {
+          "valid": true,
+          "details": [
+            "No configuration files to validate"
+          ]
+        },
+        "dependencies": {
+          "valid": true,
+          "details": [
+            "Valid imports: 0",
+            "Invalid imports: 0"
+          ],
+          "imports": [],
+          "invalid_imports": []
+        },
+        "communication": {
+          "valid": true,
+          "details": [
+            "Communication test successful"
+          ],
+          "signal_id": "SIG-20251007_173643_755193"
+        },
+        "timestamp": "2025-10-07T17:36:43.754690"
+      },
+      "file_checksums": {},
+      "config_snapshots": {}
+    },
+    {
+      "timestamp": "2025-10-07T17:40:22.314515",
+      "validation_result": {
+        "system_address": "GEN-2.381",
+        "overall_valid": true,
+        "file_integrity": {
+          "valid": true,
+          "details": [
+            "File checksum: None"
+          ],
+          "checksum": null,
+          "file_path": "F:\\The Central Command\\Command Center\\Plug-ins"
+        },
+        "configuration": {
+          "valid": true,
+          "details": [
+            "No configuration files to validate"
+          ]
+        },
+        "dependencies": {
+          "valid": true,
+          "details": [
+            "Valid imports: 0",
+            "Invalid imports: 0"
+          ],
+          "imports": [],
+          "invalid_imports": []
+        },
+        "communication": {
+          "valid": true,
+          "details": [
+            "Communication test successful"
+          ],
+          "signal_id": "SIG-20251007_174022_314279"
+        },
+        "timestamp": "2025-10-07T17:40:22.313774"
+      },
+      "file_checksums": {},
+      "config_snapshots": {}
+    },
+    {
+      "timestamp": "2025-10-07T17:53:47.641354",
+      "validation_result": {
+        "system_address": "GEN-2.381",
+        "overall_valid": true,
+        "file_integrity": {
+          "valid": true,
+          "details": [
+            "File checksum: None"
+          ],
+          "checksum": null,
+          "file_path": "F:\\The Central Command\\Command Center\\Plug-ins"
+        },
+        "configuration": {
+          "valid": true,
+          "details": [
+            "No configuration files to validate"
+          ]
+        },
+        "dependencies": {
+          "valid": true,
+          "details": [
+            "Valid imports: 0",
+            "Invalid imports: 0"
+          ],
+          "imports": [],
+          "invalid_imports": []
+        },
+        "communication": {
+          "valid": true,
+          "details": [
+            "Communication test successful"
+          ],
+          "signal_id": "SIG-20251007_175347_641110"
+        },
+        "timestamp": "2025-10-07T17:53:47.640586"
+      },
+      "file_checksums": {},
+      "config_snapshots": {}
+    }
+  ],
+  "GEN-2.367": [
+    {
+      "timestamp": "2025-10-07T16:49:58.857150",
+      "validation_result": {
+        "system_address": "GEN-2.367",
+        "overall_valid": true,
+        "file_integrity": {
+          "valid": true,
+          "details": [
+            "File checksum: None"
+          ],
+          "checksum": null,
+          "file_path": "F:\\The Central Command\\Command Center\\Plug-ins"
+        },
+        "configuration": {
+          "valid": true,
+          "details": [
+            "No configuration files to validate"
+          ]
+        },
+        "dependencies": {
+          "valid": true,
+          "details": [
+            "Valid imports: 0",
+            "Invalid imports: 0"
+          ],
+          "imports": [],
+          "invalid_imports": []
+        },
+        "communication": {
+          "valid": true,
+          "details": [
+            "Communication test successful"
+          ],
+          "signal_id": "SIG-20251007_164958_856965"
+        },
+        "timestamp": "2025-10-07T16:49:58.856440"
+      },
+      "file_checksums": {},
+      "config_snapshots": {}
+    },
+    {
+      "timestamp": "2025-10-07T16:58:42.570508",
+      "validation_result": {
+        "system_address": "GEN-2.367",
+        "overall_valid": true,
+        "file_integrity": {
+          "valid": true,
+          "details": [
+            "File checksum: None"
+          ],
+          "checksum": null,
+          "file_path": "F:\\The Central Command\\Command Center\\Plug-ins"
+        },
+        "configuration": {
+          "valid": true,
+          "details": [
+            "No configuration files to validate"
+          ]
+        },
+        "dependencies": {
+          "valid": true,
+          "details": [
+            "Valid imports: 0",
+            "Invalid imports: 0"
+          ],
+          "imports": [],
+          "invalid_imports": []
+        },
+        "communication": {
+          "valid": true,
+          "details": [
+            "Communication test successful"
+          ],
+          "signal_id": "SIG-20251007_165842_570328"
+        },
+        "timestamp": "2025-10-07T16:58:42.569832"
+      },
+      "file_checksums": {},
+      "config_snapshots": {}
+    },
+    {
+      "timestamp": "2025-10-07T17:08:50.158668",
+      "validation_result": {
+        "system_address": "GEN-2.367",
+        "overall_valid": true,
+        "file_integrity": {
+          "valid": true,
+          "details": [
+            "File checksum: None"
+          ],
+          "checksum": null,
+          "file_path": "F:\\The Central Command\\Command Center\\Plug-ins"
+        },
+        "configuration": {
+          "valid": true,
+          "details": [
+            "No configuration files to validate"
+          ]
+        },
+        "dependencies": {
+          "valid": true,
+          "details": [
+            "Valid imports: 0",
+            "Invalid imports: 0"
+          ],
+          "imports": [],
+          "invalid_imports": []
+        },
+        "communication": {
+          "valid": true,
+          "details": [
+            "Communication test successful"
+          ],
+          "signal_id": "SIG-20251007_170850_158476"
+        },
+        "timestamp": "2025-10-07T17:08:50.157960"
+      },
+      "file_checksums": {},
+      "config_snapshots": {}
+    },
+    {
+      "timestamp": "2025-10-07T17:17:01.807440",
+      "validation_result": {
+        "system_address": "GEN-2.367",
+        "overall_valid": true,
+        "file_integrity": {
+          "valid": true,
+          "details": [
+            "File checksum: None"
+          ],
+          "checksum": null,
+          "file_path": "F:\\The Central Command\\Command Center\\Plug-ins"
+        },
+        "configuration": {
+          "valid": true,
+          "details": [
+            "No configuration files to validate"
+          ]
+        },
+        "dependencies": {
+          "valid": true,
+          "details": [
+            "Valid imports: 0",
+            "Invalid imports: 0"
+          ],
+          "imports": [],
+          "invalid_imports": []
+        },
+        "communication": {
+          "valid": true,
+          "details": [
+            "Communication test successful"
+          ],
+          "signal_id": "SIG-20251007_171701_807259"
+        },
+        "timestamp": "2025-10-07T17:17:01.806751"
+      },
+      "file_checksums": {},
+      "config_snapshots": {}
+    },
+    {
+      "timestamp": "2025-10-07T17:21:51.192591",
+      "validation_result": {
+        "system_address": "GEN-2.367",
+        "overall_valid": true,
+        "file_integrity": {
+          "valid": true,
+          "details": [
+            "File checksum: None"
+          ],
+          "checksum": null,
+          "file_path": "F:\\The Central Command\\Command Center\\Plug-ins"
+        },
+        "configuration": {
+          "valid": true,
+          "details": [
+            "No configuration files to validate"
+          ]
+        },
+        "dependencies": {
+          "valid": true,
+          "details": [
+            "Valid imports: 0",
+            "Invalid imports: 0"
+          ],
+          "imports": [],
+          "invalid_imports": []
+        },
+        "communication": {
+          "valid": true,
+          "details": [
+            "Communication test successful"
+          ],
+          "signal_id": "SIG-20251007_172151_192376"
+        },
+        "timestamp": "2025-10-07T17:21:51.191838"
+      },
+      "file_checksums": {},
+      "config_snapshots": {}
+    },
+    {
+      "timestamp": "2025-10-07T17:25:07.899622",
+      "validation_result": {
+        "system_address": "GEN-2.367",
+        "overall_valid": true,
+        "file_integrity": {
+          "valid": true,
+          "details": [
+            "File checksum: None"
+          ],
+          "checksum": null,
+          "file_path": "F:\\The Central Command\\Command Center\\Plug-ins"
+        },
+        "configuration": {
+          "valid": true,
+          "details": [
+            "No configuration files to validate"
+          ]
+        },
+        "dependencies": {
+          "valid": true,
+          "details": [
+            "Valid imports: 0",
+            "Invalid imports: 0"
+          ],
+          "imports": [],
+          "invalid_imports": []
+        },
+        "communication": {
+          "valid": true,
+          "details": [
+            "Communication test successful"
+          ],
+          "signal_id": "SIG-20251007_172507_899415"
+        },
+        "timestamp": "2025-10-07T17:25:07.898915"
+      },
+      "file_checksums": {},
+      "config_snapshots": {}
+    },
+    {
+      "timestamp": "2025-10-07T17:32:50.758984",
+      "validation_result": {
+        "system_address": "GEN-2.367",
+        "overall_valid": true,
+        "file_integrity": {
+          "valid": true,
+          "details": [
+            "File checksum: None"
+          ],
+          "checksum": null,
+          "file_path": "F:\\The Central Command\\Command Center\\Plug-ins"
+        },
+        "configuration": {
+          "valid": true,
+          "details": [
+            "No configuration files to validate"
+          ]
+        },
+        "dependencies": {
+          "valid": true,
+          "details": [
+            "Valid imports: 0",
+            "Invalid imports: 0"
+          ],
+          "imports": [],
+          "invalid_imports": []
+        },
+        "communication": {
+          "valid": true,
+          "details": [
+            "Communication test successful"
+          ],
+          "signal_id": "SIG-20251007_173250_758742"
+        },
+        "timestamp": "2025-10-07T17:32:50.757998"
+      },
+      "file_checksums": {},
+      "config_snapshots": {}
+    },
+    {
+      "timestamp": "2025-10-07T17:36:43.756073",
+      "validation_result": {
+        "system_address": "GEN-2.367",
+        "overall_valid": true,
+        "file_integrity": {
+          "valid": true,
+          "details": [
+            "File checksum: None"
+          ],
+          "checksum": null,
+          "file_path": "F:\\The Central Command\\Command Center\\Plug-ins"
+        },
+        "configuration": {
+          "valid": true,
+          "details": [
+            "No configuration files to validate"
+          ]
+        },
+        "dependencies": {
+          "valid": true,
+          "details": [
+            "Valid imports: 0",
+            "Invalid imports: 0"
+          ],
+          "imports": [],
+          "invalid_imports": []
+        },
+        "communication": {
+          "valid": true,
+          "details": [
+            "Communication test successful"
+          ],
+          "signal_id": "SIG-20251007_173643_755888"
+        },
+        "timestamp": "2025-10-07T17:36:43.755379"
+      },
+      "file_checksums": {},
+      "config_snapshots": {}
+    },
+    {
+      "timestamp": "2025-10-07T17:40:22.315265",
+      "validation_result": {
+        "system_address": "GEN-2.367",
+        "overall_valid": true,
+        "file_integrity": {
+          "valid": true,
+          "details": [
+            "File checksum: None"
+          ],
+          "checksum": null,
+          "file_path": "F:\\The Central Command\\Command Center\\Plug-ins"
+        },
+        "configuration": {
+          "valid": true,
+          "details": [
+            "No configuration files to validate"
+          ]
+        },
+        "dependencies": {
+          "valid": true,
+          "details": [
+            "Valid imports: 0",
+            "Invalid imports: 0"
+          ],
+          "imports": [],
+          "invalid_imports": []
+        },
+        "communication": {
+          "valid": true,
+          "details": [
+            "Communication test successful"
+          ],
+          "signal_id": "SIG-20251007_174022_315012"
+        },
+        "timestamp": "2025-10-07T17:40:22.314519"
+      },
+      "file_checksums": {},
+      "config_snapshots": {}
+    },
+    {
+      "timestamp": "2025-10-07T17:53:47.642111",
+      "validation_result": {
+        "system_address": "GEN-2.367",
+        "overall_valid": true,
+        "file_integrity": {
+          "valid": true,
+          "details": [
+            "File checksum: None"
+          ],
+          "checksum": null,
+          "file_path": "F:\\The Central Command\\Command Center\\Plug-ins"
+        },
+        "configuration": {
+          "valid": true,
+          "details": [
+            "No configuration files to validate"
+          ]
+        },
+        "dependencies": {
+          "valid": true,
+          "details": [
+            "Valid imports: 0",
+            "Invalid imports: 0"
+          ],
+          "imports": [],
+          "invalid_imports": []
+        },
+        "communication": {
+          "valid": true,
+          "details": [
+            "Communication test successful"
+          ],
+          "signal_id": "SIG-20251007_175347_641869"
+        },
+        "timestamp": "2025-10-07T17:53:47.641358"
+      },
+      "file_checksums": {},
+      "config_snapshots": {}
+    }
+  ],
+  "GEN-2.249": [
+    {
+      "timestamp": "2025-10-07T16:49:58.857833",
+      "validation_result": {
+        "system_address": "GEN-2.249",
+        "overall_valid": true,
+        "file_integrity": {
+          "valid": true,
+          "details": [
+            "File checksum: None"
+          ],
+          "checksum": null,
+          "file_path": "F:\\The Central Command\\Command Center\\Plug-ins"
+        },
+        "configuration": {
+          "valid": true,
+          "details": [
+            "No configuration files to validate"
+          ]
+        },
+        "dependencies": {
+          "valid": true,
+          "details": [
+            "Valid imports: 0",
+            "Invalid imports: 0"
+          ],
+          "imports": [],
+          "invalid_imports": []
+        },
+        "communication": {
+          "valid": true,
+          "details": [
+            "Communication test successful"
+          ],
+          "signal_id": "SIG-20251007_164958_857650"
+        },
+        "timestamp": "2025-10-07T16:49:58.857154"
+      },
+      "file_checksums": {},
+      "config_snapshots": {}
+    },
+    {
+      "timestamp": "2025-10-07T16:58:42.571188",
+      "validation_result": {
+        "system_address": "GEN-2.249",
+        "overall_valid": true,
+        "file_integrity": {
+          "valid": true,
+          "details": [
+            "File checksum: None"
+          ],
+          "checksum": null,
+          "file_path": "F:\\The Central Command\\Command Center\\Plug-ins"
+        },
+        "configuration": {
+          "valid": true,
+          "details": [
+            "No configuration files to validate"
+          ]
+        },
+        "dependencies": {
+          "valid": true,
+          "details": [
+            "Valid imports: 0",
+            "Invalid imports: 0"
+          ],
+          "imports": [],
+          "invalid_imports": []
+        },
+        "communication": {
+          "valid": true,
+          "details": [
+            "Communication test successful"
+          ],
+          "signal_id": "SIG-20251007_165842_571007"
+        },
+        "timestamp": "2025-10-07T16:58:42.570512"
+      },
+      "file_checksums": {},
+      "config_snapshots": {}
+    },
+    {
+      "timestamp": "2025-10-07T17:08:50.159373",
+      "validation_result": {
+        "system_address": "GEN-2.249",
+        "overall_valid": true,
+        "file_integrity": {
+          "valid": true,
+          "details": [
+            "File checksum: None"
+          ],
+          "checksum": null,
+          "file_path": "F:\\The Central Command\\Command Center\\Plug-ins"
+        },
+        "configuration": {
+          "valid": true,
+          "details": [
+            "No configuration files to validate"
+          ]
+        },
+        "dependencies": {
+          "valid": true,
+          "details": [
+            "Valid imports: 0",
+            "Invalid imports: 0"
+          ],
+          "imports": [],
+          "invalid_imports": []
+        },
+        "communication": {
+          "valid": true,
+          "details": [
+            "Communication test successful"
+          ],
+          "signal_id": "SIG-20251007_170850_159188"
+        },
+        "timestamp": "2025-10-07T17:08:50.158671"
+      },
+      "file_checksums": {},
+      "config_snapshots": {}
+    },
+    {
+      "timestamp": "2025-10-07T17:17:01.808184",
+      "validation_result": {
+        "system_address": "GEN-2.249",
+        "overall_valid": true,
+        "file_integrity": {
+          "valid": true,
+          "details": [
+            "File checksum: None"
+          ],
+          "checksum": null,
+          "file_path": "F:\\The Central Command\\Command Center\\Plug-ins"
+        },
+        "configuration": {
+          "valid": true,
+          "details": [
+            "No configuration files to validate"
+          ]
+        },
+        "dependencies": {
+          "valid": true,
+          "details": [
+            "Valid imports: 0",
+            "Invalid imports: 0"
+          ],
+          "imports": [],
+          "invalid_imports": []
+        },
+        "communication": {
+          "valid": true,
+          "details": [
+            "Communication test successful"
+          ],
+          "signal_id": "SIG-20251007_171701_807973"
+        },
+        "timestamp": "2025-10-07T17:17:01.807444"
+      },
+      "file_checksums": {},
+      "config_snapshots": {}
+    },
+    {
+      "timestamp": "2025-10-07T17:21:51.193307",
+      "validation_result": {
+        "system_address": "GEN-2.249",
+        "overall_valid": true,
+        "file_integrity": {
+          "valid": true,
+          "details": [
+            "File checksum: None"
+          ],
+          "checksum": null,
+          "file_path": "F:\\The Central Command\\Command Center\\Plug-ins"
+        },
+        "configuration": {
+          "valid": true,
+          "details": [
+            "No configuration files to validate"
+          ]
+        },
+        "dependencies": {
+          "valid": true,
+          "details": [
+            "Valid imports: 0",
+            "Invalid imports: 0"
+          ],
+          "imports": [],
+          "invalid_imports": []
+        },
+        "communication": {
+          "valid": true,
+          "details": [
+            "Communication test successful"
+          ],
+          "signal_id": "SIG-20251007_172151_193098"
+        },
+        "timestamp": "2025-10-07T17:21:51.192594"
+      },
+      "file_checksums": {},
+      "config_snapshots": {}
+    },
+    {
+      "timestamp": "2025-10-07T17:25:07.900452",
+      "validation_result": {
+        "system_address": "GEN-2.249",
+        "overall_valid": true,
+        "file_integrity": {
+          "valid": true,
+          "details": [
+            "File checksum: None"
+          ],
+          "checksum": null,
+          "file_path": "F:\\The Central Command\\Command Center\\Plug-ins"
+        },
+        "configuration": {
+          "valid": true,
+          "details": [
+            "No configuration files to validate"
+          ]
+        },
+        "dependencies": {
+          "valid": true,
+          "details": [
+            "Valid imports: 0",
+            "Invalid imports: 0"
+          ],
+          "imports": [],
+          "invalid_imports": []
+        },
+        "communication": {
+          "valid": true,
+          "details": [
+            "Communication test successful"
+          ],
+          "signal_id": "SIG-20251007_172507_900124"
+        },
+        "timestamp": "2025-10-07T17:25:07.899625"
+      },
+      "file_checksums": {},
+      "config_snapshots": {}
+    },
+    {
+      "timestamp": "2025-10-07T17:32:50.759905",
+      "validation_result": {
+        "system_address": "GEN-2.249",
+        "overall_valid": true,
+        "file_integrity": {
+          "valid": true,
+          "details": [
+            "File checksum: None"
+          ],
+          "checksum": null,
+          "file_path": "F:\\The Central Command\\Command Center\\Plug-ins"
+        },
+        "configuration": {
+          "valid": true,
+          "details": [
+            "No configuration files to validate"
+          ]
+        },
+        "dependencies": {
+          "valid": true,
+          "details": [
+            "Valid imports: 0",
+            "Invalid imports: 0"
+          ],
+          "imports": [],
+          "invalid_imports": []
+        },
+        "communication": {
+          "valid": true,
+          "details": [
+            "Communication test successful"
+          ],
+          "signal_id": "SIG-20251007_173250_759520"
+        },
+        "timestamp": "2025-10-07T17:32:50.758988"
+      },
+      "file_checksums": {},
+      "config_snapshots": {}
+    },
+    {
+      "timestamp": "2025-10-07T17:36:43.756762",
+      "validation_result": {
+        "system_address": "GEN-2.249",
+        "overall_valid": true,
+        "file_integrity": {
+          "valid": true,
+          "details": [
+            "File checksum: None"
+          ],
+          "checksum": null,
+          "file_path": "F:\\The Central Command\\Command Center\\Plug-ins"
+        },
+        "configuration": {
+          "valid": true,
+          "details": [
+            "No configuration files to validate"
+          ]
+        },
+        "dependencies": {
+          "valid": true,
+          "details": [
+            "Valid imports: 0",
+            "Invalid imports: 0"
+          ],
+          "imports": [],
+          "invalid_imports": []
+        },
+        "communication": {
+          "valid": true,
+          "details": [
+            "Communication test successful"
+          ],
+          "signal_id": "SIG-20251007_173643_756582"
+        },
+        "timestamp": "2025-10-07T17:36:43.756077"
+      },
+      "file_checksums": {},
+      "config_snapshots": {}
+    },
+    {
+      "timestamp": "2025-10-07T17:40:22.315999",
+      "validation_result": {
+        "system_address": "GEN-2.249",
+        "overall_valid": true,
+        "file_integrity": {
+          "valid": true,
+          "details": [
+            "File checksum: None"
+          ],
+          "checksum": null,
+          "file_path": "F:\\The Central Command\\Command Center\\Plug-ins"
+        },
+        "configuration": {
+          "valid": true,
+          "details": [
+            "No configuration files to validate"
+          ]
+        },
+        "dependencies": {
+          "valid": true,
+          "details": [
+            "Valid imports: 0",
+            "Invalid imports: 0"
+          ],
+          "imports": [],
+          "invalid_imports": []
+        },
+        "communication": {
+          "valid": true,
+          "details": [
+            "Communication test successful"
+          ],
+          "signal_id": "SIG-20251007_174022_315759"
+        },
+        "timestamp": "2025-10-07T17:40:22.315268"
+      },
+      "file_checksums": {},
+      "config_snapshots": {}
+    },
+    {
+      "timestamp": "2025-10-07T17:53:47.642864",
+      "validation_result": {
+        "system_address": "GEN-2.249",
+        "overall_valid": true,
+        "file_integrity": {
+          "valid": true,
+          "details": [
+            "File checksum: None"
+          ],
+          "checksum": null,
+          "file_path": "F:\\The Central Command\\Command Center\\Plug-ins"
+        },
+        "configuration": {
+          "valid": true,
+          "details": [
+            "No configuration files to validate"
+          ]
+        },
+        "dependencies": {
+          "valid": true,
+          "details": [
+            "Valid imports: 0",
+            "Invalid imports: 0"
+          ],
+          "imports": [],
+          "invalid_imports": []
+        },
+        "communication": {
+          "valid": true,
+          "details": [
+            "Communication test successful"
+          ],
+          "signal_id": "SIG-20251007_175347_642618"
+        },
+        "timestamp": "2025-10-07T17:53:47.642115"
+      },
+      "file_checksums": {},
+      "config_snapshots": {}
+    }
+  ],
+  "GEN-2.924": [
+    {
+      "timestamp": "2025-10-07T16:49:58.858511",
+      "validation_result": {
+        "system_address": "GEN-2.924",
+        "overall_valid": true,
+        "file_integrity": {
+          "valid": true,
+          "details": [
+            "File checksum: None"
+          ],
+          "checksum": null,
+          "file_path": "F:\\The Central Command\\Command Center\\Plug-ins"
+        },
+        "configuration": {
+          "valid": true,
+          "details": [
+            "No configuration files to validate"
+          ]
+        },
+        "dependencies": {
+          "valid": true,
+          "details": [
+            "Valid imports: 0",
+            "Invalid imports: 0"
+          ],
+          "imports": [],
+          "invalid_imports": []
+        },
+        "communication": {
+          "valid": true,
+          "details": [
+            "Communication test successful"
+          ],
+          "signal_id": "SIG-20251007_164958_858332"
+        },
+        "timestamp": "2025-10-07T16:49:58.857836"
+      },
+      "file_checksums": {},
+      "config_snapshots": {}
+    },
+    {
+      "timestamp": "2025-10-07T16:58:42.571961",
+      "validation_result": {
+        "system_address": "GEN-2.924",
+        "overall_valid": true,
+        "file_integrity": {
+          "valid": true,
+          "details": [
+            "File checksum: None"
+          ],
+          "checksum": null,
+          "file_path": "F:\\The Central Command\\Command Center\\Plug-ins"
+        },
+        "configuration": {
+          "valid": true,
+          "details": [
+            "No configuration files to validate"
+          ]
+        },
+        "dependencies": {
+          "valid": true,
+          "details": [
+            "Valid imports: 0",
+            "Invalid imports: 0"
+          ],
+          "imports": [],
+          "invalid_imports": []
+        },
+        "communication": {
+          "valid": true,
+          "details": [
+            "Communication test successful"
+          ],
+          "signal_id": "SIG-20251007_165842_571689"
+        },
+        "timestamp": "2025-10-07T16:58:42.571191"
+      },
+      "file_checksums": {},
+      "config_snapshots": {}
+    },
+    {
+      "timestamp": "2025-10-07T17:08:50.160072",
+      "validation_result": {
+        "system_address": "GEN-2.924",
+        "overall_valid": true,
+        "file_integrity": {
+          "valid": true,
+          "details": [
+            "File checksum: None"
+          ],
+          "checksum": null,
+          "file_path": "F:\\The Central Command\\Command Center\\Plug-ins"
+        },
+        "configuration": {
+          "valid": true,
+          "details": [
+            "No configuration files to validate"
+          ]
+        },
+        "dependencies": {
+          "valid": true,
+          "details": [
+            "Valid imports: 0",
+            "Invalid imports: 0"
+          ],
+          "imports": [],
+          "invalid_imports": []
+        },
+        "communication": {
+          "valid": true,
+          "details": [
+            "Communication test successful"
+          ],
+          "signal_id": "SIG-20251007_170850_159882"
+        },
+        "timestamp": "2025-10-07T17:08:50.159376"
+      },
+      "file_checksums": {},
+      "config_snapshots": {}
+    },
+    {
+      "timestamp": "2025-10-07T17:17:01.808933",
+      "validation_result": {
+        "system_address": "GEN-2.924",
+        "overall_valid": true,
+        "file_integrity": {
+          "valid": true,
+          "details": [
+            "File checksum: None"
+          ],
+          "checksum": null,
+          "file_path": "F:\\The Central Command\\Command Center\\Plug-ins"
+        },
+        "configuration": {
+          "valid": true,
+          "details": [
+            "No configuration files to validate"
+          ]
+        },
+        "dependencies": {
+          "valid": true,
+          "details": [
+            "Valid imports: 0",
+            "Invalid imports: 0"
+          ],
+          "imports": [],
+          "invalid_imports": []
+        },
+        "communication": {
+          "valid": true,
+          "details": [
+            "Communication test successful"
+          ],
+          "signal_id": "SIG-20251007_171701_808745"
+        },
+        "timestamp": "2025-10-07T17:17:01.808190"
+      },
+      "file_checksums": {},
+      "config_snapshots": {}
+    },
+    {
+      "timestamp": "2025-10-07T17:21:51.194036",
+      "validation_result": {
+        "system_address": "GEN-2.924",
+        "overall_valid": true,
+        "file_integrity": {
+          "valid": true,
+          "details": [
+            "File checksum: None"
+          ],
+          "checksum": null,
+          "file_path": "F:\\The Central Command\\Command Center\\Plug-ins"
+        },
+        "configuration": {
+          "valid": true,
+          "details": [
+            "No configuration files to validate"
+          ]
+        },
+        "dependencies": {
+          "valid": true,
+          "details": [
+            "Valid imports: 0",
+            "Invalid imports: 0"
+          ],
+          "imports": [],
+          "invalid_imports": []
+        },
+        "communication": {
+          "valid": true,
+          "details": [
+            "Communication test successful"
+          ],
+          "signal_id": "SIG-20251007_172151_193817"
+        },
+        "timestamp": "2025-10-07T17:21:51.193311"
+      },
+      "file_checksums": {},
+      "config_snapshots": {}
+    },
+    {
+      "timestamp": "2025-10-07T17:25:07.901421",
+      "validation_result": {
+        "system_address": "GEN-2.924",
+        "overall_valid": true,
+        "file_integrity": {
+          "valid": true,
+          "details": [
+            "File checksum: None"
+          ],
+          "checksum": null,
+          "file_path": "F:\\The Central Command\\Command Center\\Plug-ins"
+        },
+        "configuration": {
+          "valid": true,
+          "details": [
+            "No configuration files to validate"
+          ]
+        },
+        "dependencies": {
+          "valid": true,
+          "details": [
+            "Valid imports: 0",
+            "Invalid imports: 0"
+          ],
+          "imports": [],
+          "invalid_imports": []
+        },
+        "communication": {
+          "valid": true,
+          "details": [
+            "Communication test successful"
+          ],
+          "signal_id": "SIG-20251007_172507_901195"
+        },
+        "timestamp": "2025-10-07T17:25:07.900457"
+      },
+      "file_checksums": {},
+      "config_snapshots": {}
+    },
+    {
+      "timestamp": "2025-10-07T17:32:50.761193",
+      "validation_result": {
+        "system_address": "GEN-2.924",
+        "overall_valid": true,
+        "file_integrity": {
+          "valid": true,
+          "details": [
+            "File checksum: None"
+          ],
+          "checksum": null,
+          "file_path": "F:\\The Central Command\\Command Center\\Plug-ins"
+        },
+        "configuration": {
+          "valid": true,
+          "details": [
+            "No configuration files to validate"
+          ]
+        },
+        "dependencies": {
+          "valid": true,
+          "details": [
+            "Valid imports: 0",
+            "Invalid imports: 0"
+          ],
+          "imports": [],
+          "invalid_imports": []
+        },
+        "communication": {
+          "valid": true,
+          "details": [
+            "Communication test successful"
+          ],
+          "signal_id": "SIG-20251007_173250_760812"
+        },
+        "timestamp": "2025-10-07T17:32:50.759911"
+      },
+      "file_checksums": {},
+      "config_snapshots": {}
+    },
+    {
+      "timestamp": "2025-10-07T17:36:43.757444",
+      "validation_result": {
+        "system_address": "GEN-2.924",
+        "overall_valid": true,
+        "file_integrity": {
+          "valid": true,
+          "details": [
+            "File checksum: None"
+          ],
+          "checksum": null,
+          "file_path": "F:\\The Central Command\\Command Center\\Plug-ins"
+        },
+        "configuration": {
+          "valid": true,
+          "details": [
+            "No configuration files to validate"
+          ]
+        },
+        "dependencies": {
+          "valid": true,
+          "details": [
+            "Valid imports: 0",
+            "Invalid imports: 0"
+          ],
+          "imports": [],
+          "invalid_imports": []
+        },
+        "communication": {
+          "valid": true,
+          "details": [
+            "Communication test successful"
+          ],
+          "signal_id": "SIG-20251007_173643_757264"
+        },
+        "timestamp": "2025-10-07T17:36:43.756766"
+      },
+      "file_checksums": {},
+      "config_snapshots": {}
+    },
+    {
+      "timestamp": "2025-10-07T17:40:22.316722",
+      "validation_result": {
+        "system_address": "GEN-2.924",
+        "overall_valid": true,
+        "file_integrity": {
+          "valid": true,
+          "details": [
+            "File checksum: None"
+          ],
+          "checksum": null,
+          "file_path": "F:\\The Central Command\\Command Center\\Plug-ins"
+        },
+        "configuration": {
+          "valid": true,
+          "details": [
+            "No configuration files to validate"
+          ]
+        },
+        "dependencies": {
+          "valid": true,
+          "details": [
+            "Valid imports: 0",
+            "Invalid imports: 0"
+          ],
+          "imports": [],
+          "invalid_imports": []
+        },
+        "communication": {
+          "valid": true,
+          "details": [
+            "Communication test successful"
+          ],
+          "signal_id": "SIG-20251007_174022_316489"
+        },
+        "timestamp": "2025-10-07T17:40:22.316002"
+      },
+      "file_checksums": {},
+      "config_snapshots": {}
+    },
+    {
+      "timestamp": "2025-10-07T17:53:47.643620",
+      "validation_result": {
+        "system_address": "GEN-2.924",
+        "overall_valid": true,
+        "file_integrity": {
+          "valid": true,
+          "details": [
+            "File checksum: None"
+          ],
+          "checksum": null,
+          "file_path": "F:\\The Central Command\\Command Center\\Plug-ins"
+        },
+        "configuration": {
+          "valid": true,
+          "details": [
+            "No configuration files to validate"
+          ]
+        },
+        "dependencies": {
+          "valid": true,
+          "details": [
+            "Valid imports: 0",
+            "Invalid imports: 0"
+          ],
+          "imports": [],
+          "invalid_imports": []
+        },
+        "communication": {
+          "valid": true,
+          "details": [
+            "Communication test successful"
+          ],
+          "signal_id": "SIG-20251007_175347_643376"
+        },
+        "timestamp": "2025-10-07T17:53:47.642868"
+      },
+      "file_checksums": {},
+      "config_snapshots": {}
+    }
+  ]
+}

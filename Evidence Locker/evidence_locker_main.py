@@ -1,4 +1,13 @@
-﻿#!/usr/bin/env python3
+#!/usr/bin/env python3
+"""
+Evidence Locker Main - Enhanced with Universal Communication Protocol
+Standard Operating Procedure (SOP) for evidence processing communication
+"""
+
+import sys
+import os
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from universal_communicator import UniversalCommunicator
 
 
 
@@ -319,7 +328,7 @@ from datetime import datetime
 
 
 
-from typing import Dict, List, Any, Optional, Set
+from typing import Dict, List, Any, Optional, Set, Iterable
 
 
 
@@ -1120,6 +1129,8 @@ class EvidenceLocker:
 
 
     def __init__(self, ecc=None, gateway=None, bus=None):
+        # Initialize Universal Communication Protocol
+        self.communicator = UniversalCommunicator("1-1", bus_connection=bus)
 
 
 
@@ -1441,6 +1452,14 @@ class EvidenceLocker:
 
         self.processing_log = []
 
+        self._manifest_lock = getattr(self, "_manifest_lock", threading.Lock())
+        self.manifest_path = Path(os.getenv("DKI_EVIDENCE_MANIFEST", Path(__file__).with_name("evidence_manifest.json")))
+        self.manifest_path.parent.mkdir(parents=True, exist_ok=True)
+        self._manifest_meta = {"path": str(self.manifest_path), "updated_at": None}
+        if not hasattr(self, "evidence_manifest"):
+            self.evidence_manifest = {}
+        self._load_persisted_manifest()
+
 
 
 
@@ -1664,6 +1683,220 @@ class EvidenceLocker:
 
 
         self.logger.info("[EVIDENCE] Evidence Locker initialized with Central Command architecture")
+
+
+    def _load_persisted_manifest(self) -> None:
+        """Populate in-memory evidence cache from the persisted manifest (if available)."""
+        if not getattr(self, "manifest_path", None):
+            return
+        if not self.manifest_path.exists():
+            return
+        try:
+            with self.manifest_path.open("r", encoding="utf-8") as handle:
+                data = json.load(handle)
+        except Exception as exc:
+            self.logger.warning("Failed to load evidence manifest %s: %s", self.manifest_path, exc)
+            return
+        entries = data.get("entries")
+        with self._manifest_lock:
+            self.evidence_index.clear()
+            if hasattr(self, "evidence_manifest"):
+                self.evidence_manifest.clear()
+            if isinstance(entries, list):
+                for entry in entries:
+                    if not isinstance(entry, dict):
+                        continue
+                    evidence_id = entry.get("evidence_id")
+                    if not evidence_id:
+                        continue
+                    record = dict(entry)
+                    record.pop("evidence_id", None)
+                    self.evidence_index[evidence_id] = record
+                    if hasattr(self, "evidence_manifest"):
+                        self.evidence_manifest[evidence_id] = dict(record)
+            else:
+                legacy_index = data.get("evidence_index")
+                if isinstance(legacy_index, dict):
+                    for evidence_id, record in legacy_index.items():
+                        evidence_key = str(evidence_id)
+                        record_dict = dict(record) if isinstance(record, dict) else {}
+                        self.evidence_index[evidence_key] = record_dict
+                        if hasattr(self, "evidence_manifest"):
+                            self.evidence_manifest[evidence_key] = dict(record_dict)
+            self._manifest_meta["updated_at"] = data.get("updated_at")
+        loaded_count = len(self.evidence_index)
+        if loaded_count:
+            self.logger.info("[MANIFEST] Loaded %d evidence entries from %s", loaded_count, self.manifest_path)
+
+    def start_new_case(self, case_id: str) -> None:
+        """Clear evidence pool for new case"""
+        with self._manifest_lock:
+            # Clear in-memory cache
+            self.evidence_index.clear()
+            if hasattr(self, "evidence_manifest"):
+                self.evidence_manifest.clear()
+            
+            # Clear persistent manifest file
+            empty_manifest = {
+                "manifest_version": 1,
+                "updated_at": datetime.now().isoformat(),
+                "evidence_count": 0,
+                "entries": []
+            }
+            
+            with self.manifest_path.open("w", encoding="utf-8") as handle:
+                json.dump(empty_manifest, handle, indent=2)
+            
+            self.logger.info(f"[NEW CASE] Evidence pool cleared for case: {case_id}")
+
+    def clear_evidence_pool(self) -> None:
+        """Clear all evidence from pool"""
+        with self._manifest_lock:
+            # Clear in-memory cache
+            self.evidence_index.clear()
+            if hasattr(self, "evidence_manifest"):
+                self.evidence_manifest.clear()
+            
+            # Clear persistent manifest
+            empty_manifest = {
+                "manifest_version": 1,
+                "updated_at": datetime.now().isoformat(),
+                "evidence_count": 0,
+                "entries": []
+            }
+            
+            with self.manifest_path.open("w", encoding="utf-8") as handle:
+                json.dump(empty_manifest, handle, indent=2)
+            
+            self.logger.info("[CLEAR] Evidence pool cleared")
+
+    def _serialize_for_manifest(self, value: Any) -> Any:
+        if isinstance(value, dict):
+            return {str(k): self._serialize_for_manifest(v) for k, v in value.items()}
+        if isinstance(value, (list, tuple, set)):
+            return [self._serialize_for_manifest(v) for v in value]
+        if isinstance(value, Path):
+            return str(value)
+        if isinstance(value, datetime):
+            return value.isoformat()
+        if isinstance(value, bytes):
+            try:
+                return value.decode("utf-8")
+            except UnicodeDecodeError:
+                return value.decode("utf-8", "ignore")
+        if isinstance(value, (str, int, float, bool)) or value is None:
+            return value
+        return str(value)
+
+    def _normalize_manifest_entry(self, evidence_id: str, record: Dict[str, Any]) -> Dict[str, Any]:
+        normalized = {"evidence_id": evidence_id}
+        normalized.update(self._serialize_for_manifest(record))
+        classification = normalized.get("classification")
+        if isinstance(classification, dict):
+            normalized["classification"] = self._serialize_for_manifest(classification)
+            tags = classification.get("tags")
+        else:
+            tags = None
+        explicit_tags = normalized.get("tags")
+        if tags and not explicit_tags:
+            normalized["tags"] = self._serialize_for_manifest(tags)
+        related_sections = None
+        if isinstance(classification, dict):
+            related_sections = classification.get("related_sections")
+        if related_sections and "related_sections" not in normalized:
+            normalized["related_sections"] = self._serialize_for_manifest(related_sections)
+        return normalized
+
+    def _persist_manifest(self, *, already_locked: bool = False) -> None:
+        """Write the current evidence index to disk for cross-module access."""
+        def _write_payload() -> None:
+            payload_entries = [
+                self._normalize_manifest_entry(evidence_id, record)
+                for evidence_id, record in sorted(self.evidence_index.items())
+            ]
+            payload = {
+                "manifest_version": 1,
+                "updated_at": datetime.now().isoformat(),
+                "evidence_count": len(payload_entries),
+                "entries": payload_entries,
+            }
+            temp_path = self.manifest_path.with_suffix(self.manifest_path.suffix + ".tmp")
+            try:
+                with temp_path.open("w", encoding="utf-8") as handle:
+                    json.dump(payload, handle, indent=2, ensure_ascii=False)
+                temp_path.replace(self.manifest_path)
+                self._manifest_meta["updated_at"] = payload["updated_at"]
+            except Exception as exc:
+                if temp_path.exists():
+                    temp_path.unlink(missing_ok=True)
+                self.logger.error("Failed to persist evidence manifest %s: %s", self.manifest_path, exc)
+
+        if already_locked:
+            _write_payload()
+        else:
+            with self._manifest_lock:
+                _write_payload()
+
+    def _update_common_pool_cache(self, evidence_id: str, record: Dict[str, Any], *, already_locked: bool = False, persist: bool = True) -> None:
+        """Merge new evidence details into the in-memory cache and persist if requested."""
+        if not evidence_id or not isinstance(record, dict):
+            return
+
+        def _merge() -> None:
+            current = dict(self.evidence_index.get(evidence_id, {}))
+            current.update(record)
+            self.evidence_index[evidence_id] = current
+            if hasattr(self, "evidence_manifest"):
+                self.evidence_manifest[evidence_id] = dict(current)
+            if persist:
+                self._persist_manifest(already_locked=True)
+
+        if already_locked:
+            _merge()
+        else:
+            with self._manifest_lock:
+                _merge()
+
+    def get_structured_manifest(self) -> Dict[str, Any]:
+        """Return a structured snapshot of the persisted evidence manifest."""
+        with self._manifest_lock:
+            entries = [
+                self._normalize_manifest_entry(evidence_id, record)
+                for evidence_id, record in self.evidence_index.items()
+            ]
+            return {
+                "path": str(self.manifest_path),
+                "updated_at": self._manifest_meta.get("updated_at"),
+                "evidence_count": len(entries),
+                "entries": entries,
+            }
+
+    def get_common_pool(self, *, section: Optional[str] = None, tags: Optional[Iterable[str]] = None, include_related: bool = True, limit: Optional[int] = None) -> List[Dict[str, Any]]:
+        """Provide filtered view of the evidence pool for downstream controllers."""
+        normalized_section = str(section) if section else None
+        tag_filter = {str(tag).lower() for tag in tags} if tags else None
+        results: List[Dict[str, Any]] = []
+        with self._manifest_lock:
+            for evidence_id, record in self.evidence_index.items():
+                entry = self._normalize_manifest_entry(evidence_id, record)
+                if normalized_section:
+                    primary = str(entry.get("assigned_section") or entry.get("section_hint") or "")
+                    related = {str(candidate) for candidate in entry.get("related_sections") or []}
+                    if primary != normalized_section and not (include_related and normalized_section in related):
+                        continue
+                if tag_filter:
+                    entry_tags = {str(tag).lower() for tag in entry.get("tags") or []}
+                    classification_tags = []
+                    classification = entry.get("classification")
+                    if isinstance(classification, dict):
+                        classification_tags = classification.get("tags") or []
+                    entry_tags.update(str(tag).lower() for tag in classification_tags or [])
+                    if not entry_tags.intersection(tag_filter):
+                        continue
+                results.append(entry)
+                if limit and len(results) >= limit:
+                    break
+        return results
 
 
 
@@ -3992,6 +4225,7 @@ class EvidenceLocker:
 
 
             self.evidence_index[evidence_id] = record
+            self._update_common_pool_cache(evidence_id, record)
 
 
 
@@ -9159,6 +9393,7 @@ class EvidenceLocker:
 
 
 
+        self._update_common_pool_cache(evidence_id, self.evidence_index[evidence_id])
         self.logger.info(f"[INDEX] Evidence {evidence_id} indexed to {assigned_section} - {section_metadata.get('title', 'Unknown')}")
 
 
@@ -16873,9 +17108,101 @@ class EvidenceLocker:
 
             return False
 
+    # ------------------------------------------------------------------
+    # Universal Communication Protocol Methods
+    # ------------------------------------------------------------------
+    def process_evidence_with_communication(self, evidence_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Process evidence using universal communication protocol"""
+        try:
+            # Send evidence received signal
+            self.communicator.send_signal(
+                target_address="2-1",  # ECC
+                radio_code="10-6",
+                message="Evidence received for processing",
+                payload={"evidence_data": evidence_data}
+            )
+            
+            # Process evidence
+            result = self.process_evidence(evidence_data)
+            
+            # Send evidence complete signal
+            self.communicator.send_signal(
+                target_address="2-1",  # ECC
+                radio_code="10-8",
+                message="Evidence processing complete",
+                payload={"result": result}
+            )
+            
+            return result
+            
+        except Exception as e:
+            # Send SOS fault with precise diagnostic code
+            fault_code = f"1-1-30-{self._get_line_number()}"
+            self.communicator.send_sos_fault(
+                fault_code=fault_code,
+                description=f"Evidence processing error: {str(e)}",
+                details={"error": str(e), "evidence_data": evidence_data}
+            )
+            raise
+
+    def start_new_case_with_communication(self, case_id: str) -> None:
+        """Start new case using universal communication protocol"""
+        try:
+            # Send case start signal
+            self.communicator.send_signal(
+                target_address="Bus-1",
+                radio_code="10-4",
+                message=f"Starting new case: {case_id}",
+                payload={"case_id": case_id, "operation": "start_new_case"}
+            )
+            
+            # Clear evidence pool
+            self.start_new_case(case_id)
+            
+            # Send case start complete signal
+            self.communicator.send_signal(
+                target_address="Bus-1",
+                radio_code="10-8",
+                message=f"New case started: {case_id}",
+                payload={"case_id": case_id, "status": "complete"}
+            )
+            
+        except Exception as e:
+            # Send SOS fault
+            fault_code = f"1-1-30-{self._get_line_number()}"
+            self.communicator.send_sos_fault(
+                fault_code=fault_code,
+                description=f"Case start error: {str(e)}",
+                details={"case_id": case_id, "error": str(e)}
+            )
+            raise
+
+    def get_communication_status(self) -> Dict[str, Any]:
+        """Get communication status for health monitoring"""
+        return {
+            "address": "1-1",
+            "status": "ACTIVE",
+            "last_check": self.communicator.get_module_status()["last_check"],
+            "communication_log_count": len(self.communicator.communication_log),
+            "active_signals_count": len(self.communicator.active_signals)
+        }
+
+    def _get_line_number(self) -> int:
+        """Get current line number for fault reporting"""
+        import inspect
+        frame = inspect.currentframe()
+        caller_frame = frame.f_back.f_back if frame.f_back else frame
+        return caller_frame.f_lineno
+
 
 from bus_extensions import inject_bus_extensions
 inject_bus_extensions(EvidenceLocker)
+
+
+
+
+
+
 
 
 

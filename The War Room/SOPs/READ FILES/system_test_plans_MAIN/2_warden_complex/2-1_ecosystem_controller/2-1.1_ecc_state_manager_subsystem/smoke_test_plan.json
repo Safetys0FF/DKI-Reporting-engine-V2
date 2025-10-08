@@ -1,0 +1,117 @@
+{
+  "test_plan": {
+    "system_name": "ECC State Manager Subsystem",
+    "system_address": "2-1.1",
+    "parent_system": "ECC (2-1)",
+    "test_type": "smoke_test",
+    "version": "1.0",
+    "created": "2025-10-05",
+    "description": "Basic functionality validation for ECC State Manager subsystem",
+    "test_data_location": "./test_data/",
+    "expected_results_location": "./expected_results/",
+    "test_vectors": [
+      {
+        "test_id": "ESM_SMOKE_001",
+        "test_name": "Subsystem Initialization",
+        "description": "Verify ECC State Manager can initialize independently",
+        "test_method": "initialize_ecc_state_manager",
+        "input_parameters": {
+          "state_modes": ["active", "standby", "maintenance", "error"],
+          "state_persistence": true
+        },
+        "expected_result": {
+          "status": "SUCCESS",
+          "state_manager_initialized": true,
+          "state_modes_configured": true,
+          "state_persistence_active": true
+        },
+        "timeout_seconds": 5,
+        "retry_count": 3,
+        "critical": true
+      },
+      {
+        "test_id": "ESM_SMOKE_002",
+        "test_name": "State Transition Management",
+        "description": "Test state transition functionality",
+        "test_method": "manage_state_transition",
+        "input_parameters": {
+          "transition_data": {
+            "from_state": "standby",
+            "to_state": "active",
+            "transition_reason": "system_startup"
+          }
+        },
+        "expected_result": {
+          "status": "SUCCESS",
+          "state_transitioned": true,
+          "transition_valid": true,
+          "state_persisted": true,
+          "transition_logged": true
+        },
+        "timeout_seconds": 3,
+        "retry_count": 2,
+        "critical": true
+      },
+      {
+        "test_id": "ESM_SMOKE_003",
+        "test_name": "State Validation",
+        "description": "Test state validation functionality",
+        "test_method": "validate_state",
+        "input_parameters": {
+          "validation_data": {
+            "current_state": "active",
+            "validation_rules": ["state_consistency", "permission_check", "dependency_verification"]
+          }
+        },
+        "expected_result": {
+          "status": "SUCCESS",
+          "state_validated": true,
+          "validation_rules_passed": true,
+          "state_consistent": true,
+          "validation_report_generated": true
+        },
+        "timeout_seconds": 3,
+        "retry_count": 2,
+        "critical": true
+      },
+      {
+        "test_id": "ESM_SMOKE_004",
+        "test_name": "State Recovery",
+        "description": "Test state recovery functionality",
+        "test_method": "recover_state",
+        "input_parameters": {
+          "recovery_data": {
+            "target_state": "active",
+            "recovery_method": "automatic",
+            "backup_available": true
+          }
+        },
+        "expected_result": {
+          "status": "SUCCESS",
+          "state_recovered": true,
+          "recovery_successful": true,
+          "state_restored": true,
+          "recovery_logged": true
+        },
+        "timeout_seconds": 5,
+        "retry_count": 2,
+        "critical": false
+      }
+    ],
+    "performance_metrics": {
+      "initialization_time_max_ms": 5000,
+      "state_transition_time_max_ms": 3000,
+      "state_validation_time_max_ms": 3000,
+      "state_recovery_time_max_ms": 5000,
+      "memory_usage_max_mb": 50,
+      "cpu_usage_max_percent": 10
+    },
+    "test_environment": {
+      "required_files": [],
+      "required_directories": [
+        "./test_data/",
+        "./expected_results/"
+      ]
+    }
+  }
+}

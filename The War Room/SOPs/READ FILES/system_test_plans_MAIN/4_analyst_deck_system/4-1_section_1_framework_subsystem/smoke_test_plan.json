@@ -1,0 +1,130 @@
+{
+  "test_plan": {
+    "system_name": "Section 1 Framework Subsystem",
+    "system_address": "4-1.1",
+    "parent_system": "Analyst Deck (4-1)",
+    "test_type": "smoke_test",
+    "version": "1.0",
+    "created": "2025-10-05",
+    "description": "Basic functionality validation for Section 1 Framework subsystem",
+    "test_data_location": "./test_data/",
+    "expected_results_location": "./expected_results/",
+    "test_vectors": [
+      {
+        "test_id": "S1F_SMOKE_001",
+        "test_name": "Subsystem Initialization",
+        "description": "Verify Section 1 Framework can initialize independently",
+        "test_method": "initialize_section_1_framework",
+        "input_parameters": {
+          "section_type": "executive_summary",
+          "framework_mode": "standard"
+        },
+        "expected_result": {
+          "status": "SUCCESS",
+          "section_1_framework_initialized": true,
+          "section_type_set": true,
+          "framework_mode_active": true
+        },
+        "timeout_seconds": 3,
+        "retry_count": 3,
+        "critical": true
+      },
+      {
+        "test_id": "S1F_SMOKE_002",
+        "test_name": "Executive Summary Processing",
+        "description": "Test executive summary processing functionality",
+        "test_method": "process_executive_summary",
+        "input_parameters": {
+          "summary_data": {
+            "case_id": "S1F_TEST_CASE_001",
+            "case_summary": "Test case summary for executive summary",
+            "key_findings": ["finding_1", "finding_2", "finding_3"],
+            "recommendations": ["recommendation_1", "recommendation_2"],
+            "word_count_target": 500
+          }
+        },
+        "expected_result": {
+          "status": "SUCCESS",
+          "executive_summary_processed": true,
+          "key_findings_included": true,
+          "recommendations_included": true,
+          "word_count_acceptable": true,
+          "summary_format_valid": true
+        },
+        "timeout_seconds": 8,
+        "retry_count": 2,
+        "critical": true
+      },
+      {
+        "test_id": "S1F_SMOKE_003",
+        "test_name": "Content Structure Validation",
+        "description": "Test content structure validation",
+        "test_method": "validate_content_structure",
+        "input_parameters": {
+          "structure_data": {
+            "content_id": "S1F_CONTENT_001",
+            "validation_rules": [
+              "executive_summary_present",
+              "key_findings_listed",
+              "recommendations_provided",
+              "word_count_appropriate"
+            ]
+          }
+        },
+        "expected_result": {
+          "status": "SUCCESS",
+          "content_structure_validated": true,
+          "all_rules_passed": true,
+          "structure_compliance": ">=0.95",
+          "validation_report_generated": true
+        },
+        "timeout_seconds": 5,
+        "retry_count": 2,
+        "critical": true
+      },
+      {
+        "test_id": "S1F_SMOKE_004",
+        "test_name": "Output Formatting",
+        "description": "Test output formatting and presentation",
+        "test_method": "format_output",
+        "input_parameters": {
+          "formatting_data": {
+            "content_id": "S1F_CONTENT_001",
+            "format_options": {
+              "include_headings": true,
+              "include_bullet_points": true,
+              "include_numbering": true,
+              "apply_styling": true
+            }
+          }
+        },
+        "expected_result": {
+          "status": "SUCCESS",
+          "output_formatted": true,
+          "headings_applied": true,
+          "bullet_points_formatted": true,
+          "numbering_applied": true,
+          "styling_consistent": true
+        },
+        "timeout_seconds": 3,
+        "retry_count": 2,
+        "critical": false
+      }
+    ],
+    "performance_metrics": {
+      "initialization_time_max_ms": 3000,
+      "executive_summary_processing_time_max_ms": 8000,
+      "content_structure_validation_time_max_ms": 5000,
+      "output_formatting_time_max_ms": 3000,
+      "memory_usage_max_mb": 50,
+      "cpu_usage_max_percent": 10
+    },
+    "test_environment": {
+      "required_files": [],
+      "required_directories": [
+        "./test_data/",
+        "./expected_results/"
+      ]
+    }
+  }
+}

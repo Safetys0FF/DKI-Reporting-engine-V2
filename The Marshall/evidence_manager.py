@@ -56,10 +56,43 @@ from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
+CONFIG_PATH = r"F:\The Central Command\The Warden\section_tag_map.json"
+
+try:
+    with open(CONFIG_PATH, 'r', encoding='utf-8') as config_file:
+        SECTION_TAGS = json.load(config_file)
+except (OSError, json.JSONDecodeError):
+    SECTION_TAGS = {}
 
 
 
 
+
+
+
+
+NORMALIZE_TAGS = {
+    "supporting_documents": "supporting-documents",
+    "evidence_index": "media-photo",
+    "intakeform": "intake-form",
+    "dailylog": "daily-log",
+}
+
+
+def normalize_tags(tags: List[str]) -> List[str]:
+    normalized = []
+    for tag in tags or []:
+        if not isinstance(tag, str):
+            continue
+        key = tag.strip().lower()
+        normalized.append(NORMALIZE_TAGS.get(key, key))
+    unique: List[str] = []
+    seen: Set[str] = set()
+    for tag in normalized:
+        if tag and tag not in seen:
+            seen.add(tag)
+            unique.append(tag)
+    return unique
 
 
 class EvidenceManager:
@@ -74,7 +107,7 @@ class EvidenceManager:
 
 
 
-    def __init__(self, ecc=None, gateway=None, evidence_builder=None, ai_orchestrator=None):
+    def __init__(self, ecc=None, gateway=None, evidence_builder=None, ai_orchestrator=None, bus=None):
 
 
 
@@ -83,6 +116,10 @@ class EvidenceManager:
 
 
         self.gateway = gateway
+
+
+
+        self.bus = bus or getattr(gateway, 'bus', None)
 
 
 
@@ -114,7 +151,7 @@ class EvidenceManager:
 
 
 
-        
+        self.delivery_queue = []
 
 
 
@@ -145,6 +182,12 @@ class EvidenceManager:
         
 
 
+
+        if self.bus and hasattr(self.bus, 'register_signal'):
+            try:
+                self.bus.register_signal('section.data.updated', self._handle_section_data_updated)
+            except Exception as exc:
+                self.logger.warning('Failed to register section.data.updated handler: %s', exc)
 
         self.logger.info("EvidenceManager initialized")
 
@@ -1861,6 +1904,49 @@ class EvidenceManager:
 
 
 
+    def _handle_section_data_updated(self, payload: Dict[str, Any]) -> None:
+        if not isinstance(payload, dict):
+            return
+        inner = payload.get('payload') if isinstance(payload.get('payload'), dict) else None
+        section = (payload.get('section') or payload.get('section_id') or (inner or {}).get('section') or (inner or {}).get('section_id'))
+        evidence_id = (payload.get('evidence_id') or (inner or {}).get('evidence_id'))
+        if not section or not evidence_id:
+            return
+        section = str(section)
+        evidence_id = str(evidence_id)
+        self.delivery_queue.append((section, evidence_id))
+        if len(self.delivery_queue) > 200:
+            self.delivery_queue = self.delivery_queue[-200:]
+        raw_tags = payload.get('tags') or (inner or {}).get('tags') or []
+        normalized_tags = normalize_tags(raw_tags) if raw_tags else []
+        summary = (payload.get('summary') or (inner or {}).get('summary') or
+                   payload.get('filename') or (inner or {}).get('filename') or
+                   payload.get('file_path') or (inner or {}).get('file_path') or evidence_id)
+        try:
+            summary = Path(str(summary)).name
+        except Exception:
+            summary = str(summary)
+        status = payload.get('status') or (inner or {}).get('status') or 'delivered'
+        message = {
+            'section': section,
+            'evidence_id': evidence_id,
+            'summary': summary,
+            'status': status,
+        }
+        if normalized_tags:
+            message['tags'] = normalized_tags
+        emitter = None
+        if self.bus and hasattr(self.bus, 'emit'):
+            emitter = self.bus.emit
+        elif self.gateway and hasattr(self.gateway, 'emit'):
+            emitter = self.gateway.emit
+        if emitter:
+            try:
+                emitter('evidence.deliver', message)
+            except Exception as exc:
+                self.logger.warning('Failed to emit evidence.deliver: %s', exc)
+
+
     def distribute_evidence(self, evidence_id: str, target_section_id: str) -> bool:
 
 
@@ -1905,7 +1991,9 @@ class EvidenceManager:
 
 
 
-            
+            metadata = evidence_record.setdefault('metadata', {})
+            if 'tags' in metadata:
+                metadata['tags'] = normalize_tags(metadata.get('tags'))
 
 
 
@@ -1949,7 +2037,7 @@ class EvidenceManager:
 
 
 
-                        evidence_record.get('metadata', {}).get('tags', []),
+                        normalize_tags(evidence_record.get('metadata', {}).get('tags', [])),
 
 
 
@@ -2257,6 +2345,10 @@ class EvidenceManager:
 
 
 
+            'delivery_queue_count': len(self.delivery_queue),
+
+
+
             'ecc_connected': bool(self.ecc),
 
 
@@ -2377,7 +2469,7 @@ class EvidenceManager:
 
 
 
-def create_evidence_manager(ecc, gateway, evidence_builder=None):
+def create_evidence_manager(ecc, gateway, evidence_builder=None, bus=None):
 
 
 
@@ -2397,7 +2489,11 @@ def create_evidence_manager(ecc, gateway, evidence_builder=None):
 
 
 
-        evidence_builder=evidence_builder
+        evidence_builder=evidence_builder,
+
+
+
+        bus=bus
 
 
 

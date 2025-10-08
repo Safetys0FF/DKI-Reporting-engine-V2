@@ -1,0 +1,494 @@
+{
+  "system_registry": {
+    "metadata": {
+      "version": "1.0.0",
+      "last_updated": "2025-10-05",
+      "total_systems": 29,
+      "connected_systems": 29,
+      "missing_systems": 24,
+      "connection_percentage": 55
+    },
+    "connected_systems": {
+      "Bus-1": {
+        "name": "Central Command Bus",
+        "handler": "bus_core.DKIReportBus",
+        "address": "Bus-1",
+        "parent": null,
+        "status": "ACTIVE",
+        "location": "F:/The Central Command/Command Center/Data Bus/Bus Core Design/bus_core.py",
+        "last_check": null,
+        "test_plans": []
+      },
+      "Bus-1.1": {
+        "name": "Universal Communicator",
+        "handler": "universal_communicator.UniversalCommunicator",
+        "address": "Bus-1.1",
+        "parent": "Bus-1",
+        "status": "ACTIVE",
+        "location": "F:/The Central Command/Command Center/Data Bus/universal_communicator.py",
+        "last_check": null,
+        "test_plans": []
+      },
+      "1-1": {
+        "name": "Evidence Locker Main",
+        "handler": "evidence_locker_main.EvidenceLocker",
+        "address": "1-1",
+        "parent": null,
+        "status": "ACTIVE",
+        "location": "F:/The Central Command/Evidence Locker/evidence_locker_main.py",
+        "last_check": null,
+        "test_plans": []
+      },
+      "1-1.1": {
+        "name": "Evidence Classifier",
+        "handler": "evidence_classifier.EvidenceClassifier",
+        "address": "1-1.1",
+        "parent": "1-1",
+        "status": "ACTIVE",
+        "location": "F:/The Central Command/Evidence Locker/evidence_classifier.py",
+        "last_check": null,
+        "test_plans": []
+      },
+      "1-1.3": {
+        "name": "Static Data Flow",
+        "handler": "static_data_flow.StaticDataFlow",
+        "address": "1-1.3",
+        "parent": "1-1",
+        "status": "ACTIVE",
+        "location": "F:/The Central Command/Evidence Locker/static_data_flow.py",
+        "last_check": null,
+        "test_plans": []
+      },
+      "1-1.4": {
+        "name": "Evidence Index",
+        "handler": "evidence_index.EvidenceIndex",
+        "address": "1-1.4",
+        "parent": "1-1",
+        "status": "ACTIVE",
+        "location": "F:/The Central Command/Evidence Locker/evidence_index.py",
+        "last_check": null,
+        "test_plans": []
+      },
+      "1-1.6": {
+        "name": "Evidence Class Builder",
+        "handler": "evidence_class_builder.EvidenceClassBuilder",
+        "address": "1-1.6",
+        "parent": "1-1",
+        "status": "ACTIVE",
+        "location": "F:/The Central Command/Evidence Locker/evidence_class_builder.py",
+        "last_check": null,
+        "test_plans": []
+      },
+      "1-1.7": {
+        "name": "Case Manifest Builder",
+        "handler": "case_manifest_builder.CaseManifestBuilder",
+        "address": "1-1.7",
+        "parent": "1-1",
+        "status": "ACTIVE",
+        "location": "F:/The Central Command/Evidence Locker/case_manifest_builder.py",
+        "last_check": null,
+        "test_plans": []
+      },
+      "2-1": {
+        "name": "Ecosystem Controller",
+        "handler": "ecosystem_controller.EcosystemController",
+        "address": "2-1",
+        "parent": null,
+        "status": "ACTIVE",
+        "location": "F:/The Central Command/The Warden/ecosystem_controller.py",
+        "last_check": null,
+        "test_plans": []
+      },
+      "2-2": {
+        "name": "Gateway Controller",
+        "handler": "gateway_controller.GatewayController",
+        "address": "2-2",
+        "parent": null,
+        "status": "ACTIVE",
+        "location": "F:/The Central Command/The Warden/gateway_controller.py",
+        "last_check": null,
+        "test_plans": []
+      },
+      "3-1": {
+        "name": "Mission Debrief Manager",
+        "handler": "mission_debrief_manager.MissionDebriefManager",
+        "address": "3-1",
+        "parent": null,
+        "status": "ACTIVE",
+        "location": "F:/The Central Command/Command Center/Mission Debrief/Debrief/README/mission_debrief_manager.py",
+        "last_check": null,
+        "test_plans": []
+      },
+      "3-1.1": {
+        "name": "Report Generator",
+        "handler": "report_generator.ReportGenerator",
+        "address": "3-1.1",
+        "parent": "3-1",
+        "status": "ACTIVE",
+        "location": "F:/The Central Command/Command Center/Mission Debrief/report generator/report_generator.py",
+        "last_check": null,
+        "test_plans": []
+      },
+      "3-2": {
+        "name": "The Librarian",
+        "handler": "narrative_assembler.NarrativeAssembler",
+        "address": "3-2",
+        "parent": null,
+        "status": "ACTIVE",
+        "location": "F:/The Central Command/Command Center/Mission Debrief/The Librarian/narrative_assembler.py",
+        "last_check": null,
+        "test_plans": []
+      },
+      "4-1": {
+        "name": "Section 1 Framework",
+        "handler": "section_1_framework.Section1Framework",
+        "address": "4-1",
+        "parent": null,
+        "status": "ACTIVE",
+        "location": "F:/The Central Command/The Analyst Deck/Analyst 1/section_1_framework.py",
+        "last_check": null,
+        "test_plans": []
+      },
+      "4-2": {
+        "name": "Section 2 Framework",
+        "handler": "section_2_framework.Section2Framework",
+        "address": "4-2",
+        "parent": null,
+        "status": "ACTIVE",
+        "location": "F:/The Central Command/The Analyst Deck/Analyst 2/section_2_framework.py",
+        "last_check": null,
+        "test_plans": []
+      },
+      "4-3": {
+        "name": "Section 3 Framework",
+        "handler": "section_3_framework.Section3Framework",
+        "address": "4-3",
+        "parent": null,
+        "status": "ACTIVE",
+        "location": "F:/The Central Command/The Analyst Deck/Analyst 3/section_3_framework.py",
+        "last_check": null,
+        "test_plans": []
+      },
+      "4-4": {
+        "name": "Section 4 Framework",
+        "handler": "section_4_framework.Section4Framework",
+        "address": "4-4",
+        "parent": null,
+        "status": "ACTIVE",
+        "location": "F:/The Central Command/The Analyst Deck/Analyst 4/section_4_framework.py",
+        "last_check": null,
+        "test_plans": []
+      },
+      "4-5": {
+        "name": "Section 5 Framework",
+        "handler": "section_5_framework.Section5Framework",
+        "address": "4-5",
+        "parent": null,
+        "status": "ACTIVE",
+        "location": "F:/The Central Command/The Analyst Deck/Analyst 5/section_5_framework.py",
+        "last_check": null,
+        "test_plans": []
+      },
+      "4-6": {
+        "name": "Section 6 Framework",
+        "handler": "section_6_framework.Section6Framework",
+        "address": "4-6",
+        "parent": null,
+        "status": "ACTIVE",
+        "location": "F:/The Central Command/The Analyst Deck/Analyst 6/section_6_framework.py",
+        "last_check": null,
+        "test_plans": []
+      },
+      "4-7": {
+        "name": "Section 7 Framework",
+        "handler": "section_7_framework.Section7Framework",
+        "address": "4-7",
+        "parent": null,
+        "status": "ACTIVE",
+        "location": "F:/The Central Command/The Analyst Deck/Analyst 7/section_7_framework.py",
+        "last_check": null,
+        "test_plans": []
+      },
+      "4-8": {
+        "name": "Section 8 Framework",
+        "handler": "section_8_framework.Section8Framework",
+        "address": "4-8",
+        "parent": null,
+        "status": "ACTIVE",
+        "location": "F:/The Central Command/The Analyst Deck/Analyst 8/section_8_framework.py",
+        "last_check": null,
+        "test_plans": []
+      },
+      "4-CP": {
+        "name": "Cover Page Framework",
+        "handler": "section_cp_framework.SectionCPFramework",
+        "address": "4-CP",
+        "parent": null,
+        "status": "ACTIVE",
+        "location": "F:/The Central Command/Command Center/Mission Debrief/Debrief/productions/section_cp_framework.py",
+        "last_check": null,
+        "test_plans": []
+      },
+      "4-TOC": {
+        "name": "Table of Contents Framework",
+        "handler": "section_toc_framework.SectionTOCFramework",
+        "address": "4-TOC",
+        "parent": null,
+        "status": "ACTIVE",
+        "location": "F:/The Central Command/Command Center/Mission Debrief/The Librarian/Mission_Ops/section_toc_framework.py",
+        "last_check": null,
+        "test_plans": []
+      },
+      "4-DP": {
+        "name": "Disclosure Page Framework",
+        "handler": "section_dp_framework.SectionDPFramework",
+        "address": "4-DP",
+        "parent": null,
+        "status": "ACTIVE",
+        "location": "F:/The Central Command/Command Center/Mission Debrief/Debrief/productions/section_dp_framework.py",
+        "last_check": null,
+        "test_plans": []
+      },
+      "5-1": {
+        "name": "Evidence Manager",
+        "handler": "evidence_manager.EvidenceManager",
+        "address": "5-1",
+        "parent": null,
+        "status": "ACTIVE",
+        "location": "F:/The Central Command/The Marshall/evidence_manager.py",
+        "last_check": null,
+        "test_plans": []
+      },
+      "5-3": {
+        "name": "Section Controller",
+        "handler": "section_controller.SectionController",
+        "address": "5-3",
+        "parent": null,
+        "status": "ACTIVE",
+        "location": "F:/The Central Command/The Marshall/Evidence_Checkout/section_controller.py",
+        "last_check": null,
+        "test_plans": []
+      },
+      "7-1": {
+        "name": "Enhanced Functional GUI",
+        "handler": "enhanced_functional_gui.EnhancedFunctionalGUI",
+        "address": "7-1",
+        "parent": null,
+        "status": "ACTIVE",
+        "location": "F:/The Central Command/Command Center/UI/enhanced_functional_gui.py",
+        "last_check": null,
+        "test_plans": []
+      }
+    },
+    "missing_systems": {
+      "1-1.2": {
+        "name": "Evidence Identifier",
+        "handler": "evidence_identifier.EvidenceIdentifier",
+        "address": "1-1.2",
+        "parent": "1-1",
+        "status": "MISSING",
+        "reason": "Handler file does not exist"
+      },
+      "1-1.5": {
+        "name": "Evidence Manifest",
+        "handler": "evidence_manifest.EvidenceManifest",
+        "address": "1-1.5",
+        "parent": "1-1",
+        "status": "MISSING",
+        "reason": "Only JSON file exists, no Python handler"
+      },
+      "1-1.8": {
+        "name": "OCR Processor",
+        "handler": "ocr_processor.OCRProcessor",
+        "address": "1-1.8",
+        "parent": "1-1",
+        "status": "MISSING",
+        "reason": "Handler file does not exist"
+      },
+      "2-1.1": {
+        "name": "ECC State Manager",
+        "handler": "ecc_state_manager.ECCStateManager",
+        "address": "2-1.1",
+        "parent": "2-1",
+        "status": "MISSING",
+        "reason": "Handler file does not exist"
+      },
+      "2-1.2": {
+        "name": "ECC Dependency Tracker",
+        "handler": "ecc_dependency_tracker.ECCDependencyTracker",
+        "address": "2-1.2",
+        "parent": "2-1",
+        "status": "MISSING",
+        "reason": "Handler file does not exist"
+      },
+      "2-1.3": {
+        "name": "ECC Execution Order",
+        "handler": "ecc_execution_order.ECCExecutionOrder",
+        "address": "2-1.3",
+        "parent": "2-1",
+        "status": "MISSING",
+        "reason": "Handler file does not exist"
+      },
+      "2-1.4": {
+        "name": "ECC Permission Controller",
+        "handler": "ecc_permission_controller.ECCPermissionController",
+        "address": "2-1.4",
+        "parent": "2-1",
+        "status": "MISSING",
+        "reason": "Handler file does not exist"
+      },
+      "2-2.1": {
+        "name": "Gateway Signal Dispatcher",
+        "handler": "gateway_signal_dispatcher.GatewaySignalDispatcher",
+        "address": "2-2.1",
+        "parent": "2-2",
+        "status": "MISSING",
+        "reason": "Handler file does not exist"
+      },
+      "2-2.2": {
+        "name": "Gateway Section Router",
+        "handler": "gateway_section_router.GatewaySectionRouter",
+        "address": "2-2.2",
+        "parent": "2-2",
+        "status": "MISSING",
+        "reason": "Handler file does not exist"
+      },
+      "2-2.3": {
+        "name": "Gateway Evidence Pipeline",
+        "handler": "gateway_evidence_pipeline.GatewayEvidencePipeline",
+        "address": "2-2.3",
+        "parent": "2-2",
+        "status": "MISSING",
+        "reason": "Handler file does not exist"
+      },
+      "2-2.4": {
+        "name": "Gateway Bottleneck Monitor",
+        "handler": "gateway_bottleneck_monitor.GatewayBottleneckMonitor",
+        "address": "2-2.4",
+        "parent": "2-2",
+        "status": "MISSING",
+        "reason": "Handler file does not exist"
+      },
+      "3-1.2": {
+        "name": "Digital Signing",
+        "handler": "digital_signing.DigitalSigning",
+        "address": "3-1.2",
+        "parent": "3-1",
+        "status": "MISSING",
+        "reason": "Handler file does not exist"
+      },
+      "3-1.3": {
+        "name": "Template Engine",
+        "handler": "template_engine.TemplateEngine",
+        "address": "3-1.3",
+        "parent": "3-1",
+        "status": "MISSING",
+        "reason": "Handler file does not exist"
+      },
+      "3-1.4": {
+        "name": "Watermark System",
+        "handler": "watermark_system.WatermarkSystem",
+        "address": "3-1.4",
+        "parent": "3-1",
+        "status": "MISSING",
+        "reason": "Handler file does not exist"
+      },
+      "3-2.2": {
+        "name": "Template Cache",
+        "handler": "template_cache.TemplateCache",
+        "address": "3-2.2",
+        "parent": "3-2",
+        "status": "MISSING",
+        "reason": "Handler file does not exist"
+      },
+      "3-2.3": {
+        "name": "Document Processor",
+        "handler": "document_processor.DocumentProcessor",
+        "address": "3-2.3",
+        "parent": "3-2",
+        "status": "MISSING",
+        "reason": "Handler file does not exist"
+      },
+      "3-2.4": {
+        "name": "OSINT Engine",
+        "handler": "osint_engine.OSINTEngine",
+        "address": "3-2.4",
+        "parent": "3-2",
+        "status": "MISSING",
+        "reason": "Handler file does not exist"
+      },
+      "7-1.1": {
+        "name": "UI Controller",
+        "handler": "ui_controller.UIController",
+        "address": "7-1.1",
+        "parent": "7-1",
+        "status": "MISSING",
+        "reason": "Should be integrated into enhanced_functional_gui.py"
+      },
+      "7-1.2": {
+        "name": "Case Management Interface",
+        "handler": "case_management_interface.CaseManagementInterface",
+        "address": "7-1.2",
+        "parent": "7-1",
+        "status": "MISSING",
+        "reason": "Should be integrated into enhanced_functional_gui.py"
+      },
+      "7-1.3": {
+        "name": "Evidence Display Interface",
+        "handler": "evidence_display_interface.EvidenceDisplayInterface",
+        "address": "7-1.3",
+        "parent": "7-1",
+        "status": "MISSING",
+        "reason": "Should be integrated into enhanced_functional_gui.py"
+      },
+      "7-1.4": {
+        "name": "Section Review Interface",
+        "handler": "section_review_interface.SectionReviewInterface",
+        "address": "7-1.4",
+        "parent": "7-1",
+        "status": "MISSING",
+        "reason": "Should be integrated into enhanced_functional_gui.py"
+      },
+      "7-1.5": {
+        "name": "Report Generation Interface",
+        "handler": "report_generation_interface.ReportGenerationInterface",
+        "address": "7-1.5",
+        "parent": "7-1",
+        "status": "MISSING",
+        "reason": "Should be integrated into enhanced_functional_gui.py"
+      },
+      "7-1.6": {
+        "name": "System Status Interface",
+        "handler": "system_status_interface.SystemStatusInterface",
+        "address": "7-1.6",
+        "parent": "7-1",
+        "status": "MISSING",
+        "reason": "Should be integrated into enhanced_functional_gui.py"
+      },
+      "7-1.7": {
+        "name": "Error Display Interface",
+        "handler": "error_display_interface.ErrorDisplayInterface",
+        "address": "7-1.7",
+        "parent": "7-1",
+        "status": "MISSING",
+        "reason": "Should be integrated into enhanced_functional_gui.py"
+      },
+      "7-1.8": {
+        "name": "Progress Monitoring Interface",
+        "handler": "progress_monitoring_interface.ProgressMonitoringInterface",
+        "address": "7-1.8",
+        "parent": "7-1",
+        "status": "MISSING",
+        "reason": "Should be integrated into enhanced_functional_gui.py"
+      },
+      "7-1.9": {
+        "name": "Health Monitor",
+        "handler": "health_monitor.HealthMonitor",
+        "address": "7-1.9",
+        "parent": "7-1",
+        "status": "MISSING",
+        "reason": "Should be integrated into enhanced_functional_gui.py"
+      }
+    }
+  }
+}

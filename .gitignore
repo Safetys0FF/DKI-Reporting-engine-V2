@@ -1,0 +1,10 @@
+__pycache__/
+*.log
+*.backup_*
+*.md.bak
+*.json.bak
+*.pyc
+.env
+venv/
+library/
+system_logs/

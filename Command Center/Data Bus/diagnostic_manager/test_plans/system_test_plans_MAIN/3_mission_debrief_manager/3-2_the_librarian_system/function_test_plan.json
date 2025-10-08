@@ -1,0 +1,206 @@
+{
+  "test_plan": {
+    "system_name": "Mission Debrief",
+    "system_address": "3-1",
+    "test_type": "function_test",
+    "version": "1.0",
+    "created": "2025-10-05",
+    "description": "Comprehensive functional testing for Mission Debrief system",
+    "test_data_location": "./test_data/",
+    "expected_results_location": "./expected_results/",
+    "test_vectors": [
+      {
+        "test_id": "MD_FUNC_001",
+        "test_name": "Complex Report Generation",
+        "description": "Test full report generation with complex multi-section content",
+        "test_method": "generate_complex_report",
+        "input_parameters": {
+          "complex_report_data": {
+            "case_id": "MD_COMPLEX_TEST_001",
+            "report_sections": [
+              {
+                "section_id": "executive_summary",
+                "content": "Comprehensive executive summary with multiple paragraphs and key findings",
+                "status": "complete",
+                "word_count": 500
+              },
+              {
+                "section_id": "evidence_analysis",
+                "content": "Detailed evidence analysis with technical specifications and findings",
+                "status": "complete",
+                "word_count": 2000,
+                "evidence_references": ["EVIDENCE_001", "EVIDENCE_002", "EVIDENCE_003"]
+              },
+              {
+                "section_id": "methodology",
+                "content": "Technical methodology section with procedures and protocols",
+                "status": "complete",
+                "word_count": 1500
+              },
+              {
+                "section_id": "conclusions",
+                "content": "Detailed conclusions with recommendations and next steps",
+                "status": "complete",
+                "word_count": 800
+              }
+            ],
+            "metadata": {
+              "author": "test_analyst",
+              "creation_date": "2025-10-05T22:00:00Z",
+              "version": "1.0",
+              "classification": "CONFIDENTIAL"
+            }
+          }
+        },
+        "expected_result": {
+          "status": "SUCCESS",
+          "report_generated": true,
+          "all_sections_processed": true,
+          "word_count_accurate": true,
+          "formatting_correct": true,
+          "metadata_complete": true
+        },
+        "timeout_seconds": 45,
+        "retry_count": 2,
+        "critical": true
+      },
+      {
+        "test_id": "MD_FUNC_002",
+        "test_name": "Multi-Format Export",
+        "description": "Test report export in multiple formats",
+        "test_method": "export_multiple_formats",
+        "input_parameters": {
+          "export_formats": [
+            {
+              "format": "PDF",
+              "options": {
+                "include_cover": true,
+                "include_toc": true,
+                "watermark": "DRAFT"
+              }
+            },
+            {
+              "format": "DOCX",
+              "options": {
+                "include_cover": true,
+                "include_toc": true,
+                "editable": true
+              }
+            },
+            {
+              "format": "HTML",
+              "options": {
+                "include_cover": true,
+                "include_toc": true,
+                "interactive": true
+              }
+            }
+          ]
+        },
+        "expected_result": {
+          "status": "SUCCESS",
+          "all_formats_exported": true,
+          "pdf_export_successful": true,
+          "docx_export_successful": true,
+          "html_export_successful": true,
+          "all_files_valid": true
+        },
+        "timeout_seconds": 60,
+        "retry_count": 2,
+        "critical": false
+      },
+      {
+        "test_id": "MD_FUNC_003",
+        "test_name": "Narrative Assembly Pipeline",
+        "description": "Test complex narrative assembly with multiple sections",
+        "test_method": "assemble_narrative_pipeline",
+        "input_parameters": {
+          "narrative_pipeline": {
+            "sections": [
+              {
+                "section_id": "NARRATIVE_001",
+                "content": "First narrative section with evidence references",
+                "evidence_references": ["EVIDENCE_001", "EVIDENCE_002"]
+              },
+              {
+                "section_id": "NARRATIVE_002",
+                "content": "Second narrative section with technical details",
+                "evidence_references": ["EVIDENCE_003"]
+              },
+              {
+                "section_id": "NARRATIVE_003",
+                "content": "Third narrative section with conclusions",
+                "evidence_references": []
+              }
+            ],
+            "assembly_order": "sequential",
+            "broadcast_targets": ["2-1", "Bus-1"]
+          }
+        },
+        "expected_result": {
+          "status": "SUCCESS",
+          "all_narratives_assembled": true,
+          "pipeline_executed": true,
+          "all_broadcasts_successful": true,
+          "content_coherence_maintained": true
+        },
+        "timeout_seconds": 30,
+        "retry_count": 2,
+        "critical": true
+      },
+      {
+        "test_id": "MD_FUNC_004",
+        "test_name": "Performance Under Load",
+        "description": "Test system performance with high volume report generation",
+        "test_method": "load_test_report_generation",
+        "input_parameters": {
+          "load_test_config": {
+            "concurrent_reports": 5,
+            "report_complexity": "high",
+            "section_count_per_report": 8,
+            "processing_duration": 60,
+            "memory_limit_mb": 300
+          }
+        },
+        "expected_result": {
+          "status": "SUCCESS",
+          "all_reports_generated": true,
+          "processing_rate": ">=1_report_per_12_seconds",
+          "memory_usage": "<=300MB",
+          "no_memory_leaks": true,
+          "consistent_performance": true
+        },
+        "timeout_seconds": 120,
+        "retry_count": 1,
+        "critical": false
+      }
+    ],
+    "performance_metrics": {
+      "complex_report_generation_time_max_ms": 45000,
+      "multi_format_export_time_max_ms": 60000,
+      "narrative_pipeline_time_max_ms": 30000,
+      "load_test_throughput_min_reports_per_hour": 5,
+      "memory_usage_max_mb": 300,
+      "cpu_usage_max_percent": 50
+    },
+    "calibration_tests": [
+      {
+        "test_name": "Report Generation Calibration",
+        "description": "Calibrate report generation performance baselines",
+        "metrics": [
+          "report_generation_speed_baseline",
+          "memory_usage_baseline",
+          "export_speed_baseline",
+          "narrative_assembly_speed_baseline"
+        ]
+      }
+    ],
+    "test_environment": {
+      "required_files": [],
+      "required_directories": [
+        "./test_data/",
+        "./expected_results/"
+      ]
+    }
+  }
+}

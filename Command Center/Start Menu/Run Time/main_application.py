@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env python3
+#!/usr/bin/env python3
 """
 DKI Engine - Central Command Runtime
 Pure Central Command architecture - no UI interface
@@ -61,12 +61,12 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # Initialize Central Command System
-logger.info("🚀 Initializing Central Command System...")
+logger.info("?? Initializing Central Command System...")
 
 # Initialize Central Command Bus
-logger.info("🚀 Initializing Central Command Bus...")
+logger.info("?? Initializing Central Command Bus...")
 bus = DKIReportBus()
-logger.info("✅ Central Command Bus initialized")
+logger.info("? Central Command Bus initialized")
 
 # Initialize Warden (ECC + Gateway Controller)
 warden = Warden()
@@ -84,15 +84,15 @@ warden.register_evidence_manager(evidence_manager)
 narrative_assembler = NarrativeAssembler(ecc=warden.ecc, bus=bus)
 
 # Initialize Mission Debrief Manager (Bootstrap Component) with bus
-mission_debrief_manager = MissionDebriefManager(ecc=warden.ecc, bus=bus, gateway=warden.gateway)
+mission_debrief_manager = MissionDebriefManager(ecc=warden.ecc, bus=bus, gateway=warden.gateway, librarian=narrative_assembler)
 
-logger.info("✅ Central Command System initialized successfully")
-logger.info("🏛️ Warden (ECC + Gateway Controller) active")
-logger.info("🔐 Evidence Locker registered with Central Command Bus")
-logger.info("📦 Evidence Manager registered")
-logger.info("📝 Narrative Assembler (Bootstrap Component) initialized with Bus")
-logger.info("🎯 Mission Debrief Manager (Bootstrap Component) initialized with Bus")
-logger.info("📡 Central Command Runtime ready - listening for signals via Bus")
+logger.info("? Central Command System initialized successfully")
+logger.info("??? Warden (ECC + Gateway Controller) active")
+logger.info("?? Evidence Locker registered with Central Command Bus")
+logger.info("?? Evidence Manager registered")
+logger.info("?? Narrative Assembler (Bootstrap Component) initialized with Bus")
+logger.info("?? Mission Debrief Manager (Bootstrap Component) initialized with Bus")
+logger.info("?? Central Command Runtime ready - listening for signals via Bus")
 
 # Keep the runtime alive
 if __name__ == "__main__":
@@ -101,6 +101,6 @@ if __name__ == "__main__":
         while True:
             pass
     except KeyboardInterrupt:
-        logger.info("🛑 Central Command Runtime shutdown")
+        logger.info("?? Central Command Runtime shutdown")
         warden.stop_warden()
         print("Central Command Runtime shutdown")

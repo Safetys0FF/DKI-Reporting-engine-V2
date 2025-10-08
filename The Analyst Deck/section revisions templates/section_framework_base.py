@@ -3,7 +3,15 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+import logging
 from typing import Any, Dict, Iterable, Optional, Sequence, Tuple
+
+
+try:
+    from ..deck_bus_listener import get_section_state
+except ImportError:  # pragma: no cover
+    def get_section_state(section_id: str) -> Dict[str, Any]:
+        return {}
 
 
 @dataclass(frozen=True)
@@ -59,6 +67,7 @@ class SectionFramework:
     """
 
     SECTION_ID: str = ""
+    BUS_SECTION_ID: Optional[str] = None
     MAX_RERUNS: int = 3
     STAGES: Tuple[StageDefinition, ...] = ()
     COMMUNICATION: Optional[CommunicationContract] = None
@@ -80,6 +89,44 @@ class SectionFramework:
         self.fact_graph = fact_graph
         self.revision_depth: int = 0
         self.signed_payload_id: Optional[str] = None
+
+    @classmethod
+    def bus_section_id(cls) -> Optional[str]:
+        if cls.BUS_SECTION_ID:
+            return cls.BUS_SECTION_ID
+        section_id = getattr(cls, "SECTION_ID", "")
+        if section_id.startswith("section_"):
+            parts = section_id.split("_")
+            if len(parts) >= 2:
+                return f"section_{parts[1]}"
+        return section_id or None
+
+    @classmethod
+    def get_bus_state(cls) -> Dict[str, Any]:
+        bus_id = cls.bus_section_id()
+        if not bus_id:
+            return {}
+        try:
+            return get_section_state(bus_id)
+        except Exception as exc:  # pragma: no cover
+            logging.getLogger(cls.__name__).warning("Failed to fetch bus state for %s: %s", bus_id, exc)
+            return {}
+
+    def get_latest_bus_state(self) -> Dict[str, Any]:
+        return self.get_bus_state()
+
+    def _augment_with_bus_context(self, inputs: Dict[str, Any]) -> Dict[str, Any]:
+        bus_state = self.get_latest_bus_state()
+        if not bus_state:
+            return inputs
+        enriched = dict(inputs)
+        enriched.setdefault("bus_state", bus_state)
+        payload = bus_state.get("payload") or {}
+        if isinstance(payload, dict):
+            enriched.setdefault("section_payload", payload.get("structured_data") or payload)
+            for key, value in payload.items():
+                enriched.setdefault(key, value)
+        return enriched
 
     # ------------------------------------------------------------------
     # Lifecycle hooks

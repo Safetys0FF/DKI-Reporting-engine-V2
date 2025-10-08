@@ -785,6 +785,7 @@ CASE_MODE_TO_HEADING = {
 
 class Section2Framework(SectionFramework):
     SECTION_ID = "section_2_planning"
+    BUS_SECTION_ID = "section_2"
     MAX_RERUNS = 2
     STAGES = (
         StageDefinition(
@@ -875,12 +876,13 @@ class Section2Framework(SectionFramework):
                 "subject_count": len(context["subject_manifest"]),
                 "planning_asset_count": len(context["planning_docs"].get("route_assets", [])),
             }
+            context = self._augment_with_bus_context(context)
             self.logger.debug("Section 2 inputs loaded: %s", context["basic_stats"])
             self._last_context = context
             return context
         except Exception as exc:
             self.logger.exception("Failed to load inputs for %s: %s", self.SECTION_ID, exc)
-            return {}
+            return self._augment_with_bus_context({})
     def build_payload(self, context: Dict[str, Any]) -> Dict[str, Any]:
         try:
             self._guard_execution("payload building")
@@ -963,6 +965,18 @@ class Section2Framework(SectionFramework):
             if config.get("disclaimer"):
                 payload["contract_disclaimer"] = config["disclaimer"]
             
+            case_id = context.get("case_id") or context.get("bus_state", {}).get("case_id")
+            if case_id:
+                payload["case_id"] = case_id
+            payload["section_id"] = self.bus_section_id() or "section_2"
+            if context.get("manifest_context") is not None:
+                payload.setdefault("manifest_context", context.get("manifest_context"))
+            if context.get("section_needs") is not None:
+                payload.setdefault("section_needs", context.get("section_needs"))
+            if context.get("evidence") is not None:
+                payload.setdefault("section_evidence", context.get("evidence"))
+            if context.get("bus_state") is not None:
+                payload.setdefault("bus_state", context.get("bus_state"))
             return payload
         except Exception as exc:
             self.logger.exception("Failed to build payload for %s: %s", self.SECTION_ID, exc)
@@ -990,23 +1004,33 @@ class Section2Framework(SectionFramework):
             narrative = "\n".join(narrative_lines)
             
             # 3. Create result package
+            section_bus_id = self.bus_section_id() or "section_2"
+            timestamp = datetime.now().isoformat()
+            summary = narrative.splitlines()[0] if narrative else ""
+            summary = summary[:320]
             result = {
+                "section_id": section_bus_id,
+                "case_id": payload.get("case_id"),
                 "payload": payload,
                 "manifest": model["manifest"],
                 "narrative": narrative,
-                "status": "completed"
+                "summary": summary,
+                "metadata": {"published_at": timestamp, "section": self.SECTION_ID},
+                "source": "section_2_framework",
             }
-            
+
             # 4. Gateway publishing
-            self.gateway.publish_section_result("section_2", result)
-            
+            self.gateway.publish_section_result(section_bus_id, result)
+
             # 5. ECC completion notification
             if self.ecc:
                 self.ecc.mark_complete(self.SECTION_ID)
-            
+
             # 6. Signal emission (standardized)
-            self.gateway.emit("section_2_planning.completed", result)
-            
+            emit_payload = dict(result)
+            emit_payload.setdefault("published_at", timestamp)
+            self.gateway.emit("section_2_planning.completed", emit_payload)
+
             return {
                 "status": "published",
                 "narrative": narrative,

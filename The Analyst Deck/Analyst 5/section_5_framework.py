@@ -1,4 +1,4 @@
-﻿"""Framework template for Section 5 (Supporting Documents & Records)."""
+"""Framework template for Section 5 (Supporting Documents & Records)."""
 
 from __future__ import annotations
 
@@ -65,6 +65,7 @@ class OrderContract:
 
 class SectionFramework:
     SECTION_ID: str = ""
+    BUS_SECTION_ID: Optional[str] = None
     MAX_RERUNS: int = 3
     STAGES: Tuple[StageDefinition, ...] = ()
     COMMUNICATION: Optional[CommunicationContract] = None
@@ -644,7 +645,7 @@ class Section5Renderer:
     """
 
     SECTION_KEY = "section_5"
-    TITLE = "SECTION 5 – REVIEW OF SUPPORTING DOCUMENTS"
+    TITLE = "SECTION 5 - REVIEW OF SUPPORTING DOCUMENTS"
 
     DOCUMENT_CATEGORIES = [
         "identity_records",
@@ -796,7 +797,7 @@ DOCUMENT_CATEGORIES = (
     "delivery_confirmations",
     "case_administration",
 )
-    PARSING_MAP = {
+PARSING_MAP = {
         'police report': ('supporting_government_records', 'Police Report'),
         'sheriff report': ('supporting_government_records', 'Sheriff Report'),
         'court filing': ('county_and_court_filings', 'Court Filing'),
@@ -805,15 +806,16 @@ DOCUMENT_CATEGORIES = (
         'intake form': ('case_administration', 'Client Intake Form'),
         'contract': ('case_administration', 'Service Contract'),
     }
-    REQUIRED_FINAL_DOCS = (
+REQUIRED_FINAL_DOCS = (
         ('Client Intake Form', 'Client Intake Form'),
         ('Service Contract', 'Signed Service Contract'),
     )
 REQUIRED_FIELDS = ("subject_name", "record_type", "jurisdiction", "record_date")
 
 
-    class Section5Framework(SectionFramework):
+class Section5Framework(SectionFramework):
         SECTION_ID = "section_5_documents"
+        BUS_SECTION_ID = "section_5"
         MAX_RERUNS = 2
         STAGES = (
             StageDefinition(
@@ -876,6 +878,57 @@ REQUIRED_FIELDS = ("subject_name", "record_type", "jurisdiction", "record_date")
             export_priority=50,
         )
 
+        @classmethod
+        def bus_section_id(cls) -> str:
+            if getattr(cls, "BUS_SECTION_ID", None):
+                return cls.BUS_SECTION_ID
+            section_id = getattr(cls, "SECTION_ID", "")
+            if section_id.startswith("section_"):
+                parts = section_id.split("_")
+                if len(parts) >= 2:
+                    return f"section_{parts[1]}"
+            return section_id or "section_5"
+
+        def _get_latest_bus_state(self) -> Dict[str, Any]:
+            bus_id = self.bus_section_id()
+            get_state = getattr(self.gateway, "get_bus_state", None) if hasattr(self, "gateway") else None
+            if not bus_id or not callable(get_state):
+                return {}
+            try:
+                return get_state(bus_id) or {}
+            except Exception as exc:
+                self.logger.warning("Failed to fetch bus state for %s: %s", bus_id, exc)
+                return {}
+
+        def _augment_with_bus_context(self, inputs: Dict[str, Any]) -> Dict[str, Any]:
+            bus_state = self._get_latest_bus_state()
+            if not bus_state:
+                return inputs
+            enriched: Dict[str, Any] = dict(inputs)
+            enriched.setdefault("bus_state", bus_state)
+            payload = bus_state.get("payload") or {}
+            if isinstance(payload, dict):
+                enriched.setdefault("section_payload", payload.get("structured_data") or payload)
+                manifest_context = payload.get("manifest") or bus_state.get("manifest")
+                if manifest_context is not None:
+                    enriched.setdefault("manifest_context", manifest_context)
+                for key, value in payload.items():
+                    enriched.setdefault(key, value)
+            else:
+                manifest_context = bus_state.get("manifest")
+                if manifest_context is not None:
+                    enriched.setdefault("manifest_context", manifest_context)
+            if bus_state.get("needs") is not None:
+                enriched.setdefault("section_needs", bus_state.get("needs"))
+            if bus_state.get("evidence") is not None:
+                enriched.setdefault("section_evidence", bus_state.get("evidence"))
+            case_id = enriched.get("case_id") or bus_state.get("case_id")
+            if not case_id and isinstance(payload, dict):
+                case_id = payload.get("case_id")
+            if case_id and "case_id" not in enriched:
+                enriched["case_id"] = case_id
+            return enriched
+
         def __init__(self, gateway: Any, ecc: Optional[Any] = None) -> None:
             super().__init__(gateway=gateway, ecc=ecc)
             self._last_context: Dict[str, Any] = {}
@@ -903,12 +956,13 @@ REQUIRED_FIELDS = ("subject_name", "record_type", "jurisdiction", "record_date")
                     "document_count": len(documents),
                     "custody_entries": len(context.get("chain_of_custody", [])),
                 }
+                context = self._augment_with_bus_context(context)
                 self.logger.debug("Section 5 inputs loaded: %s", context["basic_stats"])
                 self._last_context = context
                 return context
             except Exception as exc:
                 self.logger.exception("Failed to load inputs for %s: %s", self.SECTION_ID, exc)
-                return {}
+                return self._augment_with_bus_context({})
 
         def build_payload(self, context: Dict[str, Any]) -> Dict[str, Any]:
             try:
@@ -961,6 +1015,19 @@ REQUIRED_FIELDS = ("subject_name", "record_type", "jurisdiction", "record_date")
                     "subjects_in_scope": sorted(meta.get("subjects_in_scope", [])),
                     "manual_queue": meta.get("manual_queue", []),
                 }
+                case_id = context.get("case_id") or context.get("bus_state", {}).get("case_id")
+                if case_id:
+                    payload.setdefault("case_id", case_id)
+                section_bus_id = self.bus_section_id()
+                payload.setdefault("section_id", section_bus_id)
+                if context.get("manifest_context") is not None:
+                    payload.setdefault("manifest_context", context.get("manifest_context"))
+                if context.get("section_needs") is not None:
+                    payload.setdefault("section_needs", context.get("section_needs"))
+                if context.get("section_evidence") is not None:
+                    payload.setdefault("section_evidence", context.get("section_evidence"))
+                if context.get("bus_state") is not None:
+                    payload.setdefault("bus_state", context.get("bus_state"))
                 return payload
             except Exception as exc:
                 self.logger.exception("Failed to build payload for %s: %s", self.SECTION_ID, exc)
@@ -979,16 +1046,31 @@ REQUIRED_FIELDS = ("subject_name", "record_type", "jurisdiction", "record_date")
                     else:
                         narrative_lines.append(str(block["text"]))
                 narrative = "\n".join(narrative_lines)
+                section_bus_id = self.bus_section_id()
+                timestamp = datetime.now().isoformat()
+                summary = narrative.splitlines()[0] if narrative else ""
+                summary = summary[:320]
                 result = {
+                    "section_id": section_bus_id,
+                    "case_id": payload.get("case_id"),
                     "payload": payload,
                     "manifest": model["manifest"],
                     "render_tree": model["render_tree"],
                     "narrative": narrative,
-                    "status": "completed",
+                    "summary": summary,
+                    "metadata": {"published_at": timestamp, "section": self.SECTION_ID},
+                    "source": "section_5_framework",
                 }
                 if self.gateway:
-                    self.gateway.publish_section_result("section_5", result)
+                    self.gateway.publish_section_result(section_bus_id, result)
+                    emit_payload = dict(result)
+                    emit_payload.setdefault("published_at", timestamp)
+                    if self.COMMUNICATION and self.COMMUNICATION.output_signal:
+                        self.gateway.emit(self.COMMUNICATION.output_signal, emit_payload)
                     self.gateway.emit("document_inventory_ready", model["manifest"])
+                if self.ecc:
+                    self.ecc.mark_complete(self.SECTION_ID)
+
                 return {
                     "status": "published",
                     "narrative": narrative,
@@ -1417,4 +1499,6 @@ __all__ = [
     "extract_text_from_image",
     "easyocr_text",
 ]
+
+
 

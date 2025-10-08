@@ -1,0 +1,10 @@
+{
+  "fault_id": "COMPLIANCE_FAULT_Bus-1.3_1759870101",
+  "system_address": "Bus-1.3",
+  "fault_code": "[Bus-1.3-98-COMPLIANCE_VIOLATION]",
+  "severity": "ERROR",
+  "description": "Compliance violation: NO_DIAGNOSTIC_RESPONSE",
+  "timestamp": "2025-10-07T15:48:21.754889",
+  "violation_type": "NO_DIAGNOSTIC_RESPONSE",
+  "punishment_level": "COMPLIANCE_FAULT"
+}

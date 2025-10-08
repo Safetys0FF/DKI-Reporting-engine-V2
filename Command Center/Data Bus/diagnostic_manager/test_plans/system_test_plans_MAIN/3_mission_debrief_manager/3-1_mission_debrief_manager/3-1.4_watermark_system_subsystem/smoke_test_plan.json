@@ -1,0 +1,129 @@
+{
+  "test_plan": {
+    "system_name": "Watermark System Subsystem",
+    "system_address": "3-1.4",
+    "parent_system": "Mission Debrief Manager (3-1)",
+    "test_type": "smoke_test",
+    "version": "1.0",
+    "created": "2025-10-05",
+    "description": "Basic functionality validation for Watermark System subsystem",
+    "test_data_location": "./test_data/",
+    "expected_results_location": "./expected_results/",
+    "test_vectors": [
+      {
+        "test_id": "WS_SMOKE_001",
+        "test_name": "Subsystem Initialization",
+        "description": "Verify Watermark System can initialize independently",
+        "test_method": "initialize_watermark_system",
+        "input_parameters": {
+          "watermark_types": ["text", "image", "digital", "invisible"],
+          "document_formats": ["PDF", "DOCX", "HTML", "RTF"],
+          "watermark_positioning": ["header", "footer", "background", "overlay"]
+        },
+        "expected_result": {
+          "status": "SUCCESS",
+          "watermark_system_initialized": true,
+          "watermark_types_loaded": true,
+          "document_formats_supported": true,
+          "positioning_options_configured": true
+        },
+        "timeout_seconds": 5,
+        "retry_count": 3,
+        "critical": true
+      },
+      {
+        "test_id": "WS_SMOKE_002",
+        "test_name": "Text Watermark Application",
+        "description": "Test text watermark application functionality",
+        "test_method": "apply_text_watermark",
+        "input_parameters": {
+          "watermark_data": {
+            "document_path": "./test_data/sample_report.pdf",
+            "watermark_text": "CONFIDENTIAL - Test Watermark",
+            "watermark_position": "background",
+            "watermark_opacity": 0.3,
+            "watermark_font": "Arial",
+            "watermark_size": 12
+          }
+        },
+        "expected_result": {
+          "status": "SUCCESS",
+          "watermark_applied": true,
+          "text_positioned_correctly": true,
+          "opacity_set": true,
+          "watermark_visible": true
+        },
+        "timeout_seconds": 8,
+        "retry_count": 2,
+        "critical": true
+      },
+      {
+        "test_id": "WS_SMOKE_003",
+        "test_name": "Image Watermark Application",
+        "description": "Test image watermark application functionality",
+        "test_method": "apply_image_watermark",
+        "input_parameters": {
+          "watermark_data": {
+            "document_path": "./test_data/sample_report.pdf",
+            "watermark_image_path": "./test_data/watermark_logo.png",
+            "watermark_position": "footer",
+            "watermark_opacity": 0.5,
+            "watermark_size": "small"
+          }
+        },
+        "expected_result": {
+          "status": "SUCCESS",
+          "image_watermark_applied": true,
+          "image_positioned_correctly": true,
+          "image_opacity_set": true,
+          "watermark_image_visible": true
+        },
+        "timeout_seconds": 10,
+        "retry_count": 2,
+        "critical": true
+      },
+      {
+        "test_id": "WS_SMOKE_004",
+        "test_name": "Watermark Validation",
+        "description": "Test watermark validation functionality",
+        "test_method": "validate_watermark",
+        "input_parameters": {
+          "validation_data": {
+            "watermarked_document_path": "./test_data/watermarked_report.pdf",
+            "validation_criteria": ["watermark_present", "watermark_readable", "watermark_position", "watermark_opacity"]
+          }
+        },
+        "expected_result": {
+          "status": "SUCCESS",
+          "watermark_validated": true,
+          "watermark_present": true,
+          "watermark_readable": true,
+          "position_correct": true,
+          "opacity_appropriate": true
+        },
+        "timeout_seconds": 5,
+        "retry_count": 2,
+        "critical": false
+      }
+    ],
+    "performance_metrics": {
+      "initialization_time_max_ms": 5000,
+      "text_watermark_application_time_max_ms": 8000,
+      "image_watermark_application_time_max_ms": 10000,
+      "watermark_validation_time_max_ms": 5000,
+      "memory_usage_max_mb": 100,
+      "cpu_usage_max_percent": 20
+    },
+    "test_environment": {
+      "required_files": [
+        "./test_data/sample_report.pdf",
+        "./test_data/watermark_logo.png",
+        "./test_data/watermarked_report.pdf"
+      ],
+      "required_directories": [
+        "./test_data/",
+        "./expected_results/"
+      ]
+    }
+  }
+}

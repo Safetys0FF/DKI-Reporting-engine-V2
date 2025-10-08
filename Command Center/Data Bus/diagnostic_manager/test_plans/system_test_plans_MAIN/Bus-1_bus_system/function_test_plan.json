@@ -1,0 +1,107 @@
+{
+  "test_plan": {
+    "system_name": "Bus Core",
+    "system_address": "Bus-1",
+    "test_type": "function_test",
+    "version": "1.0",
+    "created": "2025-10-05",
+    "description": "Comprehensive functional testing for Bus Core system - Communication Hub",
+    "test_data_location": "./test_data/",
+    "expected_results_location": "./expected_results/",
+    "test_vectors": [
+      {
+        "test_id": "BUS_FUNC_001",
+        "test_name": "High-Volume Signal Routing",
+        "description": "Test bus performance with high volume signal routing",
+        "test_method": "route_signal_batch",
+        "input_parameters": {
+          "signal_batch": [
+            {
+              "signal_name": "evidence_processing",
+              "source": "1-1",
+              "target": "2-2",
+              "payload": {"evidence_id": "TEST_001"}
+            },
+            {
+              "signal_name": "section_validation",
+              "source": "2-2", 
+              "target": "2-1",
+              "payload": {"section_id": "TEST_001"}
+            },
+            {
+              "signal_name": "report_generation",
+              "source": "3-1",
+              "target": "Bus-1",
+              "payload": {"report_id": "TEST_001"}
+            }
+          ],
+          "concurrent_signals": 10,
+          "routing_duration": 30
+        },
+        "expected_result": {
+          "status": "SUCCESS",
+          "all_signals_routed": true,
+          "routing_accuracy": ">=0.95",
+          "no_signals_lost": true,
+          "performance_within_limits": true
+        },
+        "timeout_seconds": 60,
+        "retry_count": 2,
+        "critical": true
+      },
+      {
+        "test_id": "BUS_FUNC_002",
+        "test_name": "Universal Communication Protocol",
+        "description": "Test universal communication protocol with all radio codes",
+        "test_method": "test_universal_communication",
+        "input_parameters": {
+          "communication_tests": [
+            {
+              "radio_code": "10-4",
+              "expected_response": "acknowledged"
+            },
+            {
+              "radio_code": "10-6", 
+              "expected_response": "evidence_received"
+            },
+            {
+              "radio_code": "10-8",
+              "expected_response": "operation_complete"
+            },
+            {
+              "radio_code": "10-9",
+              "expected_response": "repeat_message"
+            },
+            {
+              "radio_code": "10-10",
+              "expected_response": "transmission_complete"
+            }
+          ]
+        },
+        "expected_result": {
+          "status": "SUCCESS",
+          "all_radio_codes_working": true,
+          "response_accuracy": ">=0.9",
+          "protocol_compliance": true
+        },
+        "timeout_seconds": 30,
+        "retry_count": 2,
+        "critical": true
+      }
+    ],
+    "performance_metrics": {
+      "signal_routing_throughput_min_per_second": 10,
+      "communication_protocol_accuracy_min_percent": 90,
+      "memory_usage_max_mb": 100,
+      "cpu_usage_max_percent": 30,
+      "signal_latency_max_ms": 100
+    },
+    "test_environment": {
+      "required_files": [],
+      "required_directories": [
+        "./test_data/",
+        "./expected_results/"
+      ]
+    }
+  }
+}

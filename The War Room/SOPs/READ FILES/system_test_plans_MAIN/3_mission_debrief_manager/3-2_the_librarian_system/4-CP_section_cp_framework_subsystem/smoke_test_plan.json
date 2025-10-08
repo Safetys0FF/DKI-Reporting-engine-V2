@@ -1,0 +1,129 @@
+{
+  "test_plan": {
+    "system_name": "Section CP Framework Subsystem",
+    "system_address": "4-CP",
+    "parent_system": "Analyst Deck (4-x)",
+    "test_type": "smoke_test",
+    "version": "1.0",
+    "created": "2025-10-05",
+    "description": "Basic functionality validation for Section CP Framework (Cover Page) subsystem",
+    "test_data_location": "./test_data/",
+    "expected_results_location": "./expected_results/",
+    "test_vectors": [
+      {
+        "test_id": "SCP_SMOKE_001",
+        "test_name": "Subsystem Initialization",
+        "description": "Verify Section CP Framework can initialize independently",
+        "test_method": "initialize_section_cp_framework",
+        "input_parameters": {
+          "section_type": "cover_page",
+          "framework_mode": "standard",
+          "page_elements": ["header", "title", "subtitle", "author", "date", "confidentiality_notice"]
+        },
+        "expected_result": {
+          "status": "SUCCESS",
+          "section_cp_framework_initialized": true,
+          "section_type_set": true,
+          "framework_mode_active": true,
+          "page_elements_configured": true
+        },
+        "timeout_seconds": 5,
+        "retry_count": 3,
+        "critical": true
+      },
+      {
+        "test_id": "SCP_SMOKE_002",
+        "test_name": "Cover Page Generation",
+        "description": "Test cover page generation functionality",
+        "test_method": "generate_cover_page",
+        "input_parameters": {
+          "generation_data": {
+            "case_id": "SCP_TEST_CASE_001",
+            "report_title": "Test Investigation Report",
+            "report_subtitle": "Comprehensive Analysis",
+            "author_name": "Test Analyst",
+            "report_date": "2025-10-05",
+            "confidentiality_level": "confidential"
+          }
+        },
+        "expected_result": {
+          "status": "SUCCESS",
+          "cover_page_generated": true,
+          "report_title_displayed": true,
+          "author_information_included": true,
+          "confidentiality_notice_applied": true
+        },
+        "timeout_seconds": 5,
+        "retry_count": 2,
+        "critical": true
+      },
+      {
+        "test_id": "SCP_SMOKE_003",
+        "test_name": "Page Formatting",
+        "description": "Test page formatting functionality",
+        "test_method": "format_cover_page",
+        "input_parameters": {
+          "formatting_data": {
+            "cover_page_id": "SCP_TEST_COVER_001",
+            "formatting_options": {
+              "font_style": "professional",
+              "layout": "centered",
+              "color_scheme": "corporate",
+              "logo_inclusion": true
+            }
+          }
+        },
+        "expected_result": {
+          "status": "SUCCESS",
+          "cover_page_formatted": true,
+          "font_style_applied": true,
+          "layout_positioned": true,
+          "color_scheme_implemented": true,
+          "logo_included": true
+        },
+        "timeout_seconds": 3,
+        "retry_count": 2,
+        "critical": true
+      },
+      {
+        "test_id": "SCP_SMOKE_004",
+        "test_name": "Template Management",
+        "description": "Test template management functionality",
+        "test_method": "manage_templates",
+        "input_parameters": {
+          "template_data": {
+            "template_operation": "create_template",
+            "template_name": "standard_cover_page",
+            "template_type": "professional_report",
+            "template_customization": true
+          }
+        },
+        "expected_result": {
+          "status": "SUCCESS",
+          "template_managed": true,
+          "template_created": true,
+          "template_type_configured": true,
+          "customization_options_available": true
+        },
+        "timeout_seconds": 3,
+        "retry_count": 2,
+        "critical": false
+      }
+    ],
+    "performance_metrics": {
+      "initialization_time_max_ms": 5000,
+      "cover_page_generation_time_max_ms": 5000,
+      "page_formatting_time_max_ms": 3000,
+      "template_management_time_max_ms": 3000,
+      "memory_usage_max_mb": 50,
+      "cpu_usage_max_percent": 10
+    },
+    "test_environment": {
+      "required_files": [],
+      "required_directories": [
+        "./test_data/",
+        "./expected_results/"
+      ]
+    }
+  }
+}

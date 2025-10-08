@@ -1,0 +1,165 @@
+{
+  "test_plan": {
+    "system_name": "Marshall System",
+    "system_address": "5-1",
+    "test_type": "smoke_test",
+    "version": "1.0",
+    "created": "2025-10-05",
+    "description": "Basic functionality validation for Marshall system - Gateway & Evidence Manager",
+    "test_data_location": "./test_data/",
+    "expected_results_location": "./expected_results/",
+    "test_vectors": [
+      {
+        "test_id": "MARS_SMOKE_001",
+        "test_name": "System Initialization",
+        "description": "Verify Marshall system can initialize with Gateway and Evidence Manager",
+        "test_method": "initialize_marshall_system",
+        "input_parameters": {
+          "components": ["gateway", "evidence_manager"],
+          "bus_connection": true,
+          "ecc_integration": true
+        },
+        "expected_result": {
+          "status": "SUCCESS",
+          "marshall_initialized": true,
+          "gateway_active": true,
+          "evidence_manager_active": true,
+          "bus_connected": true,
+          "ecc_integration_ready": true
+        },
+        "timeout_seconds": 10,
+        "retry_count": 3,
+        "critical": true
+      },
+      {
+        "test_id": "MARS_SMOKE_002",
+        "test_name": "Gateway Operations",
+        "description": "Test basic gateway operations and routing",
+        "test_method": "test_gateway_operations",
+        "input_parameters": {
+          "gateway_operations": {
+            "route_evidence": true,
+            "validate_permissions": true,
+            "manage_sessions": true,
+            "monitor_traffic": true
+          },
+          "test_data": {
+            "evidence_sample": "test_evidence_001",
+            "permission_request": "test_permission_001"
+          }
+        },
+        "expected_result": {
+          "status": "SUCCESS",
+          "evidence_routing_working": true,
+          "permission_validation_working": true,
+          "session_management_working": true,
+          "traffic_monitoring_working": true
+        },
+        "timeout_seconds": 15,
+        "retry_count": 2,
+        "critical": true
+      },
+      {
+        "test_id": "MARS_SMOKE_003",
+        "test_name": "Evidence Manager Operations",
+        "description": "Test basic evidence manager operations",
+        "test_method": "test_evidence_manager_operations",
+        "input_parameters": {
+          "evidence_manager_operations": {
+            "store_evidence": true,
+            "retrieve_evidence": true,
+            "validate_integrity": true,
+            "manage_metadata": true
+          },
+          "test_data": {
+            "evidence_file": "./test_data/sample_evidence.pdf",
+            "metadata": {
+              "case_id": "MARS_TEST_CASE_001",
+              "evidence_type": "document",
+              "source": "test_scanner"
+            }
+          }
+        },
+        "expected_result": {
+          "status": "SUCCESS",
+          "evidence_stored": true,
+          "evidence_retrieved": true,
+          "integrity_validated": true,
+          "metadata_managed": true
+        },
+        "timeout_seconds": 20,
+        "retry_count": 2,
+        "critical": true
+      },
+      {
+        "test_id": "MARS_SMOKE_004",
+        "test_name": "System Integration",
+        "description": "Test integration between Gateway and Evidence Manager",
+        "test_method": "test_system_integration",
+        "input_parameters": {
+          "integration_test": {
+            "workflow": "evidence_processing_workflow",
+            "steps": [
+              "gateway_receives_evidence",
+              "gateway_validates_permissions",
+              "gateway_routes_to_evidence_manager",
+              "evidence_manager_stores_evidence",
+              "evidence_manager_reports_status_to_gateway"
+            ]
+          }
+        },
+        "expected_result": {
+          "status": "SUCCESS",
+          "workflow_completed": true,
+          "all_steps_executed": true,
+          "integration_functional": true,
+          "status_reporting_working": true
+        },
+        "timeout_seconds": 25,
+        "retry_count": 2,
+        "critical": true
+      },
+      {
+        "test_id": "MARS_SMOKE_005",
+        "test_name": "Communication Status",
+        "description": "Test communication status and monitoring",
+        "test_method": "test_communication_status",
+        "input_parameters": {
+          "status_request": {
+            "request_gateway_status": true,
+            "request_evidence_manager_status": true,
+            "request_integration_status": true
+          }
+        },
+        "expected_result": {
+          "status": "SUCCESS",
+          "gateway_status_reported": true,
+          "evidence_manager_status_reported": true,
+          "integration_status_reported": true,
+          "all_statuses_accurate": true
+        },
+        "timeout_seconds": 8,
+        "retry_count": 2,
+        "critical": false
+      }
+    ],
+    "performance_metrics": {
+      "initialization_time_max_ms": 10000,
+      "gateway_operations_time_max_ms": 15000,
+      "evidence_manager_operations_time_max_ms": 20000,
+      "integration_test_time_max_ms": 25000,
+      "communication_status_time_max_ms": 8000,
+      "memory_usage_max_mb": 300,
+      "cpu_usage_max_percent": 35
+    },
+    "test_environment": {
+      "required_files": [
+        "./test_data/sample_evidence.pdf"
+      ],
+      "required_directories": [
+        "./test_data/",
+        "./expected_results/"
+      ]
+    }
+  }
+}

@@ -1,0 +1,136 @@
+{
+  "test_plan": {
+    "system_name": "Ecosystem Controller",
+    "system_address": "2-1",
+    "parent_complex": "Warden Complex (2-x)",
+    "test_type": "smoke_test",
+    "version": "1.0",
+    "created": "2025-10-05",
+    "description": "Basic functionality validation for ECC system - Master Orchestrator",
+    "test_data_location": "./test_data/",
+    "expected_results_location": "./expected_results/",
+    "test_vectors": [
+      {
+        "test_id": "ECC_SMOKE_001",
+        "test_name": "System Initialization",
+        "description": "Verify ECC can initialize as master orchestrator",
+        "test_method": "initialize_system",
+        "input_parameters": {
+          "master_mode": true,
+          "bus_connection": true
+        },
+        "expected_result": {
+          "status": "SUCCESS",
+          "ecc_initialized": true,
+          "master_mode_active": true,
+          "bus_connected": true,
+          "orchestration_ready": true
+        },
+        "timeout_seconds": 10,
+        "retry_count": 3,
+        "critical": true
+      },
+      {
+        "test_id": "ECC_SMOKE_002",
+        "test_name": "Module Registration",
+        "description": "Test module registration and management",
+        "test_method": "register_module",
+        "input_parameters": {
+          "module_data": {
+            "module_id": "TEST_MODULE_001",
+            "module_type": "evidence_processor",
+            "address": "1-1",
+            "capabilities": ["process_evidence", "get_manifest"]
+          }
+        },
+        "expected_result": {
+          "status": "SUCCESS",
+          "module_registered": true,
+          "registration_logged": true,
+          "module_status_tracked": true
+        },
+        "timeout_seconds": 8,
+        "retry_count": 2,
+        "critical": true
+      },
+      {
+        "test_id": "ECC_SMOKE_003",
+        "test_name": "Permission Validation",
+        "description": "Test permission checking and validation",
+        "test_method": "check_permissions",
+        "input_parameters": {
+          "permission_request": {
+            "module_id": "TEST_MODULE_001",
+            "operation": "process_evidence",
+            "target_resource": "evidence_locker"
+          }
+        },
+        "expected_result": {
+          "status": "SUCCESS",
+          "permission_granted": true,
+          "validation_complete": true,
+          "audit_log_created": true
+        },
+        "timeout_seconds": 5,
+        "retry_count": 2,
+        "critical": true
+      },
+      {
+        "test_id": "ECC_SMOKE_004",
+        "test_name": "Case Management",
+        "description": "Test case lifecycle management",
+        "test_method": "start_new_case",
+        "input_parameters": {
+          "case_data": {
+            "case_id": "ECC_TEST_CASE_001",
+            "case_type": "forensic_analysis",
+            "priority": "normal",
+            "assigned_modules": ["1-1", "2-2"]
+          }
+        },
+        "expected_result": {
+          "status": "SUCCESS",
+          "case_created": true,
+          "modules_notified": true,
+          "case_tracking_active": true
+        },
+        "timeout_seconds": 8,
+        "retry_count": 2,
+        "critical": true
+      },
+      {
+        "test_id": "ECC_SMOKE_005",
+        "test_name": "System Status Monitoring",
+        "description": "Test system-wide status monitoring",
+        "test_method": "get_system_status",
+        "input_parameters": {},
+        "expected_result": {
+          "status": "SUCCESS",
+          "system_health": "good",
+          "active_modules": ">0",
+          "active_cases": ">=0",
+          "overall_status": "operational"
+        },
+        "timeout_seconds": 5,
+        "retry_count": 2,
+        "critical": false
+      }
+    ],
+    "performance_metrics": {
+      "initialization_time_max_ms": 10000,
+      "module_registration_time_max_ms": 2000,
+      "permission_check_time_max_ms": 500,
+      "case_creation_time_max_ms": 2000,
+      "status_query_time_max_ms": 500,
+      "memory_usage_max_mb": 200,
+      "cpu_usage_max_percent": 30
+    },
+    "test_environment": {
+      "required_files": [],
+      "required_directories": [
+        "./test_data/",
+        "./expected_results/"
+      ]
+    }
+  }
+}

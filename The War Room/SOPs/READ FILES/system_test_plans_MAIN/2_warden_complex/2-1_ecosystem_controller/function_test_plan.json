@@ -1,0 +1,97 @@
+{
+  "test_plan": {
+    "system_name": "ECC - Ecosystem Controller",
+    "system_address": "2-1",
+    "test_type": "function_test",
+    "version": "1.0",
+    "created": "2025-10-05",
+    "description": "Comprehensive functional testing for ECC system - Master Orchestrator",
+    "test_data_location": "./test_data/",
+    "expected_results_location": "./expected_results/",
+    "test_vectors": [
+      {
+        "test_id": "ECC_FUNC_001",
+        "test_name": "Multi-Module Orchestration",
+        "description": "Test orchestration of multiple modules simultaneously",
+        "test_method": "orchestrate_multiple_modules",
+        "input_parameters": {
+          "orchestration_test": {
+            "modules": [
+              {
+                "module_id": "EVIDENCE_LOCKER",
+                "address": "1-1",
+                "operations": ["process_evidence", "get_manifest"]
+              },
+              {
+                "module_id": "GATEWAY_CONTROLLER", 
+                "address": "2-2",
+                "operations": ["route_evidence", "validate_section"]
+              }
+            ],
+            "workflow": "sequential_processing",
+            "timeout_seconds": 30
+          }
+        },
+        "expected_result": {
+          "status": "SUCCESS",
+          "all_modules_responsive": true,
+          "orchestration_complete": true,
+          "workflow_executed": true,
+          "all_operations_successful": true
+        },
+        "timeout_seconds": 45,
+        "retry_count": 2,
+        "critical": true
+      },
+      {
+        "test_id": "ECC_FUNC_002",
+        "test_name": "Permission Matrix Validation",
+        "description": "Test complex permission validation scenarios",
+        "test_method": "validate_permission_matrix",
+        "input_parameters": {
+          "permission_tests": [
+            {
+              "module_id": "EVIDENCE_LOCKER",
+              "operation": "process_evidence",
+              "expected_result": "granted"
+            },
+            {
+              "module_id": "GATEWAY_CONTROLLER",
+              "operation": "route_evidence",
+              "expected_result": "granted"
+            },
+            {
+              "module_id": "UNAUTHORIZED_MODULE",
+              "operation": "admin_operations",
+              "expected_result": "denied"
+            }
+          ]
+        },
+        "expected_result": {
+          "status": "SUCCESS",
+          "permission_matrix_valid": true,
+          "all_grants_correct": true,
+          "all_denials_correct": true,
+          "audit_trail_complete": true
+        },
+        "timeout_seconds": 20,
+        "retry_count": 2,
+        "critical": true
+      }
+    ],
+    "performance_metrics": {
+      "orchestration_time_max_ms": 45000,
+      "permission_validation_time_max_ms": 500,
+      "memory_usage_max_mb": 200,
+      "cpu_usage_max_percent": 40,
+      "throughput_min_operations_per_second": 5
+    },
+    "test_environment": {
+      "required_files": [],
+      "required_directories": [
+        "./test_data/",
+        "./expected_results/"
+      ]
+    }
+  }
+}

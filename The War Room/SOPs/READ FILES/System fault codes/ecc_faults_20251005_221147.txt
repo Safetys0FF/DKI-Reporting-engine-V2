@@ -1,0 +1,18 @@
+ECC FAULT CODE RESULTS
+==================================================
+Test Date: 2025-10-05T22:11:47.041733
+Total Faults: 13
+
+ 1. 2-1-50-46 - Validate section error: 'EcosystemController' object has no attribute 'validate_section'
+ 2. 2-1-51-54 - Invalid section ID error: 'EcosystemController' object has no attribute 'validate_section'
+ 3. 2-1-52-62 - Check permissions error: 'EcosystemController' object has no attribute 'check_permissions'
+ 4. 2-1-53-70 - Authorize operation error: 'EcosystemController' object has no attribute 'authorize_operation'
+ 5. 2-1-54-78 - Get system status error: 'EcosystemController' object has no attribute 'get_system_status'
+ 6. 2-1-55-87 - Get module status error: 'EcosystemController' object has no attribute 'get_module_status'
+ 7. 2-1-56-95 - Start new case error: 'EcosystemController' object has no attribute 'start_new_case'
+ 8. 2-1-57-103 - End case error: 'EcosystemController' object has no attribute 'end_case'
+ 9. 2-1-58-111 - Get active cases error: 'EcosystemController' object has no attribute 'get_active_cases'
+10. 2-1-59-120 - Register module error: 'EcosystemController' object has no attribute 'register_module'
+11. 2-1-60-128 - Unregister module error: 'EcosystemController' object has no attribute 'unregister_module'
+12. 2-1-61-136 - Get registered modules error: 'EcosystemController' object has no attribute 'get_registered_modules'
+13. 2-1-62-145 - Broadcast signal error: 'EcosystemController' object has no attribute 'broadcast_signal'

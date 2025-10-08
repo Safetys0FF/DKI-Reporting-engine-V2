@@ -1,0 +1,124 @@
+{
+  "test_plan": {
+    "system_name": "Digital Signing Subsystem",
+    "system_address": "3-1.2",
+    "parent_system": "Mission Debrief Manager (3-1)",
+    "test_type": "smoke_test",
+    "version": "1.0",
+    "created": "2025-10-05",
+    "description": "Basic functionality validation for Digital Signing subsystem",
+    "test_data_location": "./test_data/",
+    "expected_results_location": "./expected_results/",
+    "test_vectors": [
+      {
+        "test_id": "DS_SMOKE_001",
+        "test_name": "Subsystem Initialization",
+        "description": "Verify Digital Signing can initialize independently",
+        "test_method": "initialize_digital_signing",
+        "input_parameters": {
+          "signing_algorithms": ["RSA", "ECDSA", "DSA"],
+          "hash_algorithms": ["SHA256", "SHA384", "SHA512"],
+          "certificate_store": "system_certificates"
+        },
+        "expected_result": {
+          "status": "SUCCESS",
+          "digital_signing_initialized": true,
+          "signing_algorithms_loaded": true,
+          "hash_algorithms_configured": true,
+          "certificate_store_accessible": true
+        },
+        "timeout_seconds": 5,
+        "retry_count": 3,
+        "critical": true
+      },
+      {
+        "test_id": "DS_SMOKE_002",
+        "test_name": "Document Signing",
+        "description": "Test document signing functionality",
+        "test_method": "sign_document",
+        "input_parameters": {
+          "signing_data": {
+            "document_path": "./test_data/sample_report.pdf",
+            "signing_algorithm": "RSA",
+            "hash_algorithm": "SHA256",
+            "certificate_id": "test_certificate_001"
+          }
+        },
+        "expected_result": {
+          "status": "SUCCESS",
+          "document_signed": true,
+          "signature_valid": true,
+          "signature_embedded": true,
+          "integrity_verified": true
+        },
+        "timeout_seconds": 10,
+        "retry_count": 2,
+        "critical": true
+      },
+      {
+        "test_id": "DS_SMOKE_003",
+        "test_name": "Signature Verification",
+        "description": "Test signature verification functionality",
+        "test_method": "verify_signature",
+        "input_parameters": {
+          "verification_data": {
+            "signed_document_path": "./test_data/signed_report.pdf",
+            "verification_algorithm": "RSA",
+            "expected_signer": "test_certificate_001"
+          }
+        },
+        "expected_result": {
+          "status": "SUCCESS",
+          "signature_verified": true,
+          "signer_authenticated": true,
+          "document_integrity_confirmed": true,
+          "verification_report_generated": true
+        },
+        "timeout_seconds": 8,
+        "retry_count": 2,
+        "critical": true
+      },
+      {
+        "test_id": "DS_SMOKE_004",
+        "test_name": "Certificate Management",
+        "description": "Test certificate management functionality",
+        "test_method": "manage_certificates",
+        "input_parameters": {
+          "certificate_data": {
+            "operation": "validate_certificate",
+            "certificate_id": "test_certificate_001",
+            "validation_criteria": ["expiry_date", "revocation_status", "chain_validity"]
+          }
+        },
+        "expected_result": {
+          "status": "SUCCESS",
+          "certificate_validated": true,
+          "expiry_check_passed": true,
+          "revocation_check_passed": true,
+          "chain_validation_successful": true
+        },
+        "timeout_seconds": 5,
+        "retry_count": 2,
+        "critical": false
+      }
+    ],
+    "performance_metrics": {
+      "initialization_time_max_ms": 5000,
+      "document_signing_time_max_ms": 10000,
+      "signature_verification_time_max_ms": 8000,
+      "certificate_management_time_max_ms": 5000,
+      "memory_usage_max_mb": 100,
+      "cpu_usage_max_percent": 20
+    },
+    "test_environment": {
+      "required_files": [
+        "./test_data/sample_report.pdf",
+        "./test_data/signed_report.pdf"
+      ],
+      "required_directories": [
+        "./test_data/",
+        "./expected_results/"
+      ]
+    }
+  }
+}

@@ -1,0 +1,127 @@
+{
+  "test_plan": {
+    "system_name": "Dev Environment System",
+    "system_address": "6-1",
+    "parent_system": "War Room Complex (6-x)",
+    "test_type": "smoke_test",
+    "version": "1.0",
+    "created": "2025-10-05",
+    "description": "Basic functionality validation for Dev Environment system",
+    "test_data_location": "./test_data/",
+    "expected_results_location": "./expected_results/",
+    "test_vectors": [
+      {
+        "test_id": "DE_SMOKE_001",
+        "test_name": "System Initialization",
+        "description": "Verify Dev Environment can initialize independently",
+        "test_method": "initialize_dev_environment",
+        "input_parameters": {
+          "environment_modes": ["development", "testing", "staging", "production_simulation"],
+          "development_tools": ["ide", "debugger", "profiler", "version_control"],
+          "environment_isolation": true
+        },
+        "expected_result": {
+          "status": "SUCCESS",
+          "dev_environment_initialized": true,
+          "environment_modes_configured": true,
+          "development_tools_loaded": true,
+          "environment_isolation_active": true
+        },
+        "timeout_seconds": 10,
+        "retry_count": 3,
+        "critical": true
+      },
+      {
+        "test_id": "DE_SMOKE_002",
+        "test_name": "Code Compilation",
+        "description": "Test code compilation functionality",
+        "test_method": "compile_code",
+        "input_parameters": {
+          "compilation_data": {
+            "source_file": "./test_data/sample_code.py",
+            "compilation_target": "executable",
+            "compilation_options": ["optimization", "debug_symbols"],
+            "compilation_environment": "python_3.9"
+          }
+        },
+        "expected_result": {
+          "status": "SUCCESS",
+          "code_compiled": true,
+          "compilation_target_generated": true,
+          "compilation_options_applied": true,
+          "compilation_successful": true
+        },
+        "timeout_seconds": 15,
+        "retry_count": 2,
+        "critical": true
+      },
+      {
+        "test_id": "DE_SMOKE_003",
+        "test_name": "Testing Framework",
+        "description": "Test testing framework functionality",
+        "test_method": "run_tests",
+        "input_parameters": {
+          "testing_data": {
+            "test_suite": "./test_data/test_suite.py",
+            "test_framework": "pytest",
+            "test_scope": "unit_tests",
+            "test_coverage": true
+          }
+        },
+        "expected_result": {
+          "status": "SUCCESS",
+          "tests_executed": true,
+          "test_framework_functional": true,
+          "test_scope_completed": true,
+          "test_coverage_calculated": true
+        },
+        "timeout_seconds": 20,
+        "retry_count": 2,
+        "critical": true
+      },
+      {
+        "test_id": "DE_SMOKE_004",
+        "test_name": "Environment Management",
+        "description": "Test environment management functionality",
+        "test_method": "manage_environment",
+        "input_parameters": {
+          "management_data": {
+            "environment_operation": "backup_environment",
+            "backup_scope": "complete_environment",
+            "backup_location": "./backups/",
+            "environment_cleanup": true
+          }
+        },
+        "expected_result": {
+          "status": "SUCCESS",
+          "environment_managed": true,
+          "environment_backed_up": true,
+          "backup_location_accessible": true,
+          "environment_cleanup_complete": true
+        },
+        "timeout_seconds": 10,
+        "retry_count": 2,
+        "critical": false
+      }
+    ],
+    "performance_metrics": {
+      "initialization_time_max_ms": 10000,
+      "code_compilation_time_max_ms": 15000,
+      "testing_framework_time_max_ms": 20000,
+      "environment_management_time_max_ms": 10000,
+      "memory_usage_max_mb": 200,
+      "cpu_usage_max_percent": 30
+    },
+    "test_environment": {
+      "required_files": [
+        "./test_data/sample_code.py",
+        "./test_data/test_suite.py"
+      ],
+      "required_directories": [
+        "./test_data/",
+        "./expected_results/",
+        "./backups/"
+      ]
+    }
+  }
+}

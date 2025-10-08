@@ -1,0 +1,120 @@
+{
+  "test_plan": {
+    "system_name": "Evidence Classifier Subsystem",
+    "system_address": "1-1.2",
+    "parent_system": "Evidence Locker (1-1)",
+    "test_type": "function_test",
+    "version": "1.0",
+    "created": "2025-10-05",
+    "description": "Comprehensive functional testing for Evidence Classifier subsystem",
+    "test_data_location": "./test_data/",
+    "expected_results_location": "./expected_results/",
+    "test_vectors": [
+      {
+        "test_id": "EC_FUNC_001",
+        "test_name": "Multi-Format Classification Accuracy",
+        "description": "Test classification accuracy across multiple file formats",
+        "test_method": "multi_format_classification",
+        "input_parameters": {
+          "classification_test_set": [
+            {
+              "file_type": "PDF",
+              "expected_classification": "document",
+              "confidence_threshold": 0.9
+            },
+            {
+              "file_type": "DOCX",
+              "expected_classification": "document",
+              "confidence_threshold": 0.9
+            },
+            {
+              "file_type": "JPG",
+              "expected_classification": "media",
+              "confidence_threshold": 0.9
+            },
+            {
+              "file_type": "MP4",
+              "expected_classification": "media",
+              "confidence_threshold": 0.9
+            },
+            {
+              "file_type": "MP3",
+              "expected_classification": "media",
+              "confidence_threshold": 0.9
+            },
+            {
+              "file_type": "TXT",
+              "expected_classification": "document",
+              "confidence_threshold": 0.9
+            },
+            {
+              "file_type": "EXE",
+              "expected_classification": "executable",
+              "confidence_threshold": 0.8
+            },
+            {
+              "file_type": "ZIP",
+              "expected_classification": "archive",
+              "confidence_threshold": 0.8
+            }
+          ]
+        },
+        "expected_result": {
+          "status": "SUCCESS",
+          "classification_accuracy": ">=0.95",
+          "all_formats_classified": true,
+          "confidence_thresholds_met": true,
+          "misclassification_rate": "<=0.05"
+        },
+        "timeout_seconds": 60,
+        "retry_count": 2,
+        "critical": true
+      },
+      {
+        "test_id": "EC_FUNC_002",
+        "test_name": "Batch Classification Performance",
+        "description": "Test batch classification performance with large volumes",
+        "test_method": "batch_classification_performance",
+        "input_parameters": {
+          "batch_config": {
+            "batch_size": 100,
+            "file_types": ["PDF", "JPG", "MP4", "TXT", "DOCX"],
+            "concurrent_processing": true,
+            "max_concurrent": 5,
+            "processing_duration": 60
+          }
+        },
+        "expected_result": {
+          "status": "SUCCESS",
+          "batch_processing_rate": ">=20_items_per_second",
+          "all_items_classified": true,
+          "concurrent_processing_working": true,
+          "classification_accuracy_maintained": true
+        },
+        "timeout_seconds": 90,
+        "retry_count": 2,
+        "critical": false
+      }
+    ],
+    "performance_metrics": {
+      "multi_format_accuracy_min_percent": 95,
+      "batch_processing_rate_min_items_per_second": 20,
+      "classification_response_time_max_ms": 5000,
+      "memory_usage_max_mb": 200,
+      "cpu_usage_max_percent": 30
+    },
+    "test_environment": {
+      "required_files": [
+        "./test_data/sample_document.pdf",
+        "./test_data/sample_image.jpg",
+        "./test_data/sample_video.mp4",
+        "./test_data/sample_audio.mp3",
+        "./test_data/sample_text.txt"
+      ],
+      "required_directories": [
+        "./test_data/",
+        "./expected_results/"
+      ]
+    }
+  }
+}

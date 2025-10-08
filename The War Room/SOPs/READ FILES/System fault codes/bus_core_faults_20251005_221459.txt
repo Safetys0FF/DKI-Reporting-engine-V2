@@ -1,0 +1,9 @@
+BUS CORE FAULT CODE RESULTS
+==================================================
+Test Date: 2025-10-05T22:14:59.824090
+Total Faults: 4
+
+ 1. Bus-1-30-569 - New case error: 'NoneType' object has no attribute 'copy'
+ 2. Bus-1-31-582 - Add files error: 'NoneType' object is not iterable
+ 3. Bus-1-11-477 - Register signal error: 'NoneType' object has no attribute 'strip'
+ 4. Bus-1-52-143 - Get system status error: 'DKIReportBus' object has no attribute 'get_system_status'

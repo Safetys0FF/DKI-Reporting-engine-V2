@@ -1,0 +1,43 @@
+import sys
+sys.path.append(r"F:\The Central Command\The War Room\dev_tracking")
+from operator_manager import OperatorManager, AccessRules
+from audit_log import log_case_event
+
+self.access_rules = AccessRules()
+self.operator_manager = OperatorManager(self.access_rules)
+
+def _allow(self, user_role: str, action: str) -> bool:
+    # permissive until rules.enabled = true
+    return self.operator_manager.is_allowed(user_role, action)
+
+def upload_evidence_guarded(self, session, file_path, user_role="investigator"):
+    if not self._allow(user_role, "upload_evidence"):
+        raise PermissionError("Not permitted for this role.")
+    # ... your existing upload logic ...
+    # Audit (optional now)
+    from pathlib import Path
+    case_dir = Path(r"F:\The Central Command\The War Room\dev_tracking\case_dev") / session.case_id
+    log_case_event(case_dir, "UPLOAD_EVIDENCE", role=user_role, file=file_path)
+
+
+test plans, 
+
+Create operator:
+
+python -c "import sys; sys.path.append(r'F:\The Central Command\The War Room\dev_tracking');
+from operator_manager import OperatorManager; om=OperatorManager();
+op=om.create(name='Brian Pierog', email='bp@dki.com', phone='405-555-1423', role='field_operator');
+print('NEW:', op.operator_id);
+op=om.assign_to_case(op.operator_id, 'CASE-20251004', hours=12); print('ASSIGNED:', op.access);
+op=om.extend_access(op.operator_id, 12); print('EXTENDED:', op.access);
+op=om.deactivate(op.operator_id); print('STATUS:', op.status)"
+
+
+Issue & Validate token
+python -c "import sys; sys.path.append(r'F:\The Central Command\The War Room\dev_tracking');
+from auth_manager import issue_token, validate_token, revoke_token;
+t=issue_token('OPR-TEST123','CASE-20251004','field_operator',hours=1); print('TOKEN:',t['token_id']);
+print('VALID:', bool(validate_token(t['token_id'],'CASE-20251004')));
+revoke_token(t['token_id']); print('AFTER REVOKE:', validate_token(t['token_id'],'CASE-20251004'))"
+
+

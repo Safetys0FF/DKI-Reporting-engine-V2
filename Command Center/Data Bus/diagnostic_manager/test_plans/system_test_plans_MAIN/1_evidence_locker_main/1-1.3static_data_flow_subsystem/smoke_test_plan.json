@@ -1,0 +1,118 @@
+{
+  "test_plan": {
+    "system_name": "Static Data Flow Subsystem",
+    "system_address": "1-1.3",
+    "parent_system": "Evidence Locker (1-1)",
+    "test_type": "smoke_test",
+    "version": "1.0",
+    "created": "2025-10-05",
+    "description": "Basic functionality validation for Static Data Flow subsystem",
+    "test_data_location": "./test_data/",
+    "expected_results_location": "./expected_results/",
+    "test_vectors": [
+      {
+        "test_id": "SDF_SMOKE_001",
+        "test_name": "Subsystem Initialization",
+        "description": "Verify Static Data Flow can initialize with core data contracts",
+        "test_method": "initialize_static_data_flow",
+        "input_parameters": {
+          "data_contracts": ["evidence_contract", "metadata_contract", "status_contract"],
+          "flow_mode": "standard"
+        },
+        "expected_result": {
+          "status": "SUCCESS",
+          "data_flow_initialized": true,
+          "core_contracts_loaded": true,
+          "flow_mode_active": true
+        },
+        "timeout_seconds": 3,
+        "retry_count": 3,
+        "critical": true
+      },
+      {
+        "test_id": "SDF_SMOKE_002",
+        "test_name": "Evidence Data Flow",
+        "description": "Test evidence data flow processing",
+        "test_method": "process_evidence_flow",
+        "input_parameters": {
+          "evidence_flow_data": {
+            "evidence_id": "SDF_TEST_001",
+            "data_type": "evidence_contract",
+            "flow_stages": ["ingestion", "validation", "processing", "storage"]
+          }
+        },
+        "expected_result": {
+          "status": "SUCCESS",
+          "evidence_flow_completed": true,
+          "all_stages_processed": true,
+          "data_contract_validated": true,
+          "flow_integrity_maintained": true
+        },
+        "timeout_seconds": 5,
+        "retry_count": 2,
+        "critical": true
+      },
+      {
+        "test_id": "SDF_SMOKE_003",
+        "test_name": "Metadata Data Flow",
+        "description": "Test metadata data flow processing",
+        "test_method": "process_metadata_flow",
+        "input_parameters": {
+          "metadata_flow_data": {
+            "metadata_id": "SDF_META_001",
+            "data_type": "metadata_contract",
+            "metadata_fields": ["timestamp", "source", "classification", "size"]
+          }
+        },
+        "expected_result": {
+          "status": "SUCCESS",
+          "metadata_flow_completed": true,
+          "all_fields_processed": true,
+          "metadata_contract_validated": true,
+          "data_consistency_maintained": true
+        },
+        "timeout_seconds": 3,
+        "retry_count": 2,
+        "critical": true
+      },
+      {
+        "test_id": "SDF_SMOKE_004",
+        "test_name": "Status Data Flow",
+        "description": "Test status data flow processing",
+        "test_method": "process_status_flow",
+        "input_parameters": {
+          "status_flow_data": {
+            "status_id": "SDF_STATUS_001",
+            "data_type": "status_contract",
+            "status_fields": ["system_id", "status", "timestamp", "message"]
+          }
+        },
+        "expected_result": {
+          "status": "SUCCESS",
+          "status_flow_completed": true,
+          "all_fields_processed": true,
+          "status_contract_validated": true,
+          "status_accuracy_maintained": true
+        },
+        "timeout_seconds": 3,
+        "retry_count": 2,
+        "critical": false
+      }
+    ],
+    "performance_metrics": {
+      "initialization_time_max_ms": 3000,
+      "evidence_flow_time_max_ms": 5000,
+      "metadata_flow_time_max_ms": 3000,
+      "status_flow_time_max_ms": 3000,
+      "memory_usage_max_mb": 50,
+      "cpu_usage_max_percent": 10
+    },
+    "test_environment": {
+      "required_files": [],
+      "required_directories": [
+        "./test_data/",
+        "./expected_results/"
+      ]
+    }
+  }
+}

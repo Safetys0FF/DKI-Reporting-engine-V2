@@ -1,0 +1,109 @@
+{
+  "section_1": [
+    "intake-form",
+    "client-data",
+    "subject-profile",
+    "background-report",
+    "contract",
+    "subcontractor-agreement",
+    "supporting-documents"
+  ],
+  "section_2": [
+    "planning-notes",
+    "pre-surveillance",
+    "map",
+    "route-plan",
+    "target-location",
+    "vehicle-id",
+    "background-report",
+    "subcontractor-agreement",
+    "supporting-documents"
+  ],
+  "section_3": [
+    "surveillance-log",
+    "daily-log",
+    "timeline-entry",
+    "field-notes",
+    "shift-report",
+    "action-report",
+    "background-report",
+    "media-photo",
+    "media-video"
+  ],
+  "section_4": [
+    "session-review",
+    "daily-review",
+    "chronology",
+    "analysis",
+    "continuity",
+    "action-report",
+    "surveillance-log",
+    "media-photo",
+    "media-video"
+  ],
+  "section_5": [
+    "intake-form",
+    "background-report",
+    "contract",
+    "subcontractor-agreement",
+    "court-filing",
+    "petition",
+    "summons",
+    "affidavit",
+    "receipt",
+    "invoice",
+    "billing-record",
+    "email",
+    "correspondence",
+    "official-record",
+    "supporting-documents"
+  ],
+  "section_6": [
+    "billing-record",
+    "hours-log",
+    "shift-report",
+    "expense-record",
+    "mileage-log",
+    "invoice",
+    "receipt",
+    "subcontractor-invoice",
+    "subcontractor-agreement",
+    "contract",
+    "supporting-documents",
+    "background-report",
+    "court-filing",
+    "email",
+    "correspondence",
+    "equipment-use",
+    "service-return"
+  ],
+  "section_7": [
+    "conclusion",
+    "findings",
+    "decision",
+    "recommendation",
+    "final-summary",
+    "daily-review",
+    "action-report",
+    "background-report"
+  ],
+  "section_8": [
+    "media-photo",
+    "media-video",
+    "screenshot",
+    "surveillance-photo",
+    "surveillance-video",
+    "surveillance-log"
+  ],
+  "section_9": [
+    "certification",
+    "disclosure",
+    "authenticity",
+    "signature",
+    "legal",
+    "disclaimer",
+    "supporting-documents",
+    "contract",
+    "subcontractor-agreement"
+  ]
+}

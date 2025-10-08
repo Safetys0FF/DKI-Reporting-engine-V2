@@ -1,0 +1,117 @@
+{
+  "test_plan": {
+    "system_name": "Case Manifest Builder Subsystem",
+    "system_address": "1-1.7",
+    "parent_system": "Evidence Locker (1-1)",
+    "test_type": "smoke_test",
+    "version": "1.0",
+    "created": "2025-10-05",
+    "description": "Basic functionality validation for Case Manifest Builder subsystem",
+    "test_data_location": "./test_data/",
+    "expected_results_location": "./expected_results/",
+    "test_vectors": [
+      {
+        "test_id": "CMB_SMOKE_001",
+        "test_name": "Subsystem Initialization",
+        "description": "Verify Case Manifest Builder can initialize independently",
+        "test_method": "initialize_case_manifest_builder",
+        "input_parameters": {
+          "manifest_version": 1,
+          "template_mode": "standard"
+        },
+        "expected_result": {
+          "status": "SUCCESS",
+          "manifest_builder_initialized": true,
+          "version_set": true,
+          "template_loaded": true
+        },
+        "timeout_seconds": 3,
+        "retry_count": 3,
+        "critical": true
+      },
+      {
+        "test_id": "CMB_SMOKE_002",
+        "test_name": "Case Manifest Creation",
+        "description": "Test basic case manifest creation",
+        "test_method": "create_case_manifest",
+        "input_parameters": {
+          "case_data": {
+            "case_id": "CMB_TEST_CASE_001",
+            "case_name": "Test Case for Manifest Builder",
+            "case_type": "forensic_analysis",
+            "created_by": "test_user"
+          }
+        },
+        "expected_result": {
+          "status": "SUCCESS",
+          "manifest_created": true,
+          "case_data_included": true,
+          "manifest_format_valid": true,
+          "timestamp_recorded": true
+        },
+        "timeout_seconds": 3,
+        "retry_count": 2,
+        "critical": true
+      },
+      {
+        "test_id": "CMB_SMOKE_003",
+        "test_name": "Evidence Entry Addition",
+        "description": "Test adding evidence entries to manifest",
+        "test_method": "add_evidence_entry",
+        "input_parameters": {
+          "evidence_entry": {
+            "evidence_id": "CMB_EVIDENCE_001",
+            "file_name": "test_evidence.pdf",
+            "file_type": "PDF",
+            "file_size": 1024,
+            "added_timestamp": "2025-10-05T22:00:00Z"
+          }
+        },
+        "expected_result": {
+          "status": "SUCCESS",
+          "evidence_entry_added": true,
+          "manifest_updated": true,
+          "entry_data_valid": true,
+          "entry_count_incremented": true
+        },
+        "timeout_seconds": 2,
+        "retry_count": 2,
+        "critical": true
+      },
+      {
+        "test_id": "CMB_SMOKE_004",
+        "test_name": "Manifest Retrieval",
+        "description": "Test manifest retrieval and validation",
+        "test_method": "retrieve_manifest",
+        "input_parameters": {
+          "case_id": "CMB_TEST_CASE_001"
+        },
+        "expected_result": {
+          "status": "SUCCESS",
+          "manifest_retrieved": true,
+          "data_complete": true,
+          "format_valid": true,
+          "evidence_entries_included": true
+        },
+        "timeout_seconds": 2,
+        "retry_count": 2,
+        "critical": false
+      }
+    ],
+    "performance_metrics": {
+      "initialization_time_max_ms": 3000,
+      "manifest_creation_time_max_ms": 3000,
+      "evidence_addition_time_max_ms": 2000,
+      "manifest_retrieval_time_max_ms": 2000,
+      "memory_usage_max_mb": 25,
+      "cpu_usage_max_percent": 5
+    },
+    "test_environment": {
+      "required_files": [],
+      "required_directories": [
+        "./test_data/",
+        "./expected_results/"
+      ]
+    }
+  }
+}

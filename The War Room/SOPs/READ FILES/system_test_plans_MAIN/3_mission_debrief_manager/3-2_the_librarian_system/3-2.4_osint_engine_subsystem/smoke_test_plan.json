@@ -1,0 +1,123 @@
+{
+  "test_plan": {
+    "system_name": "OSINT Engine Subsystem",
+    "system_address": "3-2.4",
+    "parent_system": "The Librarian (3-2)",
+    "test_type": "smoke_test",
+    "version": "1.0",
+    "created": "2025-10-05",
+    "description": "Basic functionality validation for OSINT Engine subsystem",
+    "test_data_location": "./test_data/",
+    "expected_results_location": "./expected_results/",
+    "test_vectors": [
+      {
+        "test_id": "OE_SMOKE_001",
+        "test_name": "Subsystem Initialization",
+        "description": "Verify OSINT Engine can initialize independently",
+        "test_method": "initialize_osint_engine",
+        "input_parameters": {
+          "osint_sources": ["public_databases", "social_media", "news_feeds", "government_sites"],
+          "search_engines": ["google", "bing", "duckduckgo"],
+          "data_types": ["text", "images", "metadata", "links"]
+        },
+        "expected_result": {
+          "status": "SUCCESS",
+          "osint_engine_initialized": true,
+          "osint_sources_configured": true,
+          "search_engines_ready": true,
+          "data_types_supported": true
+        },
+        "timeout_seconds": 10,
+        "retry_count": 3,
+        "critical": true
+      },
+      {
+        "test_id": "OE_SMOKE_002",
+        "test_name": "OSINT Search",
+        "description": "Test OSINT search functionality",
+        "test_method": "perform_osint_search",
+        "input_parameters": {
+          "search_data": {
+            "search_query": "test search term",
+            "search_sources": ["public_databases", "news_feeds"],
+            "search_type": "text",
+            "result_limit": 50
+          }
+        },
+        "expected_result": {
+          "status": "SUCCESS",
+          "osint_search_executed": true,
+          "search_sources_queried": true,
+          "results_collected": true,
+          "search_accurate": true
+        },
+        "timeout_seconds": 30,
+        "retry_count": 2,
+        "critical": true
+      },
+      {
+        "test_id": "OE_SMOKE_003",
+        "test_name": "Data Aggregation",
+        "description": "Test data aggregation functionality",
+        "test_method": "aggregate_osint_data",
+        "input_parameters": {
+          "aggregation_data": {
+            "data_sources": ["source_1", "source_2", "source_3"],
+            "aggregation_method": "consolidate",
+            "data_format": "structured",
+            "deduplication": true
+          }
+        },
+        "expected_result": {
+          "status": "SUCCESS",
+          "data_aggregated": true,
+          "sources_consolidated": true,
+          "data_structured": true,
+          "duplicates_removed": true
+        },
+        "timeout_seconds": 15,
+        "retry_count": 2,
+        "critical": true
+      },
+      {
+        "test_id": "OE_SMOKE_004",
+        "test_name": "Intelligence Analysis",
+        "description": "Test intelligence analysis functionality",
+        "test_method": "analyze_intelligence",
+        "input_parameters": {
+          "analysis_data": {
+            "intelligence_data": "collected_osint_data",
+            "analysis_type": "pattern_recognition",
+            "analysis_criteria": ["relevance", "credibility", "recency"],
+            "output_format": "intelligence_report"
+          }
+        },
+        "expected_result": {
+          "status": "SUCCESS",
+          "intelligence_analyzed": true,
+          "patterns_identified": true,
+          "analysis_accurate": true,
+          "report_generated": true
+        },
+        "timeout_seconds": 20,
+        "retry_count": 2,
+        "critical": false
+      }
+    ],
+    "performance_metrics": {
+      "initialization_time_max_ms": 10000,
+      "osint_search_time_max_ms": 30000,
+      "data_aggregation_time_max_ms": 15000,
+      "intelligence_analysis_time_max_ms": 20000,
+      "memory_usage_max_mb": 200,
+      "cpu_usage_max_percent": 30
+    },
+    "test_environment": {
+      "required_files": [],
+      "required_directories": [
+        "./test_data/",
+        "./expected_results/"
+      ]
+    }
+  }
+}

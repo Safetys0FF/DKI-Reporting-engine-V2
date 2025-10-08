@@ -1,0 +1,195 @@
+{
+  "test_plan": {
+    "system_name": "Marshall System",
+    "system_address": "5-1",
+    "test_type": "function_test",
+    "version": "1.0",
+    "created": "2025-10-05",
+    "description": "Comprehensive functional testing for Marshall system",
+    "test_data_location": "./test_data/",
+    "expected_results_location": "./expected_results/",
+    "test_vectors": [
+      {
+        "test_id": "MARS_FUNC_001",
+        "test_name": "High-Volume Evidence Processing",
+        "description": "Test Marshall system with high-volume evidence processing",
+        "test_method": "process_high_volume_evidence",
+        "input_parameters": {
+          "volume_test_config": {
+            "evidence_batch_size": 50,
+            "evidence_types": ["PDF", "IMAGE", "TEXT", "VIDEO", "AUDIO"],
+            "concurrent_processing": true,
+            "max_concurrent": 10,
+            "processing_duration": 120
+          }
+        },
+        "expected_result": {
+          "status": "SUCCESS",
+          "all_evidence_processed": true,
+          "processing_rate": ">=5_items_per_second",
+          "concurrent_processing_working": true,
+          "no_evidence_lost": true,
+          "integrity_maintained": true
+        },
+        "timeout_seconds": 180,
+        "retry_count": 2,
+        "critical": true
+      },
+      {
+        "test_id": "MARS_FUNC_002",
+        "test_name": "Complex Permission Matrix",
+        "description": "Test complex permission validation scenarios",
+        "test_method": "test_complex_permissions",
+        "input_parameters": {
+          "permission_test_matrix": {
+            "test_scenarios": [
+              {
+                "scenario": "high_privilege_user",
+                "user_role": "senior_analyst",
+                "requested_operations": ["store_evidence", "retrieve_evidence", "modify_metadata"],
+                "expected_result": "granted"
+              },
+              {
+                "scenario": "standard_user",
+                "user_role": "analyst",
+                "requested_operations": ["store_evidence", "retrieve_evidence"],
+                "expected_result": "granted"
+              },
+              {
+                "scenario": "restricted_user",
+                "user_role": "viewer",
+                "requested_operations": ["retrieve_evidence"],
+                "expected_result": "granted"
+              },
+              {
+                "scenario": "unauthorized_user",
+                "user_role": "external",
+                "requested_operations": ["store_evidence", "retrieve_evidence"],
+                "expected_result": "denied"
+              }
+            ]
+          }
+        },
+        "expected_result": {
+          "status": "SUCCESS",
+          "all_permission_scenarios_tested": true,
+          "high_privilege_permissions_correct": true,
+          "standard_permissions_correct": true,
+          "restricted_permissions_correct": true,
+          "unauthorized_access_blocked": true
+        },
+        "timeout_seconds": 30,
+        "retry_count": 2,
+        "critical": true
+      },
+      {
+        "test_id": "MARS_FUNC_003",
+        "test_name": "Gateway Traffic Management",
+        "description": "Test gateway traffic management and load balancing",
+        "test_method": "test_traffic_management",
+        "input_parameters": {
+          "traffic_test_config": {
+            "traffic_patterns": [
+              {
+                "pattern": "burst_traffic",
+                "requests_per_second": 100,
+                "duration_seconds": 30
+              },
+              {
+                "pattern": "sustained_traffic",
+                "requests_per_second": 50,
+                "duration_seconds": 60
+              },
+              {
+                "pattern": "spike_traffic",
+                "requests_per_second": 200,
+                "duration_seconds": 10
+              }
+            ],
+            "load_balancing": true,
+            "traffic_monitoring": true
+          }
+        },
+        "expected_result": {
+          "status": "SUCCESS",
+          "burst_traffic_handled": true,
+          "sustained_traffic_managed": true,
+          "spike_traffic_absorbed": true,
+          "load_balancing_effective": true,
+          "no_traffic_drops": true
+        },
+        "timeout_seconds": 120,
+        "retry_count": 2,
+        "critical": false
+      },
+      {
+        "test_id": "MARS_FUNC_004",
+        "test_name": "Evidence Integrity and Chain of Custody",
+        "description": "Test evidence integrity validation and chain of custody tracking",
+        "test_method": "test_evidence_integrity",
+        "input_parameters": {
+          "integrity_test_config": {
+            "integrity_tests": [
+              {
+                "test_type": "checksum_validation",
+                "algorithm": "SHA256",
+                "expected_result": "valid"
+              },
+              {
+                "test_type": "chain_of_custody",
+                "custody_events": 10,
+                "expected_result": "complete"
+              },
+              {
+                "test_type": "tamper_detection",
+                "tamper_scenarios": ["modification", "deletion", "addition"],
+                "expected_result": "detected"
+              }
+            ]
+          }
+        },
+        "expected_result": {
+          "status": "SUCCESS",
+          "checksum_validation_working": true,
+          "chain_of_custody_complete": true,
+          "tamper_detection_functional": true,
+          "all_integrity_tests_passed": true
+        },
+        "timeout_seconds": 45,
+        "retry_count": 2,
+        "critical": true
+      }
+    ],
+    "performance_metrics": {
+      "high_volume_processing_rate_min_items_per_second": 5,
+      "permission_validation_time_max_ms": 100,
+      "traffic_management_capacity_min_requests_per_second": 200,
+      "integrity_validation_time_max_ms": 500,
+      "memory_usage_max_mb": 400,
+      "cpu_usage_max_percent": 50
+    },
+    "calibration_tests": [
+      {
+        "test_name": "Marshall System Performance Calibration",
+        "description": "Calibrate Marshall system performance baselines",
+        "metrics": [
+          "evidence_processing_speed_baseline",
+          "permission_validation_speed_baseline",
+          "traffic_management_capacity_baseline",
+          "integrity_validation_speed_baseline"
+        ]
+      }
+    ],
+    "test_environment": {
+      "required_files": [
+        "./test_data/sample_evidence.pdf",
+        "./test_data/sample_evidence.jpg",
+        "./test_data/sample_evidence.txt"
+      ],
+      "required_directories": [
+        "./test_data/",
+        "./expected_results/"
+      ]
+    }
+  }
+}

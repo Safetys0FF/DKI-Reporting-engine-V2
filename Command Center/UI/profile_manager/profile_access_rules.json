@@ -1,0 +1,51 @@
+{
+  "enabled": false,
+  "default_expiration_hours": 24,
+  "multi_operator_locking": false,
+  "roles": {
+    "investigator": {
+      "can_approve": true,
+      "can_export": true,
+      "can_upload": true,
+      "can_delete": true,
+      "can_lock_case": true,
+      "can_assign_operators": true
+    },
+    "field_operator": {
+      "can_approve": false,
+      "can_export": false,
+      "can_upload": true,
+      "can_delete": false,
+      "can_lock_case": false,
+      "can_assign_operators": false
+    }
+  },
+  "actions": {
+    "approve_section": [
+      "investigator"
+    ],
+    "export_report": [
+      "investigator"
+    ],
+    "upload_evidence": [
+      "investigator",
+      "field_operator"
+    ],
+    "delete_evidence": [
+      "investigator"
+    ],
+    "assign_operator": [
+      "investigator"
+    ],
+    "lock_case": [
+      "investigator"
+    ],
+    "add_field_notes": [
+      "investigator",
+      "field_operator"
+    ],
+    "process_evidence": [
+      "investigator"
+    ]
+  }
+}

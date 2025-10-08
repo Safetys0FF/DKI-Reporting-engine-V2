@@ -1,0 +1,92 @@
+{
+  "test_plan": {
+    "system_name": "Gateway Controller",
+    "system_address": "2-2",
+    "test_type": "function_test",
+    "version": "1.0",
+    "created": "2025-10-05",
+    "description": "Comprehensive functional testing for Gateway Controller system",
+    "test_data_location": "./test_data/",
+    "expected_results_location": "./expected_results/",
+    "test_vectors": [
+      {
+        "test_id": "GC_FUNC_001",
+        "test_name": "Multi-System Evidence Routing",
+        "description": "Test evidence routing to multiple target systems",
+        "test_method": "route_evidence_batch",
+        "input_parameters": {
+          "routing_batch": [
+            {
+              "evidence_id": "ROUTING_TEST_001",
+              "file_type": "PDF",
+              "target_systems": ["ecc", "mission_debrief"],
+              "routing_priority": "high"
+            },
+            {
+              "evidence_id": "ROUTING_TEST_002", 
+              "file_type": "IMAGE",
+              "target_systems": ["ecc"],
+              "routing_priority": "normal"
+            }
+          ]
+        },
+        "expected_result": {
+          "status": "SUCCESS",
+          "all_routing_successful": true,
+          "priority_handling_correct": true,
+          "target_systems_notified": true,
+          "routing_logs_complete": true
+        },
+        "timeout_seconds": 20,
+        "retry_count": 2,
+        "critical": true
+      },
+      {
+        "test_id": "GC_FUNC_002",
+        "test_name": "OCR Processing Accuracy",
+        "description": "Test OCR processing with various document types",
+        "test_method": "process_ocr_batch",
+        "input_parameters": {
+          "ocr_tests": [
+            {
+              "document_path": "./test_data/sample_document.pdf",
+              "expected_text": "Sample Test Document",
+              "confidence_threshold": 0.8
+            },
+            {
+              "document_path": "./test_data/image_with_text.jpg",
+              "expected_text": "extractable text",
+              "confidence_threshold": 0.7
+            }
+          ]
+        },
+        "expected_result": {
+          "status": "SUCCESS",
+          "ocr_accuracy": ">=0.8",
+          "all_documents_processed": true,
+          "confidence_scores_valid": true
+        },
+        "timeout_seconds": 30,
+        "retry_count": 2,
+        "critical": false
+      }
+    ],
+    "performance_metrics": {
+      "routing_batch_time_max_ms": 20000,
+      "ocr_accuracy_min_percent": 80,
+      "memory_usage_max_mb": 150,
+      "cpu_usage_max_percent": 40,
+      "throughput_min_operations_per_second": 2
+    },
+    "test_environment": {
+      "required_files": [
+        "./test_data/sample_document.pdf",
+        "./test_data/image_with_text.jpg"
+      ],
+      "required_directories": [
+        "./test_data/",
+        "./expected_results/"
+      ]
+    }
+  }
+}

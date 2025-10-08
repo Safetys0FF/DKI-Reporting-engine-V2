@@ -1,0 +1,121 @@
+{
+  "test_plan": {
+    "system_name": "Gateway Evidence Pipeline Subsystem",
+    "system_address": "2-2.3",
+    "parent_system": "Gateway Controller (2-2)",
+    "test_type": "smoke_test",
+    "version": "1.0",
+    "created": "2025-10-05",
+    "description": "Basic functionality validation for Gateway Evidence Pipeline subsystem",
+    "test_data_location": "./test_data/",
+    "expected_results_location": "./expected_results/",
+    "test_vectors": [
+      {
+        "test_id": "GEP_SMOKE_001",
+        "test_name": "Subsystem Initialization",
+        "description": "Verify Gateway Evidence Pipeline can initialize independently",
+        "test_method": "initialize_gateway_evidence_pipeline",
+        "input_parameters": {
+          "pipeline_stages": ["ingestion", "validation", "processing", "routing", "storage"],
+          "processing_modes": ["stream", "batch", "real_time"]
+        },
+        "expected_result": {
+          "status": "SUCCESS",
+          "evidence_pipeline_initialized": true,
+          "pipeline_stages_configured": true,
+          "processing_modes_active": true
+        },
+        "timeout_seconds": 5,
+        "retry_count": 3,
+        "critical": true
+      },
+      {
+        "test_id": "GEP_SMOKE_002",
+        "test_name": "Evidence Ingestion",
+        "description": "Test evidence ingestion functionality",
+        "test_method": "ingest_evidence",
+        "input_parameters": {
+          "ingestion_data": {
+            "evidence_id": "GEP_TEST_001",
+            "evidence_type": "document",
+            "source": "file_upload",
+            "metadata": {"size": 1024, "type": "PDF", "source": "test"}
+          }
+        },
+        "expected_result": {
+          "status": "SUCCESS",
+          "evidence_ingested": true,
+          "metadata_extracted": true,
+          "ingestion_validated": true,
+          "pipeline_stage_completed": true
+        },
+        "timeout_seconds": 5,
+        "retry_count": 2,
+        "critical": true
+      },
+      {
+        "test_id": "GEP_SMOKE_003",
+        "test_name": "Evidence Processing",
+        "description": "Test evidence processing functionality",
+        "test_method": "process_evidence",
+        "input_parameters": {
+          "processing_data": {
+            "evidence_id": "GEP_TEST_001",
+            "processing_stages": ["classification", "indexing", "enrichment"],
+            "processing_mode": "real_time"
+          }
+        },
+        "expected_result": {
+          "status": "SUCCESS",
+          "evidence_processed": true,
+          "all_stages_completed": true,
+          "processing_accurate": true,
+          "quality_standards_met": true
+        },
+        "timeout_seconds": 8,
+        "retry_count": 2,
+        "critical": true
+      },
+      {
+        "test_id": "GEP_SMOKE_004",
+        "test_name": "Pipeline Monitoring",
+        "description": "Test pipeline monitoring functionality",
+        "test_method": "monitor_pipeline",
+        "input_parameters": {
+          "monitoring_data": {
+            "monitoring_metrics": ["throughput", "latency", "error_rate", "queue_depth"],
+            "monitoring_interval": 30,
+            "alert_thresholds": {"error_rate": 0.05, "latency": 5000}
+          }
+        },
+        "expected_result": {
+          "status": "SUCCESS",
+          "pipeline_monitored": true,
+          "metrics_collected": true,
+          "performance_tracked": true,
+          "alerts_functional": true
+        },
+        "timeout_seconds": 5,
+        "retry_count": 2,
+        "critical": false
+      }
+    ],
+    "performance_metrics": {
+      "initialization_time_max_ms": 5000,
+      "evidence_ingestion_time_max_ms": 5000,
+      "evidence_processing_time_max_ms": 8000,
+      "pipeline_monitoring_time_max_ms": 5000,
+      "memory_usage_max_mb": 100,
+      "cpu_usage_max_percent": 20
+    },
+    "test_environment": {
+      "required_files": [
+        "./test_data/sample_evidence.pdf"
+      ],
+      "required_directories": [
+        "./test_data/",
+        "./expected_results/"
+      ]
+    }
+  }
+}

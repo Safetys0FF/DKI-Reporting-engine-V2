@@ -1,0 +1,130 @@
+{
+  "test_plan": {
+    "system_name": "The Librarian System",
+    "system_address": "3-2",
+    "parent_system": "Mission Debrief Complex (3-x)",
+    "test_type": "smoke_test",
+    "version": "1.0",
+    "created": "2025-10-05",
+    "description": "Basic functionality validation for The Librarian system",
+    "test_data_location": "./test_data/",
+    "expected_results_location": "./expected_results/",
+    "test_vectors": [
+      {
+        "test_id": "TL_SMOKE_001",
+        "test_name": "System Initialization",
+        "description": "Verify The Librarian can initialize independently",
+        "test_method": "initialize_the_librarian",
+        "input_parameters": {
+          "librarian_modes": ["document_management", "template_management", "content_curation"],
+          "storage_backend": "file_system",
+          "indexing_engine": "full_text_search"
+        },
+        "expected_result": {
+          "status": "SUCCESS",
+          "librarian_initialized": true,
+          "librarian_modes_configured": true,
+          "storage_backend_connected": true,
+          "indexing_engine_ready": true
+        },
+        "timeout_seconds": 10,
+        "retry_count": 3,
+        "critical": true
+      },
+      {
+        "test_id": "TL_SMOKE_002",
+        "test_name": "Document Management",
+        "description": "Test document management functionality",
+        "test_method": "manage_documents",
+        "input_parameters": {
+          "management_data": {
+            "operation": "store_document",
+            "document_path": "./test_data/sample_document.pdf",
+            "document_metadata": {
+              "title": "Test Document",
+              "author": "Test User",
+              "category": "test",
+              "tags": ["smoke_test", "document"]
+            }
+          }
+        },
+        "expected_result": {
+          "status": "SUCCESS",
+          "document_stored": true,
+          "metadata_indexed": true,
+          "document_retrievable": true,
+          "management_operation_successful": true
+        },
+        "timeout_seconds": 8,
+        "retry_count": 2,
+        "critical": true
+      },
+      {
+        "test_id": "TL_SMOKE_003",
+        "test_name": "Content Search",
+        "description": "Test content search functionality",
+        "test_method": "search_content",
+        "input_parameters": {
+          "search_data": {
+            "search_query": "test document",
+            "search_type": "full_text",
+            "search_filters": {
+              "category": "test",
+              "date_range": "last_30_days"
+            }
+          }
+        },
+        "expected_result": {
+          "status": "SUCCESS",
+          "search_executed": true,
+          "results_found": true,
+          "search_accurate": true,
+          "results_ranked": true
+        },
+        "timeout_seconds": 5,
+        "retry_count": 2,
+        "critical": true
+      },
+      {
+        "test_id": "TL_SMOKE_004",
+        "test_name": "Content Curation",
+        "description": "Test content curation functionality",
+        "test_method": "curate_content",
+        "input_parameters": {
+          "curation_data": {
+            "curation_operation": "organize_content",
+            "content_collection": "test_documents",
+            "curation_rules": ["categorize_by_type", "tag_by_content", "archive_old_documents"]
+          }
+        },
+        "expected_result": {
+          "status": "SUCCESS",
+          "content_curated": true,
+          "organization_applied": true,
+          "categorization_complete": true,
+          "archiving_functional": true
+        },
+        "timeout_seconds": 10,
+        "retry_count": 2,
+        "critical": false
+      }
+    ],
+    "performance_metrics": {
+      "initialization_time_max_ms": 10000,
+      "document_management_time_max_ms": 8000,
+      "content_search_time_max_ms": 5000,
+      "content_curation_time_max_ms": 10000,
+      "memory_usage_max_mb": 150,
+      "cpu_usage_max_percent": 25
+    },
+    "test_environment": {
+      "required_files": [
+        "./test_data/sample_document.pdf"
+      ],
+      "required_directories": [
+        "./test_data/",
+        "./expected_results/"
+      ]
+    }
+  }
+}

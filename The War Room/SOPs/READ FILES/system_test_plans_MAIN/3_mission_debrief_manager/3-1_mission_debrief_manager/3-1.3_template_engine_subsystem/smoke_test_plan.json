@@ -1,0 +1,127 @@
+{
+  "test_plan": {
+    "system_name": "Template Engine Subsystem",
+    "system_address": "3-1.3",
+    "parent_system": "Mission Debrief Manager (3-1)",
+    "test_type": "smoke_test",
+    "version": "1.0",
+    "created": "2025-10-05",
+    "description": "Basic functionality validation for Template Engine subsystem",
+    "test_data_location": "./test_data/",
+    "expected_results_location": "./expected_results/",
+    "test_vectors": [
+      {
+        "test_id": "TE_SMOKE_001",
+        "test_name": "Subsystem Initialization",
+        "description": "Verify Template Engine can initialize independently",
+        "test_method": "initialize_template_engine",
+        "input_parameters": {
+          "template_formats": ["HTML", "PDF", "DOCX", "RTF"],
+          "template_languages": ["Jinja2", "Handlebars", "Mustache"],
+          "template_cache_size": 100
+        },
+        "expected_result": {
+          "status": "SUCCESS",
+          "template_engine_initialized": true,
+          "template_formats_loaded": true,
+          "template_languages_configured": true,
+          "template_cache_initialized": true
+        },
+        "timeout_seconds": 5,
+        "retry_count": 3,
+        "critical": true
+      },
+      {
+        "test_id": "TE_SMOKE_002",
+        "test_name": "Template Loading",
+        "description": "Test template loading functionality",
+        "test_method": "load_template",
+        "input_parameters": {
+          "template_data": {
+            "template_path": "./test_data/sample_template.html",
+            "template_type": "HTML",
+            "template_language": "Jinja2"
+          }
+        },
+        "expected_result": {
+          "status": "SUCCESS",
+          "template_loaded": true,
+          "template_parsed": true,
+          "template_validated": true,
+          "template_cached": true
+        },
+        "timeout_seconds": 3,
+        "retry_count": 2,
+        "critical": true
+      },
+      {
+        "test_id": "TE_SMOKE_003",
+        "test_name": "Template Rendering",
+        "description": "Test template rendering functionality",
+        "test_method": "render_template",
+        "input_parameters": {
+          "rendering_data": {
+            "template_id": "sample_template",
+            "template_variables": {
+              "title": "Test Report",
+              "author": "Test User",
+              "date": "2025-10-05",
+              "content": "Test content for rendering"
+            },
+            "output_format": "HTML"
+          }
+        },
+        "expected_result": {
+          "status": "SUCCESS",
+          "template_rendered": true,
+          "variables_substituted": true,
+          "output_generated": true,
+          "rendering_accurate": true
+        },
+        "timeout_seconds": 5,
+        "retry_count": 2,
+        "critical": true
+      },
+      {
+        "test_id": "TE_SMOKE_004",
+        "test_name": "Template Validation",
+        "description": "Test template validation functionality",
+        "test_method": "validate_template",
+        "input_parameters": {
+          "validation_data": {
+            "template_content": "template_content_to_validate",
+            "validation_rules": ["syntax_check", "variable_check", "format_check"],
+            "template_schema": "standard_template_schema"
+          }
+        },
+        "expected_result": {
+          "status": "SUCCESS",
+          "template_validated": true,
+          "syntax_check_passed": true,
+          "variable_check_passed": true,
+          "format_check_passed": true
+        },
+        "timeout_seconds": 3,
+        "retry_count": 2,
+        "critical": false
+      }
+    ],
+    "performance_metrics": {
+      "initialization_time_max_ms": 5000,
+      "template_loading_time_max_ms": 3000,
+      "template_rendering_time_max_ms": 5000,
+      "template_validation_time_max_ms": 3000,
+      "memory_usage_max_mb": 75,
+      "cpu_usage_max_percent": 15
+    },
+    "test_environment": {
+      "required_files": [
+        "./test_data/sample_template.html"
+      ],
+      "required_directories": [
+        "./test_data/",
+        "./expected_results/"
+      ]
+    }
+  }
+}

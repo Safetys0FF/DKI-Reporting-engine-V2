@@ -1,0 +1,131 @@
+{
+  "test_plan": {
+    "system_name": "Gateway Controller",
+    "system_address": "2-2",
+    "test_type": "smoke_test",
+    "version": "1.0",
+    "created": "2025-10-05",
+    "description": "Basic functionality validation for Gateway Controller system",
+    "test_data_location": "./test_data/",
+    "expected_results_location": "./expected_results/",
+    "test_vectors": [
+      {
+        "test_id": "GC_SMOKE_001",
+        "test_name": "System Initialization",
+        "description": "Verify Gateway Controller can initialize without errors",
+        "test_method": "initialize_system",
+        "input_parameters": {
+          "bus_connection": true,
+          "ecc_connection": false
+        },
+        "expected_result": {
+          "status": "SUCCESS",
+          "gateway_initialized": true,
+          "bus_connected": true,
+          "communication_active": true
+        },
+        "timeout_seconds": 5,
+        "retry_count": 3,
+        "critical": true
+      },
+      {
+        "test_id": "GC_SMOKE_002",
+        "test_name": "Evidence Routing",
+        "description": "Test basic evidence routing functionality",
+        "test_method": "route_evidence",
+        "input_parameters": {
+          "evidence_data": {
+            "evidence_id": "TEST_EVIDENCE_001",
+            "file_type": "PDF",
+            "classification": "document",
+            "source": "evidence_locker",
+            "target_system": "ecc"
+          }
+        },
+        "expected_result": {
+          "status": "SUCCESS",
+          "routing_successful": true,
+          "target_system_notified": true,
+          "routing_log_created": true
+        },
+        "timeout_seconds": 10,
+        "retry_count": 2,
+        "critical": true
+      },
+      {
+        "test_id": "GC_SMOKE_003",
+        "test_name": "Section Validation",
+        "description": "Test section validation with ECC bypass",
+        "test_method": "validate_section",
+        "input_parameters": {
+          "section_id": "TEST_SECTION_001",
+          "validation_type": "permission_check"
+        },
+        "expected_result": {
+          "status": "SUCCESS",
+          "validation_complete": true,
+          "bypass_mechanism_working": true,
+          "validation_log_created": true
+        },
+        "timeout_seconds": 8,
+        "retry_count": 2,
+        "critical": true
+      },
+      {
+        "test_id": "GC_SMOKE_004",
+        "test_name": "OCR Processing Test",
+        "description": "Test OCR processing with sample document",
+        "test_method": "process_ocr",
+        "input_parameters": {
+          "document_path": "./test_data/sample_document.pdf",
+          "ocr_settings": {
+            "language": "en",
+            "confidence_threshold": 0.8
+          }
+        },
+        "expected_result": {
+          "status": "SUCCESS",
+          "ocr_processing_complete": true,
+          "text_extracted": true,
+          "confidence_acceptable": true
+        },
+        "timeout_seconds": 15,
+        "retry_count": 2,
+        "critical": false
+      },
+      {
+        "test_id": "GC_SMOKE_005",
+        "test_name": "Communication Status",
+        "description": "Verify communication status reporting",
+        "test_method": "get_communication_status",
+        "input_parameters": {},
+        "expected_result": {
+          "status": "SUCCESS",
+          "address": "2-2",
+          "communication_active": true,
+          "last_check_valid": true
+        },
+        "timeout_seconds": 5,
+        "retry_count": 2,
+        "critical": false
+      }
+    ],
+    "performance_metrics": {
+      "initialization_time_max_ms": 2000,
+      "routing_time_max_ms": 3000,
+      "validation_time_max_ms": 2000,
+      "ocr_processing_time_max_ms": 15000,
+      "memory_usage_max_mb": 150,
+      "cpu_usage_max_percent": 25
+    },
+    "test_environment": {
+      "required_files": [
+        "./test_data/sample_document.pdf"
+      ],
+      "required_directories": [
+        "./test_data/",
+        "./expected_results/"
+      ]
+    }
+  }
+}

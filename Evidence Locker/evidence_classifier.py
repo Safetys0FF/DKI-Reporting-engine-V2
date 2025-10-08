@@ -1,3 +1,4 @@
+import json
 #!/usr/bin/env python3
 """
 EvidenceClassifier - Classification system for assigning evidence to sections.
@@ -12,11 +13,20 @@ import mimetypes
 import logging
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Any, Optional, Tuple
+from typing import Dict, List, Any, Optional, Tuple, Set
 
 from section_registry import SECTION_REGISTRY
 
 logger = logging.getLogger(__name__)
+
+CONFIG_PATH = r"F:\The Central Command\The Warden\section_tag_map.json"
+
+try:
+    with open(CONFIG_PATH, 'r', encoding='utf-8') as config_file:
+        SECTION_TAGS = json.load(config_file)
+except (OSError, json.JSONDecodeError):
+    SECTION_TAGS = {}
+
 
 # Default extension to section mapping. Users can override via config.
 DEFAULT_FILE_TYPE_RULES: Dict[str, str] = {
@@ -53,6 +63,17 @@ CONTENT_KEYWORDS: Dict[str, List[str]] = {
     "section_dp": ["certify", "authenticity", "signature"],
     "section_fr": ["final report", "assembly"],
 }
+
+NORMALIZE = {
+    "supporting_documents": "supporting-documents",
+    "evidence_index": "media-photo",
+    "intakeform": "intake-form",
+    "dailylog": "daily-log",
+}
+
+
+def normalize_tags(tags: List[str]) -> List[str]:
+    return [NORMALIZE.get(tag, tag) for tag in tags]
 
 LEGAL_MARKERS = {"agreement", "contract", "retainer", "terms", "payment", "consideration"}
 
@@ -193,6 +214,8 @@ class EvidenceClassifier:
             classification["assigned_section"]
         )
 
+        classification["tags"] = self._derive_tags(file_ext, filename, classification["assigned_section"])
+
         self.classification_history.append(classification.copy())
         self._send_message("classified", classification)
         self._send_accept_signal("classified", classification)
@@ -261,6 +284,28 @@ class EvidenceClassifier:
 
         return classification["classification_method"] == "content_keywords" or \
             classification["classification_method"] == "legal_heuristic"
+
+    def _derive_tags(self, file_ext: Optional[str], filename: str, section_id: str) -> List[str]:
+        tags: Set[str] = set()
+        profile = SECTION_REGISTRY.get(section_id, {})
+        tags.update(SECTION_TAGS.get(section_id, []))
+        tags.update(profile.get("tags", []))
+
+        ext = (file_ext or "").lower()
+        lowered = filename.lower()
+
+        if ext in {".pdf", ".docx"}:
+            tags.add("supporting-documents")
+            if "intake" in lowered:
+                tags.add("intake-form")
+            if "contract" in lowered:
+                tags.add("contract")
+            if "agreement" in lowered:
+                tags.add("subcontractor-agreement")
+            if any(word in lowered for word in ["billing", "hours", "mileage", "expense", "receipt", "invoice"]):
+                tags.add("billing-record")
+
+        return normalize_tags(sorted(tags))
 
     def _keyword_hits(self, text: str) -> Optional[Tuple[str, List[str]]]:
         scores: Dict[str, List[str]] = {}

@@ -64,6 +64,7 @@ class OrderContract:
 
 class SectionFramework:
     SECTION_ID: str = ""
+    BUS_SECTION_ID: Optional[str] = None
     MAX_RERUNS: int = 3
     STAGES: Tuple[StageDefinition, ...] = ()
     COMMUNICATION: Optional[CommunicationContract] = None
@@ -95,6 +96,58 @@ class SectionFramework:
 
     def publish(self, payload: Dict[str, Any]) -> Dict[str, Any]:
         raise NotImplementedError
+
+    @classmethod
+    def bus_section_id(cls) -> Optional[str]:
+        if getattr(cls, "BUS_SECTION_ID", None):
+            return cls.BUS_SECTION_ID
+        section_id = getattr(cls, "SECTION_ID", "")
+        if section_id.startswith("section_"):
+            parts = section_id.split("_")
+            if len(parts) >= 2:
+                return f"section_{parts[1]}"
+        return section_id or None
+
+    def _get_latest_bus_state(self) -> Dict[str, Any]:
+        bus_id = self.bus_section_id()
+        get_state = getattr(self.gateway, "get_bus_state", None) if hasattr(self, "gateway") else None
+        if not bus_id or not callable(get_state):
+            return {}
+        try:
+            state = get_state(bus_id) or {}
+            return state
+        except Exception as exc:
+            self.logger.warning("Failed to fetch bus state for %s: %s", bus_id, exc)
+            return {}
+
+    def _augment_with_bus_context(self, inputs: Dict[str, Any]) -> Dict[str, Any]:
+        bus_state = self._get_latest_bus_state()
+        if not bus_state:
+            return inputs
+        enriched: Dict[str, Any] = dict(inputs)
+        enriched.setdefault("bus_state", bus_state)
+        payload = bus_state.get("payload") or {}
+        if isinstance(payload, dict):
+            enriched.setdefault("section_payload", payload.get("structured_data") or payload)
+            manifest_context = payload.get("manifest") or bus_state.get("manifest")
+            if manifest_context is not None:
+                enriched.setdefault("manifest_context", manifest_context)
+            for key, value in payload.items():
+                enriched.setdefault(key, value)
+        else:
+            manifest_context = bus_state.get("manifest")
+            if manifest_context is not None:
+                enriched.setdefault("manifest_context", manifest_context)
+        if bus_state.get("needs") is not None:
+            enriched.setdefault("section_needs", bus_state.get("needs"))
+        if bus_state.get("evidence") is not None:
+            enriched.setdefault("section_evidence", bus_state.get("evidence"))
+        case_id = enriched.get("case_id") or bus_state.get("case_id")
+        if not case_id and isinstance(payload, dict):
+            case_id = payload.get("case_id")
+        if case_id and "case_id" not in enriched:
+            enriched["case_id"] = case_id
+        return enriched
 
     def _guard_execution(self, operation: str) -> None:
         if self.ecc and not self.ecc.can_run(self.SECTION_ID):
@@ -866,12 +919,13 @@ class Section7Framework(SectionFramework):
                 "coverage": coverage,
                 "toolkit_flags": len(context.get("toolkit_results", {}).get("continuity_check") or []),
             }
+            context = self._augment_with_bus_context(context)
             self.logger.debug("Section 7 inputs loaded: %s", context["basic_stats"])
             self._last_context = context
             return context
         except Exception as exc:
             self.logger.exception("Failed to load inputs for %s: %s", self.SECTION_ID, exc)
-            return {}
+            return self._augment_with_bus_context({})
 
     def build_payload(self, context: Dict[str, Any]) -> Dict[str, Any]:
         try:
@@ -905,6 +959,19 @@ class Section7Framework(SectionFramework):
                 "qa_flags": sorted(conclusion_data.get("qa_flags", [])),
                 "notes": notes,
             }
+            if context.get("bus_state") is not None:
+                payload.setdefault("bus_state", context.get("bus_state"))
+            if context.get("section_evidence") is not None:
+                payload.setdefault("section_evidence", context.get("section_evidence"))
+            if context.get("section_needs") is not None:
+                payload.setdefault("section_needs", context.get("section_needs"))
+            if context.get("manifest_context") is not None:
+                payload.setdefault("manifest_context", context.get("manifest_context"))
+            section_bus_id = self.bus_section_id() or "section_7"
+            payload.setdefault("section_id", section_bus_id)
+            case_id = context.get("case_id") or context.get("bus_state", {}).get("case_id")
+            if case_id:
+                payload.setdefault("case_id", case_id)
             return payload
         except Exception as exc:
             self.logger.exception("Failed to build payload for %s: %s", self.SECTION_ID, exc)
@@ -913,38 +980,61 @@ class Section7Framework(SectionFramework):
     def publish(self, payload: Dict[str, Any]) -> Dict[str, Any]:
         try:
             self._guard_execution("publishing")
+
             renderer = Section7Renderer()
             case_sources = self._build_renderer_sources(self._last_context)
             model = renderer.render_model(payload, case_sources)
-            narrative = "\n".join(
-                block.get('text') or block.get('value') or ''
-                for block in model["render_tree"]
-                if block.get('type') in {'title', 'header', 'paragraph', 'field'}
-            )
+            narrative_lines: List[str] = []
+            for block in model["render_tree"]:
+                block_type = block.get("type")
+                if block_type == "field":
+                    label = str(block.get('label', '')).strip()
+                    value = str(block.get('value', '')).strip()
+                    narrative_lines.append(f"{label}: {value}")
+                elif block_type in {"title", "header", "paragraph"}:
+                    narrative_lines.append(str(block.get("text", "")))
+            narrative = "\n".join(filter(None, narrative_lines))
+
+            section_bus_id = self.bus_section_id() or "section_7"
+            timestamp = datetime.now().isoformat()
+            summary = narrative.splitlines()[0] if narrative else ""
+            summary = summary[:320]
+
             result = {
+                "section_id": section_bus_id,
+                "case_id": payload.get("case_id"),
                 "payload": payload,
-                "manifest": model["manifest"],
-                "render_tree": model["render_tree"],
+                "manifest": model.get("manifest", {}) or payload,
+                "render_tree": model.get("render_tree", []),
                 "narrative": narrative,
-                "status": "completed",
+                "summary": summary,
+                "metadata": {"published_at": timestamp, "section": self.SECTION_ID},
+                "source": "section_7_framework",
             }
+
             if self.gateway:
-                self.gateway.publish_section_result("section_7", result)
-                self.gateway.emit("conclusion_ready", model["manifest"])
-            
-            # ECC completion notification
+                try:
+                    if hasattr(self.gateway, "publish_section_result"):
+                        self.gateway.publish_section_result(section_bus_id, result)
+                    if hasattr(self.gateway, "emit"):
+                        emit_payload = dict(result)
+                        emit_payload.setdefault("published_at", timestamp)
+                        if self.COMMUNICATION and self.COMMUNICATION.output_signal:
+                            self.gateway.emit(self.COMMUNICATION.output_signal, emit_payload)
+                        self.gateway.emit("conclusion_ready", result["manifest"])
+                except Exception:
+                    self.logger.exception("Gateway publish for section_7 failed")
+
             if self.ecc:
-                self.ecc.mark_complete(self.SECTION_ID)
-            
-            return {
-                "status": "published",
-                "narrative": narrative,
-                "manifest": model["manifest"],
-            }
+                try:
+                    self.ecc.mark_complete(self.SECTION_ID)
+                except Exception:
+                    self.logger.exception("ECC completion for section_7 failed")
+
+            return {"status": "published", "narrative": narrative, "manifest": result["manifest"]}
         except Exception as exc:
             self.logger.exception("Failed to publish for %s: %s", self.SECTION_ID, exc)
             return {"error": str(exc)}
-
         def _case_heading(self, case_mode: str) -> str:
             if case_mode == "investigative":
                 return INVESTIGATIVE_HEADING

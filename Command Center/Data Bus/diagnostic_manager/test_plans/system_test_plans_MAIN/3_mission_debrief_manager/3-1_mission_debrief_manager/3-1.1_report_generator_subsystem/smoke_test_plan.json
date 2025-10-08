@@ -1,0 +1,136 @@
+{
+  "test_plan": {
+    "system_name": "Report Generator Subsystem",
+    "system_address": "3-1.2",
+    "parent_system": "Mission Debrief (3-1)",
+    "test_type": "smoke_test",
+    "version": "1.0",
+    "created": "2025-10-05",
+    "description": "Basic functionality validation for Report Generator subsystem",
+    "test_data_location": "./test_data/",
+    "expected_results_location": "./expected_results/",
+    "test_vectors": [
+      {
+        "test_id": "RG_SMOKE_001",
+        "test_name": "Subsystem Initialization",
+        "description": "Verify Report Generator can initialize independently",
+        "test_method": "initialize_report_generator",
+        "input_parameters": {
+          "generator_mode": "standard",
+          "template_engine": "active"
+        },
+        "expected_result": {
+          "status": "SUCCESS",
+          "report_generator_initialized": true,
+          "generator_mode_active": true,
+          "template_engine_ready": true
+        },
+        "timeout_seconds": 5,
+        "retry_count": 3,
+        "critical": true
+      },
+      {
+        "test_id": "RG_SMOKE_002",
+        "test_name": "Basic Report Generation",
+        "description": "Test basic report generation functionality",
+        "test_method": "generate_basic_report",
+        "input_parameters": {
+          "report_data": {
+            "case_id": "RG_TEST_CASE_001",
+            "sections": [
+              {
+                "section_id": "executive_summary",
+                "content": "Test executive summary content"
+              },
+              {
+                "section_id": "evidence_analysis",
+                "content": "Test evidence analysis content"
+              }
+            ],
+            "format": "standard"
+          }
+        },
+        "expected_result": {
+          "status": "SUCCESS",
+          "report_generated": true,
+          "all_sections_included": true,
+          "format_applied": true,
+          "report_structure_valid": true
+        },
+        "timeout_seconds": 10,
+        "retry_count": 2,
+        "critical": true
+      },
+      {
+        "test_id": "RG_SMOKE_003",
+        "test_name": "Report Formatting",
+        "description": "Test report formatting and structure",
+        "test_method": "format_report",
+        "input_parameters": {
+          "formatting_data": {
+            "report_id": "RG_TEST_REPORT_001",
+            "format_options": {
+              "include_cover_page": true,
+              "include_toc": true,
+              "include_page_numbers": true,
+              "include_headers_footers": true
+            }
+          }
+        },
+        "expected_result": {
+          "status": "SUCCESS",
+          "report_formatted": true,
+          "cover_page_included": true,
+          "toc_generated": true,
+          "page_numbers_added": true,
+          "headers_footers_applied": true
+        },
+        "timeout_seconds": 8,
+        "retry_count": 2,
+        "critical": true
+      },
+      {
+        "test_id": "RG_SMOKE_004",
+        "test_name": "Report Validation",
+        "description": "Test report validation and quality checks",
+        "test_method": "validate_report",
+        "input_parameters": {
+          "validation_data": {
+            "report_id": "RG_TEST_REPORT_001",
+            "validation_criteria": [
+              "content_completeness",
+              "format_consistency",
+              "section_integrity",
+              "metadata_accuracy"
+            ]
+          }
+        },
+        "expected_result": {
+          "status": "SUCCESS",
+          "report_validated": true,
+          "all_criteria_passed": true,
+          "quality_score": ">=0.9",
+          "validation_report_generated": true
+        },
+        "timeout_seconds": 5,
+        "retry_count": 2,
+        "critical": false
+      }
+    ],
+    "performance_metrics": {
+      "initialization_time_max_ms": 5000,
+      "report_generation_time_max_ms": 10000,
+      "report_formatting_time_max_ms": 8000,
+      "report_validation_time_max_ms": 5000,
+      "memory_usage_max_mb": 150,
+      "cpu_usage_max_percent": 20
+    },
+    "test_environment": {
+      "required_files": [],
+      "required_directories": [
+        "./test_data/",
+        "./expected_results/"
+      ]
+    }
+  }
+}

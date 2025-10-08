@@ -1,0 +1,125 @@
+{
+  "test_plan": {
+    "system_name": "Report Generation Interface Subsystem",
+    "system_address": "7-1.5",
+    "parent_system": "Enhanced Functional GUI (7-1)",
+    "test_type": "smoke_test",
+    "version": "1.0",
+    "created": "2025-10-05",
+    "description": "Basic functionality validation for Report Generation Interface subsystem",
+    "test_data_location": "./test_data/",
+    "expected_results_location": "./expected_results/",
+    "test_vectors": [
+      {
+        "test_id": "RGI_SMOKE_001",
+        "test_name": "Subsystem Initialization",
+        "description": "Verify Report Generation Interface can initialize independently",
+        "test_method": "initialize_report_generation_interface",
+        "input_parameters": {
+          "interface_modes": ["report_wizard", "template_selection", "custom_generation", "batch_processing"],
+          "report_formats": ["PDF", "DOCX", "HTML", "RTF"],
+          "generation_options": ["cover_page", "table_of_contents", "appendices", "watermarks"]
+        },
+        "expected_result": {
+          "status": "SUCCESS",
+          "report_generation_interface_initialized": true,
+          "interface_modes_configured": true,
+          "report_formats_available": true,
+          "generation_options_loaded": true
+        },
+        "timeout_seconds": 5,
+        "retry_count": 3,
+        "critical": true
+      },
+      {
+        "test_id": "RGI_SMOKE_002",
+        "test_name": "Report Wizard Interface",
+        "description": "Test report wizard interface functionality",
+        "test_method": "launch_report_wizard",
+        "input_parameters": {
+          "wizard_data": {
+            "wizard_steps": ["template_selection", "content_selection", "format_options", "generation_settings"],
+            "wizard_navigation": "step_by_step",
+            "wizard_preview": "enabled",
+            "wizard_validation": "per_step"
+          }
+        },
+        "expected_result": {
+          "status": "SUCCESS",
+          "report_wizard_launched": true,
+          "wizard_steps_displayed": true,
+          "wizard_navigation_functional": true,
+          "wizard_preview_working": true,
+          "wizard_validation_active": true
+        },
+        "timeout_seconds": 5,
+        "retry_count": 2,
+        "critical": true
+      },
+      {
+        "test_id": "RGI_SMOKE_003",
+        "test_name": "Template Selection Interface",
+        "description": "Test template selection interface functionality",
+        "test_method": "select_template",
+        "input_parameters": {
+          "template_data": {
+            "template_categories": ["standard", "executive", "technical", "legal"],
+            "template_preview": "thumbnail_view",
+            "template_customization": "available",
+            "template_validation": "automatic"
+          }
+        },
+        "expected_result": {
+          "status": "SUCCESS",
+          "template_selection_loaded": true,
+          "template_categories_displayed": true,
+          "template_preview_functional": true,
+          "template_customization_available": true,
+          "template_validation_working": true
+        },
+        "timeout_seconds": 5,
+        "retry_count": 2,
+        "critical": true
+      },
+      {
+        "test_id": "RGI_SMOKE_004",
+        "test_name": "Generation Progress Interface",
+        "description": "Test generation progress interface functionality",
+        "test_method": "display_generation_progress",
+        "input_parameters": {
+          "progress_data": {
+            "generation_id": "RGI_TEST_GENERATION_001",
+            "progress_indicators": ["percentage", "current_step", "estimated_time", "log_output"],
+            "progress_display": "real_time",
+            "progress_controls": ["pause", "cancel", "view_log"]
+          }
+        },
+        "expected_result": {
+          "status": "SUCCESS",
+          "generation_progress_displayed": true,
+          "progress_indicators_functional": true,
+          "progress_display_real_time": true,
+          "progress_controls_working": true
+        },
+        "timeout_seconds": 5,
+        "retry_count": 2,
+        "critical": false
+      }
+    ],
+    "performance_metrics": {
+      "initialization_time_max_ms": 5000,
+      "report_wizard_time_max_ms": 5000,
+      "template_selection_time_max_ms": 5000,
+      "generation_progress_time_max_ms": 5000,
+      "memory_usage_max_mb": 100,
+      "cpu_usage_max_percent": 20
+    },
+    "test_environment": {
+      "required_files": [],
+      "required_directories": [
+        "./test_data/",
+        "./expected_results/"
+      ]
+    }
+  }
+}

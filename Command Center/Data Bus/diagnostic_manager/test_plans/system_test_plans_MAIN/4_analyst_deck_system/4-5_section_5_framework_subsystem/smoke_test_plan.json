@@ -1,0 +1,121 @@
+{
+  "test_plan": {
+    "system_name": "Section 5 Framework Subsystem",
+    "system_address": "4-5",
+    "parent_system": "Analyst Deck (4-x)",
+    "test_type": "smoke_test",
+    "version": "1.0",
+    "created": "2025-10-05",
+    "description": "Basic functionality validation for Section 5 Framework (Document Inventory) subsystem",
+    "test_data_location": "./test_data/",
+    "expected_results_location": "./expected_results/",
+    "test_vectors": [
+      {
+        "test_id": "S5F_SMOKE_001",
+        "test_name": "Subsystem Initialization",
+        "description": "Verify Section 5 Framework can initialize independently",
+        "test_method": "initialize_section_5_framework",
+        "input_parameters": {
+          "section_type": "document_inventory",
+          "framework_mode": "standard",
+          "inventory_types": ["evidence_documents", "case_documents", "reference_documents"]
+        },
+        "expected_result": {
+          "status": "SUCCESS",
+          "section_5_framework_initialized": true,
+          "section_type_set": true,
+          "framework_mode_active": true,
+          "inventory_types_configured": true
+        },
+        "timeout_seconds": 5,
+        "retry_count": 3,
+        "critical": true
+      },
+      {
+        "test_id": "S5F_SMOKE_002",
+        "test_name": "Document Inventory Creation",
+        "description": "Test document inventory creation functionality",
+        "test_method": "create_document_inventory",
+        "input_parameters": {
+          "inventory_data": {
+            "case_id": "S5F_TEST_CASE_001",
+            "inventory_type": "evidence_documents",
+            "inventory_scope": "complete",
+            "categorization_method": "automatic"
+          }
+        },
+        "expected_result": {
+          "status": "SUCCESS",
+          "document_inventory_created": true,
+          "inventory_type_applied": true,
+          "scope_complete": true,
+          "categorization_successful": true
+        },
+        "timeout_seconds": 8,
+        "retry_count": 2,
+        "critical": true
+      },
+      {
+        "test_id": "S5F_SMOKE_003",
+        "test_name": "Document Classification",
+        "description": "Test document classification functionality",
+        "test_method": "classify_documents",
+        "input_parameters": {
+          "classification_data": {
+            "document_batch": ["doc_1", "doc_2", "doc_3"],
+            "classification_criteria": ["document_type", "relevance", "confidentiality"],
+            "classification_method": "automated"
+          }
+        },
+        "expected_result": {
+          "status": "SUCCESS",
+          "documents_classified": true,
+          "classification_criteria_applied": true,
+          "classification_method_effective": true,
+          "classification_accurate": true
+        },
+        "timeout_seconds": 8,
+        "retry_count": 2,
+        "critical": true
+      },
+      {
+        "test_id": "S5F_SMOKE_004",
+        "test_name": "Inventory Management",
+        "description": "Test inventory management functionality",
+        "test_method": "manage_inventory",
+        "input_parameters": {
+          "management_data": {
+            "inventory_id": "S5F_TEST_INVENTORY_001",
+            "management_operations": ["update_metadata", "reorganize", "archive_old", "generate_report"],
+            "management_mode": "automated"
+          }
+        },
+        "expected_result": {
+          "status": "SUCCESS",
+          "inventory_managed": true,
+          "management_operations_executed": true,
+          "management_mode_effective": true,
+          "inventory_optimized": true
+        },
+        "timeout_seconds": 10,
+        "retry_count": 2,
+        "critical": false
+      }
+    ],
+    "performance_metrics": {
+      "initialization_time_max_ms": 5000,
+      "inventory_creation_time_max_ms": 8000,
+      "document_classification_time_max_ms": 8000,
+      "inventory_management_time_max_ms": 10000,
+      "memory_usage_max_mb": 100,
+      "cpu_usage_max_percent": 20
+    },
+    "test_environment": {
+      "required_files": [],
+      "required_directories": [
+        "./test_data/",
+        "./expected_results/"
+      ]
+    }
+  }
+}

@@ -14,6 +14,15 @@ from section_registry import SECTION_REGISTRY, REPORTING_STANDARDS
 
 logger = logging.getLogger(__name__)
 
+CONFIG_PATH = r"F:\The Central Command\The Warden\section_tag_map.json"
+
+try:
+    with open(CONFIG_PATH, 'r', encoding='utf-8') as config_file:
+        SECTION_TAGS = json.load(config_file)
+except (OSError, json.JSONDecodeError):
+    SECTION_TAGS = {}
+
+
 class EvidenceIndex:
     """Evidence Index - holds every file's tag, source, path, and links"""
     
@@ -183,8 +192,12 @@ class EvidenceIndex:
             # Registry validation and default tag enrichment
             if section_id and section_id not in SECTION_REGISTRY:
                 raise Exception(f"Invalid section {section_id} not in registry")
-            default_tags = SECTION_REGISTRY.get(section_id, {}).get('tags', []) if section_id else []
-            record_tags = (tags or default_tags)
+            if section_id:
+                config_tags = SECTION_TAGS.get(section_id) or []
+                default_tags = config_tags or SECTION_REGISTRY.get(section_id, {}).get('tags', [])
+            else:
+                default_tags = []
+            record_tags = normalize_tags(tags or default_tags)
 
             # Evidence record
             evidence_record = {
@@ -225,7 +238,7 @@ class EvidenceIndex:
                 "evidence_id": evidence_id,
                 "file_path": file_path,
                 "section_id": section_id,
-                "tags": tags or [],
+                "tags": record_tags,
                 "source": source
             })
             
@@ -234,7 +247,7 @@ class EvidenceIndex:
                 "evidence_id": evidence_id,
                 "file_path": file_path,
                 "section_id": section_id,
-                "tags": tags or [],
+                "tags": record_tags,
                 "source": source
             })
             
@@ -243,7 +256,7 @@ class EvidenceIndex:
                 "evidence_id": evidence_id,
                 "file_path": file_path,
                 "section_id": section_id,
-                "tags": tags or [],
+                "tags": record_tags,
                 "source": source
             })
             

@@ -1,0 +1,13 @@
+EVIDENCE LOCKER FAULT CODE RESULTS
+==================================================
+Test Date: 2025-10-05T22:08:24.536911
+Total Faults: 8
+
+ 1. 1-1-30-47 - Process evidence error: 'EvidenceLocker' object has no attribute 'process_evidence'
+ 2. 1-1-31-55 - Invalid evidence data: 'EvidenceLocker' object has no attribute 'process_evidence'
+ 3. 1-1-50-71 - Get evidence error: 'EvidenceLocker' object has no attribute 'get_evidence'
+ 4. 1-1-51-88 - Get manifest error: 'EvidenceLocker' object has no attribute 'get_manifest'
+ 5. 1-1-52-99 - Evidence index error: 'EvidenceIndex' object has no attribute 'add_evidence'
+ 6. 1-1-53-109 - Evidence classifier error: from __future__ imports must occur at the beginning of the file (evidence_classifier.py, line 9)
+ 7. 1-1-54-122 - Static data flow error: 'StaticDataFlow' object has no attribute 'process_static_data'
+ 8. 1-1-55-141 - Case manifest builder error: No ECC reference available for manifest building
