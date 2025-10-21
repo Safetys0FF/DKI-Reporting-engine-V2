@@ -84,6 +84,12 @@ tail -f library/system_logs/unified_diagnostic.log
 4. **Escalation**: Critical signals added to priority repair queue
 5. **Repair**: Automatic repair attempt via `_repair_signal_timeout()`
 
+#### 3.2.3 Parent Module Routing (CAN Bus)
+- `CommsSystem` builds parent/child mappings from `system_registry.json` during initialization.
+- Signals addressed to subsystems are automatically routed through their parent modules; the original subsystem address is preserved in `original_target_address` and `payload['target_subsystem']`.
+- **Subscription requests** are issued to each parent module (Bus-1, Evidence Locker, Gateway, GUI, etc.) with the full list of child addresses they supervise.
+- **Direct subsystem transmissions** should be avoided. Always communicate with the parent module and let the diagnostic messenger relay the message down to the subsystem.
+
 ### 3.3 Fault Management Procedures
 
 #### 3.3.1 Priority Repair Queue

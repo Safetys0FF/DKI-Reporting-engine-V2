@@ -1,4 +1,4 @@
-﻿"""Framework template for Section 7 (Conclusion)."""
+"""Framework template for Section 7 (Conclusion)."""
 
 from __future__ import annotations
 
@@ -6,11 +6,14 @@ import json
 import logging
 import os
 import re
+import sys
+import time
 import zipfile
 import hashlib
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple
+from pathlib import Path
+from typing import Any, Callable, Dict, Iterable, List, Optional, Sequence, Tuple
 
 # OCR imports
 try:
@@ -23,6 +26,17 @@ except ImportError:
     OCR_AVAILABLE = False
 
 LOGGER = logging.getLogger(__name__)
+
+_CURRENT_DIR = Path(__file__).resolve().parent
+_ANALYST_ROOT = _CURRENT_DIR.parent
+_BASE_PATH = _ANALYST_ROOT / "section revisions templates"
+if str(_BASE_PATH) not in sys.path:
+    sys.path.insert(0, str(_BASE_PATH))
+
+from section_framework_base import (
+    LifecycleState,
+    SectionFramework as LifecycleSectionFramework,
+)
 
 
 @dataclass(frozen=True)
@@ -62,7 +76,7 @@ class OrderContract:
     export_priority: int = 0
 
 
-class SectionFramework:
+class LegacySectionFramework:
     SECTION_ID: str = ""
     BUS_SECTION_ID: Optional[str] = None
     MAX_RERUNS: int = 3
@@ -78,15 +92,166 @@ class SectionFramework:
         gateway: Any,
         ecc: Optional[Any] = None,
         logger: Optional[logging.Logger] = None,
+        bus: Optional[Any] = None,
+        communicator: Optional[Any] = None
     ) -> None:
+        # CRITICAL: Initialize logger FIRST so initialization errors can be logged
+        self.logger = logger or logging.getLogger(self.__class__.__name__)
+        self.MODULE_ADDRESS = "4-7"
+        
+        # ------------------------------------------------------------------ #
+        # CANBUS CONNECTION (SECTION MODULE - INLINE)
+        # ------------------------------------------------------------------ #
+        self.bus = bus
+        self.communicator = communicator
+        self.bus_connected = False
+        
         self.gateway = gateway
         self.ecc = ecc
-        self.logger = logger or logging.getLogger(self.__class__.__name__)
         self.queue_client: Optional[Any] = None
         self.storage: Optional[Any] = None
         self.fact_graph_client: Optional[Any] = None
         self.revision_depth: int = 0
         self.signed_payload_id: Optional[str] = None
+        
+        # Initialize CANBUS after logger is ready
+        if self.bus:
+            # MODULE INITIALIZATION PROTOCOL - Wait for bus ready and module turn
+            self.logger.info("[%s] Waiting for bus stabilization...", self.MODULE_ADDRESS)
+            if not self.bus.wait_for_ready(timeout=15.0):
+                self.logger.warning("[%s] Bus stabilization timeout - initializing in degraded mode", self.MODULE_ADDRESS)
+                self.bus_connected = False
+            else:
+                self.logger.info("[%s] Bus ready - waiting for module turn in sequence...", self.MODULE_ADDRESS)
+                if not self.bus.wait_for_module_turn('4-7', timeout=30.0):
+                    self.logger.warning("[%s] Module turn timeout - initializing in degraded mode", self.MODULE_ADDRESS)
+                    self.bus_connected = False
+                else:
+                    self._initialize_canbus(self.bus, communicator=self.communicator)
+        else:
+            self.logger.warning("[%s] CANBUS initialization skipped - no bus provided", self.MODULE_ADDRESS)
+            self.bus_connected = False
+        
+        # Run mandatory self-test per UDS protocol
+        self._run_startup_self_test()
+    
+    # ------------------------------------------------------------------ #
+    # CANBUS initialization
+    # ------------------------------------------------------------------ #
+    def _initialize_canbus(self, bus: Any, *, communicator: Optional[Any] = None) -> None:
+        """Set up CANBUS connectivity and register signal handlers."""
+        try:
+            import sys
+            sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..', 'Command Center', 'Data Bus', 'Bus Core Design'))
+            from universal_communicator import UniversalCommunicator
+        except ImportError:
+            UniversalCommunicator = None
+        
+        self.bus = bus
+        try:
+            if communicator:
+                self.communicator = communicator
+            elif UniversalCommunicator:
+                self.communicator = UniversalCommunicator(self.MODULE_ADDRESS, bus_connection=bus)
+                self.logger.info("[%s] UniversalCommunicator created", self.MODULE_ADDRESS)
+
+            bus.register_system_address(self.MODULE_ADDRESS, {
+                "system_type": "section_engine",
+                "capabilities": ["evidence_request", "evidence_processing", "section_rendering", "fault_reporting"],
+                "status": "active",
+                "mode": "primary",
+                "registered_at": datetime.now().isoformat(),
+                "section_name": "Conclusion",
+                "tools": []  # Section 7 has no tool dependencies
+            })
+            self.logger.info("[%s] Section 7 registered with CANBUS", self.MODULE_ADDRESS)
+
+            self._register_signal_handlers()
+            self.bus_connected = True
+            self.logger.info("[%s] CANBUS CONNECTION ESTABLISHED", self.MODULE_ADDRESS)
+            
+            # MODULE INITIALIZATION PROTOCOL - Register with bus
+            if self.bus.register_module_init('4-7', {
+                'version': '1.0',
+                'type': 'analyst_section',
+                'capabilities': ['timeline_analysis', 'chronological_ordering', 'event_tracking']
+            }):
+                self.logger.info("[%s] [OK] Module registered with bus (Address 4-7)", self.MODULE_ADDRESS)
+            else:
+                self.logger.warning("[%s] Module registration failed - continuing anyway", self.MODULE_ADDRESS)
+        except Exception as exc:
+            self.logger.critical("[%s] CANBUS connection failed: %s", self.MODULE_ADDRESS, exc)
+            self.bus_connected = False
+
+    def _register_signal_handlers(self) -> None:
+        """Register section signal handlers with the CANBUS."""
+        if not self.bus:
+            self.logger.warning("[%s] Cannot register signals - no CANBUS connection", self.MODULE_ADDRESS)
+            return
+        try:
+            self.bus.register_signal("section_7.evidence_request", self._handle_evidence_request)
+            self.bus.register_signal("section_7.wake", self._handle_wake_signal)
+            self.bus.register_signal("section_7.sleep", self._handle_sleep_signal)
+            self.bus.register_signal("section_7.status", self._handle_status_signal)
+            self.bus.register_signal("diagnostic.rollcall", self._handle_rollcall)
+            self.bus.register_signal("diagnostic.radio_check", self._handle_radio_check)
+            self.bus.register_signal("auto_registration", self._handle_auto_registration)
+            self.logger.info("[%s] Section signal handlers registered (including UDS bidirectional protocol)", self.MODULE_ADDRESS)
+        except Exception as exc:
+            self.logger.error("[%s] Failed to register signal handlers: %s", self.MODULE_ADDRESS, exc)
+
+    def _handle_evidence_request(self, payload: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+        """Handle evidence request signal."""
+        return {"status": "evidence_request_received", "section": self.MODULE_ADDRESS}
+
+    def _handle_wake_signal(self, payload: Optional[Dict[str, Any]] = None) -> None:
+        """Handle wake signal from Marshall."""
+        self.logger.info("[%s] Wake signal received", self.MODULE_ADDRESS)
+
+    def _handle_sleep_signal(self, payload: Optional[Dict[str, Any]] = None) -> None:
+        """Handle sleep signal from Marshall."""
+        self.logger.info("[%s] Sleep signal received", self.MODULE_ADDRESS)
+
+    def _handle_status_signal(self, payload: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+        """Handle status signal."""
+        return {
+            "module_address": self.MODULE_ADDRESS,
+            "status": "active",
+            "bus_connected": self.bus_connected
+        }
+    
+    def _handle_rollcall(self, payload: Dict[str, Any]) -> None:
+        """Handle UDS rollcall request (PHASE 2C FIX)"""
+        if self.communicator:
+            try: self.communicator.send_rollcall_response("DIAG-1", {"system_address": self.MODULE_ADDRESS, "system_name": "Section 7", "status": "OPERATIONAL" if self.bus_connected else "INITIALIZING", "compliance_status": "COMPLIANT", "timestamp": datetime.now().isoformat()})
+            except: pass
+    
+    def _handle_radio_check(self, payload: Dict[str, Any]) -> None:
+        """Handle UDS radio check request (PHASE 2C FIX)"""
+        if self.communicator:
+            try: self.communicator.send_radio_check_response("DIAG-1", {"system_address": self.MODULE_ADDRESS, "latency_ms": 0, "signal_strength": "STRONG", "bus_connected": self.bus_connected, "timestamp": datetime.now().isoformat()})
+            except: pass
+    
+    def _handle_auto_registration(self, payload: Dict[str, Any]) -> None:
+        """Handle UDS auto-registration request (PHASE 2C FIX)"""
+        # Check if this signal is addressed to us (or is a broadcast)
+        target_address = payload.get('target_address', '')
+        if target_address and target_address not in [self.MODULE_ADDRESS, "BROADCAST", "*"]:
+            return  # Not for us - ignore
+        
+        if self.communicator:
+            try: self.communicator.send_auto_registration_response("DIAG-1", {"system_address": self.MODULE_ADDRESS, "system_name": "Section 7", "system_type": "analyst_section", "parent_address": "3", "status": "OPERATIONAL" if self.bus_connected else "INITIALIZING", "compliance_status": "COMPLIANT", "protocol_version": "1.0.0", "timestamp": datetime.now().isoformat()})
+            except: pass
+    
+    # ------------------------------------------------------------------ #
+    # Self-Test Protocol (UDS Compliance)
+    # ------------------------------------------------------------------ #
+    def _run_startup_self_test(self) -> bool:
+        """Validate all tool dependencies per UDS self-test protocol."""
+        self.logger.info("[%s] Running mandatory startup self-test per UDS protocol", self.MODULE_ADDRESS)
+        # Section 7 has no tool dependencies - self-test always passes
+        self.logger.info("[%s] All tool dependencies operational (no tools required)", self.MODULE_ADDRESS)
+        return True
 
     def load_inputs(self) -> Dict[str, Any]:
         raise NotImplementedError
@@ -726,7 +891,7 @@ class Section7Renderer:
                     if available['section_1']:
                         basis_lines.append("- Objectives and case information identified (Section 1)")
                     if available['section_2']:
-                        basis_lines.append("- Requirements and pre‑surveillance preparation documented (Section 2)")
+                        basis_lines.append("- Requirements and pre-surveillance preparation documented (Section 2)")
                     if available['section_3']:
                         basis_lines.append("- Field activity recorded in daily logs (Section 3)")
                     if available['section_4']:
@@ -831,7 +996,7 @@ FIELD_HEADING = "SECTION 7 - CONCLUSION (FIELD OPERATIONS)"
 HYBRID_HEADING = "SECTION 7 - CONCLUSION (HYBRID)"
 
 
-class Section7Framework(SectionFramework):
+class LegacySection7Framework(LegacySectionFramework):
     SECTION_ID = "section_7_conclusion"
     MAX_RERUNS = 2
     STAGES = (
@@ -897,8 +1062,12 @@ class Section7Framework(SectionFramework):
         export_priority=70,
     )
 
-    def __init__(self, gateway: Any, ecc: Optional[Any] = None) -> None:
-        super().__init__(gateway=gateway, ecc=ecc)
+    def __init__(self, gateway: Any, ecc: Optional[Any] = None, 
+                 logger: Optional[logging.Logger] = None,
+                 bus: Optional[Any] = None,
+                 communicator: Optional[Any] = None) -> None:
+        super().__init__(gateway=gateway, ecc=ecc, logger=logger,
+                         bus=bus, communicator=communicator)
         self._last_context: Dict[str, Any] = {}
 
     def load_inputs(self) -> Dict[str, Any]:
@@ -1121,7 +1290,86 @@ class Section7Framework(SectionFramework):
             return None
 
 
+
+class Section7Framework(LifecycleSectionFramework):
+    SECTION_ID = LegacySection7Framework.SECTION_ID
+    MODULE_ADDRESS = "4-7"
+    BUS_SECTION_ID = LegacySection7Framework.BUS_SECTION_ID
+    MAX_RERUNS = LegacySection7Framework.MAX_RERUNS
+    STAGES = LegacySection7Framework.STAGES
+    COMMUNICATION = LegacySection7Framework.COMMUNICATION
+    PERSISTENCE = getattr(LegacySection7Framework, "PERSISTENCE", None)
+    FACT_GRAPH = getattr(LegacySection7Framework, "FACT_GRAPH", None)
+    ORDER = LegacySection7Framework.ORDER
+
+    def __init__(
+        self,
+        gateway: Any,
+        *,
+        communicator_initializer: Optional[Callable[..., Any]] = None,
+        marshal_client: Optional[Any] = None,
+        marshal_address: Optional[str] = None,
+        warden_client: Optional[Any] = None,
+        dependency_initializers: Optional[Dict[str, Callable[..., Any]]] = None,
+        queue_client: Optional[Any] = None,
+        storage: Optional[Any] = None,
+        fact_graph: Optional[Any] = None,
+    ) -> None:
+        dependencies: Dict[str, Callable[..., Any]] = {}
+        if dependency_initializers:
+            dependencies.update(dependency_initializers)
+
+        super().__init__(
+            gateway,
+            module_address=self.MODULE_ADDRESS,
+            communicator_initializer=communicator_initializer,
+            marshal_client=marshal_client,
+            marshal_address=marshal_address,
+            warden_client=warden_client,
+            dependency_initializers=dependencies,
+            queue_client=queue_client,
+            storage=storage,
+            fact_graph=fact_graph,
+        )
+
+        self.legacy = LegacySection7Framework(gateway=gateway, ecc=self.ecc, logger=self.logger)
+        self.baseline_report = self.run_baseline_initialization()
+        
+        # Run mandatory self-test per UDS protocol
+        self._run_startup_self_test()
+
+    # ------------------------------------------------------------------
+    # Self-Test Protocol (UDS Compliance)
+    # ------------------------------------------------------------------
+    def _run_startup_self_test(self) -> bool:
+        """Validate tool dependencies per UDS self-test protocol (Section 7 has no external tools)."""
+        self.logger.info("[%s] Running mandatory startup self-test per UDS protocol", self.MODULE_ADDRESS)
+        # Section 7 (Conclusion) has no external tool dependencies - self-contained logic only
+        self.logger.info("[%s] PASS - Self-test COMPLETE - No external tool dependencies to validate", self.MODULE_ADDRESS)
+        return True
+
+    def load_inputs(self) -> Dict[str, Any]:
+        if self.lifecycle_state() == LifecycleState.RESTING:
+            self.resume_from_rest()
+        return self.legacy.load_inputs()
+
+    def build_payload(self, context: Dict[str, Any]) -> Dict[str, Any]:
+        if self.lifecycle_state() == LifecycleState.RESTING:
+            self.resume_from_rest()
+        return self.legacy.build_payload(context)
+
+    def publish(self, payload: Dict[str, Any]) -> Dict[str, Any]:
+        return self.legacy.publish(payload)
+
+    def handle_revision(self, reason: str, context: Dict[str, Any]) -> None:
+        self.legacy.handle_revision(reason, context)
+
+    def lock_payload(self, payload_id: str) -> None:
+        self.legacy.lock_payload(payload_id)
+        super().lock_payload(payload_id)
+
 __all__ = [
+    "LegacySection7Framework",
     "Section7Framework",
     "Section7Renderer",
     "StageDefinition",

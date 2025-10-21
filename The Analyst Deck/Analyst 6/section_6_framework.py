@@ -1,4 +1,4 @@
-﻿"""Framework template for Section 6 (Billing Summary)."""
+"""Framework template for Section 6 (Billing Summary)."""
 
 from __future__ import annotations
 
@@ -6,10 +6,13 @@ import json
 import logging
 import os
 import re
+import sys
+import time
 import zipfile
 import hashlib
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
+from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple, Set
 from difflib import SequenceMatcher
 
@@ -25,6 +28,26 @@ except ImportError:
 
 LOGGER = logging.getLogger(__name__)
 
+_CURRENT_DIR = Path(__file__).resolve().parent
+_ANALYST_ROOT = _CURRENT_DIR.parent
+_BASE_PATH = _ANALYST_ROOT / "section revisions templates"
+if str(_BASE_PATH) not in sys.path:
+    sys.path.insert(0, str(_BASE_PATH))
+
+from section_framework_base import (
+    LifecycleState,
+    SectionFramework as LifecycleSectionFramework,
+)
+
+from _init_evidence_manager import init_evidence_manager
+from _init_metadata_processor import init_metadata_processor
+from _init_reverse_continuity import init_reverse_continuity
+from _init_section6_billing_renderer import init_section6_billing_renderer
+from _init_section6_media_helper import init_section6_media_helper
+from _init_section6_mileage_tool import init_section6_mileage_tool
+from _init_section6_switchboard import init_section6_switchboard
+from _init_section6_timestamp_engine import init_section6_timestamp_engine
+from _init_section6_voice_helper import init_section6_voice_helper
 
 @dataclass(frozen=True)
 class StageDefinition:
@@ -63,7 +86,7 @@ class OrderContract:
     export_priority: int = 0
 
 
-class SectionFramework:
+class LegacySectionFramework:
     SECTION_ID: str = ""
     BUS_SECTION_ID: Optional[str] = None
     MAX_RERUNS: int = 3
@@ -79,15 +102,244 @@ class SectionFramework:
         gateway: Any,
         ecc: Optional[Any] = None,
         logger: Optional[logging.Logger] = None,
+        bus: Optional[Any] = None,
+        communicator: Optional[Any] = None
     ) -> None:
+        # CRITICAL: Initialize logger FIRST so initialization errors can be logged
+        self.logger = logger or logging.getLogger(self.__class__.__name__)
+        self.MODULE_ADDRESS = "4-6"
+        
+        # ------------------------------------------------------------------ #
+        # CANBUS CONNECTION (SECTION MODULE - INLINE)
+        # ------------------------------------------------------------------ #
+        self.bus = bus
+        self.communicator = communicator
+        self.bus_connected = False
+        
         self.gateway = gateway
         self.ecc = ecc
-        self.logger = logger or logging.getLogger(self.__class__.__name__)
         self.queue_client: Optional[Any] = None
         self.storage: Optional[Any] = None
         self.fact_graph_client: Optional[Any] = None
         self.revision_depth: int = 0
         self.signed_payload_id: Optional[str] = None
+        
+        # Initialize CANBUS after logger is ready
+        if self.bus:
+            # MODULE INITIALIZATION PROTOCOL - Wait for bus ready and module turn
+            self.logger.info("[%s] Waiting for bus stabilization...", self.MODULE_ADDRESS)
+            if not self.bus.wait_for_ready(timeout=15.0):
+                self.logger.warning("[%s] Bus stabilization timeout - initializing in degraded mode", self.MODULE_ADDRESS)
+                self.bus_connected = False
+            else:
+                self.logger.info("[%s] Bus ready - waiting for module turn in sequence...", self.MODULE_ADDRESS)
+                if not self.bus.wait_for_module_turn('4-6', timeout=30.0):
+                    self.logger.warning("[%s] Module turn timeout - initializing in degraded mode", self.MODULE_ADDRESS)
+                    self.bus_connected = False
+                else:
+                    self._initialize_canbus(self.bus, communicator=self.communicator)
+        else:
+            self.logger.warning("[%s] CANBUS initialization skipped - no bus provided", self.MODULE_ADDRESS)
+            self.bus_connected = False
+        
+        # Run mandatory self-test per UDS protocol
+        self._run_startup_self_test()
+    
+    # ------------------------------------------------------------------ #
+    # CANBUS initialization
+    # ------------------------------------------------------------------ #
+    def _initialize_canbus(self, bus: Any, *, communicator: Optional[Any] = None) -> None:
+        """Set up CANBUS connectivity and register signal handlers."""
+        try:
+            import sys
+            sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..', 'Command Center', 'Data Bus', 'Bus Core Design'))
+            from universal_communicator import UniversalCommunicator
+        except ImportError:
+            UniversalCommunicator = None
+        
+        self.bus = bus
+        try:
+            if communicator:
+                self.communicator = communicator
+            elif UniversalCommunicator:
+                self.communicator = UniversalCommunicator(self.MODULE_ADDRESS, bus_connection=bus)
+                self.logger.info("[%s] UniversalCommunicator created", self.MODULE_ADDRESS)
+
+            bus.register_system_address(self.MODULE_ADDRESS, {
+                "system_type": "section_engine",
+                "capabilities": ["evidence_request", "evidence_processing", "section_rendering", "fault_reporting"],
+                "status": "active",
+                "mode": "primary",
+                "registered_at": datetime.now().isoformat(),
+                "section_name": "Billing Summary",
+                "tools": ["billing_engine", "mileage_calculator", "time_analyzer", 
+                         "rate_calculator", "invoice_generator", "expense_tracker",
+                         "payment_processor", "tax_calculator", "section_renderer"]
+            })
+            self.logger.info("[%s] Section 6 registered with CANBUS", self.MODULE_ADDRESS)
+
+            self._register_signal_handlers()
+            self.bus_connected = True
+            self.logger.info("[%s] CANBUS CONNECTION ESTABLISHED", self.MODULE_ADDRESS)
+            
+            # MODULE INITIALIZATION PROTOCOL - Register with bus
+            if self.bus.register_module_init('4-6', {
+                'version': '1.0',
+                'type': 'analyst_section',
+                'capabilities': ['billing_analysis', 'cost_tracking', 'expense_validation']
+            }):
+                self.logger.info("[%s] [OK] Module registered with bus (Address 4-6)", self.MODULE_ADDRESS)
+            else:
+                self.logger.warning("[%s] Module registration failed - continuing anyway", self.MODULE_ADDRESS)
+        except Exception as exc:
+            self.logger.critical("[%s] CANBUS connection failed: %s", self.MODULE_ADDRESS, exc)
+            self.bus_connected = False
+
+    def _register_signal_handlers(self) -> None:
+        """Register section signal handlers with the CANBUS."""
+        if not self.bus:
+            self.logger.warning("[%s] Cannot register signals - no CANBUS connection", self.MODULE_ADDRESS)
+            return
+        try:
+            self.bus.register_signal("section_6.evidence_request", self._handle_evidence_request)
+            self.bus.register_signal("section_6.wake", self._handle_wake_signal)
+            self.bus.register_signal("section_6.sleep", self._handle_sleep_signal)
+            self.bus.register_signal("section_6.status", self._handle_status_signal)
+            self.bus.register_signal("diagnostic.rollcall", self._handle_rollcall)
+            self.bus.register_signal("diagnostic.radio_check", self._handle_radio_check)
+            self.bus.register_signal("auto_registration", self._handle_auto_registration)
+            self.logger.info("[%s] Section signal handlers registered (including UDS bidirectional protocol)", self.MODULE_ADDRESS)
+        except Exception as exc:
+            self.logger.error("[%s] Failed to register signal handlers: %s", self.MODULE_ADDRESS, exc)
+
+    def _handle_evidence_request(self, payload: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+        """Handle evidence request signal."""
+        return {"status": "evidence_request_received", "section": self.MODULE_ADDRESS}
+
+    def _handle_wake_signal(self, payload: Optional[Dict[str, Any]] = None) -> None:
+        """Handle wake signal from Marshall."""
+        self.logger.info("[%s] Wake signal received", self.MODULE_ADDRESS)
+
+    def _handle_sleep_signal(self, payload: Optional[Dict[str, Any]] = None) -> None:
+        """Handle sleep signal from Marshall."""
+        self.logger.info("[%s] Sleep signal received", self.MODULE_ADDRESS)
+
+    def _handle_status_signal(self, payload: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+        """Handle status signal."""
+        return {
+            "module_address": self.MODULE_ADDRESS,
+            "status": "active",
+            "bus_connected": self.bus_connected
+        }
+    
+    def _handle_rollcall(self, payload: Dict[str, Any]) -> None:
+        """Handle UDS rollcall request (PHASE 2C FIX)"""
+        if self.communicator:
+            try: self.communicator.send_rollcall_response("DIAG-1", {"system_address": self.MODULE_ADDRESS, "system_name": "Section 6", "status": "OPERATIONAL" if self.bus_connected else "INITIALIZING", "compliance_status": "COMPLIANT", "timestamp": datetime.now().isoformat()})
+            except: pass
+    
+    def _handle_radio_check(self, payload: Dict[str, Any]) -> None:
+        """Handle UDS radio check request (PHASE 2C FIX)"""
+        if self.communicator:
+            try: self.communicator.send_radio_check_response("DIAG-1", {"system_address": self.MODULE_ADDRESS, "latency_ms": 0, "signal_strength": "STRONG", "bus_connected": self.bus_connected, "timestamp": datetime.now().isoformat()})
+            except: pass
+    
+    def _handle_auto_registration(self, payload: Dict[str, Any]) -> None:
+        """Handle UDS auto-registration request (PHASE 2C FIX)"""
+        # Check if this signal is addressed to us (or is a broadcast)
+        target_address = payload.get('target_address', '')
+        if target_address and target_address not in [self.MODULE_ADDRESS, "BROADCAST", "*"]:
+            return  # Not for us - ignore
+        
+        if self.communicator:
+            try: self.communicator.send_auto_registration_response("DIAG-1", {"system_address": self.MODULE_ADDRESS, "system_name": "Section 6", "system_type": "analyst_section", "parent_address": "3", "status": "OPERATIONAL" if self.bus_connected else "INITIALIZING", "compliance_status": "COMPLIANT", "protocol_version": "1.0.0", "timestamp": datetime.now().isoformat()})
+            except: pass
+    
+    # ------------------------------------------------------------------ #
+    # Self-Test Protocol (UDS Compliance)
+    # ------------------------------------------------------------------ #
+    def _run_startup_self_test(self) -> bool:
+        """Validate all tool dependencies per UDS self-test protocol."""
+        self.logger.info("[%s] Running mandatory startup self-test per UDS protocol", self.MODULE_ADDRESS)
+        operational = True
+        
+        tools_to_validate = [
+            ('4-6.1', 'Billing Engine', lambda: getattr(self, 'billing_engine', None)),
+            ('4-6.2', 'Mileage Calculator', lambda: getattr(self, 'mileage_calculator', None)),
+            ('4-6.3', 'Time Analyzer', lambda: getattr(self, 'time_analyzer', None)),
+            ('4-6.4', 'Rate Calculator', lambda: getattr(self, 'rate_calculator', None)),
+            ('4-6.5', 'Invoice Generator', lambda: getattr(self, 'invoice_generator', None)),
+            ('4-6.6', 'Expense Tracker', lambda: getattr(self, 'expense_tracker', None)),
+            ('4-6.7', 'Payment Processor', lambda: getattr(self, 'payment_processor', None)),
+            ('4-6.8', 'Tax Calculator', lambda: getattr(self, 'tax_calculator', None)),
+            ('4-6.9', 'Section Renderer', lambda: getattr(self, 'renderer_factory', None)),
+        ]
+        
+        for tool_addr, tool_name, get_tool_ref in tools_to_validate:
+            try:
+                tool_ref = get_tool_ref()
+                
+                if tool_ref is None:
+                    self.logger.error(
+                        "[%s] Self-test FAILED: %s (%s) not initialized",
+                        self.MODULE_ADDRESS, tool_name, tool_addr
+                    )
+                    
+                    # Emit fault code to Marshall via LINBUS (primary path)
+                    fault_payload = {
+                        "fault_code": f"[{tool_addr}-12-INIT]",
+                        "description": f"{tool_name} failed to initialize",
+                        "component": tool_name,
+                        "reporting_address": tool_addr,
+                        "parent_address": self.MODULE_ADDRESS,
+                        "severity": "CRITICAL",
+                        "timestamp": datetime.now().isoformat(),
+                        "fault_type": "12",
+                        "fault_type_description": "Missing initialization dependency",
+                        "message_type": "initialization_failure"
+                    }
+                    
+                    linbus_success = False
+                    if self.bus and self.bus_connected:
+                        try:
+                            # Primary: LINBUS emission to Marshall
+                            self.bus.emit('section.fault', fault_payload)
+                            self.logger.warning("[%s] Fault code emitted via LINBUS: [%s-12-INIT]",
+                                               self.MODULE_ADDRESS, tool_addr)
+                            linbus_success = True
+                        except Exception as linbus_exc:
+                            self.logger.error("[%s] LINBUS fault emission failed: %s - attempting CANBUS fallback",
+                                            self.MODULE_ADDRESS, linbus_exc)
+                    
+                    # Fallback: CANBUS direct emission to UDS if LINBUS fails
+                    if not linbus_success:
+                        if hasattr(self, 'communicator') and self.communicator:
+                            try:
+                                self.communicator.send_signal(
+                                    target_address="DIAG-1",
+                                    radio_code="SOS",
+                                    message=f"{tool_name} initialization failed (CANBUS fallback)",
+                                    payload=fault_payload
+                                )
+                                self.logger.warning("[%s] Fault code emitted via CANBUS fallback: [%s-12-INIT]",
+                                                   self.MODULE_ADDRESS, tool_addr)
+                            except Exception as canbus_exc:
+                                self.logger.error("[%s] CANBUS fallback also failed: %s",
+                                                self.MODULE_ADDRESS, canbus_exc)
+                        else:
+                            self.logger.error("[%s] Cannot emit fault code - no bus connection available",
+                                            self.MODULE_ADDRESS)
+                    operational = False
+            except Exception as exc:
+                self.logger.exception("[%s] Exception during self-test for %s: %s", self.MODULE_ADDRESS, tool_name, exc)
+                operational = False
+        
+        if operational:
+            self.logger.info("[%s] All tool dependencies operational", self.MODULE_ADDRESS)
+        else:
+            self.logger.warning("[%s] One or more tool dependencies failed - check fault codes", self.MODULE_ADDRESS)
+        
+        return operational
 
     def load_inputs(self) -> Dict[str, Any]:
         raise NotImplementedError
@@ -589,7 +841,7 @@ class BodyTextSwitchboard:
     def _build_logic(self) -> Dict[str, Any]:
         if self.mode == "INVESTIGATIVE":
             return {
-                "title": "SECTION 6 – BILLING SUMMARY (INVESTIGATIVE)",
+                "title": "SECTION 6 - BILLING SUMMARY (INVESTIGATIVE)",
                 "sections": [
                     "Investigation Overview",
                     "Research & Analysis", 
@@ -604,7 +856,7 @@ class BodyTextSwitchboard:
 
         elif self.mode == "FIELD":
             return {
-                "title": "SECTION 6 – BILLING SUMMARY (FIELD OPERATIONS)",
+                "title": "SECTION 6 - BILLING SUMMARY (FIELD OPERATIONS)",
                 "sections": [
                     "Surveillance Summary",
                     "Field Logs Verified",
@@ -619,7 +871,7 @@ class BodyTextSwitchboard:
 
         elif self.mode == "HYBRID":
             return {
-                "title": "SECTION 6 – BILLING SUMMARY (HYBRID SERVICES)",
+                "title": "SECTION 6 - BILLING SUMMARY (HYBRID SERVICES)",
                 "sections": [
                     "Investigation Findings",
                     "Surveillance Results",
@@ -627,7 +879,7 @@ class BodyTextSwitchboard:
                     "Compliance and Review"
                 ],
                 "summary_rules": [
-                    "Tie Sections 2–5 together.",
+                    "Tie Sections 2-5 together.",
                     "Flag any overages or field time gaps.",
                     "Mark recon as visible but not billed."
                 ],
@@ -637,7 +889,7 @@ class BodyTextSwitchboard:
             }
 
         return {
-            "title": "SECTION 6 – BILLING SUMMARY",
+            "title": "SECTION 6 - BILLING SUMMARY",
             "sections": ["Billing Narrative Not Specified"],
             "summary_rules": ["Fallback mode. Check upstream inputs."],
             "field_visibility": False,
@@ -952,7 +1204,7 @@ def get_report_config(contract_history):
     # Section 6-specific report configurations
     report_configs = {
         "Investigative": {
-            "label": "SECTION 6 – BILLING SUMMARY (INVESTIGATIVE)",
+            "label": "SECTION 6 - BILLING SUMMARY (INVESTIGATIVE)",
             "billing": "Flat",
             "clause": "investigation_only",
             "modules": {
@@ -965,7 +1217,7 @@ def get_report_config(contract_history):
             }
         },
         "Surveillance": {
-            "label": "SECTION 6 – BILLING SUMMARY (FIELD OPERATIONS)", 
+            "label": "SECTION 6 - BILLING SUMMARY (FIELD OPERATIONS)", 
             "billing": "Hourly",
             "clause": "field_operations",
             "modules": {
@@ -978,7 +1230,7 @@ def get_report_config(contract_history):
             }
         },
         "Hybrid": {
-            "label": "SECTION 6 – BILLING SUMMARY (HYBRID SERVICES)",
+            "label": "SECTION 6 - BILLING SUMMARY (HYBRID SERVICES)",
             "billing": "Hybrid", 
             "clause": "mixed_billing",
             "modules": {
@@ -1212,7 +1464,7 @@ class Section6BillingRenderer:
         )
 
         # Use specialized BodyTextSwitchboard for Section 6
-        switchboard = BodyTextSwitchboard(report_type)
+        switchboard = self._switchboard_factory(report_type)
         
         billing_hint = payload.get('billing_data') or {}
         processed = {
@@ -1276,7 +1528,7 @@ class Section6BillingRenderer:
         if summary_rules:
             blocks.append({'type': 'header', 'text': 'COMPLIANCE NOTES'})
             for rule in summary_rules:
-                blocks.append({'type': 'paragraph', 'text': f"• {rule}"})
+                blocks.append({'type': 'paragraph', 'text': f"- {rule}"})
 
         manifest = {
             'section_key': self.section_id,
@@ -1379,7 +1631,7 @@ STANDARD_RATES = {
 }
 
 
-class Section6Framework(SectionFramework):
+class LegacySection6Framework(LegacySectionFramework):
     SECTION_ID = "section_6_billing"
     BUS_SECTION_ID = "section_6"
     MAX_RERUNS = 2
@@ -1444,10 +1696,21 @@ class Section6Framework(SectionFramework):
         export_priority=60,
     )
 
-    def __init__(self, gateway: Any, ecc: Optional[Any] = None) -> None:
-        super().__init__(gateway=gateway, ecc=ecc)
+    def __init__(self, gateway: Any, ecc: Optional[Any] = None,
+                 logger: Optional[logging.Logger] = None,
+                 bus: Optional[Any] = None,
+                 communicator: Optional[Any] = None) -> None:
+        super().__init__(gateway=gateway, ecc=ecc, logger=logger,
+                         bus=bus, communicator=communicator)
         self._last_context: Dict[str, Any] = {}
         self.timestamp_engine = TimestampAdjustmentEngine()
+        self.billing_renderer_factory = Section6BillingRenderer
+        self.reverse_continuity_cls = ReverseContinuityTool
+        self.metadata_tool = MetadataToolV5
+        self.mileage_tool = MileageToolV2
+        self.voice_helper = VoiceTranscriptionHelper
+        self.media_helper = MediaCorrelationHelper
+        self._switchboard_factory = lambda mode: BodyTextSwitchboard(mode)
 
     def load_inputs(self) -> Dict[str, Any]:
         try:
@@ -1555,9 +1818,10 @@ class Section6Framework(SectionFramework):
         narrative = None
         manifest: Dict[str, Any] = {}
 
-        if Section6BillingRenderer:
+        renderer_factory = getattr(self, "billing_renderer_factory", Section6BillingRenderer)
+        if renderer_factory:
             try:
-                renderer = Section6BillingRenderer()
+                renderer = renderer_factory() if callable(renderer_factory) else Section6BillingRenderer()
                 model = renderer.render_model(payload, case_sources={})
                 manifest = model.get("manifest", {})
                 narrative = self._render_narrative(model)
@@ -1859,12 +2123,18 @@ class Section6Framework(SectionFramework):
 
     def _run_inline_tools(self, context: Dict[str, Any], billing_data: Dict[str, Any]) -> Dict[str, Any]:
         toolkit_results = context.get("toolkit_results", {})
-        mileage_audit = MileageToolV2.audit_mileage()
+        mileage_tool = getattr(self, "mileage_tool", MileageToolV2)
+        mileage_audit = (
+            mileage_tool.audit_mileage()
+            if hasattr(mileage_tool, "audit_mileage")
+            else {"status": "SKIPPED", "reason": "mileage tool unavailable"}
+        )
         continuity_notes = toolkit_results.get("continuity") or []
         qa_flags: List[str] = []
         if isinstance(continuity_notes, str):
             continuity_notes = [continuity_notes]
-        reverse_tool = ReverseContinuityTool()
+        reverse_cls = getattr(self, "reverse_continuity_cls", ReverseContinuityTool)
+        reverse_tool = reverse_cls() if callable(reverse_cls) else ReverseContinuityTool()
         planning_summary = json.dumps(context.get("planning_manifest", {}), default=str)
         surveillance_summary = json.dumps(context.get("surveillance_manifest", {}), default=str)
         text_blob = "\n".join([
@@ -1884,8 +2154,9 @@ class Section6Framework(SectionFramework):
                     qa_flags.append("mileage_issue_detected")
                     break
         metadata_zip = context.get("contract_terms", {}).get("metadata_zip")
+        metadata_tool = getattr(self, "metadata_tool", MetadataToolV5)
         metadata_result = (
-            MetadataToolV5.process_zip(metadata_zip, context.get("metadata_output_dir", "./metadata_out"))
+            metadata_tool.process_zip(metadata_zip, context.get("metadata_output_dir", "./metadata_out"))
             if metadata_zip
             else {"status": "SKIPPED"}
         )
@@ -1929,19 +2200,188 @@ class Section6Framework(SectionFramework):
         return None
 
 
+class Section6Framework(LifecycleSectionFramework):
+    SECTION_ID = LegacySection6Framework.SECTION_ID
+    MODULE_ADDRESS = "4-6"
+    BUS_SECTION_ID = LegacySection6Framework.BUS_SECTION_ID
+    MAX_RERUNS = LegacySection6Framework.MAX_RERUNS
+    STAGES = LegacySection6Framework.STAGES
+    COMMUNICATION = LegacySection6Framework.COMMUNICATION
+    PERSISTENCE = getattr(LegacySection6Framework, "PERSISTENCE", None)
+    FACT_GRAPH = getattr(LegacySection6Framework, "FACT_GRAPH", None)
+    ORDER = LegacySection6Framework.ORDER
+
+    def __init__(
+        self,
+        gateway: Any,
+        *,
+        communicator_initializer: Optional[Callable[..., Any]] = None,
+        marshal_client: Optional[Any] = None,
+        marshal_address: Optional[str] = None,
+        warden_client: Optional[Any] = None,
+        dependency_initializers: Optional[Dict[str, Callable[..., Any]]] = None,
+        queue_client: Optional[Any] = None,
+        storage: Optional[Any] = None,
+        fact_graph: Optional[Any] = None,
+    ) -> None:
+        dependencies: Dict[str, Callable[..., Any]] = {
+            "evidence_manager": init_evidence_manager,
+            "timestamp_engine": init_section6_timestamp_engine,
+            "billing_renderer": init_section6_billing_renderer,
+            "reverse_continuity": init_reverse_continuity,
+            "metadata_processor": init_metadata_processor,
+            "mileage_tool": init_section6_mileage_tool,
+            "switchboard_factory": init_section6_switchboard,
+            "voice_helper": init_section6_voice_helper,
+            "media_helper": init_section6_media_helper,
+        }
+        if dependency_initializers:
+            dependencies.update(dependency_initializers)
+
+        super().__init__(
+            gateway,
+            module_address=self.MODULE_ADDRESS,
+            communicator_initializer=communicator_initializer,
+            marshal_client=marshal_client,
+            marshal_address=marshal_address,
+            warden_client=warden_client,
+            dependency_initializers=dependencies,
+            queue_client=queue_client,
+            storage=storage,
+            fact_graph=fact_graph,
+        )
+
+        self.legacy = LegacySection6Framework(gateway=gateway, ecc=self.ecc)
+        timestamp_engine = self.get_dependency("timestamp_engine")
+        if timestamp_engine is not None:
+            self.legacy.timestamp_engine = timestamp_engine
+        billing_renderer = self.get_dependency("billing_renderer")
+        if billing_renderer is not None:
+            self.legacy.billing_renderer_factory = lambda: billing_renderer
+        reverse_cls = self.get_dependency("reverse_continuity")
+        if reverse_cls is not None:
+            self.legacy.reverse_continuity_cls = reverse_cls
+        metadata_processor = self.get_dependency("metadata_processor")
+        if metadata_processor is not None:
+            self.legacy.metadata_tool = metadata_processor
+        mileage_tool = self.get_dependency("mileage_tool")
+        if mileage_tool is not None:
+            self.legacy.mileage_tool = mileage_tool
+        switchboard_factory = self.get_dependency("switchboard_factory")
+        if switchboard_factory is not None:
+            self._switchboard_factory = switchboard_factory
+        else:
+            self._switchboard_factory = lambda mode: BodyTextSwitchboard(mode)
+        voice_helper = self.get_dependency("voice_helper")
+        if voice_helper is not None:
+            self.legacy.voice_helper = voice_helper
+        media_helper = self.get_dependency("media_helper")
+        if media_helper is not None:
+            self.legacy.media_helper = media_helper
+
+        self.baseline_report = self.run_baseline_initialization()
+        
+        # Run mandatory self-test per UDS protocol
+        self._run_startup_self_test()
+
+    # ------------------------------------------------------------------
+    # Self-Test Protocol (UDS Compliance)
+    # ------------------------------------------------------------------
+    def _run_startup_self_test(self) -> bool:
+        """Validate all tool dependencies per UDS self-test protocol."""
+        self.logger.info("[%s] Running mandatory startup self-test per UDS protocol", self.MODULE_ADDRESS)
+        operational = True
+        
+        tools_to_validate = [
+            ('4-6.1', 'Evidence Manager', lambda: self.get_dependency('evidence_manager')),
+            ('4-6.2', 'Timestamp Engine', lambda: self.get_dependency('timestamp_engine')),
+            ('4-6.3', 'Billing Renderer', lambda: self.get_dependency('billing_renderer')),
+            ('4-6.4', 'Reverse Continuity', lambda: self.get_dependency('reverse_continuity')),
+            ('4-6.5', 'Metadata Processor', lambda: self.get_dependency('metadata_processor')),
+            ('4-6.6', 'Mileage Tool', lambda: self.get_dependency('mileage_tool')),
+            ('4-6.7', 'Switchboard Factory', lambda: self.get_dependency('switchboard_factory')),
+            ('4-6.8', 'Voice Helper', lambda: self.get_dependency('voice_helper')),
+            ('4-6.9', 'Media Helper', lambda: self.get_dependency('media_helper')),
+        ]
+        
+        for tool_addr, tool_name, get_tool_ref in tools_to_validate:
+            try:
+                tool_ref = get_tool_ref()
+                
+                if tool_ref is None:
+                    self.logger.error("[%s] Self-test FAILED: %s (%s) not initialized", 
+                                      self.MODULE_ADDRESS, tool_name, tool_addr)
+                    
+                    if hasattr(self, 'communicator') and self.communicator:
+                        self.communicator.send_signal(
+                            target_address="3",
+                            radio_code="SOS",
+                            message=f"{tool_name} initialization failed",
+                            payload={
+                                "fault_code": f"[{tool_addr}-12-INIT]",
+                                "description": f"{tool_name} not initialized - missing dependency or initialization failure",
+                                "component": tool_name,
+                                "reporting_address": tool_addr,
+                                "parent_address": self.MODULE_ADDRESS,
+                                "severity": "CRITICAL",
+                                "timestamp": datetime.now().isoformat(),
+                                "fault_type": "12",
+                                "fault_type_description": "Missing initialization dependency"
+                            }
+                        )
+                        self.logger.warning("[%s] Fault code emitted: [%s-12-INIT]", 
+                                           self.MODULE_ADDRESS, tool_addr)
+                    
+                    operational = False
+                else:
+                    self.logger.info("[%s] Self-test PASSED: %s (%s) operational", 
+                                    self.MODULE_ADDRESS, tool_name, tool_addr)
+            
+            except Exception as exc:
+                self.logger.error("[%s] Self-test ERROR: %s (%s): %s", 
+                                 self.MODULE_ADDRESS, tool_name, tool_addr, exc)
+                operational = False
+        
+        if operational:
+            self.logger.info("[%s] PASS - Self-test COMPLETE - All tool dependencies operational", self.MODULE_ADDRESS)
+        else:
+            self.logger.warning("[%s] FAIL - Self-test COMPLETE - One or more tool dependencies FAILED", self.MODULE_ADDRESS)
+        
+        return operational
+
+    def load_inputs(self) -> Dict[str, Any]:
+        if self.lifecycle_state() == LifecycleState.RESTING:
+            self.resume_from_rest()
+        context = self.legacy.load_inputs()
+        return context
+
+    def build_payload(self, context: Dict[str, Any]) -> Dict[str, Any]:
+        if self.lifecycle_state() == LifecycleState.RESTING:
+            self.resume_from_rest()
+        payload = self.legacy.build_payload(context)
+        return payload
+
+    def publish(self, payload: Dict[str, Any]) -> Dict[str, Any]:
+        return self.legacy.publish(payload)
+
+    def handle_revision(self, reason: str, context: Dict[str, Any]) -> None:
+        self.legacy.handle_revision(reason, context)
+
+
 __all__ = [
-"Section6Framework",
-"StageDefinition",
-"CommunicationContract",
-"FactGraphContract",
-"PersistenceContract",
-"OrderContract",
-"BodyTextSwitchboard",
-"ToolInjectionLogic",
-"TimestampAdjustmentEngine",
-"get_report_config",
-"extract_text_from_pdf",
-"extract_text_from_image",
-"easyocr_text",
+    "Section6Framework",
+    "LegacySection6Framework",
+    "StageDefinition",
+    "CommunicationContract",
+    "FactGraphContract",
+    "PersistenceContract",
+    "OrderContract",
+    "BodyTextSwitchboard",
+    "ToolInjectionLogic",
+    "TimestampAdjustmentEngine",
+    "get_report_config",
+    "extract_text_from_pdf",
+    "extract_text_from_image",
+    "easyocr_text",
 ]
 

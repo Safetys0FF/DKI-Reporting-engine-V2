@@ -1,4 +1,3 @@
-import json
 #!/usr/bin/env python3
 """
 EvidenceClassifier - Classification system for assigning evidence to sections.
@@ -8,6 +7,7 @@ shared SECTION_REGISTRY metadata.
 
 from __future__ import annotations
 
+import json
 import os
 import mimetypes
 import logging

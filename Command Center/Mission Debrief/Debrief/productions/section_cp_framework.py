@@ -292,7 +292,13 @@ class SectionCPFramework(SectionFramework):
         revision_signal="cover_profile_revision",
     )
 
-    ORDER = OrderContract(\n        execution_after=('',),\n        export_after=('',),\n        export_priority=100,\n    )\n\n    def load_inputs(self) -> Dict[str, Any]:
+    ORDER = OrderContract(
+        execution_after=('',),
+        export_after=('',),
+        export_priority=100,
+    )
+
+    def load_inputs(self) -> Dict[str, Any]:
         """Template hook for retrieving inputs from the gateway with ECC handoff protocol"""
         try:
             # Step 1: Call out to ECC for permission

@@ -111,6 +111,16 @@ class EnforcementSystem:
         """Process incoming fault report"""
         self.logger.info(f"Processing fault report from {fault_data.get('system_address')}")
         
+        # ALWAYS record ALL faults to vault for comprehensive analysis
+        self._save_fault_to_vault(fault_data)
+        
+        # Analyze fault context to determine if it's real or normal condition
+        fault_analysis = self._analyze_fault_context(fault_data)
+        fault_data['analysis'] = fault_analysis
+        
+        # Add to consolidation buffer for comprehensive reporting
+        self._add_to_consolidation_buffer(fault_data)
+        
         # Determine severity
         fault_code = fault_data.get('fault_code', '')
         severity = self._determine_severity_from_code(fault_code)
@@ -122,6 +132,59 @@ class EnforcementSystem:
             self._handle_failure_fault(fault_data)
         else:
             self._handle_error_fault(fault_data)
+    
+    def process_registration_confirmation(self, system_metadata: Dict[str, Any]) -> None:
+        """
+        Process confirmed system registration from auto-registration response.
+        
+        Called by comms module when a system successfully responds to auto-registration.
+        Updates system registry with confirmed registration status.
+        """
+        system_address = system_metadata.get('system_address')
+        
+        if not system_address:
+            self.logger.warning("[ENFORCEMENT] Registration confirmation missing system_address")
+            return
+        
+        # Update system registry with confirmed registration
+        if system_address in self.orchestrator.system_registry:
+            self.orchestrator.system_registry[system_address].update({
+                'registration_confirmed': True,
+                'registration_timestamp': system_metadata.get('registration_timestamp'),
+                'system_name': system_metadata.get('system_name'),
+                'system_type': system_metadata.get('system_type'),
+                'capabilities': system_metadata.get('capabilities', []),
+                'compliance_status': system_metadata.get('compliance_status'),
+                'protocol_version': system_metadata.get('protocol_version'),
+                'parent_address': system_metadata.get('parent_address'),
+                'last_seen': datetime.now().isoformat()
+            })
+            
+            self.logger.info(
+                f"[ENFORCEMENT] Registration confirmed: {system_address} "
+                f"({system_metadata.get('system_name', 'Unknown')}) - "
+                f"Compliance: {system_metadata.get('compliance_status', 'UNKNOWN')}"
+            )
+        else:
+            # System not in registry - add it
+            self.orchestrator.system_registry[system_address] = {
+                'system_address': system_address,
+                'registration_confirmed': True,
+                'registration_timestamp': system_metadata.get('registration_timestamp'),
+                'system_name': system_metadata.get('system_name', 'Unknown'),
+                'system_type': system_metadata.get('system_type', 'unknown'),
+                'capabilities': system_metadata.get('capabilities', []),
+                'compliance_status': system_metadata.get('compliance_status', 'PENDING'),
+                'protocol_version': system_metadata.get('protocol_version', 'unknown'),
+                'parent_address': system_metadata.get('parent_address'),
+                'first_seen': datetime.now().isoformat(),
+                'last_seen': datetime.now().isoformat()
+            }
+            
+            self.logger.info(
+                f"[ENFORCEMENT] New system registered: {system_address} "
+                f"({system_metadata.get('system_name', 'Unknown')})"
+            )
     
     def _determine_severity_from_code(self, fault_code: str) -> str:
         """Determine severity from fault code"""
@@ -211,6 +274,35 @@ class EnforcementSystem:
     def process_error_report(self, fault_data: Dict[str, Any]):
         """Process error report signal"""
         self._handle_error_fault(fault_data)
+    
+    def process_rollcall_response(self, response_data: Dict[str, Any]):
+        """
+        Process rollcall response from system
+        
+        DEESCALATION Agent: Added to handle rollcall responses during system startup
+        and operational monitoring. Tracks system presence and compliance.
+        """
+        try:
+            system_address = response_data.get('source_address') or response_data.get('sender') or response_data.get('system_address', 'UNKNOWN')
+            status = response_data.get('status', 'UNKNOWN')
+            compliance_status = response_data.get('compliance_status', 'PENDING')
+            
+            # Log the response
+            self.logger.info(f"[ENFORCEMENT] Rollcall response from {system_address} - Status: {status}, Compliance: {compliance_status}")
+            
+            # Update system tracking if orchestrator is available
+            if self.orchestrator and hasattr(self.orchestrator, 'system_registry'):
+                if system_address in self.orchestrator.system_registry:
+                    self.orchestrator.system_registry[system_address]['last_rollcall'] = datetime.now().isoformat()
+                    self.orchestrator.system_registry[system_address]['status'] = status
+                    self.orchestrator.system_registry[system_address]['compliance_status'] = compliance_status
+            
+            # Mark system as active (not idle)
+            if system_address in self.system_idle_tracker['idle_systems']:
+                self.mark_system_active(system_address)
+            
+        except Exception as e:
+            self.logger.error(f"[ENFORCEMENT] Error processing rollcall response: {e}")
     
     def exercise_oligarch_authority(self, system_address: str, action: str, reason: str):
         """Exercise oligarch authority"""
@@ -313,7 +405,8 @@ class EnforcementSystem:
         
         # Save to fault vault
         if self.orchestrator and hasattr(self.orchestrator, 'core'):
-            fault_vault_path = self.orchestrator.core.fault_vault_path
+            # Get the correct fault vault path
+            fault_vault_path = self.orchestrator.fault_vault_path if hasattr(self.orchestrator, 'fault_vault_path') else self.orchestrator.core.fault_vault_path
             intervention_file = fault_vault_path / f"manual_intervention_{fault_data.get('system_address')}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
             
             import json
@@ -444,11 +537,318 @@ class EnforcementSystem:
         except Exception as e:
             self.logger.error(f"Error executing forced shutdown: {e}")
     
+    def _load_master_protocols(self):
+        """Load master diagnostic protocols for fault code validation"""
+        try:
+            protocol_file = Path(__file__).parent.parent / "SOP" / "archives" / "diagnostic_code_protocol.json"
+            if protocol_file.exists():
+                with open(protocol_file, 'r', encoding='utf-8') as f:
+                    self.master_protocols = json.load(f)
+                self.logger.info("Master diagnostic protocols loaded successfully")
+                return True
+            else:
+                self.logger.warning(f"Master protocol file not found: {protocol_file}")
+                return False
+        except Exception as e:
+            self.logger.error(f"Error loading master protocols: {e}")
+            return False
+
+    def _validate_fault_code(self, fault_code: str, system_address: str) -> Dict[str, Any]:
+        """Validate fault code against master protocols"""
+        try:
+            if not hasattr(self, 'master_protocols'):
+                self._load_master_protocols()
+            
+            validation_result = {
+                'is_valid': False,
+                'fault_family': 'unknown',
+                'fault_description': 'unknown',
+                'severity': 'unknown',
+                'system_match': False,
+                'validation_errors': []
+            }
+            
+            # Check fault code format
+            fault_regex = self.master_protocols.get('validation', {}).get('fault_code_regex', '')
+            if not re.match(fault_regex, fault_code):
+                validation_result['validation_errors'].append(f"Invalid fault code format: {fault_code}")
+                return validation_result
+            
+            # Extract fault ID from code (e.g., [1-1-50-123] -> 50)
+            parts = fault_code.strip('[]').split('-')
+            if len(parts) >= 3:
+                fault_id = parts[2]
+                
+                # Find fault family and description
+                families = self.master_protocols.get('fault_protocols', {}).get('families', {})
+                for family_name, family_data in families.items():
+                    codes = family_data.get('codes', {})
+                    if fault_id in codes:
+                        validation_result['fault_family'] = family_name
+                        validation_result['fault_description'] = codes[fault_id]
+                        validation_result['is_valid'] = True
+                        break
+                
+                # Determine severity
+                severity_map = self.master_protocols.get('fault_protocols', {}).get('severity_map', [])
+                for severity_range in severity_map:
+                    range_parts = severity_range['range'].split('-')
+                    if len(range_parts) == 2:
+                        min_id, max_id = int(range_parts[0]), int(range_parts[1])
+                        if min_id <= int(fault_id) <= max_id:
+                            validation_result['severity'] = severity_range['severity']
+                            break
+                
+                # Check if fault family applies to this system
+                inheritance = self.master_protocols.get('inheritance', {}).get('apply_families_to_systems', [])
+                for rule in inheritance:
+                    if re.match(rule['match'], system_address):
+                        if validation_result['fault_family'] in rule['families']:
+                            validation_result['system_match'] = True
+                            break
+            
+            return validation_result
+            
+        except Exception as e:
+            self.logger.error(f"Error validating fault code: {e}")
+            return {'is_valid': False, 'validation_errors': [str(e)]}
+
+    def _organize_faults_by_protocol(self, faults: List[Dict[str, Any]]) -> Dict[str, Any]:
+        """Organize faults according to master protocols"""
+        try:
+            organized = {
+                'by_system_address': {},
+                'by_fault_family': {},
+                'by_severity': {},
+                'validation_status': {
+                    'valid_faults': [],
+                    'invalid_faults': [],
+                    'system_mismatch': []
+                },
+                'protocol_summary': {
+                    'total_faults': len(faults),
+                    'valid_faults': 0,
+                    'invalid_faults': 0,
+                    'critical_faults': 0,
+                    'failure_faults': 0,
+                    'error_faults': 0
+                }
+            }
+            
+            for fault in faults:
+                system_address = fault.get('system_address', 'unknown')
+                fault_code = fault.get('fault_code', 'unknown')
+                
+                # Validate fault code
+                validation = self._validate_fault_code(fault_code, system_address)
+                fault['validation'] = validation
+                
+                # Organize by system address
+                if system_address not in organized['by_system_address']:
+                    organized['by_system_address'][system_address] = []
+                organized['by_system_address'][system_address].append(fault)
+                
+                # Organize by fault family
+                fault_family = validation.get('fault_family', 'unknown')
+                if fault_family not in organized['by_fault_family']:
+                    organized['by_fault_family'][fault_family] = []
+                organized['by_fault_family'][fault_family].append(fault)
+                
+                # Organize by severity
+                severity = validation.get('severity', 'unknown')
+                if severity not in organized['by_severity']:
+                    organized['by_severity'][severity] = []
+                organized['by_severity'][severity].append(fault)
+                
+                # Categorize by validation status
+                if validation.get('is_valid', False):
+                    if validation.get('system_match', False):
+                        organized['validation_status']['valid_faults'].append(fault)
+                        organized['protocol_summary']['valid_faults'] += 1
+                    else:
+                        organized['validation_status']['system_mismatch'].append(fault)
+                else:
+                    organized['validation_status']['invalid_faults'].append(fault)
+                    organized['protocol_summary']['invalid_faults'] += 1
+                
+                # Update severity counts
+                if severity == 'CRITICAL':
+                    organized['protocol_summary']['critical_faults'] += 1
+                elif severity == 'FAILURE':
+                    organized['protocol_summary']['failure_faults'] += 1
+                elif severity == 'ERROR':
+                    organized['protocol_summary']['error_faults'] += 1
+            
+            return organized
+            
+        except Exception as e:
+            self.logger.error(f"Error organizing faults by protocol: {e}")
+            return {'error': str(e)}
+
+    def _analyze_fault_context(self, fault_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Analyze fault context to determine if it's a real fault or normal condition"""
+        try:
+            system_address = fault_data.get('system_address', 'unknown')
+            fault_code = fault_data.get('fault_code', 'unknown')
+            timestamp = datetime.now()
+            
+            # Get historical data for this system
+            historical_faults = self._get_historical_faults(system_address, hours_back=24)
+            
+            # Analyze fault pattern
+            analysis = {
+                'is_real_fault': False,
+                'fault_category': 'unknown',
+                'confidence_level': 0.0,
+                'analysis_reasoning': [],
+                'recommended_action': 'monitor'
+            }
+            
+            # Check if this is a recurring pattern (normal condition)
+            similar_faults = [f for f in historical_faults if f.get('fault_code') == fault_code]
+            if len(similar_faults) >= 3:
+                analysis['fault_category'] = 'recurring_pattern'
+                analysis['analysis_reasoning'].append(f"Fault {fault_code} occurred {len(similar_faults)} times in last 24h - likely normal condition")
+                analysis['recommended_action'] = 'monitor_pattern'
+            
+            # Check if system was working recently (real fault)
+            recent_success = self._check_recent_system_success(system_address, hours_back=2)
+            if recent_success and len(similar_faults) == 0:
+                analysis['is_real_fault'] = True
+                analysis['fault_category'] = 'sudden_failure'
+                analysis['confidence_level'] = 0.9
+                analysis['analysis_reasoning'].append(f"System {system_address} was working 2h ago, sudden failure detected")
+                analysis['recommended_action'] = 'investigate_immediately'
+            
+            # Check for idle state conditions
+            if self._is_system_in_idle_state(system_address):
+                analysis['fault_category'] = 'idle_state_runtime'
+                analysis['analysis_reasoning'].append(f"System {system_address} in idle state - runtime errors expected")
+                analysis['recommended_action'] = 'monitor_idle'
+            
+            # Check for escalating issues
+            if self._is_fault_escalating(system_address, fault_code, historical_faults):
+                analysis['is_real_fault'] = True
+                analysis['fault_category'] = 'escalating_issue'
+                analysis['confidence_level'] = 0.8
+                analysis['analysis_reasoning'].append(f"Fault {fault_code} showing escalation pattern")
+                analysis['recommended_action'] = 'investigate_escalation'
+            
+            return analysis
+            
+        except Exception as e:
+            self.logger.error(f"Error analyzing fault context: {e}")
+            return {'is_real_fault': True, 'fault_category': 'analysis_error', 'confidence_level': 0.0}
+
+    def _get_historical_faults(self, system_address: str, hours_back: int = 24) -> List[Dict[str, Any]]:
+        """Get historical faults for a system"""
+        try:
+            # This would query the fault vault for historical data
+            # For now, return empty list - would need to implement vault querying
+            return []
+        except Exception as e:
+            self.logger.error(f"Error getting historical faults: {e}")
+            return []
+
+    def _check_recent_system_success(self, system_address: str, hours_back: int = 2) -> bool:
+        """Check if system had recent successful operations"""
+        try:
+            # This would check recent successful operations
+            # For now, return True - would need to implement success tracking
+            return True
+        except Exception as e:
+            self.logger.error(f"Error checking recent system success: {e}")
+            return False
+
+    def _is_system_in_idle_state(self, system_address: str) -> bool:
+        """Check if system is in idle state"""
+        try:
+            # This would check system activity patterns
+            # For now, return False - would need to implement idle detection
+            return False
+        except Exception as e:
+            self.logger.error(f"Error checking idle state: {e}")
+            return False
+
+    def _is_fault_escalating(self, system_address: str, fault_code: str, historical_faults: List[Dict[str, Any]]) -> bool:
+        """Check if fault is escalating in frequency or severity"""
+        try:
+            # Check if fault frequency is increasing
+            recent_faults = [f for f in historical_faults if f.get('fault_code') == fault_code]
+            if len(recent_faults) >= 2:
+                # Check if frequency is increasing (simplified logic)
+                return len(recent_faults) > 2
+            return False
+        except Exception as e:
+            self.logger.error(f"Error checking fault escalation: {e}")
+            return False
+
+    def _add_to_consolidation_buffer(self, fault_data: Dict[str, Any]):
+        """Add fault to consolidation buffer for comprehensive reporting"""
+        try:
+            # Create fault record for consolidation
+            fault_record = {
+                'timestamp': datetime.now().isoformat(),
+                'system_address': fault_data.get('system_address', 'unknown'),
+                'fault_code': fault_data.get('fault_code', 'unknown'),
+                'severity': self._determine_severity_from_code(fault_data.get('fault_code', '')),
+                'fault_data': fault_data,
+                'buffer_entry_id': f"{datetime.now().strftime('%Y%m%d_%H%M%S')}_{fault_data.get('system_address', 'unknown')}"
+            }
+            
+            # Add to buffer
+            self.consolidated_fault_state['fault_buffer'].append(fault_record)
+            
+            # Update statistics
+            self.consolidated_fault_state['report_statistics']['total_faults_consolidated'] += 1
+            
+            # Check if consolidation should be triggered
+            if self._should_trigger_immediate_consolidation():
+                self._trigger_consolidation()
+                
+            self.logger.info(f"Fault added to consolidation buffer: {fault_record['buffer_entry_id']}")
+            
+        except Exception as e:
+            self.logger.error(f"Error adding fault to consolidation buffer: {e}")
+
+    def _save_fault_to_vault(self, fault_data: Dict[str, Any]):
+        """Save ALL faults to fault vault for comprehensive analysis"""
+        try:
+            timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+            system_address = fault_data.get('system_address', 'unknown')
+            fault_code = fault_data.get('fault_code', 'unknown')
+            
+            # Create comprehensive fault record
+            fault_record = {
+                'timestamp': datetime.now().isoformat(),
+                'system_address': system_address,
+                'fault_code': fault_code,
+                'severity': self._determine_severity_from_code(fault_code),
+                'fault_data': fault_data,
+                'recorded_by': 'enforcement_system',
+                'analysis_required': True
+            }
+            
+            # Get the correct fault vault path
+            fault_vault_path = self.orchestrator.fault_vault_path if hasattr(self.orchestrator, 'fault_vault_path') else self.orchestrator.core.fault_vault_path
+            
+            # Save to fault vault
+            fault_file = fault_vault_path / f"fault_{system_address}_{timestamp}.json"
+            with open(fault_file, 'w', encoding='utf-8') as f:
+                json.dump(fault_record, f, indent=2, ensure_ascii=False)
+            
+            self.logger.info(f"Fault recorded to vault: {fault_file.name}")
+            
+        except Exception as e:
+            self.logger.error(f"Error saving fault to vault: {e}")
+
     def _save_oligarch_fault_to_vault(self, fault_report: Dict[str, Any]):
         """Save oligarch fault to fault vault with special marking"""
         try:
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            fault_file = self.orchestrator.core.fault_vault_path / f"oligarch_fault_{timestamp}.md"
+            # Get the correct fault vault path
+            fault_vault_path = self.orchestrator.fault_vault_path if hasattr(self.orchestrator, 'fault_vault_path') else self.orchestrator.core.fault_vault_path
+            fault_file = fault_vault_path / f"oligarch_fault_{timestamp}.md"
             
             with open(fault_file, 'w') as f:
                 f.write(f"# OLIGARCH AUTHORITY FAULT REPORT\n\n")
@@ -473,7 +873,9 @@ class EnforcementSystem:
         """Log oligarch action for audit trail"""
         try:
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            log_file = self.orchestrator.core.fault_vault_path / f"oligarch_action_{timestamp}.md"
+            # Get the correct fault vault path
+            fault_vault_path = self.orchestrator.fault_vault_path if hasattr(self.orchestrator, 'fault_vault_path') else self.orchestrator.core.fault_vault_path
+            log_file = fault_vault_path / f"oligarch_action_{timestamp}.md"
             
             with open(log_file, 'w') as f:
                 f.write(f"# OLIGARCH AUTHORITY ACTION LOG\n\n")
@@ -3622,9 +4024,9 @@ class EnforcementSystem:
             self.consolidated_fault_config = {
                 'collection_settings': {
                     'auto_consolidation': True,
-                    'consolidation_threshold': 10,  # Consolidate after 10+ faults
+                    'consolidation_threshold': 2,  # Consolidate after 2+ faults (lowered for immediate reporting)
                     'consolidation_time_window_minutes': 5,  # Or every 5 minutes
-                    'max_individual_faults': 50,  # Max individual faults before forced consolidation
+                    'max_individual_faults': 10,  # Max individual faults before forced consolidation (lowered)
                     'collection_buffer_size': 1000,
                     'real_time_consolidation': True
                 },
@@ -4014,6 +4416,16 @@ class EnforcementSystem:
             self.logger.error(f"Error checking consolidation triggers: {e}")
             return False
     
+    def force_consolidation(self):
+        """Force immediate consolidation of all current faults"""
+        try:
+            self.logger.info("Manual consolidation triggered")
+            self._trigger_consolidation()
+            return True
+        except Exception as e:
+            self.logger.error(f"Error in manual consolidation: {e}")
+            return False
+
     def _trigger_consolidation(self):
         """Trigger consolidation process"""
         try:
@@ -4123,6 +4535,9 @@ class EnforcementSystem:
             # Categorize faults
             categorized_faults = self._categorize_faults(faults)
             
+            # Organize faults according to master protocols
+            protocol_organized = self._organize_faults_by_protocol(faults)
+            
             # Generate summary statistics
             summary_stats = self._generate_summary_statistics(faults, categorized_faults)
             
@@ -4136,8 +4551,10 @@ class EnforcementSystem:
                     'generated_timestamp': datetime.now().isoformat(),
                     'total_faults': len(faults),
                     'report_version': '1.0',
-                    'generator': 'UnifiedDiagnosticSystem'
+                    'generator': 'UnifiedDiagnosticSystem',
+                    'protocol_version': self.master_protocols.get('meta', {}).get('protocol_version', 'unknown')
                 },
+                'protocol_organization': protocol_organized,
                 'summary_statistics': summary_stats,
                 'categorized_faults': categorized_faults,
                 'fault_details': faults,
@@ -4411,20 +4828,23 @@ class EnforcementSystem:
             
             timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
             
+            # Get the correct fault vault path
+            fault_vault_path = self.orchestrator.fault_vault_path if hasattr(self.orchestrator, 'fault_vault_path') else self.orchestrator.core.fault_vault_path
+            
             # Save JSON report
-            json_path = self.orchestrator.fault_vault_path / f"consolidated_fault_report_{consolidation_id}_{timestamp}.json"
+            json_path = fault_vault_path / f"consolidated_fault_report_{consolidation_id}_{timestamp}.json"
             with open(json_path, 'w') as f:
                 json.dump(consolidated_report, f, indent=2, default=str)
             
             # Save encrypted report
             if encrypted_data:
-                encrypted_path = self.orchestrator.fault_vault_path / f"consolidated_fault_report_{consolidation_id}_{timestamp}.enc"
+                encrypted_path = fault_vault_path / f"consolidated_fault_report_{consolidation_id}_{timestamp}.enc"
                 with open(encrypted_path, 'wb') as f:
                     f.write(encrypted_data)
             
             # Generate and save Markdown report
             markdown_report = self._generate_markdown_report(consolidated_report)
-            markdown_path = self.orchestrator.fault_vault_path / f"consolidated_fault_report_{consolidation_id}_{timestamp}.md"
+            markdown_path = fault_vault_path / f"consolidated_fault_report_{consolidation_id}_{timestamp}.md"
             with open(markdown_path, 'w', encoding='utf-8') as f:
                 f.write(markdown_report)
             
@@ -4439,33 +4859,102 @@ class EnforcementSystem:
             metadata = consolidated_report.get('report_metadata', {})
             summary = consolidated_report.get('summary_statistics', {})
             categorized = consolidated_report.get('categorized_faults', {})
+            protocol_org = consolidated_report.get('protocol_organization', {})
             recommendations = consolidated_report.get('recommendations', [])
             
-            markdown = f"""# Consolidated Fault Report
+            markdown = f"""# Consolidated Fault Report - Master Protocol Compliance
 
 ## Report Metadata
 - **Consolidation ID**: {metadata.get('consolidation_id', 'UNKNOWN')}
 - **Generated**: {metadata.get('generated_timestamp', 'UNKNOWN')}
 - **Total Faults**: {metadata.get('total_faults', 0)}
+- **Protocol Version**: {metadata.get('protocol_version', 'UNKNOWN')}
 - **Report Version**: {metadata.get('report_version', 'UNKNOWN')}
 
-## Summary Statistics
-- **Total Faults**: {summary.get('total_faults', 0)}
-- **Critical Faults**: {summary.get('critical_fault_count', 0)}
-- **Most Affected System**: {summary.get('most_affected_system', 'NONE')}
-- **Most Common Fault Type**: {summary.get('most_common_fault_type', 'NONE')}
-- **Time Span**: {summary.get('time_span_minutes', 0)} minutes
+## Protocol Compliance Summary
+- **Valid Faults**: {protocol_org.get('protocol_summary', {}).get('valid_faults', 0)}
+- **Invalid Faults**: {protocol_org.get('protocol_summary', {}).get('invalid_faults', 0)}
+- **System Mismatch**: {len(protocol_org.get('validation_status', {}).get('system_mismatch', []))}
+- **Critical Faults**: {protocol_org.get('protocol_summary', {}).get('critical_faults', 0)}
+- **Failure Faults**: {protocol_org.get('protocol_summary', {}).get('failure_faults', 0)}
+- **Error Faults**: {protocol_org.get('protocol_summary', {}).get('error_faults', 0)}
 
-## Faults by System
+## Faults by System Address (Master Protocol)
 """
             
-            for system, count in summary.get('faults_by_system', {}).items():
-                markdown += f"- **{system}**: {count} faults\n"
+            # Add faults organized by system address
+            for system_address, system_faults in protocol_org.get('by_system_address', {}).items():
+                markdown += f"\n### {system_address}\n"
+                for fault in system_faults:
+                    validation = fault.get('validation', {})
+                    analysis = fault.get('analysis', {})
+                    markdown += f"- **Fault Code**: {fault.get('fault_code', 'unknown')}\n"
+                    markdown += f"  - **Family**: {validation.get('fault_family', 'unknown')}\n"
+                    markdown += f"  - **Description**: {validation.get('fault_description', 'unknown')}\n"
+                    markdown += f"  - **Severity**: {validation.get('severity', 'unknown')}\n"
+                    markdown += f"  - **Valid**: {'[PASS]' if validation.get('is_valid', False) else '[FAIL]'}\n"
+                    markdown += f"  - **System Match**: {'[PASS]' if validation.get('system_match', False) else '[FAIL]'}\n"
+                    markdown += f"  - **Real Fault**: {'[PASS]' if analysis.get('is_real_fault', False) else '[FAIL]'}\n"
+                    markdown += f"  - **Category**: {analysis.get('fault_category', 'unknown')}\n"
+                    if validation.get('validation_errors'):
+                        markdown += f"  - **Validation Errors**: {', '.join(validation['validation_errors'])}\n"
+                    markdown += "\n"
+
+            markdown += "\n## Faults by Family (Master Protocol)\n"
+            for family, family_faults in protocol_org.get('by_fault_family', {}).items():
+                markdown += f"- **{family}**: {len(family_faults)} faults\n"
+
+            markdown += "\n## Validation Status\n"
+            validation_status = protocol_org.get('validation_status', {})
+            if validation_status.get('valid_faults'):
+                markdown += "\n### [PASS] Valid Faults\n"
+                for fault in validation_status['valid_faults']:
+                    markdown += f"- {fault.get('system_address')}: {fault.get('fault_code')} - {fault.get('validation', {}).get('fault_description', 'unknown')}\n"
             
-            markdown += "\n## Faults by Severity\n"
-            for severity, count in summary.get('faults_by_severity', {}).items():
-                markdown += f"- **{severity}**: {count} faults\n"
+            if validation_status.get('invalid_faults'):
+                markdown += "\n### [FAIL] Invalid Faults\n"
+                for fault in validation_status['invalid_faults']:
+                    markdown += f"- {fault.get('system_address')}: {fault.get('fault_code')} - {', '.join(fault.get('validation', {}).get('validation_errors', []))}\n"
             
+            if validation_status.get('system_mismatch'):
+                markdown += "\n### [WARNING] System Mismatch\n"
+                for fault in validation_status['system_mismatch']:
+                    markdown += f"- {fault.get('system_address')}: {fault.get('fault_code')} - Fault family doesn't match system type\n"
+
+            markdown += "\n## Fault Analysis Summary\n"
+            
+            # Get all faults from protocol organization
+            all_faults = []
+            for system_faults in protocol_org.get('by_system_address', {}).values():
+                all_faults.extend(system_faults)
+            
+            # Separate real faults from normal conditions
+            real_faults = [f for f in all_faults if f.get('analysis', {}).get('is_real_fault', False)]
+            normal_conditions = [f for f in all_faults if not f.get('analysis', {}).get('is_real_fault', False)]
+            
+            markdown += f"- **Real Faults Requiring Action**: {len(real_faults)}\n"
+            markdown += f"- **Normal Conditions (Monitor Only)**: {len(normal_conditions)}\n\n"
+            
+            if real_faults:
+                markdown += "### Real Faults Requiring Investigation\n"
+                for fault in real_faults:
+                    analysis = fault.get('analysis', {})
+                    markdown += f"- **{fault.get('system_address')}**: {fault.get('fault_code')} - {analysis.get('fault_category', 'unknown')}\n"
+                    markdown += f"  - Confidence: {analysis.get('confidence_level', 0.0):.1f}\n"
+                    markdown += f"  - Action: {analysis.get('recommended_action', 'monitor')}\n"
+                    for reason in analysis.get('analysis_reasoning', []):
+                        markdown += f"  - {reason}\n"
+                markdown += "\n"
+            
+            if normal_conditions:
+                markdown += "### Normal Conditions (No Action Required)\n"
+                for fault in normal_conditions:
+                    analysis = fault.get('analysis', {})
+                    markdown += f"- **{fault.get('system_address')}**: {fault.get('fault_code')} - {analysis.get('fault_category', 'unknown')}\n"
+                    for reason in analysis.get('analysis_reasoning', []):
+                        markdown += f"  - {reason}\n"
+                markdown += "\n"
+
             markdown += "\n## Recommendations\n"
             for i, recommendation in enumerate(recommendations, 1):
                 markdown += f"{i}. {recommendation}\n"

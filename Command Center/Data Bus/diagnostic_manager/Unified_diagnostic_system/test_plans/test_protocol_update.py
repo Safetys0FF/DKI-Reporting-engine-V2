@@ -30,7 +30,7 @@ def test_protocol_update():
 ### **General Systems**
 | Address | System Name | Handler | Parent | Status | Last Check |
 |---------|-------------|---------|--------|--------|------------|
-| GEN-2.798 | Case Management Panel | case_management_panel.CaseManagementPanel | GEN-2 | ACTIVE | - |
+| 2-2.6 | Gateway Signal Auditor | gateway_signal_auditor.GatewaySignalAuditor | 2-2 | ACTIVE | - |
 
 """
         
@@ -42,7 +42,7 @@ def test_protocol_update():
             print(f"New file size: {len(new_content)} characters")
             
             # Find the inserted content
-            if "GEN-2.798" in new_content:
+            if "2-2.6" in new_content:
                 print("[SUCCESS] New system found in updated content")
             else:
                 print("[ERROR] New system not found in updated content")

@@ -133,3 +133,4 @@ This is a fundamental architectural flaw that breaks case isolation. Evidence po
 4. **Test case isolation**
 5. **Verify evidence pool starts empty for new cases**
 
+

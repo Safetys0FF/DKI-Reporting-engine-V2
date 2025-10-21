@@ -1,0 +1,80 @@
+description: >
+  Helps keep the repository clean, organized, and consistent.
+  Promotes structured folder hierarchy, clear file names,
+  and good housekeeping habits for non-technical users.
+autoAttach:
+  - "**/*"
+alwaysApply: true
+---
+# Cursor Repo Rules — Filing System & Organization
+
+## Purpose
+Maintain a simple, readable, and consistent file system across the project.
+Keep related code and assets grouped logically, and avoid clutter or confusion.
+
+---
+
+## Folder Structure Discipline
+1) Keep top-level folders minimal and purpose-driven:
+   - `/core` or `/command_center` for runtime scripts.
+   - `/library` for shared modules.
+   - `/assets` or `/resources` for images, docs, maps, or visuals.
+   - `/logs` for generated logs or debug output.
+   - `/archive` for retired or outdated files (never delete immediately).
+2) Never mix temporary, test, or output files with production scripts.
+3) Use lowercase names with underscores (e.g., `data_bus`, `report_engine`, `config_files`).
+
+---
+
+## File Organization Rules
+- Group by function:
+  - Core runtime → inside `/core`
+  - Tools/helpers → inside `/library/tools`
+  - Diagnostics and tests → inside `/diagnostic_manager`
+- Prefix filenames by category if helpful (e.g., `diag_`, `core_`, `sys_`).
+- Each folder should have a short `README.md` describing what belongs there.
+
+---
+
+## Cleanup & Clarity
+- Remove duplicate, obsolete, or “copy (1)” files weekly.
+- Keep only one active `.env` and one active `requirements.txt`.
+- Move old versions to `/archive/` with a date tag (e.g., `core_2025_05_backup.py`).
+- Avoid storing `.zip`, `.tmp`, `.bak`, or compiled `.pyc` files in source folders.
+
+---
+
+## Workflow Hygiene
+- Commit only clean, working files (no half-written drafts).
+- Use clear commit messages like “cleaned diagnostics folder structure” or “moved assets to resources/”.
+- Run a quick folder check monthly:
+  - Verify `core.py` and `_init_.py` still exist in expected paths.
+  - Confirm `/logs` and `/archive` don’t bloat over 1GB.
+
+---
+
+## Formatting & Naming Consistency
+- All Python files end with `.py`.
+- Configs use `.yaml` or `.json` (not `.txt`).
+- Folder names use lowercase with underscores.
+- No spaces in filenames. Ever.
+- If unsure where a file goes, put it in `/staging` and tag it for later review.
+
+---
+
+## Change Log Reminder
+Whenever restructuring:
+- List what moved and why.
+- Note new folder purpose (one line summary).
+- Example:
+  > “Moved system_logs to /logs; grouped diagnostics scripts; archived old debug builds.”
+
+---
+
+## Summary
+Keep it **clean**, **readable**, and **predictable**.  
+If it doesn’t belong in runtime or reports — it goes in `/archive/` or `/staging/`.
+A clean repo keeps the system stable and makes Cursor’s AI and Git versioning far more accurate.
+---
+alwaysApply: true
+---

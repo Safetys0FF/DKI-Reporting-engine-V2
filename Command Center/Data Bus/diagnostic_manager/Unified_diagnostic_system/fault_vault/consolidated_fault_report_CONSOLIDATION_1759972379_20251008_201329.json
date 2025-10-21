@@ -1,0 +1,655 @@
+{
+  "report_metadata": {
+    "consolidation_id": "CONSOLIDATION_1759972379",
+    "generated_timestamp": "2025-10-08T20:13:28.815568",
+    "total_faults": 2,
+    "report_version": "1.0",
+    "generator": "UnifiedDiagnosticSystem",
+    "protocol_version": "1.0.0"
+  },
+  "protocol_organization": {
+    "by_system_address": {
+      "Bus-1": [
+        {
+          "timestamp": "2025-10-08T20:12:59.043615",
+          "system_address": "Bus-1",
+          "fault_code": "[1-1-10-001]",
+          "severity": "ERROR",
+          "fault_data": {
+            "fault_id": "TEST-FAULT-000",
+            "system_address": "Bus-1",
+            "fault_code": "[1-1-10-001]",
+            "description": "Test error fault for consolidated reporting",
+            "timestamp": "2025-10-08T20:12:59",
+            "analysis": {
+              "is_real_fault": true,
+              "fault_category": "sudden_failure",
+              "confidence_level": 0.9,
+              "analysis_reasoning": [
+                "System Bus-1 was working 2h ago, sudden failure detected"
+              ],
+              "recommended_action": "investigate_immediately"
+            }
+          },
+          "buffer_entry_id": "20251008_201259_Bus-1",
+          "validation": {
+            "is_valid": true,
+            "fault_family": "Initialization",
+            "fault_description": "Failed to initialize component",
+            "severity": "ERROR",
+            "system_match": false,
+            "validation_errors": []
+          }
+        },
+        {
+          "timestamp": "2025-10-08T20:12:59.058666",
+          "system_address": "Bus-1",
+          "fault_code": "[1-1-10-001]",
+          "severity": "ERROR",
+          "fault_data": {
+            "fault_id": "TEST-FAULT-001",
+            "system_address": "Bus-1",
+            "fault_code": "[1-1-10-001]",
+            "description": "Test error fault for consolidated reporting",
+            "timestamp": "2025-10-08T20:12:59",
+            "analysis": {
+              "is_real_fault": true,
+              "fault_category": "sudden_failure",
+              "confidence_level": 0.9,
+              "analysis_reasoning": [
+                "System Bus-1 was working 2h ago, sudden failure detected"
+              ],
+              "recommended_action": "investigate_immediately"
+            }
+          },
+          "buffer_entry_id": "20251008_201259_Bus-1",
+          "validation": {
+            "is_valid": true,
+            "fault_family": "Initialization",
+            "fault_description": "Failed to initialize component",
+            "severity": "ERROR",
+            "system_match": false,
+            "validation_errors": []
+          }
+        }
+      ]
+    },
+    "by_fault_family": {
+      "Initialization": [
+        {
+          "timestamp": "2025-10-08T20:12:59.043615",
+          "system_address": "Bus-1",
+          "fault_code": "[1-1-10-001]",
+          "severity": "ERROR",
+          "fault_data": {
+            "fault_id": "TEST-FAULT-000",
+            "system_address": "Bus-1",
+            "fault_code": "[1-1-10-001]",
+            "description": "Test error fault for consolidated reporting",
+            "timestamp": "2025-10-08T20:12:59",
+            "analysis": {
+              "is_real_fault": true,
+              "fault_category": "sudden_failure",
+              "confidence_level": 0.9,
+              "analysis_reasoning": [
+                "System Bus-1 was working 2h ago, sudden failure detected"
+              ],
+              "recommended_action": "investigate_immediately"
+            }
+          },
+          "buffer_entry_id": "20251008_201259_Bus-1",
+          "validation": {
+            "is_valid": true,
+            "fault_family": "Initialization",
+            "fault_description": "Failed to initialize component",
+            "severity": "ERROR",
+            "system_match": false,
+            "validation_errors": []
+          }
+        },
+        {
+          "timestamp": "2025-10-08T20:12:59.058666",
+          "system_address": "Bus-1",
+          "fault_code": "[1-1-10-001]",
+          "severity": "ERROR",
+          "fault_data": {
+            "fault_id": "TEST-FAULT-001",
+            "system_address": "Bus-1",
+            "fault_code": "[1-1-10-001]",
+            "description": "Test error fault for consolidated reporting",
+            "timestamp": "2025-10-08T20:12:59",
+            "analysis": {
+              "is_real_fault": true,
+              "fault_category": "sudden_failure",
+              "confidence_level": 0.9,
+              "analysis_reasoning": [
+                "System Bus-1 was working 2h ago, sudden failure detected"
+              ],
+              "recommended_action": "investigate_immediately"
+            }
+          },
+          "buffer_entry_id": "20251008_201259_Bus-1",
+          "validation": {
+            "is_valid": true,
+            "fault_family": "Initialization",
+            "fault_description": "Failed to initialize component",
+            "severity": "ERROR",
+            "system_match": false,
+            "validation_errors": []
+          }
+        }
+      ]
+    },
+    "by_severity": {
+      "ERROR": [
+        {
+          "timestamp": "2025-10-08T20:12:59.043615",
+          "system_address": "Bus-1",
+          "fault_code": "[1-1-10-001]",
+          "severity": "ERROR",
+          "fault_data": {
+            "fault_id": "TEST-FAULT-000",
+            "system_address": "Bus-1",
+            "fault_code": "[1-1-10-001]",
+            "description": "Test error fault for consolidated reporting",
+            "timestamp": "2025-10-08T20:12:59",
+            "analysis": {
+              "is_real_fault": true,
+              "fault_category": "sudden_failure",
+              "confidence_level": 0.9,
+              "analysis_reasoning": [
+                "System Bus-1 was working 2h ago, sudden failure detected"
+              ],
+              "recommended_action": "investigate_immediately"
+            }
+          },
+          "buffer_entry_id": "20251008_201259_Bus-1",
+          "validation": {
+            "is_valid": true,
+            "fault_family": "Initialization",
+            "fault_description": "Failed to initialize component",
+            "severity": "ERROR",
+            "system_match": false,
+            "validation_errors": []
+          }
+        },
+        {
+          "timestamp": "2025-10-08T20:12:59.058666",
+          "system_address": "Bus-1",
+          "fault_code": "[1-1-10-001]",
+          "severity": "ERROR",
+          "fault_data": {
+            "fault_id": "TEST-FAULT-001",
+            "system_address": "Bus-1",
+            "fault_code": "[1-1-10-001]",
+            "description": "Test error fault for consolidated reporting",
+            "timestamp": "2025-10-08T20:12:59",
+            "analysis": {
+              "is_real_fault": true,
+              "fault_category": "sudden_failure",
+              "confidence_level": 0.9,
+              "analysis_reasoning": [
+                "System Bus-1 was working 2h ago, sudden failure detected"
+              ],
+              "recommended_action": "investigate_immediately"
+            }
+          },
+          "buffer_entry_id": "20251008_201259_Bus-1",
+          "validation": {
+            "is_valid": true,
+            "fault_family": "Initialization",
+            "fault_description": "Failed to initialize component",
+            "severity": "ERROR",
+            "system_match": false,
+            "validation_errors": []
+          }
+        }
+      ]
+    },
+    "validation_status": {
+      "valid_faults": [],
+      "invalid_faults": [],
+      "system_mismatch": [
+        {
+          "timestamp": "2025-10-08T20:12:59.043615",
+          "system_address": "Bus-1",
+          "fault_code": "[1-1-10-001]",
+          "severity": "ERROR",
+          "fault_data": {
+            "fault_id": "TEST-FAULT-000",
+            "system_address": "Bus-1",
+            "fault_code": "[1-1-10-001]",
+            "description": "Test error fault for consolidated reporting",
+            "timestamp": "2025-10-08T20:12:59",
+            "analysis": {
+              "is_real_fault": true,
+              "fault_category": "sudden_failure",
+              "confidence_level": 0.9,
+              "analysis_reasoning": [
+                "System Bus-1 was working 2h ago, sudden failure detected"
+              ],
+              "recommended_action": "investigate_immediately"
+            }
+          },
+          "buffer_entry_id": "20251008_201259_Bus-1",
+          "validation": {
+            "is_valid": true,
+            "fault_family": "Initialization",
+            "fault_description": "Failed to initialize component",
+            "severity": "ERROR",
+            "system_match": false,
+            "validation_errors": []
+          }
+        },
+        {
+          "timestamp": "2025-10-08T20:12:59.058666",
+          "system_address": "Bus-1",
+          "fault_code": "[1-1-10-001]",
+          "severity": "ERROR",
+          "fault_data": {
+            "fault_id": "TEST-FAULT-001",
+            "system_address": "Bus-1",
+            "fault_code": "[1-1-10-001]",
+            "description": "Test error fault for consolidated reporting",
+            "timestamp": "2025-10-08T20:12:59",
+            "analysis": {
+              "is_real_fault": true,
+              "fault_category": "sudden_failure",
+              "confidence_level": 0.9,
+              "analysis_reasoning": [
+                "System Bus-1 was working 2h ago, sudden failure detected"
+              ],
+              "recommended_action": "investigate_immediately"
+            }
+          },
+          "buffer_entry_id": "20251008_201259_Bus-1",
+          "validation": {
+            "is_valid": true,
+            "fault_family": "Initialization",
+            "fault_description": "Failed to initialize component",
+            "severity": "ERROR",
+            "system_match": false,
+            "validation_errors": []
+          }
+        }
+      ]
+    },
+    "protocol_summary": {
+      "total_faults": 2,
+      "valid_faults": 0,
+      "invalid_faults": 0,
+      "critical_faults": 0,
+      "failure_faults": 0,
+      "error_faults": 2
+    }
+  },
+  "summary_statistics": {
+    "total_faults": 2,
+    "faults_by_system": {
+      "Bus-1": 2
+    },
+    "faults_by_severity": {
+      "ERROR": 2
+    },
+    "faults_by_type": {
+      "SYNTAX_ERROR": 2
+    },
+    "faults_by_time": {
+      "2025-10-08_20:00": 2
+    },
+    "most_affected_system": "Bus-1",
+    "most_common_fault_type": "SYNTAX_ERROR",
+    "critical_fault_count": 0,
+    "time_span_minutes": 0
+  },
+  "categorized_faults": {
+    "by_system": {
+      "Bus-1": [
+        {
+          "timestamp": "2025-10-08T20:12:59.043615",
+          "system_address": "Bus-1",
+          "fault_code": "[1-1-10-001]",
+          "severity": "ERROR",
+          "fault_data": {
+            "fault_id": "TEST-FAULT-000",
+            "system_address": "Bus-1",
+            "fault_code": "[1-1-10-001]",
+            "description": "Test error fault for consolidated reporting",
+            "timestamp": "2025-10-08T20:12:59",
+            "analysis": {
+              "is_real_fault": true,
+              "fault_category": "sudden_failure",
+              "confidence_level": 0.9,
+              "analysis_reasoning": [
+                "System Bus-1 was working 2h ago, sudden failure detected"
+              ],
+              "recommended_action": "investigate_immediately"
+            }
+          },
+          "buffer_entry_id": "20251008_201259_Bus-1",
+          "validation": {
+            "is_valid": true,
+            "fault_family": "Initialization",
+            "fault_description": "Failed to initialize component",
+            "severity": "ERROR",
+            "system_match": false,
+            "validation_errors": []
+          }
+        },
+        {
+          "timestamp": "2025-10-08T20:12:59.058666",
+          "system_address": "Bus-1",
+          "fault_code": "[1-1-10-001]",
+          "severity": "ERROR",
+          "fault_data": {
+            "fault_id": "TEST-FAULT-001",
+            "system_address": "Bus-1",
+            "fault_code": "[1-1-10-001]",
+            "description": "Test error fault for consolidated reporting",
+            "timestamp": "2025-10-08T20:12:59",
+            "analysis": {
+              "is_real_fault": true,
+              "fault_category": "sudden_failure",
+              "confidence_level": 0.9,
+              "analysis_reasoning": [
+                "System Bus-1 was working 2h ago, sudden failure detected"
+              ],
+              "recommended_action": "investigate_immediately"
+            }
+          },
+          "buffer_entry_id": "20251008_201259_Bus-1",
+          "validation": {
+            "is_valid": true,
+            "fault_family": "Initialization",
+            "fault_description": "Failed to initialize component",
+            "severity": "ERROR",
+            "system_match": false,
+            "validation_errors": []
+          }
+        }
+      ]
+    },
+    "by_severity": {
+      "ERROR": [
+        {
+          "timestamp": "2025-10-08T20:12:59.043615",
+          "system_address": "Bus-1",
+          "fault_code": "[1-1-10-001]",
+          "severity": "ERROR",
+          "fault_data": {
+            "fault_id": "TEST-FAULT-000",
+            "system_address": "Bus-1",
+            "fault_code": "[1-1-10-001]",
+            "description": "Test error fault for consolidated reporting",
+            "timestamp": "2025-10-08T20:12:59",
+            "analysis": {
+              "is_real_fault": true,
+              "fault_category": "sudden_failure",
+              "confidence_level": 0.9,
+              "analysis_reasoning": [
+                "System Bus-1 was working 2h ago, sudden failure detected"
+              ],
+              "recommended_action": "investigate_immediately"
+            }
+          },
+          "buffer_entry_id": "20251008_201259_Bus-1",
+          "validation": {
+            "is_valid": true,
+            "fault_family": "Initialization",
+            "fault_description": "Failed to initialize component",
+            "severity": "ERROR",
+            "system_match": false,
+            "validation_errors": []
+          }
+        },
+        {
+          "timestamp": "2025-10-08T20:12:59.058666",
+          "system_address": "Bus-1",
+          "fault_code": "[1-1-10-001]",
+          "severity": "ERROR",
+          "fault_data": {
+            "fault_id": "TEST-FAULT-001",
+            "system_address": "Bus-1",
+            "fault_code": "[1-1-10-001]",
+            "description": "Test error fault for consolidated reporting",
+            "timestamp": "2025-10-08T20:12:59",
+            "analysis": {
+              "is_real_fault": true,
+              "fault_category": "sudden_failure",
+              "confidence_level": 0.9,
+              "analysis_reasoning": [
+                "System Bus-1 was working 2h ago, sudden failure detected"
+              ],
+              "recommended_action": "investigate_immediately"
+            }
+          },
+          "buffer_entry_id": "20251008_201259_Bus-1",
+          "validation": {
+            "is_valid": true,
+            "fault_family": "Initialization",
+            "fault_description": "Failed to initialize component",
+            "severity": "ERROR",
+            "system_match": false,
+            "validation_errors": []
+          }
+        }
+      ]
+    },
+    "by_fault_type": {
+      "SYNTAX_ERROR": [
+        {
+          "timestamp": "2025-10-08T20:12:59.043615",
+          "system_address": "Bus-1",
+          "fault_code": "[1-1-10-001]",
+          "severity": "ERROR",
+          "fault_data": {
+            "fault_id": "TEST-FAULT-000",
+            "system_address": "Bus-1",
+            "fault_code": "[1-1-10-001]",
+            "description": "Test error fault for consolidated reporting",
+            "timestamp": "2025-10-08T20:12:59",
+            "analysis": {
+              "is_real_fault": true,
+              "fault_category": "sudden_failure",
+              "confidence_level": 0.9,
+              "analysis_reasoning": [
+                "System Bus-1 was working 2h ago, sudden failure detected"
+              ],
+              "recommended_action": "investigate_immediately"
+            }
+          },
+          "buffer_entry_id": "20251008_201259_Bus-1",
+          "validation": {
+            "is_valid": true,
+            "fault_family": "Initialization",
+            "fault_description": "Failed to initialize component",
+            "severity": "ERROR",
+            "system_match": false,
+            "validation_errors": []
+          }
+        },
+        {
+          "timestamp": "2025-10-08T20:12:59.058666",
+          "system_address": "Bus-1",
+          "fault_code": "[1-1-10-001]",
+          "severity": "ERROR",
+          "fault_data": {
+            "fault_id": "TEST-FAULT-001",
+            "system_address": "Bus-1",
+            "fault_code": "[1-1-10-001]",
+            "description": "Test error fault for consolidated reporting",
+            "timestamp": "2025-10-08T20:12:59",
+            "analysis": {
+              "is_real_fault": true,
+              "fault_category": "sudden_failure",
+              "confidence_level": 0.9,
+              "analysis_reasoning": [
+                "System Bus-1 was working 2h ago, sudden failure detected"
+              ],
+              "recommended_action": "investigate_immediately"
+            }
+          },
+          "buffer_entry_id": "20251008_201259_Bus-1",
+          "validation": {
+            "is_valid": true,
+            "fault_family": "Initialization",
+            "fault_description": "Failed to initialize component",
+            "severity": "ERROR",
+            "system_match": false,
+            "validation_errors": []
+          }
+        }
+      ]
+    },
+    "by_time_window": {
+      "2025-10-08_20:00": [
+        {
+          "timestamp": "2025-10-08T20:12:59.043615",
+          "system_address": "Bus-1",
+          "fault_code": "[1-1-10-001]",
+          "severity": "ERROR",
+          "fault_data": {
+            "fault_id": "TEST-FAULT-000",
+            "system_address": "Bus-1",
+            "fault_code": "[1-1-10-001]",
+            "description": "Test error fault for consolidated reporting",
+            "timestamp": "2025-10-08T20:12:59",
+            "analysis": {
+              "is_real_fault": true,
+              "fault_category": "sudden_failure",
+              "confidence_level": 0.9,
+              "analysis_reasoning": [
+                "System Bus-1 was working 2h ago, sudden failure detected"
+              ],
+              "recommended_action": "investigate_immediately"
+            }
+          },
+          "buffer_entry_id": "20251008_201259_Bus-1",
+          "validation": {
+            "is_valid": true,
+            "fault_family": "Initialization",
+            "fault_description": "Failed to initialize component",
+            "severity": "ERROR",
+            "system_match": false,
+            "validation_errors": []
+          }
+        },
+        {
+          "timestamp": "2025-10-08T20:12:59.058666",
+          "system_address": "Bus-1",
+          "fault_code": "[1-1-10-001]",
+          "severity": "ERROR",
+          "fault_data": {
+            "fault_id": "TEST-FAULT-001",
+            "system_address": "Bus-1",
+            "fault_code": "[1-1-10-001]",
+            "description": "Test error fault for consolidated reporting",
+            "timestamp": "2025-10-08T20:12:59",
+            "analysis": {
+              "is_real_fault": true,
+              "fault_category": "sudden_failure",
+              "confidence_level": 0.9,
+              "analysis_reasoning": [
+                "System Bus-1 was working 2h ago, sudden failure detected"
+              ],
+              "recommended_action": "investigate_immediately"
+            }
+          },
+          "buffer_entry_id": "20251008_201259_Bus-1",
+          "validation": {
+            "is_valid": true,
+            "fault_family": "Initialization",
+            "fault_description": "Failed to initialize component",
+            "severity": "ERROR",
+            "system_match": false,
+            "validation_errors": []
+          }
+        }
+      ]
+    },
+    "by_impact_level": {}
+  },
+  "fault_details": [
+    {
+      "timestamp": "2025-10-08T20:12:59.043615",
+      "system_address": "Bus-1",
+      "fault_code": "[1-1-10-001]",
+      "severity": "ERROR",
+      "fault_data": {
+        "fault_id": "TEST-FAULT-000",
+        "system_address": "Bus-1",
+        "fault_code": "[1-1-10-001]",
+        "description": "Test error fault for consolidated reporting",
+        "timestamp": "2025-10-08T20:12:59",
+        "analysis": {
+          "is_real_fault": true,
+          "fault_category": "sudden_failure",
+          "confidence_level": 0.9,
+          "analysis_reasoning": [
+            "System Bus-1 was working 2h ago, sudden failure detected"
+          ],
+          "recommended_action": "investigate_immediately"
+        }
+      },
+      "buffer_entry_id": "20251008_201259_Bus-1",
+      "validation": {
+        "is_valid": true,
+        "fault_family": "Initialization",
+        "fault_description": "Failed to initialize component",
+        "severity": "ERROR",
+        "system_match": false,
+        "validation_errors": []
+      }
+    },
+    {
+      "timestamp": "2025-10-08T20:12:59.058666",
+      "system_address": "Bus-1",
+      "fault_code": "[1-1-10-001]",
+      "severity": "ERROR",
+      "fault_data": {
+        "fault_id": "TEST-FAULT-001",
+        "system_address": "Bus-1",
+        "fault_code": "[1-1-10-001]",
+        "description": "Test error fault for consolidated reporting",
+        "timestamp": "2025-10-08T20:12:59",
+        "analysis": {
+          "is_real_fault": true,
+          "fault_category": "sudden_failure",
+          "confidence_level": 0.9,
+          "analysis_reasoning": [
+            "System Bus-1 was working 2h ago, sudden failure detected"
+          ],
+          "recommended_action": "investigate_immediately"
+        }
+      },
+      "buffer_entry_id": "20251008_201259_Bus-1",
+      "validation": {
+        "is_valid": true,
+        "fault_family": "Initialization",
+        "fault_description": "Failed to initialize component",
+        "severity": "ERROR",
+        "system_match": false,
+        "validation_errors": []
+      }
+    }
+  ],
+  "recommendations": [
+    "No specific recommendations - monitor system health"
+  ],
+  "consolidation_analysis": {
+    "fault_density": 2,
+    "severity_distribution": {
+      "ERROR": 2
+    },
+    "system_impact_analysis": {
+      "Bus-1": {
+        "total": 2,
+        "critical": 0,
+        "failure": 0,
+        "error": 2
+      }
+    },
+    "temporal_analysis": {},
+    "correlation_analysis": {}
+  }
+}

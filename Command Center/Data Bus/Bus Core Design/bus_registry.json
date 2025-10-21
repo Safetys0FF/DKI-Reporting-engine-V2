@@ -1,0 +1,23 @@
+{
+  "timestamp": "2025-10-20T01:23:40.795614",
+  "systems": {
+    "1": {
+      "address": "1",
+      "status": "active",
+      "registered_at": "2025-10-20T06:21:45.724025",
+      "system_type": "evidence_locker"
+    },
+    "2-3": {
+      "address": "2-3",
+      "status": "active",
+      "registered_at": "2025-10-20T01:23:40.795599",
+      "system_type": "gateway_controller"
+    },
+    "Bus-1": {
+      "address": "Bus-1",
+      "status": "initialized",
+      "initialized_at": "2025-10-20T01:21:40.992892",
+      "system_type": "module"
+    }
+  }
+}

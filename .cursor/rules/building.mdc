@@ -1,0 +1,51 @@
+description: >
+  Enforces edit-in-place behavior, disables “card stacking,” and ensures
+  that Cursor only modifies live integrated modules for the
+  DKI Reporting Engine diagnostic system.
+
+autoAttach:
+  - "**/*.py"
+  - "**/*.json"
+  - "**/*.yml"
+entryPoints:
+  - "core.py"
+  - "unified_diagnostic_system.py"
+alwaysApply: true
+---
+# Cursor Repo Rules — Edit-in-Place, No Card Stacks
+
+## Prime Directives
+1) MODIFY EXISTING FILES IN-PLACE. Do not create new files, folders, or “examples” unless explicitly requested with a filename.
+2) PRESERVE RUNTIME INTEGRATION. Every change must keep the project runnable from the documented entry points (`core.py`, `unified_diagnostic_system.py`, `__init__.py`).
+3) RESPECT PACKAGE BOUNDARIES. Update imports and `__init__.py` when moving/renaming functions; ensure modules remain importable.
+4) COHESION OVER FRAGMENTATION. Prefer refactors that integrate logic into the live modules over introducing helpers or stubs.
+5) TEST LOCALLY. After edits, show the exact command to run (Windows/PowerShell examples first) and any required env vars.
+
+## File Creation Rules
+- DO NOT create new files by default.
+- If a helper is truly necessary:
+  - FIRST propose the exact file path and purpose in one sentence.
+  - WAIT for explicit approval (a user message naming the file) before creating it.
+- NEVER dump “sample scripts,” “snippets,” or “cards” outside the package.
+
+## Refactor & Import Discipline
+- When extracting a function/class, refactor in the SAME file unless user approves a new module.
+- If a symbol moves, update all local imports and `__all__` in `__init__.py` accordingly.
+- Keep public API stable; if breaking changes are unavoidable, list them succinctly.
+
+## Execution Guarantees
+- After edits, provide:
+  - Run command (PowerShell): `python .\unified_diagnostic_system.py`
+  - Alt entry (if any): `python .\core.py --mode run`
+  - Env setup reminder if needed: `.venv\Scripts\activate` then `pip install -r requirements.txt`
+
+## Style & Tooling
+- Follow existing lint/format config if present. If not, use PEP8 and type hints, but DO NOT add new tooling files without permission.
+- Log to the project’s configured logger; do not introduce ad-hoc prints except for temporary debug blocks labeled TODO:REMOVE.
+
+## Forbidden Outputs
+- No pseudo-files, no “card” examples, no duplicated shadow files, no notebooks, no placeholder “scaffolds,” unless explicitly requested.
+- Do not rename top-level folders without explicit permission.
+
+## Change Notes
+- At the end of each change set, include a brief “What changed / Why / How to run” block.

@@ -366,3 +366,5 @@ The entire system is built but **completely non-functional** due to language tra
 
 This will fix the **translation crisis** and enable **smooth communication** between all systems and the CAN-bus.
 
+
+

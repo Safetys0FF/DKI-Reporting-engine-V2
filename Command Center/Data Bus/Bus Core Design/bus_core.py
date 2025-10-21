@@ -8,11 +8,30 @@ Enhanced with Universal Communication Protocol
 import os
 import sys
 import json
+import time
 from datetime import datetime
 import threading
 import logging
 from typing import Dict, List, Any, Optional, Callable
 from universal_communicator import UniversalCommunicator, CommunicationSignal
+
+# Import parent module registry for routing
+try:
+    from pathlib import Path
+    sys.path.insert(0, str(Path(__file__).parent.parent / "diagnostic_manager" / "Unified_diagnostic_system" / "read_me"))
+    from system_protocol_registry import PARENT_CHILD_RELATIONSHIPS
+    PARENT_MODULES = set(PARENT_CHILD_RELATIONSHIPS.keys())
+except ImportError:
+    # Fallback if registry not available
+    PARENT_MODULES = {'Bus-1', 'DIAG-1', '1', '2-1', '3', '5', 'GUI-1'}
+
+# Message Lifecycle States for Universal Communication Protocol
+class MessageState:
+    """Defines the lifecycle states of bus messages to prevent infinite loops."""
+    CALL_SENT = "CALL_SENT"           # Initiator sends request
+    CALL_RECEIVED = "CALL_RECEIVED"   # Receiver ACKs receipt (optional)
+    CALL_ANSWERED = "CALL_ANSWERED"   # Receiver sends response data
+    CALL_COMPLETED = "CALL_COMPLETED" # Initiator confirms completion (optional)
 
 # Configure logging - redirect to diagnostic system's system_logs directory
 import pathlib
@@ -20,11 +39,13 @@ diagnostic_logs_path = pathlib.Path(__file__).parent.parent / "diagnostic_manage
 diagnostic_logs_path.mkdir(parents=True, exist_ok=True)
 bus_log_file = diagnostic_logs_path / "dki_bus_core.log"
 
+# Use rotating file handler to prevent disk-full errors
+from logging.handlers import RotatingFileHandler
 logging.basicConfig(
-    level=logging.INFO,
+    level=logging.WARNING,  # Reduced from INFO
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     handlers=[
-        logging.FileHandler(bus_log_file),
+        RotatingFileHandler(str(bus_log_file), maxBytes=10*1024*1024, backupCount=2),  # 10MB max
         logging.StreamHandler(sys.stdout)
     ]
 )
@@ -40,6 +61,31 @@ class DKIReportBus:
         self.active_modules: Dict[str, Any] = {}
         self.event_log: List[Dict[str, Any]] = []
         self.lock = threading.Lock()
+
+        # Bus stabilization state
+        self.bus_ready = False
+        self.stabilization_time = 10  # seconds
+        self.ready_event = threading.Event()
+        
+        # Registry file for UDS detection
+        self.registry_path = Path(__file__).parent / "bus_registry.json"
+        self.registry_update_interval = 5  # seconds
+        self.last_registry_update = 0
+        
+        # Module initialization orchestration
+        # NOTE: DIAG-1 and GUI-1 removed from sequence - launch after backend
+        # Modules can initialize without waiting for optional components
+        self.initialization_sequence = [
+            'Bus-1',           # Central bus (self)
+            # 'DIAG-1',        # Diagnostic system (launches later as subprocess)
+            # 'GUI-1',         # User interface (optional, launches later)
+            '1',               # Evidence Locker
+            '2',               # The Warden
+            '3',               # The Marshall
+            '5',               # Mission Debrief
+        ]
+        self.initialized_modules: Dict[str, Dict[str, Any]] = {}
+        self.initialization_complete = False
 
         # Central Command state
         self.current_case_id: Optional[str] = None
@@ -59,10 +105,186 @@ class DKIReportBus:
         self.fault_log: List[Dict[str, Any]] = []
         self.active_faults: Dict[str, Dict[str, Any]] = {}
 
-        logger.info("Central Command Bus initialized with Universal Communication Protocol")
+        # Health monitoring metrics
+        self.start_time = datetime.now()
+        self.message_count = 0
+        self.failed_deliveries = 0
+        self.processing_times: List[float] = []
+        
+        logger.info("Central Command Bus initializing - starting stabilization sequence")
 
         # Register default signal handlers for core events
         self._register_default_handlers()
+        
+        # Start stabilization sequence in background thread
+        self.stabilization_thread = threading.Thread(target=self._stabilize, daemon=True)
+        self.stabilization_thread.start()
+
+    def _stabilize(self) -> None:
+        """Stabilization sequence - allows bus to fully initialize before accepting connections."""
+        logger.warning(f"[BUS-1] STABILIZATION IN PROGRESS - {self.stabilization_time}s countdown started")
+        logger.warning(f"[BUS-1] All module connections will be gated until bus is ready")
+        
+        for remaining in range(self.stabilization_time, 0, -1):
+            logger.info(f"[BUS-1] Stabilizing... {remaining}s remaining")
+            time.sleep(1)
+        
+        # Set ready state
+        self.bus_ready = True
+        self.ready_event.set()
+        
+        # Mark Bus-1 as initialized
+        self.initialized_modules['Bus-1'] = {
+            'address': 'Bus-1',
+            'status': 'initialized',
+            'timestamp': datetime.now().isoformat()
+        }
+        
+        # Update registry file
+        self._update_registry_file()
+        
+        logger.warning("[BUS-1] [OK] STABILIZATION COMPLETE - Bus is now READY for connections")
+        logger.info(f"[BUS-1] Ready state achieved at {datetime.now().isoformat()}")
+        logger.info(f"[BUS-1] Module initialization sequence: {' -> '.join(self.initialization_sequence)}")
+    
+    def wait_for_ready(self, timeout: Optional[float] = 30.0) -> bool:
+        """Block until bus is ready. Returns True if ready, False if timeout."""
+        if self.bus_ready:
+            return True
+        
+        logger.info(f"[BUS-1] Module waiting for bus ready state (timeout: {timeout}s)")
+        ready = self.ready_event.wait(timeout=timeout)
+        
+        if ready:
+            logger.info("[BUS-1] Bus ready confirmed - module can proceed")
+        else:
+            logger.error(f"[BUS-1] Bus ready timeout after {timeout}s - connection may be unstable")
+        
+        return ready
+    
+    def is_ready(self) -> bool:
+        """Check if bus is ready without blocking."""
+        return self.bus_ready
+    
+    def register_module_init(self, module_address: str, module_info: Optional[Dict[str, Any]] = None) -> bool:
+        """Register a module as initialized in the orchestrated sequence.
+        
+        Returns True if module is allowed to initialize (its turn in sequence),
+        False if it should wait for previous modules.
+        """
+        if not self.bus_ready:
+            logger.warning(f"[BUS-1] Module {module_address} attempted registration before bus ready")
+            return False
+        
+        # Find module position in sequence
+        try:
+            module_index = self.initialization_sequence.index(module_address)
+        except ValueError:
+            # Module not in sequence - allow immediate registration
+            logger.info(f"[BUS-1] Module {module_address} not in sequence - allowing immediate registration")
+            with self.lock:
+                self.initialized_modules[module_address] = {
+                    'address': module_address,
+                    'status': 'initialized',
+                    'timestamp': datetime.now().isoformat(),
+                    'info': module_info or {}
+                }
+            # Update registry file
+            self._update_registry_file()
+            return True
+        
+        # Check if all previous modules in sequence are initialized
+        with self.lock:
+            for i in range(module_index):
+                predecessor = self.initialization_sequence[i]
+                if predecessor not in self.initialized_modules:
+                    logger.warning(
+                        f"[BUS-1] Module {module_address} must wait for {predecessor} to initialize first"
+                    )
+                    logger.info(f"[BUS-1] Initialization order: {' -> '.join(self.initialization_sequence[:module_index + 1])}")
+                    return False
+            
+            # All predecessors ready - register this module
+            self.initialized_modules[module_address] = {
+                'address': module_address,
+                'status': 'initialized',
+                'timestamp': datetime.now().isoformat(),
+                'sequence_position': module_index,
+                'info': module_info or {}
+            }
+        
+        # Update registry file
+        self._update_registry_file()
+        
+        logger.warning(f"[BUS-1] [OK] Module {module_address} initialized (position {module_index + 1}/{len(self.initialization_sequence)})")
+        
+        # Check if all modules in sequence are now initialized
+        if len(self.initialized_modules) >= len(self.initialization_sequence):
+            self.initialization_complete = True
+            logger.warning("[BUS-1] [OK] ALL CORE MODULES INITIALIZED - System ready for operation")
+        
+        return True
+    
+    def wait_for_module_turn(self, module_address: str, timeout: float = 60.0) -> bool:
+        """Block until it's this module's turn to initialize in the sequence.
+        
+        Returns True when ready to initialize, False on timeout.
+        """
+        if not self.bus_ready:
+            logger.info(f"[{module_address}] Waiting for bus stabilization...")
+            if not self.wait_for_ready(timeout=timeout):
+                return False
+        
+        try:
+            module_index = self.initialization_sequence.index(module_address)
+        except ValueError:
+            # Not in sequence - can initialize immediately
+            return True
+        
+        start_time = time.time()
+        while (time.time() - start_time) < timeout:
+            # Check if all predecessors are initialized
+            all_ready = True
+            with self.lock:
+                for i in range(module_index):
+                    predecessor = self.initialization_sequence[i]
+                    if predecessor not in self.initialized_modules:
+                        all_ready = False
+                        break
+            
+            if all_ready:
+                logger.info(f"[{module_address}] All predecessors initialized - ready to proceed")
+                return True
+            
+            # Wait and check again
+            time.sleep(0.5)
+        
+        logger.error(f"[{module_address}] Timeout waiting for initialization turn after {timeout}s")
+        return False
+    
+    def get_initialization_status(self) -> Dict[str, Any]:
+        """Get current initialization status for all modules in sequence."""
+        with self.lock:
+            status = {
+                'bus_ready': self.bus_ready,
+                'initialization_complete': self.initialization_complete,
+                'sequence': self.initialization_sequence,
+                'initialized_count': len(self.initialized_modules),
+                'total_count': len(self.initialization_sequence),
+                'modules': {}
+            }
+            
+            for module_addr in self.initialization_sequence:
+                if module_addr in self.initialized_modules:
+                    status['modules'][module_addr] = self.initialized_modules[module_addr]
+                else:
+                    status['modules'][module_addr] = {
+                        'address': module_addr,
+                        'status': 'waiting',
+                        'timestamp': None
+                    }
+        
+        return status
 
     def _register_default_handlers(self) -> None:
         """Ensure core signals always have at least a logging stub."""
@@ -89,8 +311,22 @@ class DKIReportBus:
             'radio_check': self._handle_radio_check_signal,
             'rollcall': self._handle_rollcall_signal,
             'status_request': self._handle_status_request_signal,
+            'auto_registration': self._handle_auto_registration_signal,
+            'communication': self._handle_communication_signal,  # FIX: Register generic communication handler
         }
         for signal_name, handler in default_handlers.items():
+            self.register_signal(signal_name, handler)
+    
+    def _register_universal_protocol_handlers(self) -> None:
+        """Register Universal Communication Protocol handlers on THIS bus instance."""
+        # These handlers MUST be registered on every bus instance
+        # because modules create their own bus instances
+        protocol_handlers = {
+            'communication': self._handle_communication_signal,
+            'report.generate': self._handle_report_generate_signal,
+            'report.status': self._handle_report_status_signal,
+        }
+        for signal_name, handler in protocol_handlers.items():
             self.register_signal(signal_name, handler)
 
     # ------------------------------------------------------------------
@@ -340,21 +576,99 @@ class DKIReportBus:
         self.log_event('bus.sos_fault', f"SOS fault from {reporting_address}: {fault_code} - {description}", 'error')
 
     def _handle_radio_check_signal(self, payload: Dict[str, Any]) -> None:
-        """Handle radio check signals"""
+        """Handle radio check signals
+        
+        LIFECYCLE FIX: Only responds to CALL_SENT messages.
+        """
+        # Check message lifecycle state
+        message_state = payload.get('message_state', '')
+        if message_state != "CALL_SENT":
+            return
+        
         target_address = payload.get('target_address', 'UNKNOWN')
         caller_address = payload.get('caller_address', 'UNKNOWN')
         
         self.log_event('bus.radio_check', f"Radio check from {caller_address} to {target_address}")
         
-        # Send acknowledgment response
-        self.send('radio_check_response', {
-            'target_address': caller_address,
-            'caller_address': target_address,
-            'radio_code': '10-4',
-            'message': f"Radio check acknowledged by {target_address}",
-            'timestamp': datetime.now().isoformat()
-        })
+        # Send acknowledgment response with CALL_ANSWERED state
+        if self.communicator:
+            connectivity_data = {
+                "system_address": "Bus-1",
+                "latency_ms": 0,
+                "bus_connected": True,
+                "timestamp": datetime.now().isoformat()
+            }
+            try:
+                self.communicator.send_radio_check_response(caller_address, connectivity_data)
+                logger.info(f"[Bus-1] Radio check response sent to {caller_address}")
+            except Exception as exc:
+                logger.error(f"[Bus-1] Radio check response failed: {exc}")
 
+    def _handle_auto_registration_signal(self, payload: Dict[str, Any]) -> None:
+        """Handle UDS auto-registration demand.
+        
+        LIFECYCLE FIX: Only responds to CALL_SENT messages to prevent infinite loops.
+        """
+        # Check message lifecycle state - only respond to requests
+        message_state = payload.get('message_state', '')
+        if message_state != "CALL_SENT":
+            return
+        
+        logger.info("[Bus-1] Auto-registration request received from UDS")
+        
+        if not self.communicator:
+            logger.warning("[Bus-1] Cannot respond - no communicator available")
+            return
+        
+        # Build registration response payload
+        response_payload = {
+            "system_address": "Bus-1",
+            "system_type": "central_command_bus",
+            "status": "OPERATIONAL",
+            "capabilities": ["message_routing", "signal_distribution", "event_logging", "system_state_management"],
+            "child_components": ["Bus-1.1", "Bus-1.2", "Bus-1.3", "Bus-1.4", "Bus-1.5"],
+            "compliance_status": "COMPLIANT",
+            "protocol_version": "1.0.0",
+            "timestamp": datetime.now().isoformat()
+        }
+        
+        # Send response using UniversalCommunicator
+        try:
+            self.communicator.send_auto_registration_response("DIAG-1", response_payload)
+            logger.info("[Bus-1] Auto-registration response sent to UDS")
+        except Exception as exc:
+            logger.error(f"[Bus-1] Auto-registration response failed: {exc}")
+    
+    def _handle_communication_signal(self, payload: Dict[str, Any]) -> None:
+        """Handle generic communication signals from Universal Communicator.
+        
+        This is the main handler for inter-module messages sent via UniversalCommunicator.
+        Routes messages based on radio_code and target_address.
+        """
+        radio_code = payload.get('radio_code', '10-4')
+        caller_address = payload.get('caller_address', 'UNKNOWN')
+        target_address = payload.get('target_address', 'ALL')
+        message = payload.get('message', '')
+        
+        # Log communication
+        logger.debug(f"[BUS] Communication: {caller_address} -> {target_address} [{radio_code}]: {message}")
+        
+        # Route to specific handlers based on radio code or just log
+        # Future: Add routing logic here for specific message types
+        return
+    
+    def _handle_report_generate_signal(self, payload: Dict[str, Any]) -> None:
+        """Handle report generation requests."""
+        # Stub handler - actual report generation handled by Mission Debrief module
+        logger.debug(f"[BUS] Report generation request received: {payload}")
+        return
+    
+    def _handle_report_status_signal(self, payload: Dict[str, Any]) -> None:
+        """Handle report status requests."""
+        # Stub handler - actual status provided by Mission Debrief module
+        logger.debug(f"[BUS] Report status request received: {payload}")
+        return
+    
     def _handle_rollcall_signal(self, payload: Dict[str, Any]) -> None:
         """Handle rollcall signals"""
         caller_address = payload.get('caller_address', 'UNKNOWN')
@@ -430,11 +744,63 @@ class DKIReportBus:
         with self.lock:
             self.system_addresses[address] = system_info
         self.log_event('bus.register_address', f"Registered system address: {address}")
+        
+        # Update registry file for UDS detection
+        self._update_registry_file()
 
     def get_registered_addresses(self) -> List[str]:
         """Get list of registered system addresses"""
         with self.lock:
             return list(self.system_addresses.keys())
+    
+    def _update_registry_file(self) -> None:
+        """Update registry file for UDS detection (throttled)"""
+        current_time = time.time()
+        if current_time - self.last_registry_update < self.registry_update_interval:
+            return
+        
+        self.last_registry_update = current_time
+        
+        try:
+            with self.lock:
+                registry_data = {
+                    'timestamp': datetime.now().isoformat(),
+                    'systems': {}
+                }
+                
+                # Add all registered systems
+                for address, info in self.system_addresses.items():
+                    registry_data['systems'][address] = {
+                        'address': address,
+                        'status': 'active',
+                        'registered_at': info.get('registered_at', datetime.now().isoformat()),
+                        'system_type': info.get('system_type', 'unknown')
+                    }
+                
+                # Add initialized modules
+                for address, info in self.initialized_modules.items():
+                    if address not in registry_data['systems']:
+                        registry_data['systems'][address] = {
+                            'address': address,
+                            'status': info.get('status', 'initialized'),
+                            'initialized_at': info.get('timestamp', datetime.now().isoformat()),
+                            'system_type': 'module'
+                        }
+            
+            # Write to file atomically
+            import tempfile
+            temp_path = str(self.registry_path) + '.tmp'
+            with open(temp_path, 'w') as f:
+                json.dump(registry_data, f, indent=2)
+            
+            # Atomic rename
+            import os
+            os.replace(temp_path, str(self.registry_path))
+            
+            logger.debug(f"Registry file updated with {len(registry_data['systems'])} systems")
+            
+        except Exception as e:
+            logger.warning(f"Failed to update registry file: {e}")
 
     def _get_line_number(self) -> int:
         """Get current line number for fault reporting"""
@@ -510,19 +876,39 @@ class DKIReportBus:
             return self.event_log[-limit:]
 
     def send(self, topic: str, data: Dict[str, Any]) -> Dict[str, Any]:
+        start_time = time.time()
+        self.message_count += 1
+        
         handlers = self.signal_registry.get(topic)
         if not handlers:
             logger.warning(f"[BUS] No handlers for topic: {topic}")
+            self.failed_deliveries += 1
             return {}
+        
+        # Check if message has target address - only deliver to parent modules
+        target_address = data.get('target_address')
+        if target_address and target_address not in PARENT_MODULES:
+            # Child address targeted - skip delivery (parent will handle)
+            logger.debug(f"[BUS] Skipping delivery to child address {target_address} - parent handles")
+            return {}
+        
         responses: List[Any] = []
         for handler in handlers:
             try:
                 response = handler(data)
             except Exception as exc:  # pragma: no cover
                 logger.error(f"[BUS] Error running handler '{getattr(handler, '__name__', handler)}' for topic '{topic}': {exc}")
+                self.failed_deliveries += 1
             else:
                 if response is not None:
                     responses.append(response)
+        
+        # Track processing time
+        processing_time = (time.time() - start_time) * 1000  # ms
+        self.processing_times.append(processing_time)
+        if len(self.processing_times) > 1000:
+            self.processing_times = self.processing_times[-1000:]
+        
         if not responses:
             return {}
         if len(responses) == 1 and isinstance(responses[0], dict):
@@ -669,6 +1055,29 @@ class DKIReportBus:
             'event_log_size': len(self.event_log),
             'bus_status': 'online',
         }
+    
+    def get_health_metrics(self) -> Dict[str, Any]:
+        """Get Bus-1 health monitoring metrics."""
+        uptime = (datetime.now() - self.start_time).total_seconds()
+        avg_processing = sum(self.processing_times) / len(self.processing_times) if self.processing_times else 0
+        msg_per_sec = self.message_count / uptime if uptime > 0 else 0
+        
+        return {
+            'bus_address': 'Bus-1',
+            'status': 'ready' if self.bus_ready else 'stabilizing',
+            'bus_ready': self.bus_ready,
+            'initialization_complete': self.initialization_complete,
+            'initialized_modules': len(self.initialized_modules),
+            'total_modules': len(self.initialization_sequence),
+            'uptime_seconds': int(uptime),
+            'message_count': self.message_count,
+            'failed_deliveries': self.failed_deliveries,
+            'messages_per_second': round(msg_per_sec, 2),
+            'avg_processing_ms': round(avg_processing, 2),
+            'connected_systems': len(self.system_addresses),
+            'active_signals': len(self.signal_registry),
+            'event_log_size': len(self.event_log)
+        }
 
     def get_evidence_manifest(self, evidence_id: Optional[str] = None) -> Any:
         with self.lock:
@@ -732,16 +1141,72 @@ def inject_evidence_index(bus):
 
 
 if __name__ == "__main__":
-    # Test the Central Command bus
+    # Test the Central Command bus with stabilization and orchestration
+    print("=" * 80)
+    print("CENTRAL COMMAND BUS - STABILIZATION & ORCHESTRATION TEST")
+    print("=" * 80)
+    
     bus = DKIReportBus()
     
-    # Inject Central Command modules
-    inject_gateway_controller(bus)
-    inject_evidence_manager(bus)
-    inject_evidence_index(bus)
+    print("\n[TEST] Bus created - checking ready state...")
+    print(f"[TEST] Bus ready: {bus.is_ready()}")
+    print(f"[TEST] Health metrics: {bus.get_health_metrics()}")
     
-    # Test signals
-    bus.emit("boot_check", {"status": "online"})
+    print("\n[TEST] Waiting for bus to stabilize...")
+    if bus.wait_for_ready(timeout=15.0):
+        print("\n[TEST] [OK] Bus stabilization confirmed")
+        print(f"\n[TEST] Initialization sequence: {' -> '.join(bus.initialization_sequence)}")
+        
+        # Simulate module initialization in sequence
+        print("\n[TEST] Simulating module initialization sequence...")
+        
+        # DIAG-1 initializes
+        print("\n[TEST] DIAG-1 requesting initialization...")
+        if bus.register_module_init('DIAG-1', {'version': '1.0', 'type': 'diagnostic'}):
+            print("[TEST] [OK] DIAG-1 initialized")
+        
+        # GUI-1 initializes
+        print("\n[TEST] GUI-1 requesting initialization...")
+        if bus.register_module_init('GUI-1', {'version': '1.0', 'type': 'interface'}):
+            print("[TEST] [OK] GUI-1 initialized")
+        
+        # The Warden initializes
+        print("\n[TEST] The Warden (3) requesting initialization...")
+        if bus.register_module_init('3', {'version': '1.0', 'type': 'warden'}):
+            print("[TEST] [OK] The Warden initialized")
+        
+        # Evidence Locker initializes
+        print("\n[TEST] Evidence Locker (2-1) requesting initialization...")
+        if bus.register_module_init('2-1', {'version': '1.0', 'type': 'evidence_locker'}):
+            print("[TEST] [OK] Evidence Locker initialized")
+        
+        # Mission Debrief initializes
+        print("\n[TEST] Mission Debrief (5) requesting initialization...")
+        if bus.register_module_init('5', {'version': '1.0', 'type': 'mission_debrief'}):
+            print("[TEST] [OK] Mission Debrief initialized")
+        
+        # The Marshall initializes
+        print("\n[TEST] The Marshall (1) requesting initialization...")
+        if bus.register_module_init('1', {'version': '1.0', 'type': 'marshall'}):
+            print("[TEST] [OK] The Marshall initialized")
+        
+        # Check initialization status
+        print("\n[TEST] Initialization Status:")
+        init_status = bus.get_initialization_status()
+        print(f"  Complete: {init_status['initialization_complete']}")
+        print(f"  Modules: {init_status['initialized_count']}/{init_status['total_count']}")
+        
+        # Inject Central Command signal handlers
+        inject_gateway_controller(bus)
+        inject_evidence_manager(bus)
+        inject_evidence_index(bus)
+        
+        # Test signals
+        bus.emit("boot_check", {"status": "online"})
+        
+        print("\n[TEST] Central Command Bus fully operational")
+        print(f"[TEST] Health: {bus.get_health_metrics()}")
+    else:
+        print("\n[TEST] [ERROR] Bus stabilization timeout - check logs")
     
-    print("Central Command Bus initialized successfully")
-    print(f"Status: {bus.get_status()}")
+    print("\n" + "=" * 80)

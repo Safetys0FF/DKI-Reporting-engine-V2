@@ -5569,7 +5569,7 @@ class UnifiedDiagnosticSystem:
     def transmit_sos_fault(self, system_address: str, fault_code: str, description: str) -> str:
         """Transmit SOS fault signal"""
         return self.transmit_signal(
-            target_address="Bus-1",
+            target_address="DIAG-1",
             signal_type=SignalType.SOS_FAULT.value,
             radio_code=RadioCode.SOS.value,
             message=f"SOS fault from {system_address}",

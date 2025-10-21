@@ -1,0 +1,128 @@
+@echo off
+setlocal EnableDelayedExpansion
+REM ========================================================================
+REM Unified Diagnostic System - Universal Launcher
+REM DEESCALATION Agent: Works for both normal boot AND crash recovery
+REM Auto-detects system state and adapts accordingly
+REM ========================================================================
+
+echo ========================================
+echo UNIFIED DIAGNOSTIC SYSTEM LAUNCHER
+echo Universal: Normal Boot + Crash Recovery
+echo ========================================
+echo.
+
+REM Navigate to UDS directory
+cd /d "%~dp0"
+
+REM Resolve paths to critical system components
+for %%I in ("%~dp0..\..\..") do set "COMMAND_CENTER_DIR=%%~fI"
+for %%I in ("%COMMAND_CENTER_DIR%\..") do set "ROOT_DIR=%%~fI"
+
+set "BUS_CORE_DIR=%COMMAND_CENTER_DIR%\Data Bus\Bus Core Design"
+set "MARSHALL_DIR=%ROOT_DIR%\The Marshall"
+set "WARDEN_DIR=%ROOT_DIR%\The Warden"
+set "MISSION_DEBRIEF_DIR=%COMMAND_CENTER_DIR%\Mission Debrief"
+set "ANALYST_DECK_DIR=%ROOT_DIR%\The Analyst Deck"
+set "EVIDENCE_LOCKER_DIR=%ROOT_DIR%\Evidence Locker"
+set "DATA_BUS_DIR=%COMMAND_CENTER_DIR%\Data Bus"
+
+REM Comprehensive Python path for all critical modules
+set PYTHONPATH=%CD%
+set PYTHONPATH=%PYTHONPATH%;%BUS_CORE_DIR%
+set PYTHONPATH=%PYTHONPATH%;%DATA_BUS_DIR%
+set PYTHONPATH=%PYTHONPATH%;%MARSHALL_DIR%
+set PYTHONPATH=%PYTHONPATH%;%WARDEN_DIR%
+set PYTHONPATH=%PYTHONPATH%;%MISSION_DEBRIEF_DIR%
+set PYTHONPATH=%PYTHONPATH%;%MISSION_DEBRIEF_DIR%\The Librarian
+set PYTHONPATH=%PYTHONPATH%;%EVIDENCE_LOCKER_DIR%
+set PYTHONPATH=%PYTHONPATH%;%ANALYST_DECK_DIR%
+set PYTHONPATH=%PYTHONPATH%;%ANALYST_DECK_DIR%\Analyst 1
+set PYTHONPATH=%PYTHONPATH%;%ANALYST_DECK_DIR%\Analyst 2
+
+echo Working Directory: %CD%
+echo Command Center: %COMMAND_CENTER_DIR%
+echo Root Directory: %ROOT_DIR%
+echo.
+
+REM Verify Python availability
+python --version >nul 2>&1
+if errorlevel 1 (
+    echo ERROR: Python is not installed or not in PATH
+    echo Please install Python 3.10+ and ensure it's in your system PATH
+    pause
+    exit /b 1
+)
+
+echo Python interpreter found
+python --version
+echo.
+
+REM Check for critical directories
+echo Verifying critical system paths...
+if not exist "%BUS_CORE_DIR%" (
+    echo WARNING: Bus Core directory not found at %BUS_CORE_DIR%
+)
+if not exist "%MARSHALL_DIR%" (
+    echo WARNING: Marshall directory not found at %MARSHALL_DIR%
+)
+if not exist "%WARDEN_DIR%" (
+    echo WARNING: Warden directory not found at %WARDEN_DIR%
+)
+echo.
+
+echo ========================================
+echo AUTO-DETECTION SEQUENCE
+echo ========================================
+echo UDS will automatically detect system state:
+echo.
+echo SCENARIO 1: SYSTEM RUNNING (Normal Boot)
+echo   - Detects active bus with registered modules
+echo   - UDS joins existing operations
+echo   - Monitors and diagnoses running system
+echo.
+echo SCENARIO 2: SYSTEM CRASHED (Repair Mode)
+echo   - Detects no active system
+echo   - SAFE MODE: Initializes COMPLETE system
+echo   - 13 modules in 18 seconds for testing
+echo.
+echo COMPLETE System Modules (Safe Mode):
+echo   Phase 1: Bus Core (CANBUS/LINBUS)
+echo   Phase 2: Warden (ECC + Gateway)
+echo   Phase 3: Evidence Locker (indexing)
+echo   Phase 4: Marshall + Evidence Manager
+echo   Phase 5: Mission Debrief + Librarian
+echo   Phase 6: All 8 Analyst Sections (4-1 to 4-8)
+echo.
+echo Total: 13 modules for comprehensive diagnostics
+echo Auto-detection = seamless operation in ANY scenario
+echo.
+pause
+
+REM Launch the diagnostic system with auto-detection
+echo.
+echo ========================================
+echo LAUNCHING UNIFIED DIAGNOSTIC SYSTEM
+echo ========================================
+echo Auto-detecting system state...
+echo   - If system running: Join operations
+echo   - If system crashed: Initialize full system
+echo.
+python core.py --log-level INFO %*
+
+REM Check exit code
+set EXIT_CODE=%ERRORLEVEL%
+echo.
+if %EXIT_CODE% NEQ 0 (
+    echo ERROR: Diagnostic system failed (Exit Code: %EXIT_CODE%)
+    echo Check logs at: %CD%\library\system_logs\
+    pause
+) else (
+    echo Diagnostic system shutdown successful
+)
+
+pause
+endlocal
+exit /b %EXIT_CODE%
+
+

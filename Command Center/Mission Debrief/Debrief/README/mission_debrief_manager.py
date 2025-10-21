@@ -99,10 +99,25 @@ class MissionDebriefManager:
         manifest_path: Optional[str] = None,
     ) -> None:
         self.ecc = ecc
-        self.bus = bus
         self.gateway = gateway
         self.librarian = librarian
         self.logger = logger
+
+        # CANBUS CONNECTION (DRIVEN COMPONENT - receives from parent)
+        self.bus = bus
+        self.bus_connected = bool(bus)
+        self.safemode_active = not bool(bus)
+        
+        if bus:
+            try:
+                # Register signal handlers (parent owns communicator)
+                self._register_mission_debrief_signals()
+                self.logger.info("[5-1] Debrief Manager connected via parent bus")
+            except Exception as e:
+                self.logger.critical(f"[5-1] Signal registration failed: {e}")
+                self.safemode_active = True
+        else:
+            self.logger.warning("[5-1] No bus provided - SAFEMODE")
 
         self.is_bootstrap_component = True
         self.bootstrap_time = datetime.now().isoformat()
@@ -147,11 +162,104 @@ class MissionDebriefManager:
         self.section_updates: Dict[str, Dict[str, Any]] = {}
         self.section_completion_log: List[Dict[str, Any]] = []
         self.artifact_updates: Dict[str, Dict[str, Any]] = {}
-
-        if self.bus:
-            self._register_with_bus()
+        
+        # Artifact section fault relay tracking
+        self.artifact_fault_log = []
+        
+        # Artifact section fault metadata for enrichment
+        self.ARTIFACT_FAULT_METADATA = {
+            "4-CP": {"subsystem_type": "cover_page", "priority": "high", "name": "Cover Page"},
+            "4-TOC": {"subsystem_type": "table_of_contents", "priority": "medium", "name": "Table of Contents"},
+            "4-DP": {"subsystem_type": "disclosure_page", "priority": "high", "name": "Disclosure Page"}
+        }
 
         self.logger.info("Mission Debrief Manager initialised as bootstrap component")
+    
+    def _register_mission_debrief_signals(self):
+        """Register Mission Debrief signal handlers with CANBUS"""
+        if not self.bus_connected or not self.bus:
+            self.logger.warning("[3-1] Cannot register signals - no CANBUS connection")
+            return
+        
+        try:
+            # Register Mission Debrief control signals
+            self.bus.register_signal("mission.status", self._handle_status_signal)
+            self.bus.register_signal("mission.generate_report", self._handle_generate_report_signal)
+            self.bus.register_signal("mission.assemble_narrative", self._handle_assemble_narrative_signal)
+            
+            self.logger.info("[3-1] Mission Debrief signal handlers registered")
+            
+        except Exception as e:
+            self.logger.error(f"[3-1] Failed to register signal handlers: {e}")
+    
+    def _handle_status_signal(self, payload: Dict[str, Any]) -> Dict[str, Any]:
+        """Handle mission.status signal"""
+        return self.get_bootstrap_status()
+    
+    def _handle_generate_report_signal(self, payload: Dict[str, Any]) -> Dict[str, Any]:
+        """Handle mission.generate_report signal - routes to framework execution"""
+        case_id = payload.get('case_id')
+        sections = payload.get('sections', {})
+        evidence = payload.get('evidence', {})
+        
+        # Use framework orchestration instead of legacy direct generation
+        return self.assemble_final_report(case_id, sections, evidence)
+    
+    def _handle_assemble_narrative_signal(self, payload: Dict[str, Any]) -> Dict[str, Any]:
+        """Handle mission.assemble_narrative signal - delegates to Librarian"""
+        case_id = payload.get('case_id')
+        sections = payload.get('sections', {})
+        
+        # Delegate to Librarian for narrative assembly
+        if self.librarian and hasattr(self.librarian, 'assemble_and_broadcast'):
+            return self.librarian.assemble_and_broadcast(payload)
+        
+        return {"status": "ok", "case_id": case_id, "method": "passthrough"}
+    
+    def _handle_artifact_fault_relay(self, payload: Dict[str, Any]) -> None:
+        """Handle artifact section fault relay - enriches and forwards to diagnostic system"""
+        if not isinstance(payload, dict):
+            return
+        
+        section_address = payload.get("section_address") or payload.get("source_address")
+        if not section_address:
+            self.logger.warning("[3-1] Artifact fault received without address")
+            return
+        
+        # Enrich with artifact metadata
+        metadata = self.ARTIFACT_FAULT_METADATA.get(section_address, {})
+        enriched_payload = dict(payload)
+        enriched_payload["original_target_address"] = section_address
+        enriched_payload["target_subsystem"] = metadata.get("subsystem_type", "unknown")
+        enriched_payload["relay_parent"] = "3-1"
+        enriched_payload["relay_timestamp"] = datetime.now().isoformat()
+        enriched_payload["section_name"] = metadata.get("name", section_address)
+        enriched_payload["priority"] = metadata.get("priority", "medium")
+        enriched_payload["artifact_pipeline"] = "mission_debrief"
+        
+        # Log relay
+        relay_record = {
+            "section_address": section_address,
+            "fault_code": payload.get("fault_code"),
+            "relayed_at": datetime.now().isoformat(),
+            "enriched": True
+        }
+        self.artifact_fault_log.append(relay_record)
+        if len(self.artifact_fault_log) > 100:
+            self.artifact_fault_log = self.artifact_fault_log[-100:]
+        
+        # Forward to diagnostic system via bus
+        if self.bus:
+            try:
+                self.bus.emit("fault.report", enriched_payload)
+                self.logger.info(f"[3-1] Relayed artifact fault from {section_address} to diagnostics")
+            except Exception as e:
+                self.logger.error(f"[3-1] Failed to relay fault: {e}")
+    
+    def report_child_fault(self, section_address: str, fault_payload: Dict[str, Any]) -> None:
+        """Public API for artifact sections to report faults through Mission Debrief relay"""
+        fault_payload["section_address"] = section_address
+        self._handle_artifact_fault_relay(fault_payload)
 
     def _init_adapter(self, name: str, factory: Any, *args: Any, **kwargs: Any) -> Optional[Any]:
         try:
@@ -1919,6 +2027,112 @@ class MissionDebriefManager:
             "reports_processed": len(self.processed_reports),
             "tools_available": dict(self.tool_status),
         }
+
+    # ------------------------------------------------------------------ #
+    # Artifact Framework Execution Methods
+    # ------------------------------------------------------------------ #
+    def execute_cover_page(self, case_id: str, context: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+        """Execute Cover Page framework instead of simple template."""
+        try:
+            if not hasattr(self, 'cover_page_engine') or not self.cover_page_engine:
+                self.logger.warning("[5-1] Cover Page framework not available, using fallback template")
+                return self._compose_cover_page("Final Report", case_id, datetime.now().strftime("%Y-%m-%d %H:%M"))
+            
+            # Execute framework workflow: load → build → publish
+            inputs = self.cover_page_engine.load_inputs()
+            payload = self.cover_page_engine.build_payload(context or inputs)
+            self.cover_page_engine.publish(payload)
+            
+            self.logger.info(f"[5-1] Cover Page executed via framework for case {case_id}")
+            return payload
+            
+        except Exception as exc:
+            self.logger.error(f"[5-1] Cover Page framework execution failed: {exc}")
+            # Fallback to simple template
+            return self._compose_cover_page("Final Report", case_id, datetime.now().strftime("%Y-%m-%d %H:%M"))
+    
+    def execute_disclosure_page(self, case_id: str, context: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+        """Execute Disclosure Page framework instead of simple template."""
+        try:
+            if not hasattr(self, 'disclosure_page_engine') or not self.disclosure_page_engine:
+                self.logger.warning("[5-1] Disclosure Page framework not available, using fallback template")
+                return self._compose_disclosure_page("Disclosure Page", case_id, datetime.now().strftime("%Y-%m-%d %H:%M"))
+            
+            # Execute framework workflow: load → build → publish
+            inputs = self.disclosure_page_engine.load_inputs()
+            payload = self.disclosure_page_engine.build_payload(context or inputs)
+            self.disclosure_page_engine.publish(payload)
+            
+            self.logger.info(f"[5-1] Disclosure Page executed via framework for case {case_id}")
+            return payload
+            
+        except Exception as exc:
+            self.logger.error(f"[5-1] Disclosure Page framework execution failed: {exc}")
+            # Fallback to simple template
+            return self._compose_disclosure_page("Disclosure Page", case_id, datetime.now().strftime("%Y-%m-%d %H:%M"))
+    
+    def execute_artifact_generation(self, case_id: str, sections: List[Dict[str, Any]]) -> Dict[str, Any]:
+        """Orchestrate artifact generation (CP, DP, TOC) using frameworks."""
+        try:
+            context = {
+                "case_id": case_id,
+                "sections": sections,
+                "timestamp": datetime.now().isoformat()
+            }
+            
+            artifacts = {
+                "cover_page": self.execute_cover_page(case_id, context),
+                "disclosure_page": self.execute_disclosure_page(case_id, context),
+                "case_id": case_id,
+                "generated_at": datetime.now().isoformat()
+            }
+            
+            # TOC handled by Librarian (3-3)
+            if self.librarian and hasattr(self.librarian, 'execute_table_of_contents'):
+                artifacts["table_of_contents"] = self.librarian.execute_table_of_contents(case_id, sections)
+            
+            self.logger.info(f"[5-1] Artifacts generated for case {case_id}")
+            return artifacts
+            
+        except Exception as exc:
+            self.logger.error(f"[5-1] Artifact generation failed: {exc}")
+            return {"error": str(exc), "case_id": case_id}
+    
+    def assemble_final_report(self, case_id: str, sections: Dict[str, Any], evidence: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+        """Assemble final report with artifacts, sections, and evidence."""
+        try:
+            section_list = list(sections.values()) if isinstance(sections, dict) else sections
+            
+            # Generate artifacts via frameworks
+            artifacts = self.execute_artifact_generation(case_id, section_list)
+            
+            # Assemble full report structure
+            final_report = {
+                "case_id": case_id,
+                "cover_page": artifacts.get("cover_page"),
+                "table_of_contents": artifacts.get("table_of_contents"),
+                "sections": section_list,
+                "disclosure_page": artifacts.get("disclosure_page"),
+                "evidence_manifest": evidence or {},
+                "generated_at": datetime.now().isoformat(),
+                "report_type": "final_report",
+                "status": "assembled"
+            }
+            
+            # Emit assembly complete signal
+            if self.bus:
+                self.bus.emit("mission.report.assembled", {
+                    "case_id": case_id,
+                    "report": final_report,
+                    "timestamp": datetime.now().isoformat()
+                })
+            
+            self.logger.info(f"[5-1] Final report assembled for case {case_id}")
+            return final_report
+            
+        except Exception as exc:
+            self.logger.error(f"[5-1] Final report assembly failed: {exc}")
+            return {"error": str(exc), "case_id": case_id, "status": "failed"}
 
     def get_bootstrap_status(self) -> Dict[str, Any]:
         return {

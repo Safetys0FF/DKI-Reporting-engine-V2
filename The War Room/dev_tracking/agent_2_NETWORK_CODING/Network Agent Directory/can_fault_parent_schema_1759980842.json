@@ -1,0 +1,380 @@
+{
+  "metadata": {
+    "generated_at": "2025-10-08T22:34:02",
+    "generated_by": "agent_1_POWER_CODING",
+    "context": "CAN fault routing and parent orchestration map for network agent"
+  },
+  "current_parent_map": {
+    "1-1": [
+      {
+        "address": "1-1.1",
+        "name": "Evidence Classifier"
+      },
+      {
+        "address": "1-1.2",
+        "name": "Evidence Identifier"
+      },
+      {
+        "address": "1-1.3",
+        "name": "Static Data Flow"
+      },
+      {
+        "address": "1-1.4",
+        "name": "Evidence Index"
+      },
+      {
+        "address": "1-1.5",
+        "name": "Evidence Manifest"
+      },
+      {
+        "address": "1-1.6",
+        "name": "Evidence Class Builder"
+      },
+      {
+        "address": "1-1.7",
+        "name": "Case Manifest Builder"
+      },
+      {
+        "address": "1-1.8",
+        "name": "OCR Processor"
+      }
+    ],
+    "2-1": [
+      {
+        "address": "2-1.1",
+        "name": "ECC State Manager"
+      },
+      {
+        "address": "2-1.2",
+        "name": "ECC Dependency Tracker"
+      },
+      {
+        "address": "2-1.3",
+        "name": "ECC Execution Order"
+      },
+      {
+        "address": "2-1.4",
+        "name": "ECC Permission Controller"
+      }
+    ],
+    "2-2": [
+      {
+        "address": "2-2.1",
+        "name": "Gateway Signal Dispatcher"
+      },
+      {
+        "address": "2-2.2",
+        "name": "Gateway Section Router"
+      },
+      {
+        "address": "2-2.3",
+        "name": "Gateway Evidence Pipeline"
+      },
+      {
+        "address": "2-2.4",
+        "name": "Gateway Bottleneck Monitor"
+      }
+    ],
+    "3-1": [
+      {
+        "address": "3-1.1",
+        "name": "Report Generator"
+      },
+      {
+        "address": "3-1.2",
+        "name": "Digital Signing"
+      },
+      {
+        "address": "3-1.3",
+        "name": "Template Engine"
+      },
+      {
+        "address": "3-1.4",
+        "name": "Watermark System"
+      }
+    ],
+    "3-2": [
+      {
+        "address": "3-2.1",
+        "name": "Narrative Assembler"
+      },
+      {
+        "address": "3-2.2",
+        "name": "Template Cache"
+      },
+      {
+        "address": "3-2.3",
+        "name": "Document Processor"
+      },
+      {
+        "address": "3-2.4",
+        "name": "OSINT Engine"
+      }
+    ],
+    "7-1": [
+      {
+        "address": "7-1.1",
+        "name": "User Interface Controller"
+      },
+      {
+        "address": "7-1.2",
+        "name": "Case Management Interface"
+      },
+      {
+        "address": "7-1.3",
+        "name": "Evidence Display Interface"
+      },
+      {
+        "address": "7-1.4",
+        "name": "Section Review Interface"
+      },
+      {
+        "address": "7-1.5",
+        "name": "Report Generation Interface"
+      },
+      {
+        "address": "7-1.6",
+        "name": "System Status Interface"
+      },
+      {
+        "address": "7-1.7",
+        "name": "Error Display Interface"
+      },
+      {
+        "address": "7-1.8",
+        "name": "Progress Monitoring Interface"
+      },
+      {
+        "address": "7-1.9",
+        "name": "Health Monitor"
+      }
+    ],
+    "Bus-1": [
+      {
+        "address": "Bus-1.1",
+        "name": "Universal Communicator"
+      },
+      {
+        "address": "Bus-1.2",
+        "name": "Universal Communicator"
+      },
+      {
+        "address": "Bus-1.3",
+        "name": "Bus Core"
+      },
+      {
+        "address": "Bus-1.4",
+        "name": "Universal Communicator"
+      },
+      {
+        "address": "Bus-1.5",
+        "name": "Unified Diagnostic System"
+      }
+    ],
+    "ROOT": [
+      {
+        "address": "1-1",
+        "name": "Evidence Locker Main"
+      },
+      {
+        "address": "1-2",
+        "name": "Evidence Manager (The Marshall)"
+      },
+      {
+        "address": "2-1",
+        "name": "Warden Main"
+      },
+      {
+        "address": "2-2",
+        "name": "Gateway Controller"
+      },
+      {
+        "address": "3-1",
+        "name": "Mission Debrief Manager"
+      },
+      {
+        "address": "3-2",
+        "name": "The Librarian"
+      },
+      {
+        "address": "4-1",
+        "name": "Section 1 - Case Profile"
+      },
+      {
+        "address": "4-2",
+        "name": "Section 2 - Investigation Planning"
+      },
+      {
+        "address": "4-3",
+        "name": "Section 3 - Surveillance Operations"
+      },
+      {
+        "address": "4-4",
+        "name": "Section 4 - Session Review"
+      },
+      {
+        "address": "4-5",
+        "name": "Section 5 - Document Inventory"
+      },
+      {
+        "address": "4-6",
+        "name": "Section 6 - Billing Summary"
+      },
+      {
+        "address": "4-7",
+        "name": "Section 7 - Legal Compliance"
+      },
+      {
+        "address": "4-8",
+        "name": "Section 8 - Media Documentation"
+      },
+      {
+        "address": "4-CP",
+        "name": "Cover Page"
+      },
+      {
+        "address": "4-DP",
+        "name": "Disclosure Page"
+      },
+      {
+        "address": "4-TOC",
+        "name": "Table of Contents"
+      },
+      {
+        "address": "5-1",
+        "name": "Gateway"
+      },
+      {
+        "address": "5-2",
+        "name": "Evidence Manager (Legacy Reference)"
+      },
+      {
+        "address": "5-3",
+        "name": "Section Controller"
+      },
+      {
+        "address": "6-1",
+        "name": "Dev Environment"
+      },
+      {
+        "address": "6-2",
+        "name": "Tool Dependencies"
+      },
+      {
+        "address": "7-1",
+        "name": "Enhanced Functional GUI (Legacy)"
+      },
+      {
+        "address": "Bus-1",
+        "name": "Central Command Bus"
+      },
+      {
+        "address": "GUI-1",
+        "name": "Enhanced Functional GUI"
+      }
+    ]
+  },
+  "target_parent_updates": {
+    "2-2": {
+      "name": "Gateway Controller",
+      "retain_children": [
+        "2-2.1",
+        "2-2.2",
+        "2-2.3",
+        "2-2.4"
+      ],
+      "add_sections": [
+        "4-1",
+        "4-2",
+        "4-3",
+        "4-4",
+        "4-5",
+        "4-6",
+        "4-7",
+        "4-8"
+      ],
+      "fault_relay": "gateway.report_child_fault(section_addr, fault_payload)",
+      "notes": "Sections remain CAN nodes for tooling; gateway forwards faults and consolidates metadata."
+    },
+    "3-1": {
+      "name": "Mission Debrief Manager",
+      "retain_children": [
+        "3-1.1",
+        "3-1.2",
+        "3-1.3",
+        "3-1.4"
+      ],
+      "add_sections": [
+        "4-CP",
+        "4-TOC",
+        "4-DP"
+      ],
+      "fault_relay": "mission_debrief.report_child_fault(section_addr, fault_payload)",
+      "notes": "Debrief artifacts (cover/toc/disclosure) routed through mission debrief manager; Librarian consumes outputs."
+    }
+  },
+  "fault_flow_contract": {
+    "child_fault_path": [
+      "Section engine detects fault",
+      "Section invokes parent relay API",
+      "Parent enriches and signs payload (adds original_target_address, target_subsystem)",
+      "Parent publishes CAN fault.report via CommsSystem",
+      "Diagnostic manager authenticates and consolidates",
+      "Enforcement writes individual and consolidated reports to fault_vault"
+    ],
+    "sos_fallback": "Sections may send fault.sos directly if parent unreachable; gateway/UDS must log bypass.",
+    "deliverables": [
+      "consolidated_fault_report_*.json/md/enc in fault_vault",
+      "Gateway/Librarian logs referencing original section address"
+    ]
+  },
+  "evidence_request_flow": {
+    "section_to_locker": [
+      "section.needs",
+      "evidence.request"
+    ],
+    "locker_response": [
+      "evidence.deliver",
+      "evidence.updated"
+    ],
+    "parent_visibility": "Gateway monitors requests for telemetry but does not proxy persisted pool traffic."
+  },
+  "tasks_for_network_agent": [
+    {
+      "id": "registry_parent_updates",
+      "description": "Set parent mapping for investigative sections (4-1..4-8) to Gateway (2-2) and cover/toc/disclosure sections (4-CP/4-TOC/4-DP) to Mission Debrief Manager (3-1).",
+      "files": [
+        "Command Center/Data Bus/diagnostic_manager/read_me/system_registry.json"
+      ],
+      "acceptance": "Parents reflect new mapping and CommsSystem parent map includes sections under correct controllers."
+    },
+    {
+      "id": "gateway_fault_relay",
+      "description": "Implement gateway fault relay API so child sections call gateway.report_child_fault before publishing faults.",
+      "notes": "Relay must set original_target_address and payload.target_subsystem."
+    },
+    {
+      "id": "debrief_fault_relay",
+      "description": "Implement mission debrief fault relay for cover/toc/disclosure pipeline.",
+      "notes": "Coordinate with Librarian narrative assembler; ensure consolidated reports tag section_cp/section_toc/section_dp."
+    },
+    {
+      "id": "section_client_updates",
+      "description": "Update section controllers to route faults through the parent relay instead of direct CAN fault.report publishing.",
+      "notes": "Emergency SOS direct bus path remains for redundancy."
+    },
+    {
+      "id": "routing_regression_extension",
+      "description": "Extend test_routing_logic to inject section faults via the relay and verify consolidated report output.",
+      "files": [
+        "Command Center/Data Bus/diagnostic_manager/Unified_diagnostic_system/test_plans/dev test plans/test_routing_logic.py"
+      ]
+    }
+  ],
+  "reference_files": {
+    "gateway_controller": "The Marshall/Gateway/gateway_controller.py",
+    "mission_debrief_manager": "Command Center/Mission Debrief/Debrief/README/mission_debrief_manager.py",
+    "librarian": "Command Center/Mission Debrief/The Librarian/narrative_assembler.py",
+    "diagnostic_sop": "Command Center/Data Bus/diagnostic_manager/read_me/DIAGNOSTIC_SYSTEM_SOP.md"
+  }
+}

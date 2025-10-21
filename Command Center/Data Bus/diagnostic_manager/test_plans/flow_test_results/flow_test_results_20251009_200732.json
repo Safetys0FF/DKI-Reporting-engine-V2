@@ -1,0 +1,109 @@
+{
+  "total_time": 1.6719248294830322,
+  "signals_emitted": 4,
+  "signals_expected": 4,
+  "all_signals_received": true,
+  "trace_log": [
+    {
+      "timestamp": 0.599489688873291,
+      "address": "1",
+      "signal": "evidence.classified",
+      "event": "EMITTED",
+      "payload": {
+        "case_id": "TEST-CASE-1760058450",
+        "evidence_id": "TEST-EVIDENCE-1760058450",
+        "classification": "document",
+        "file_type": "pdf",
+        "file_name": "test_sample.pdf",
+        "metadata": {
+          "size": 50000,
+          "timestamp": "2025-10-09T20:07:31.383814"
+        }
+      },
+      "time": "2025-10-09T20:07:31.383832"
+    },
+    {
+      "timestamp": 0.609591007232666,
+      "address": "2-3",
+      "signal": "evidence.classified",
+      "event": "RECEIVED",
+      "payload": {},
+      "time": "2025-10-09T20:07:31.393935"
+    },
+    {
+      "timestamp": 0.6197648048400879,
+      "address": "2-3",
+      "signal": "evidence.route.to_marshall",
+      "event": "EMITTED",
+      "payload": {
+        "case_id": "TEST-CASE-1760058450",
+        "evidence_id": "TEST-EVIDENCE-1760058450",
+        "route_target": "3-1",
+        "route_reason": "evidence_processing"
+      },
+      "time": "2025-10-09T20:07:31.404107"
+    },
+    {
+      "timestamp": 0.6302957534790039,
+      "address": "3-1",
+      "signal": "evidence.route.to_marshall",
+      "event": "RECEIVED",
+      "payload": {},
+      "time": "2025-10-09T20:07:31.414641"
+    },
+    {
+      "timestamp": 0.9310030937194824,
+      "address": "3-1",
+      "signal": "evidence.ready_for_debrief",
+      "event": "EMITTED",
+      "payload": {
+        "case_id": "TEST-CASE-1760058450",
+        "evidence_id": "TEST-EVIDENCE-1760058450",
+        "processed": true,
+        "status": "ready_for_debrief",
+        "processing_time": 0.3
+      },
+      "time": "2025-10-09T20:07:31.715347"
+    },
+    {
+      "timestamp": 0.9411542415618896,
+      "address": "5",
+      "signal": "evidence.ready_for_debrief",
+      "event": "RECEIVED",
+      "payload": {},
+      "time": "2025-10-09T20:07:31.725498"
+    },
+    {
+      "timestamp": 1.6718990802764893,
+      "address": "5",
+      "signal": "mission.report.assembled",
+      "event": "EMITTED",
+      "payload": {
+        "case_id": "TEST-CASE-1760058450",
+        "report_id": "REPORT-TEST-CASE-1760058450",
+        "status": "complete",
+        "evidence_count": 1,
+        "assembly_time": 0.73
+      },
+      "time": "2025-10-09T20:07:32.456241"
+    }
+  ],
+  "expected_signals": [
+    "evidence.classified",
+    "evidence.route.to_marshall",
+    "evidence.ready_for_debrief",
+    "mission.report.assembled"
+  ],
+  "received_signals": [
+    "evidence.classified",
+    "evidence.route.to_marshall",
+    "mission.report.assembled",
+    "evidence.ready_for_debrief"
+  ],
+  "missing_signals": [],
+  "faults": {
+    "fault_count": 0,
+    "faults": []
+  },
+  "success": true
+}

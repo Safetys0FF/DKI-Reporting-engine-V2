@@ -239,3 +239,4 @@ Evidence Locker → ECC (if available) OR Headless Mode → Gateway Controller �
 
 This creates a **resilient architecture** that can function in both full ECC mode and headless mode, with graceful degradation when ECC is unavailable.
 
+

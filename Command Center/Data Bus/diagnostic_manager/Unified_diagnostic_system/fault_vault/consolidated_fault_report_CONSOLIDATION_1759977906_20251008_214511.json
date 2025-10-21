@@ -1,0 +1,727 @@
+{
+  "report_metadata": {
+    "consolidation_id": "CONSOLIDATION_1759977906",
+    "generated_timestamp": "2025-10-08T21:45:11.092800",
+    "total_faults": 2,
+    "report_version": "1.0",
+    "generator": "UnifiedDiagnosticSystem",
+    "protocol_version": "1.0.0"
+  },
+  "protocol_organization": {
+    "by_system_address": {
+      "GATEWAY-1": [
+        {
+          "timestamp": "2025-10-08T21:45:06.693079",
+          "system_address": "GATEWAY-1",
+          "fault_code": "GATEWAY-1-10-456",
+          "severity": "ERROR",
+          "fault_data": {
+            "fault_id": "ROUTING-001",
+            "system_address": "GATEWAY-1",
+            "fault_code": "GATEWAY-1-10-456",
+            "description": "Gateway initialization failure",
+            "severity": "ERROR",
+            "timestamp": "2025-10-08T21:45:06.666862",
+            "analysis": {
+              "is_real_fault": true,
+              "fault_category": "sudden_failure",
+              "confidence_level": 0.9,
+              "analysis_reasoning": [
+                "System GATEWAY-1 was working 2h ago, sudden failure detected"
+              ],
+              "recommended_action": "investigate_immediately"
+            }
+          },
+          "buffer_entry_id": "20251008_214506_GATEWAY-1",
+          "validation": {
+            "is_valid": false,
+            "fault_family": "unknown",
+            "fault_description": "unknown",
+            "severity": "unknown",
+            "system_match": false,
+            "validation_errors": [
+              "Invalid fault code format: GATEWAY-1-10-456"
+            ]
+          }
+        }
+      ],
+      "EVIDENCE-1": [
+        {
+          "timestamp": "2025-10-08T21:45:06.732129",
+          "system_address": "EVIDENCE-1",
+          "fault_code": "EVIDENCE-1-50-789",
+          "severity": "FAILURE",
+          "fault_data": {
+            "fault_id": "ROUTING-002",
+            "system_address": "EVIDENCE-1",
+            "fault_code": "EVIDENCE-1-50-789",
+            "description": "Evidence processing failure",
+            "severity": "FAILURE",
+            "timestamp": "2025-10-08T21:45:06.666866",
+            "analysis": {
+              "is_real_fault": true,
+              "fault_category": "sudden_failure",
+              "confidence_level": 0.9,
+              "analysis_reasoning": [
+                "System EVIDENCE-1 was working 2h ago, sudden failure detected"
+              ],
+              "recommended_action": "investigate_immediately"
+            }
+          },
+          "buffer_entry_id": "20251008_214506_EVIDENCE-1",
+          "validation": {
+            "is_valid": false,
+            "fault_family": "unknown",
+            "fault_description": "unknown",
+            "severity": "unknown",
+            "system_match": false,
+            "validation_errors": [
+              "Invalid fault code format: EVIDENCE-1-50-789"
+            ]
+          }
+        }
+      ]
+    },
+    "by_fault_family": {
+      "unknown": [
+        {
+          "timestamp": "2025-10-08T21:45:06.693079",
+          "system_address": "GATEWAY-1",
+          "fault_code": "GATEWAY-1-10-456",
+          "severity": "ERROR",
+          "fault_data": {
+            "fault_id": "ROUTING-001",
+            "system_address": "GATEWAY-1",
+            "fault_code": "GATEWAY-1-10-456",
+            "description": "Gateway initialization failure",
+            "severity": "ERROR",
+            "timestamp": "2025-10-08T21:45:06.666862",
+            "analysis": {
+              "is_real_fault": true,
+              "fault_category": "sudden_failure",
+              "confidence_level": 0.9,
+              "analysis_reasoning": [
+                "System GATEWAY-1 was working 2h ago, sudden failure detected"
+              ],
+              "recommended_action": "investigate_immediately"
+            }
+          },
+          "buffer_entry_id": "20251008_214506_GATEWAY-1",
+          "validation": {
+            "is_valid": false,
+            "fault_family": "unknown",
+            "fault_description": "unknown",
+            "severity": "unknown",
+            "system_match": false,
+            "validation_errors": [
+              "Invalid fault code format: GATEWAY-1-10-456"
+            ]
+          }
+        },
+        {
+          "timestamp": "2025-10-08T21:45:06.732129",
+          "system_address": "EVIDENCE-1",
+          "fault_code": "EVIDENCE-1-50-789",
+          "severity": "FAILURE",
+          "fault_data": {
+            "fault_id": "ROUTING-002",
+            "system_address": "EVIDENCE-1",
+            "fault_code": "EVIDENCE-1-50-789",
+            "description": "Evidence processing failure",
+            "severity": "FAILURE",
+            "timestamp": "2025-10-08T21:45:06.666866",
+            "analysis": {
+              "is_real_fault": true,
+              "fault_category": "sudden_failure",
+              "confidence_level": 0.9,
+              "analysis_reasoning": [
+                "System EVIDENCE-1 was working 2h ago, sudden failure detected"
+              ],
+              "recommended_action": "investigate_immediately"
+            }
+          },
+          "buffer_entry_id": "20251008_214506_EVIDENCE-1",
+          "validation": {
+            "is_valid": false,
+            "fault_family": "unknown",
+            "fault_description": "unknown",
+            "severity": "unknown",
+            "system_match": false,
+            "validation_errors": [
+              "Invalid fault code format: EVIDENCE-1-50-789"
+            ]
+          }
+        }
+      ]
+    },
+    "by_severity": {
+      "unknown": [
+        {
+          "timestamp": "2025-10-08T21:45:06.693079",
+          "system_address": "GATEWAY-1",
+          "fault_code": "GATEWAY-1-10-456",
+          "severity": "ERROR",
+          "fault_data": {
+            "fault_id": "ROUTING-001",
+            "system_address": "GATEWAY-1",
+            "fault_code": "GATEWAY-1-10-456",
+            "description": "Gateway initialization failure",
+            "severity": "ERROR",
+            "timestamp": "2025-10-08T21:45:06.666862",
+            "analysis": {
+              "is_real_fault": true,
+              "fault_category": "sudden_failure",
+              "confidence_level": 0.9,
+              "analysis_reasoning": [
+                "System GATEWAY-1 was working 2h ago, sudden failure detected"
+              ],
+              "recommended_action": "investigate_immediately"
+            }
+          },
+          "buffer_entry_id": "20251008_214506_GATEWAY-1",
+          "validation": {
+            "is_valid": false,
+            "fault_family": "unknown",
+            "fault_description": "unknown",
+            "severity": "unknown",
+            "system_match": false,
+            "validation_errors": [
+              "Invalid fault code format: GATEWAY-1-10-456"
+            ]
+          }
+        },
+        {
+          "timestamp": "2025-10-08T21:45:06.732129",
+          "system_address": "EVIDENCE-1",
+          "fault_code": "EVIDENCE-1-50-789",
+          "severity": "FAILURE",
+          "fault_data": {
+            "fault_id": "ROUTING-002",
+            "system_address": "EVIDENCE-1",
+            "fault_code": "EVIDENCE-1-50-789",
+            "description": "Evidence processing failure",
+            "severity": "FAILURE",
+            "timestamp": "2025-10-08T21:45:06.666866",
+            "analysis": {
+              "is_real_fault": true,
+              "fault_category": "sudden_failure",
+              "confidence_level": 0.9,
+              "analysis_reasoning": [
+                "System EVIDENCE-1 was working 2h ago, sudden failure detected"
+              ],
+              "recommended_action": "investigate_immediately"
+            }
+          },
+          "buffer_entry_id": "20251008_214506_EVIDENCE-1",
+          "validation": {
+            "is_valid": false,
+            "fault_family": "unknown",
+            "fault_description": "unknown",
+            "severity": "unknown",
+            "system_match": false,
+            "validation_errors": [
+              "Invalid fault code format: EVIDENCE-1-50-789"
+            ]
+          }
+        }
+      ]
+    },
+    "validation_status": {
+      "valid_faults": [],
+      "invalid_faults": [
+        {
+          "timestamp": "2025-10-08T21:45:06.693079",
+          "system_address": "GATEWAY-1",
+          "fault_code": "GATEWAY-1-10-456",
+          "severity": "ERROR",
+          "fault_data": {
+            "fault_id": "ROUTING-001",
+            "system_address": "GATEWAY-1",
+            "fault_code": "GATEWAY-1-10-456",
+            "description": "Gateway initialization failure",
+            "severity": "ERROR",
+            "timestamp": "2025-10-08T21:45:06.666862",
+            "analysis": {
+              "is_real_fault": true,
+              "fault_category": "sudden_failure",
+              "confidence_level": 0.9,
+              "analysis_reasoning": [
+                "System GATEWAY-1 was working 2h ago, sudden failure detected"
+              ],
+              "recommended_action": "investigate_immediately"
+            }
+          },
+          "buffer_entry_id": "20251008_214506_GATEWAY-1",
+          "validation": {
+            "is_valid": false,
+            "fault_family": "unknown",
+            "fault_description": "unknown",
+            "severity": "unknown",
+            "system_match": false,
+            "validation_errors": [
+              "Invalid fault code format: GATEWAY-1-10-456"
+            ]
+          }
+        },
+        {
+          "timestamp": "2025-10-08T21:45:06.732129",
+          "system_address": "EVIDENCE-1",
+          "fault_code": "EVIDENCE-1-50-789",
+          "severity": "FAILURE",
+          "fault_data": {
+            "fault_id": "ROUTING-002",
+            "system_address": "EVIDENCE-1",
+            "fault_code": "EVIDENCE-1-50-789",
+            "description": "Evidence processing failure",
+            "severity": "FAILURE",
+            "timestamp": "2025-10-08T21:45:06.666866",
+            "analysis": {
+              "is_real_fault": true,
+              "fault_category": "sudden_failure",
+              "confidence_level": 0.9,
+              "analysis_reasoning": [
+                "System EVIDENCE-1 was working 2h ago, sudden failure detected"
+              ],
+              "recommended_action": "investigate_immediately"
+            }
+          },
+          "buffer_entry_id": "20251008_214506_EVIDENCE-1",
+          "validation": {
+            "is_valid": false,
+            "fault_family": "unknown",
+            "fault_description": "unknown",
+            "severity": "unknown",
+            "system_match": false,
+            "validation_errors": [
+              "Invalid fault code format: EVIDENCE-1-50-789"
+            ]
+          }
+        }
+      ],
+      "system_mismatch": []
+    },
+    "protocol_summary": {
+      "total_faults": 2,
+      "valid_faults": 0,
+      "invalid_faults": 2,
+      "critical_faults": 0,
+      "failure_faults": 0,
+      "error_faults": 0
+    }
+  },
+  "summary_statistics": {
+    "total_faults": 2,
+    "faults_by_system": {
+      "GATEWAY-1": 1,
+      "EVIDENCE-1": 1
+    },
+    "faults_by_severity": {
+      "ERROR": 1,
+      "FAILURE": 1
+    },
+    "faults_by_type": {
+      "SYNTAX_ERROR": 1,
+      "RESOURCE_ERROR": 1
+    },
+    "faults_by_time": {
+      "2025-10-08_21:00": 2
+    },
+    "most_affected_system": "GATEWAY-1",
+    "most_common_fault_type": "SYNTAX_ERROR",
+    "critical_fault_count": 0,
+    "time_span_minutes": 0
+  },
+  "categorized_faults": {
+    "by_system": {
+      "GATEWAY-1": [
+        {
+          "timestamp": "2025-10-08T21:45:06.693079",
+          "system_address": "GATEWAY-1",
+          "fault_code": "GATEWAY-1-10-456",
+          "severity": "ERROR",
+          "fault_data": {
+            "fault_id": "ROUTING-001",
+            "system_address": "GATEWAY-1",
+            "fault_code": "GATEWAY-1-10-456",
+            "description": "Gateway initialization failure",
+            "severity": "ERROR",
+            "timestamp": "2025-10-08T21:45:06.666862",
+            "analysis": {
+              "is_real_fault": true,
+              "fault_category": "sudden_failure",
+              "confidence_level": 0.9,
+              "analysis_reasoning": [
+                "System GATEWAY-1 was working 2h ago, sudden failure detected"
+              ],
+              "recommended_action": "investigate_immediately"
+            }
+          },
+          "buffer_entry_id": "20251008_214506_GATEWAY-1",
+          "validation": {
+            "is_valid": false,
+            "fault_family": "unknown",
+            "fault_description": "unknown",
+            "severity": "unknown",
+            "system_match": false,
+            "validation_errors": [
+              "Invalid fault code format: GATEWAY-1-10-456"
+            ]
+          }
+        }
+      ],
+      "EVIDENCE-1": [
+        {
+          "timestamp": "2025-10-08T21:45:06.732129",
+          "system_address": "EVIDENCE-1",
+          "fault_code": "EVIDENCE-1-50-789",
+          "severity": "FAILURE",
+          "fault_data": {
+            "fault_id": "ROUTING-002",
+            "system_address": "EVIDENCE-1",
+            "fault_code": "EVIDENCE-1-50-789",
+            "description": "Evidence processing failure",
+            "severity": "FAILURE",
+            "timestamp": "2025-10-08T21:45:06.666866",
+            "analysis": {
+              "is_real_fault": true,
+              "fault_category": "sudden_failure",
+              "confidence_level": 0.9,
+              "analysis_reasoning": [
+                "System EVIDENCE-1 was working 2h ago, sudden failure detected"
+              ],
+              "recommended_action": "investigate_immediately"
+            }
+          },
+          "buffer_entry_id": "20251008_214506_EVIDENCE-1",
+          "validation": {
+            "is_valid": false,
+            "fault_family": "unknown",
+            "fault_description": "unknown",
+            "severity": "unknown",
+            "system_match": false,
+            "validation_errors": [
+              "Invalid fault code format: EVIDENCE-1-50-789"
+            ]
+          }
+        }
+      ]
+    },
+    "by_severity": {
+      "ERROR": [
+        {
+          "timestamp": "2025-10-08T21:45:06.693079",
+          "system_address": "GATEWAY-1",
+          "fault_code": "GATEWAY-1-10-456",
+          "severity": "ERROR",
+          "fault_data": {
+            "fault_id": "ROUTING-001",
+            "system_address": "GATEWAY-1",
+            "fault_code": "GATEWAY-1-10-456",
+            "description": "Gateway initialization failure",
+            "severity": "ERROR",
+            "timestamp": "2025-10-08T21:45:06.666862",
+            "analysis": {
+              "is_real_fault": true,
+              "fault_category": "sudden_failure",
+              "confidence_level": 0.9,
+              "analysis_reasoning": [
+                "System GATEWAY-1 was working 2h ago, sudden failure detected"
+              ],
+              "recommended_action": "investigate_immediately"
+            }
+          },
+          "buffer_entry_id": "20251008_214506_GATEWAY-1",
+          "validation": {
+            "is_valid": false,
+            "fault_family": "unknown",
+            "fault_description": "unknown",
+            "severity": "unknown",
+            "system_match": false,
+            "validation_errors": [
+              "Invalid fault code format: GATEWAY-1-10-456"
+            ]
+          }
+        }
+      ],
+      "FAILURE": [
+        {
+          "timestamp": "2025-10-08T21:45:06.732129",
+          "system_address": "EVIDENCE-1",
+          "fault_code": "EVIDENCE-1-50-789",
+          "severity": "FAILURE",
+          "fault_data": {
+            "fault_id": "ROUTING-002",
+            "system_address": "EVIDENCE-1",
+            "fault_code": "EVIDENCE-1-50-789",
+            "description": "Evidence processing failure",
+            "severity": "FAILURE",
+            "timestamp": "2025-10-08T21:45:06.666866",
+            "analysis": {
+              "is_real_fault": true,
+              "fault_category": "sudden_failure",
+              "confidence_level": 0.9,
+              "analysis_reasoning": [
+                "System EVIDENCE-1 was working 2h ago, sudden failure detected"
+              ],
+              "recommended_action": "investigate_immediately"
+            }
+          },
+          "buffer_entry_id": "20251008_214506_EVIDENCE-1",
+          "validation": {
+            "is_valid": false,
+            "fault_family": "unknown",
+            "fault_description": "unknown",
+            "severity": "unknown",
+            "system_match": false,
+            "validation_errors": [
+              "Invalid fault code format: EVIDENCE-1-50-789"
+            ]
+          }
+        }
+      ]
+    },
+    "by_fault_type": {
+      "SYNTAX_ERROR": [
+        {
+          "timestamp": "2025-10-08T21:45:06.693079",
+          "system_address": "GATEWAY-1",
+          "fault_code": "GATEWAY-1-10-456",
+          "severity": "ERROR",
+          "fault_data": {
+            "fault_id": "ROUTING-001",
+            "system_address": "GATEWAY-1",
+            "fault_code": "GATEWAY-1-10-456",
+            "description": "Gateway initialization failure",
+            "severity": "ERROR",
+            "timestamp": "2025-10-08T21:45:06.666862",
+            "analysis": {
+              "is_real_fault": true,
+              "fault_category": "sudden_failure",
+              "confidence_level": 0.9,
+              "analysis_reasoning": [
+                "System GATEWAY-1 was working 2h ago, sudden failure detected"
+              ],
+              "recommended_action": "investigate_immediately"
+            }
+          },
+          "buffer_entry_id": "20251008_214506_GATEWAY-1",
+          "validation": {
+            "is_valid": false,
+            "fault_family": "unknown",
+            "fault_description": "unknown",
+            "severity": "unknown",
+            "system_match": false,
+            "validation_errors": [
+              "Invalid fault code format: GATEWAY-1-10-456"
+            ]
+          }
+        }
+      ],
+      "RESOURCE_ERROR": [
+        {
+          "timestamp": "2025-10-08T21:45:06.732129",
+          "system_address": "EVIDENCE-1",
+          "fault_code": "EVIDENCE-1-50-789",
+          "severity": "FAILURE",
+          "fault_data": {
+            "fault_id": "ROUTING-002",
+            "system_address": "EVIDENCE-1",
+            "fault_code": "EVIDENCE-1-50-789",
+            "description": "Evidence processing failure",
+            "severity": "FAILURE",
+            "timestamp": "2025-10-08T21:45:06.666866",
+            "analysis": {
+              "is_real_fault": true,
+              "fault_category": "sudden_failure",
+              "confidence_level": 0.9,
+              "analysis_reasoning": [
+                "System EVIDENCE-1 was working 2h ago, sudden failure detected"
+              ],
+              "recommended_action": "investigate_immediately"
+            }
+          },
+          "buffer_entry_id": "20251008_214506_EVIDENCE-1",
+          "validation": {
+            "is_valid": false,
+            "fault_family": "unknown",
+            "fault_description": "unknown",
+            "severity": "unknown",
+            "system_match": false,
+            "validation_errors": [
+              "Invalid fault code format: EVIDENCE-1-50-789"
+            ]
+          }
+        }
+      ]
+    },
+    "by_time_window": {
+      "2025-10-08_21:00": [
+        {
+          "timestamp": "2025-10-08T21:45:06.693079",
+          "system_address": "GATEWAY-1",
+          "fault_code": "GATEWAY-1-10-456",
+          "severity": "ERROR",
+          "fault_data": {
+            "fault_id": "ROUTING-001",
+            "system_address": "GATEWAY-1",
+            "fault_code": "GATEWAY-1-10-456",
+            "description": "Gateway initialization failure",
+            "severity": "ERROR",
+            "timestamp": "2025-10-08T21:45:06.666862",
+            "analysis": {
+              "is_real_fault": true,
+              "fault_category": "sudden_failure",
+              "confidence_level": 0.9,
+              "analysis_reasoning": [
+                "System GATEWAY-1 was working 2h ago, sudden failure detected"
+              ],
+              "recommended_action": "investigate_immediately"
+            }
+          },
+          "buffer_entry_id": "20251008_214506_GATEWAY-1",
+          "validation": {
+            "is_valid": false,
+            "fault_family": "unknown",
+            "fault_description": "unknown",
+            "severity": "unknown",
+            "system_match": false,
+            "validation_errors": [
+              "Invalid fault code format: GATEWAY-1-10-456"
+            ]
+          }
+        },
+        {
+          "timestamp": "2025-10-08T21:45:06.732129",
+          "system_address": "EVIDENCE-1",
+          "fault_code": "EVIDENCE-1-50-789",
+          "severity": "FAILURE",
+          "fault_data": {
+            "fault_id": "ROUTING-002",
+            "system_address": "EVIDENCE-1",
+            "fault_code": "EVIDENCE-1-50-789",
+            "description": "Evidence processing failure",
+            "severity": "FAILURE",
+            "timestamp": "2025-10-08T21:45:06.666866",
+            "analysis": {
+              "is_real_fault": true,
+              "fault_category": "sudden_failure",
+              "confidence_level": 0.9,
+              "analysis_reasoning": [
+                "System EVIDENCE-1 was working 2h ago, sudden failure detected"
+              ],
+              "recommended_action": "investigate_immediately"
+            }
+          },
+          "buffer_entry_id": "20251008_214506_EVIDENCE-1",
+          "validation": {
+            "is_valid": false,
+            "fault_family": "unknown",
+            "fault_description": "unknown",
+            "severity": "unknown",
+            "system_match": false,
+            "validation_errors": [
+              "Invalid fault code format: EVIDENCE-1-50-789"
+            ]
+          }
+        }
+      ]
+    },
+    "by_impact_level": {}
+  },
+  "fault_details": [
+    {
+      "timestamp": "2025-10-08T21:45:06.693079",
+      "system_address": "GATEWAY-1",
+      "fault_code": "GATEWAY-1-10-456",
+      "severity": "ERROR",
+      "fault_data": {
+        "fault_id": "ROUTING-001",
+        "system_address": "GATEWAY-1",
+        "fault_code": "GATEWAY-1-10-456",
+        "description": "Gateway initialization failure",
+        "severity": "ERROR",
+        "timestamp": "2025-10-08T21:45:06.666862",
+        "analysis": {
+          "is_real_fault": true,
+          "fault_category": "sudden_failure",
+          "confidence_level": 0.9,
+          "analysis_reasoning": [
+            "System GATEWAY-1 was working 2h ago, sudden failure detected"
+          ],
+          "recommended_action": "investigate_immediately"
+        }
+      },
+      "buffer_entry_id": "20251008_214506_GATEWAY-1",
+      "validation": {
+        "is_valid": false,
+        "fault_family": "unknown",
+        "fault_description": "unknown",
+        "severity": "unknown",
+        "system_match": false,
+        "validation_errors": [
+          "Invalid fault code format: GATEWAY-1-10-456"
+        ]
+      }
+    },
+    {
+      "timestamp": "2025-10-08T21:45:06.732129",
+      "system_address": "EVIDENCE-1",
+      "fault_code": "EVIDENCE-1-50-789",
+      "severity": "FAILURE",
+      "fault_data": {
+        "fault_id": "ROUTING-002",
+        "system_address": "EVIDENCE-1",
+        "fault_code": "EVIDENCE-1-50-789",
+        "description": "Evidence processing failure",
+        "severity": "FAILURE",
+        "timestamp": "2025-10-08T21:45:06.666866",
+        "analysis": {
+          "is_real_fault": true,
+          "fault_category": "sudden_failure",
+          "confidence_level": 0.9,
+          "analysis_reasoning": [
+            "System EVIDENCE-1 was working 2h ago, sudden failure detected"
+          ],
+          "recommended_action": "investigate_immediately"
+        }
+      },
+      "buffer_entry_id": "20251008_214506_EVIDENCE-1",
+      "validation": {
+        "is_valid": false,
+        "fault_family": "unknown",
+        "fault_description": "unknown",
+        "severity": "unknown",
+        "system_match": false,
+        "validation_errors": [
+          "Invalid fault code format: EVIDENCE-1-50-789"
+        ]
+      }
+    }
+  ],
+  "recommendations": [
+    "No specific recommendations - monitor system health"
+  ],
+  "consolidation_analysis": {
+    "fault_density": 2,
+    "severity_distribution": {
+      "ERROR": 1,
+      "FAILURE": 1
+    },
+    "system_impact_analysis": {
+      "GATEWAY-1": {
+        "total": 1,
+        "critical": 0,
+        "failure": 0,
+        "error": 1
+      },
+      "EVIDENCE-1": {
+        "total": 1,
+        "critical": 0,
+        "failure": 1,
+        "error": 0
+      }
+    },
+    "temporal_analysis": {},
+    "correlation_analysis": {}
+  }
+}

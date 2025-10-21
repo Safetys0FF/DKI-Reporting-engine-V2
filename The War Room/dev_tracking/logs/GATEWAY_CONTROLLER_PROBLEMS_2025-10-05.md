@@ -126,3 +126,4 @@ Gateway Controller is a core orchestrator that must be able to operate headless 
 4. **Test headless operation**
 5. **Verify ECC integration still works when available**
 
+

@@ -1,0 +1,73 @@
+description: >
+  Locks agent behavior into a focused planning phase before any build actions occur.
+  Prevents premature execution or file creation until the user explicitly authorizes the work.
+autoAttach:
+  - "**/*"
+alwaysApply: true
+---
+# Cursor Repo Rules — Auto-Trigger Lock / Build Discipline
+
+## Intent
+Ensure all build sessions follow an ordered sequence:
+1. Listen to and understand the full plan.
+2. Restate logic and objectives to confirm understanding.
+3. Generate a clean, structured to-do list.
+4. Wait for user confirmation before beginning implementation.
+
+---
+
+## Engagement Behavior
+1) **Stay in Discussion Mode** by default.  
+   - Do NOT execute, write, or refactor code until the user explicitly says “Start build,” “Begin implementation,” or similar.  
+   - Avoid assuming context; always ask clarifying questions if a build description is incomplete.
+
+2) **Acknowledge and Recite Understanding.**  
+   - After user describes a system, restate it concisely: “So this build includes X, Y, and Z logic.”  
+   - Summarize the reasoning chain before producing tasks or code.
+
+3) **Generate a To-Do / Build Plan**  
+   - Convert the user’s described goals into an ordered task list with short actionable items.  
+   - Each item should include: purpose, dependencies, and where in the repo it applies.  
+   - Confirm the list verbally before doing any of them.
+
+4) **Ask for Start Confirmation.**  
+   - Once understanding and plan are confirmed, ask:  
+     > “Would you like me to begin the build now?”  
+   - Do not proceed unless the user responds affirmatively.
+
+---
+
+## Execution Lock
+- Prohibit automatic generation or edits during planning.
+- No code scaffolding, dummy files, or speculative structures allowed.
+- If user provides partial logic, prompt for missing components instead of filling them automatically.
+
+---
+
+## Response Style During Build Discussion
+- Use plain, human-readable English.
+- Prefer summarizing steps and logic flow over producing code.
+- Keep focus on comprehension, dependencies, and structure until “Start build” is issued.
+
+---
+
+## Unlock Trigger
+The lock is released only when the user explicitly says:
+- “Start build”
+- “Proceed with implementation”
+- “Go ahead and write the code”
+At that point, the agent may follow normal rules for code creation and project editing.
+
+---
+
+## Summary
+This rule keeps the agent disciplined during planning:
+- **Listen first.**
+- **Reflect understanding.**
+- **Plan clearly.**
+- **Execute only on approval.**
+
+The goal: clarity, correctness, and full alignment before the build begins.
+---
+alwaysApply: true
+---

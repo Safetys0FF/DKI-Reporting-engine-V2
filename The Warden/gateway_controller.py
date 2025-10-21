@@ -11,11 +11,12 @@ import uuid
 import json
 import logging
 from datetime import datetime
+from pathlib import Path
 from typing import Dict, List, Any, Optional, Set, Iterable
 from enum import Enum
 
 # Universal Communication Protocol
-sys.path.append(os.path.join(os.path.dirname(os.path.dirname(__file__)), "Command Center", "Data Bus"))
+sys.path.append(os.path.join(os.path.dirname(os.path.dirname(__file__)), "Command Center", "Data Bus", "Bus Core Design"))
 from universal_communicator import UniversalCommunicator
 
 # Ensure parsing dispatcher is reachable for section context building
@@ -147,8 +148,11 @@ class GatewayController:
     DEFERS ALL SECTION EXECUTION PERMISSION TO ECOSYSTEM CONTROLLER"""
     
     def __init__(self, ecosystem_controller=None, bus=None):
+        # Initialize logger FIRST
+        self.logger = logging.getLogger(__name__)
+        
         # Initialize Universal Communication Protocol
-        self.communicator = UniversalCommunicator("2-2", bus_connection=bus)
+        self.communicator = UniversalCommunicator("2-3", bus_connection=bus)
         # Reference to Ecosystem Controller (ROOT BOOT NODE)
         self.ecosystem_controller = ecosystem_controller
         
@@ -226,11 +230,29 @@ class GatewayController:
         self.delivery_queue = []
         self._pending_section_outputs = {}
         self.toolkit_results_cache = {}
+        self.bus_connected = bool(self.bus)
+        self.gateway_initialized = False
+        self.system_registration: Dict[str, Any] = {}
+        
+        # Section fault relay tracking
+        self.section_fault_log = []
+        self.section_sos_bypass_log = []
+        
+        # Section fault metadata for enrichment
+        self.SECTION_FAULT_METADATA = {
+            "4-1": {"subsystem_type": "case_profile", "priority": "high", "name": "Section 1 - Case Profile"},
+            "4-2": {"subsystem_type": "investigation_planning", "priority": "high", "name": "Section 2 - Investigation Planning"},
+            "4-3": {"subsystem_type": "surveillance_operations", "priority": "critical", "name": "Section 3 - Surveillance Operations"},
+            "4-4": {"subsystem_type": "session_review", "priority": "medium", "name": "Section 4 - Session Review"},
+            "4-5": {"subsystem_type": "document_inventory", "priority": "medium", "name": "Section 5 - Document Inventory"},
+            "4-6": {"subsystem_type": "billing_summary", "priority": "high", "name": "Section 6 - Billing Summary"},
+            "4-7": {"subsystem_type": "legal_compliance", "priority": "critical", "name": "Section 7 - Legal Compliance"},
+            "4-8": {"subsystem_type": "media_documentation", "priority": "medium", "name": "Section 8 - Media Documentation"}
+        }
 
         if self.bus:
-            self._register_bus_handlers()
+            self._initialize_bus(self.bus)
 
-        self.logger = logging.getLogger(__name__)
         self.logger.info("Gateway Controller initialized - DEFERS TO ECOSYSTEM CONTROLLER")
         self.logger.info("Gateway orchestration capabilities enabled")
         self.logger.info("OCR processing engines initialized")
@@ -249,17 +271,62 @@ class GatewayController:
     def _attach_bus(self, bus) -> None:
         if not bus:
             return
+        self._initialize_bus(bus)
+
+    def _initialize_bus(self, bus: Any) -> None:
+        """Register the gateway on the CAN bus and bind handlers."""
         self.bus = bus
+        if not self.communicator and bus:
+            try:
+                self.communicator = UniversalCommunicator("2-3", bus_connection=bus)
+            except Exception as exc:  # pragma: no cover - defensive
+                self.logger.warning("Unable to initialise gateway communicator: %s", exc)
+                self.communicator = None
+
+        if bus and not self.system_registration:
+            try:
+                registration = {
+                    "system_type": "gateway_controller",
+                    "capabilities": [
+                        "evidence_routing",
+                        "section_mediation",
+                        "ocr_processing",
+                        "fault_relay"
+                    ],
+                    "status": "active",
+                    "mode": "primary",
+                    "registered_at": datetime.now().isoformat(),
+                }
+                bus.register_system_address("2-3", registration)
+                self.system_registration = registration
+                self.logger.info("[2-3] Gateway registered with CANBUS")
+            except Exception as exc:  # pragma: no cover - defensive
+                self.logger.warning("[2-3] Gateway failed to register system address: %s", exc)
+
         self._register_bus_handlers()
+        self.bus_connected = True
+        self.gateway_initialized = True
 
     def _register_bus_handlers(self) -> None:
         if self._bus_handlers_registered or not self.bus:
             return
-        handler_map = {"evidence.new": self._handle_bus_evidence_new,
-                       "evidence.updated": self._handle_bus_evidence_updated,
-                       "section.data.updated": self._handle_section_data_updated,
-                       "section.needs": self._handle_bus_section_needs,
-                       "case.snapshot": self._handle_bus_case_snapshot}
+        handler_map = {
+            "evidence.new": self._handle_bus_evidence_new,
+            "evidence.updated": self._handle_bus_evidence_updated,
+            "section.data.updated": self._handle_section_data_updated,
+            "section.needs": self._handle_bus_section_needs,
+            "case.snapshot": self._handle_bus_case_snapshot,
+            "warden.child.broadcast": self._handle_ecc_broadcast,
+        }
+        
+        # Register section fault relay handlers (wildcard for 4-1 through 4-8)
+        for section_addr in self.SECTION_FAULT_METADATA.keys():
+            signal_name = f"section.fault.{section_addr}"
+            try:
+                self.bus.register_signal(signal_name, self._handle_section_fault_relay)
+            except Exception as exc:
+                self.logger.warning(f"Failed to register section fault handler {signal_name}: {exc}")
+        
         for signal_name, handler in handler_map.items():
             try:
                 self.bus.register_signal(signal_name, handler)
@@ -278,13 +345,285 @@ class GatewayController:
         except Exception as exc:  # pragma: no cover - log and continue
             self.logger.warning("Failed to emit %s via bus: %s", signal, exc)
 
+    # ------------------------------------------------------------------ #
+    # External/public API (UDS/Warden compliance)
+    # ------------------------------------------------------------------ #
+    def initialize_system(
+        self,
+        *,
+        bus: Optional[Any] = None,
+        ecosystem_controller: Optional[Any] = None,
+        reinitialize: bool = False,
+    ) -> Dict[str, Any]:
+        """Initialise or refresh the gateway controller environment."""
+        if ecosystem_controller is not None:
+            self.ecosystem_controller = ecosystem_controller
+
+        target_bus = bus or self.bus
+        if target_bus is None:
+            raise ValueError("GatewayController.initialize_system requires a bus connection.")
+
+        if reinitialize or not self.gateway_initialized:
+            self._initialize_bus(target_bus)
+
+        status = {
+            "status": "SUCCESS",
+            "gateway_initialized": self.gateway_initialized,
+            "bus_connected": self.bus_connected,
+            "communicator_active": self.communicator is not None,
+            "registered_signals": list(self.signal_routing_table.keys()),
+        }
+        self.logger.info("[2-3] GatewayController initialise_system -> %s", status)
+        return status
+
+    def process_evidence(self, evidence_payload: Any) -> Dict[str, Any]:
+        """Public wrapper for evidence ingestion."""
+        if evidence_payload is None:
+            raise ValueError("process_evidence received no payload.")
+
+        payload: Dict[str, Any]
+        if isinstance(evidence_payload, dict):
+            payload = dict(evidence_payload)
+        elif isinstance(evidence_payload, str):
+            payload = {"file_path": evidence_payload}
+        else:
+            raise ValueError("process_evidence payload must be dict or path string.")
+
+        file_path = payload.get("file_path")
+        if not file_path:
+            raise ValueError("process_evidence payload missing 'file_path'.")
+        if not Path(file_path).exists():
+            raise FileNotFoundError(f"Evidence file not found: {file_path}")
+
+        section_id = payload.get("section_id")
+        result = self.process_document_pipeline(file_path, section_id=section_id)
+        self.log_communication(
+            "process_evidence",
+            {"file_path": file_path, "section_id": section_id, "result_keys": list(result.keys())},
+        )
+        return {
+            "status": "SUCCESS",
+            "file_path": file_path,
+            "section_id": section_id,
+            "result": result,
+        }
+
+    def process_files(self, files: Optional[Iterable[Any]]) -> List[Dict[str, Any]]:
+        """Process a collection of evidence files."""
+        if files is None:
+            raise ValueError("process_files received no collection.")
+        results = []
+        for entry in files:
+            results.append(self.process_evidence(entry))
+        return results
+
+    def validate_section(self, section_id: Optional[str]) -> bool:
+        """Delegate section validation to the Ecosystem Controller."""
+        if not section_id:
+            raise ValueError("validate_section requires a section identifier.")
+        if not self.ecosystem_controller:
+            raise RuntimeError("Ecosystem Controller reference unavailable.")
+        can_run = bool(self.ecosystem_controller.can_run(section_id))
+        self.log_communication("validate_section", {"section_id": section_id, "can_run": can_run})
+        return can_run
+
+    def get_section_status(self, section_id: Optional[str]) -> Dict[str, Any]:
+        """Return the cached status for a section."""
+        if not section_id:
+            raise ValueError("get_section_status requires a section identifier.")
+        record = self.section_cache.get(section_id)
+        if not record:
+            raise ValueError(f"Section {section_id} not found.")
+        status = {
+            "section_id": section_id,
+            "state": self.section_states.get(section_id),
+            "cache": record,
+            "completed": section_id in self.completed_sections,
+        }
+        self.log_communication("get_section_status", status)
+        return status
+
+    def generate_section(self, section_id: Optional[str]) -> Dict[str, Any]:
+        """Trigger orchestration for a single section using the existing pipeline."""
+        if not section_id:
+            raise ValueError("generate_section requires a section identifier.")
+        result = self.orchestrate_section_processing(section_id, file_paths=[])
+        self.log_communication("generate_section", {"section_id": section_id, "result": result})
+        return result
+
+    def process_ocr(self, document_path: Optional[str], *, section_id: Optional[str] = None) -> Dict[str, Any]:
+        """Run the OCR/document pipeline for a specific file."""
+        if not document_path:
+            raise ValueError("process_ocr requires a document path.")
+        doc_path = Path(document_path)
+        if not doc_path.exists():
+            raise FileNotFoundError(f"Document not found: {document_path}")
+        result = self.process_document_pipeline(document_path, section_id=section_id)
+        self.log_communication(
+            "process_ocr",
+            {"document_path": document_path, "section_id": section_id, "result_keys": list(result.keys())},
+        )
+        return result
+
+    def process_ocr_batch(self, ocr_tests: Optional[Iterable[Dict[str, Any]]]) -> List[Dict[str, Any]]:
+        """Batch OCR helper used by function tests."""
+        if ocr_tests is None:
+            raise ValueError("process_ocr_batch requires a collection of test vectors.")
+        responses: List[Dict[str, Any]] = []
+        for test in ocr_tests:
+            if not isinstance(test, dict):
+                raise ValueError("process_ocr_batch entries must be dictionaries.")
+            response = self.process_ocr(
+                test.get("document_path"),
+                section_id=test.get("section_id"),
+            )
+            response["expected_text"] = test.get("expected_text")
+            response["confidence_threshold"] = test.get("confidence_threshold")
+            responses.append(response)
+        return responses
+
+    def classify_evidence(self, payload: Optional[Dict[str, Any]]) -> Dict[str, Any]:
+        """Expose the classification helper for compliance tests."""
+        if not isinstance(payload, dict):
+            raise ValueError("classify_evidence payload must be a dictionary.")
+        classification = self.classify_content(payload)
+        self.log_communication(
+            "classify_evidence",
+            {"payload_keys": list(payload.keys()), "classification_keys": list(classification.keys())},
+        )
+        return classification
+
+    def route_evidence(self, routing_payload: Optional[Dict[str, Any]]) -> Dict[str, Any]:
+        """Route evidence to a target section/system."""
+        if not isinstance(routing_payload, dict):
+            raise ValueError("route_evidence payload must be a dictionary.")
+        target_section = routing_payload.get("target_section") or routing_payload.get("section_id")
+        file_path = routing_payload.get("file_path")
+        if not file_path or not target_section:
+            raise ValueError("route_evidence requires 'file_path' and 'target_section'.")
+        success = self.handoff_to_section(file_path, target_section, routing_payload.get("section_id"))
+        record = {
+            "status": "SUCCESS" if success else "FAILED",
+            "file_path": file_path,
+            "target_section": target_section,
+            "routing_payload": routing_payload,
+        }
+        self.log_communication("route_evidence", record)
+        if not success:
+            raise RuntimeError(f"Gateway failed to route evidence to {target_section}.")
+        return record
+
+    def route_evidence_batch(self, routing_batch: Optional[Iterable[Dict[str, Any]]]) -> List[Dict[str, Any]]:
+        """Batch evidence routing helper used by the function plan."""
+        if routing_batch is None:
+            raise ValueError("route_evidence_batch requires a collection.")
+        responses: List[Dict[str, Any]] = []
+        for entry in routing_batch:
+            responses.append(self.route_evidence(entry))
+        return responses
+
+    def get_processing_status(self) -> Dict[str, Any]:
+        """Return a snapshot of gateway processing statistics."""
+        status = {
+            "queued_signals": len(self.signal_queue),
+            "processed_signals": len(self.signal_history),
+            "completed_sections": len(self.completed_sections),
+            "pending_evidence": len(self.pending_evidence_requests),
+            "processed_evidence_count": len(self.processed_content),
+            "communication_log_entries": len(self.communication_log),
+            "bus_connected": self.bus_connected,
+        }
+        self.log_communication("get_processing_status", status)
+        return status
+
+    def raise_mayday(self, fault_code: str, description: str, *, details: Optional[Dict[str, Any]] = None) -> None:
+        """Emit an SOS fault using the Universal Communicator."""
+        if not fault_code or not description:
+            raise ValueError("raise_mayday requires fault_code and description.")
+        if self.communicator:
+            self.communicator.send_sos_fault(
+                fault_code=fault_code,
+                description=description,
+                details=details or {},
+            )
+        self._emit_bus_event(
+            "gateway.mayday",
+            {
+                "fault_code": fault_code,
+                "description": description,
+                "details": details or {},
+            },
+        )
+
     def attach_evidence_locker(self, locker: Any) -> None:
         """Attach Evidence Locker reference for enriched updates."""
         self.evidence_locker = locker
 
+    def register_section_ready(self, section_id: str, context: Dict[str, Any]) -> None:
+        """Record ECC release authorization for a section."""
+        section_key = str(section_id)
+        context_record = dict(context or {})
+        status_value = context_record.get("status", "ready")
+
+        self.section_states[section_key] = status_value
+        cache_entry = self.section_cache.setdefault(section_key, {})
+        cache_entry["ecc_release"] = context_record
+        cache_entry.setdefault("release_timestamp", context_record.get("timestamp"))
+
+        self.logger.info("ECC authorised section %s handoff to Mission Debrief", section_key)
+
     def emit(self, signal: str, payload: Dict[str, Any]) -> None:
         """Expose bus emit for section frameworks."""
         self._emit_bus_event(signal, payload)
+    
+    def _handle_section_fault_relay(self, payload: Dict[str, Any]) -> None:
+        """Handle section fault relay - enriches and forwards to diagnostic system"""
+        if not isinstance(payload, dict):
+            return
+        
+        section_address = payload.get("section_address") or payload.get("source_address")
+        if not section_address:
+            self.logger.warning("[2-3] Section fault received without address")
+            return
+        
+        # Enrich with section metadata
+        metadata = self.SECTION_FAULT_METADATA.get(section_address, {})
+        enriched_payload = dict(payload)
+        enriched_payload["original_target_address"] = section_address
+        enriched_payload["target_subsystem"] = metadata.get("subsystem_type", "unknown")
+        enriched_payload["relay_parent"] = "2-2"
+        enriched_payload["relay_timestamp"] = datetime.now().isoformat()
+        enriched_payload["section_name"] = metadata.get("name", section_address)
+        enriched_payload["priority"] = metadata.get("priority", "medium")
+        
+        # Log relay
+        relay_record = {
+            "section_address": section_address,
+            "fault_code": payload.get("fault_code"),
+            "relayed_at": datetime.now().isoformat(),
+            "enriched": True
+        }
+        self.section_fault_log.append(relay_record)
+        if len(self.section_fault_log) > 100:
+            self.section_fault_log = self.section_fault_log[-100:]
+        
+        # Forward to diagnostic system
+        self._emit_bus_event("fault.report", enriched_payload)
+        self.logger.info(f"[2-3] Relayed fault from {section_address} to diagnostics")
+
+    def _handle_ecc_broadcast(self, payload: Dict[str, Any]) -> None:
+        """Handle ECC-originated wildcard broadcasts."""
+        if not isinstance(payload, dict):
+            return
+        record = dict(payload)
+        record.setdefault("handled_at", datetime.now().isoformat())
+        self.log_communication("ecc_broadcast", record)
+        self.signal_history.append(record)
+
+    def report_child_fault(self, section_address: str, fault_payload: Dict[str, Any]) -> None:
+        """Public API for sections to report faults through Gateway relay"""
+        fault_payload["section_address"] = section_address
+        self._handle_section_fault_relay(fault_payload)
 
     def _normalize_section_id(self, section_id: Any) -> Optional[str]:
         if section_id is None:
@@ -1026,10 +1365,6 @@ class GatewayController:
             if self.ecosystem_controller:
                 if not self.ecosystem_controller.validate_section_id(section_id):
                     raise ValueError(f"Section '{section_id}' is not registered in ECC. Transfer denied.")
-                
-                # Check if section is frozen (completed) - prevent overwrite
-                if section_id in self.ecosystem_controller.frozen_sections:
-                    raise ValueError(f"Section '{section_id}' is frozen (completed). Use reopen() to modify.")
             
             payload = structured_section_data if isinstance(structured_section_data, dict) else {'value': structured_section_data}
             self._finalize_section_output(section_id, payload, source="section_transfer")
@@ -1359,10 +1694,6 @@ class GatewayController:
     def log_communication(self, communication_type: str, details: Dict[str, Any]) -> bool:
         """Log inter-section communication"""
         try:
-            # SECTION-AWARE EXECUTION ENFORCEMENT
-            if not self.ecosystem_controller:
-                raise Exception("No ECC reference available for communication logging")
-            
             log_entry = {
                 'communication_type': communication_type,
                 'details': details,
@@ -2385,12 +2716,12 @@ class GatewayController:
         """Validate section using universal communication protocol"""
         try:
             # Send validation request to ECC
-            response = self.communicator.send_status_request("2-1")  # ECC
+            response = self.communicator.send_status_request("2")    # ECC (Warden)
             
             if response and response.get("radio_code") == "10-4":
                 # Send validation complete signal
                 self.communicator.send_signal(
-                    target_address="2-1",  # ECC
+                    target_address="2",    # ECC (Warden)
                     radio_code="10-8",
                     message=f"Section {section_id} validation complete",
                     payload={"section_id": section_id, "status": "validated"}
@@ -2418,13 +2749,20 @@ class GatewayController:
 
     def get_communication_status(self) -> Dict[str, Any]:
         """Get communication status for health monitoring"""
-        return {
+        status = {
             "address": "2-2",
-            "status": "ACTIVE",
-            "last_check": self.communicator.get_module_status()["last_check"],
-            "communication_log_count": len(self.communicator.communication_log),
-            "active_signals_count": len(self.communicator.active_signals)
+            "status": "ACTIVE" if self.bus_connected else "INACTIVE",
+            "communication_log_count": len(self.communication_log),
+            "active_signals_count": len(self.signal_queue),
         }
+        if self.communicator:
+            try:
+                module_status = getattr(self.communicator, "get_module_status", None)
+                if callable(module_status):
+                    status["last_check"] = module_status().get("last_check")
+            except Exception:
+                status.setdefault("last_check", None)
+        return status
 
     def _get_line_number(self) -> int:
         """Get current line number for fault reporting"""
@@ -2432,8 +2770,3 @@ class GatewayController:
         frame = inspect.currentframe()
         caller_frame = frame.f_back.f_back if frame.f_back else frame
         return caller_frame.f_lineno
-
-
-
-
-

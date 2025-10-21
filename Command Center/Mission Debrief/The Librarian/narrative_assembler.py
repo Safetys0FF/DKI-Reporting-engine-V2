@@ -782,6 +782,47 @@ class NarrativeAssembler:
             narrative_parts.append(f"{i}. {section_name} ................. {page_number}")
 
         return "\\n".join(narrative_parts)
+    
+    # ------------------------------------------------------------------ #
+    # TOC Framework Execution
+    # ------------------------------------------------------------------ #
+    def execute_table_of_contents(self, case_id: str, sections: List[Dict[str, Any]]) -> Dict[str, Any]:
+        """Execute Table of Contents framework instead of simple template."""
+        try:
+            if not hasattr(self, 'toc_engine') or not self.toc_engine:
+                self.logger.warning("[5-2] TOC framework not available, using fallback template")
+                return self._compose_table_of_contents("Table of Contents", sections)
+            
+            # Build context for TOC framework
+            context = {
+                "case_id": case_id,
+                "sections": sections,
+                "timestamp": datetime.now().isoformat()
+            }
+            
+            # Execute framework workflow: load → build → publish
+            inputs = self.toc_engine.load_inputs()
+            payload = self.toc_engine.build_payload(context)
+            self.toc_engine.publish(payload)
+            
+            self.logger.info(f"[5-2] Table of Contents executed via framework for case {case_id}")
+            return payload
+            
+        except Exception as exc:
+            self.logger.error(f"[5-2] TOC framework execution failed: {exc}")
+            # Fallback to simple template
+            return self._compose_table_of_contents("Table of Contents", sections)
+    
+    def _compose_table_of_contents(self, heading: str, sections: List[Dict[str, Any]]) -> Dict[str, Any]:
+        """Fallback TOC composition (simple)."""
+        toc_lines = ["TABLE OF CONTENTS", ""]
+        for index, section in enumerate(sections, start=1):
+            title = section.get("title") or section.get("section_id") or f"Section {index}"
+            toc_lines.append(f"{title} ... {index + 1}")
+        if not sections:
+            toc_lines.append("No sections available")
+        metadata = {"total_sections": len(sections), "artifact": heading}
+        return {"type": "table_of_contents", "content": "\n".join(toc_lines), "metadata": metadata}
     def _default_template(self, data: Dict[str, Any]) -> str:
             """Default template for unknown sections"""
             section_id = data.get('section', 'Unknown Section')

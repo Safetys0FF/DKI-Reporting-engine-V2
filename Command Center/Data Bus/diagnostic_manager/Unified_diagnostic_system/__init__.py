@@ -57,22 +57,26 @@ class UnifiedDiagnosticSystem:
     CoreSystem handles all the pulling and coordination of modules.
     """
     
-    def __init__(self):
-        """Initialize with CAN-BUS as PRIMARY - CoreSystem drives the bus"""
+    def __init__(self, bus_connection=None):
+        """Initialize with CAN-BUS - either provided (safe mode) or connect to existing (join mode)"""
         self.logger = logging.getLogger("UnifiedDiagnosticSystem")
         self.logger.info("=" * 60)
         self.logger.info("UNIFIED DIAGNOSTIC SYSTEM - ROOT ENGINE INITIALIZED")
-        self.logger.info("CAN-BUS PRIMARY MODE - STANDALONE IS FAILSAFE")
         self.logger.info("=" * 60)
         
-        # CAN-BUS is PRIMARY - attempt connection first
-        self.bus = None
-        self.communicator = None
-        self.bus_connected = False
-        self.safemode_active = False
-        
-        # PRIMARY: Connect to CAN-BUS
-        self._connect_to_canbus_primary()
+        # FIXED: Handle two modes - safe mode (bus provided) or join mode (connect to existing)
+        if bus_connection:
+            # SAFE MODE: Bus already created, reuse it
+            self.logger.info("SAFE MODE: Using provided bus instance (no new bus creation)")
+            self.bus = bus_connection
+            self.communicator = UniversalCommunicator("DIAG-1", bus_connection=self.bus)
+            self.bus_connected = True
+            self.safemode_active = False
+            self.logger.info("Bus reused from safe mode initialization")
+        else:
+            # JOIN MODE: Connect to existing bus
+            self.logger.info("JOIN MODE: Connecting to existing bus")
+            self._connect_to_existing_bus()
         
         # CoreSystem is THE DRIVER (CAN-BUS PRIMARY, not fallback)
         try:
@@ -87,11 +91,77 @@ class UnifiedDiagnosticSystem:
         self.recovery = self.core.recovery
         self.enforcement = self.core.enforcement
         
+        # Register signal handlers for orchestration
         if self.bus_connected:
+            self._register_diagnostic_signals()
             self.logger.info("CoreSystem loaded as CAN-BUS PRIMARY DRIVER")
         else:
             self.logger.warning("CoreSystem loaded in SAFEMODE (CAN-BUS unavailable)")
     
+    def _connect_to_existing_bus(self):
+        """Connect to existing bus in JOIN MODE - don't create new bus"""
+        if not BUS_AVAILABLE:
+            self.logger.critical("CAN-BUS not available - entering SAFEMODE")
+            self.safemode_active = True
+            self.bus_connected = False
+            return
+            
+        try:
+            self.logger.info("JOIN MODE: Attempting to connect to existing bus...")
+            
+            # Create a new bus instance but configure it to JOIN the existing one
+            # The bus will auto-detect and connect to the running system
+            self.bus = DKIReportBus()
+            
+            # Wait for bus to be ready and detect existing system
+            self.logger.info("Waiting for bus to stabilize and detect existing system...")
+            if not self.bus.wait_for_ready(timeout=15.0):
+                self.logger.error("Failed to connect to existing bus - system may not be running")
+                self.bus_connected = False
+                self.safemode_active = True
+                return
+            
+            self.logger.info("Bus is ready - checking for existing systems...")
+            # Check if we can see existing registered systems
+            registered_addresses = self.bus.get_registered_addresses()
+            self.logger.info(f"Found {len(registered_addresses)} registered systems: {registered_addresses}")
+            
+            if len(registered_addresses) == 0:
+                self.logger.warning("No existing systems found - may be creating new bus instead of joining")
+            
+            # Create communicator and register with existing bus
+            self.communicator = UniversalCommunicator("DIAG-1", bus_connection=self.bus)
+            self.logger.info("Universal Communicator created for JOIN MODE")
+            
+            # Register diagnostic system with existing bus
+            self.bus.register_system_address("DIAG-1", {
+                "system_type": "diagnostic_manager",
+                "capabilities": ["fault_monitoring", "system_repair", "protocol_enforcement"],
+                "status": "active",
+                "mode": "join"
+            })
+            self.logger.info("Diagnostic system registered with existing bus - JOIN MODE")
+            
+            # Register module initialization
+            if self.bus.register_module_init('DIAG-1', {
+                'version': '2.0.0',
+                'type': 'diagnostic_system',
+                'capabilities': ['fault_monitoring', 'system_repair', 'protocol_enforcement']
+            }):
+                self.logger.info("[OK] UDS registered as DIAG-1 in JOIN MODE")
+            else:
+                self.logger.warning("[WARNING] UDS registration failed - continuing anyway")
+            
+            self.bus_connected = True
+            self.safemode_active = False
+            self.logger.info("CAN-BUS JOIN MODE CONNECTION ESTABLISHED SUCCESSFULLY")
+            
+        except Exception as e:
+            self.logger.critical(f"CAN-BUS JOIN MODE CONNECTION FAILED: {e}")
+            self.logger.critical("ENTERING SAFEMODE - LIMITED FUNCTIONALITY")
+            self.bus_connected = False
+            self.safemode_active = True
+
     def _connect_to_canbus_primary(self):
         """Establish CAN-BUS connection as PRIMARY operation - standalone is failsafe only"""
         if not BUS_AVAILABLE:
@@ -165,8 +235,18 @@ class UnifiedDiagnosticSystem:
             })
             self.logger.info("Diagnostic system registered with CAN-BUS - PRIMARY MODE")
             
-            # PRIMARY OPERATION: Register diagnostic signal handlers
-            self._register_diagnostic_signals()
+            # MODULE INITIALIZATION PROTOCOL - Register DIAG-1 with bus
+            if self.bus.register_module_init('DIAG-1', {
+                'version': '2.0.0',
+                'type': 'diagnostic_system',
+                'capabilities': ['fault_monitoring', 'system_repair', 'protocol_enforcement']
+            }):
+                self.logger.info("[OK] UDS registered as DIAG-1")
+            else:
+                self.logger.warning("[WARNING] UDS registration failed - continuing anyway")
+            
+        # PRIMARY OPERATION: Signal handlers delegated to comms module
+        # (comms.py now handles all signal registration on shared bus)
             
             self.bus_connected = True
             self.safemode_active = False
@@ -184,6 +264,9 @@ class UnifiedDiagnosticSystem:
             self.logger.warning("Cannot register signals - CAN-BUS not connected (SAFEMODE)")
             return
             
+        # ORCHESTRATION SIGNALS: Main application handshake
+        self.bus.register_signal("diag.initialize", self._handle_diag_initialize_signal)
+        
         # PRIMARY CAN-BUS: Register fault reporting signals
         self.bus.register_signal("fault.report", self._handle_fault_report_signal)
         self.bus.register_signal("fault.sos", self._handle_sos_fault_signal)
@@ -196,6 +279,33 @@ class UnifiedDiagnosticSystem:
         self.bus.register_signal("diagnostic.status", self._handle_diagnostic_status_signal)
         
         self.logger.info("Diagnostic signal handlers registered with CAN-BUS PRIMARY")
+    
+    def _handle_diag_initialize_signal(self, payload: Dict[str, Any]) -> None:
+        """Handle initialization command from main_application"""
+        self.logger.info("=" * 80)
+        self.logger.info("DIAG-1: Received initialization command from main_application")
+        self.logger.info("=" * 80)
+        
+        # Launch diagnostic system in background thread
+        def initialize_diag():
+            try:
+                # Launch with smoke mode for faster startup
+                launch_result = self.launch_diagnostic_system(smoke_mode=True)
+                
+                if launch_result:
+                    # Send ready signal back to main_application
+                    self.bus.emit('diag.ready', {
+                        'source': 'DIAG-1',
+                        'timestamp': datetime.now().isoformat(),
+                        'status': 'ready'
+                    })
+                    self.logger.info("✓ DIAG-1 ready signal sent to main_application")
+                else:
+                    self.logger.error("❌ DIAG-1 initialization failed")
+            except Exception as e:
+                self.logger.error(f"❌ DIAG-1 initialization error: {e}")
+        
+        threading.Thread(target=initialize_diag, daemon=True).start()
     
     def _handle_fault_report_signal(self, payload: Dict[str, Any]) -> None:
         """Handle fault report signals from other systems"""
@@ -220,7 +330,8 @@ class UnifiedDiagnosticSystem:
     def _handle_diagnostic_start_signal(self, payload: Dict[str, Any]) -> None:
         """Handle diagnostic start signals"""
         if self.core:
-            self.core.launch_diagnostic_system()
+            smoke_mode = bool(payload.get("smoke_mode", False)) if isinstance(payload, dict) else False
+            self.core.launch_diagnostic_system(smoke_mode=smoke_mode)
     
     def _handle_diagnostic_stop_signal(self, payload: Dict[str, Any]) -> None:
         """Handle diagnostic stop signals"""
@@ -235,14 +346,14 @@ class UnifiedDiagnosticSystem:
             if self.bus_connected:
                 self.bus.send("diagnostic.status.response", status)
     
-    def launch_diagnostic_system(self) -> bool:
+    def launch_diagnostic_system(self, smoke_mode: bool = False) -> bool:
         """Launch system in CAN-BUS PRIMARY mode - CoreSystem drives the bus"""
         if self.bus_connected:
             self.logger.info("Launching diagnostic system in CAN-BUS PRIMARY mode")
-            return self.core.launch_diagnostic_system()
+            return self.core.launch_diagnostic_system(smoke_mode=smoke_mode)
         else:
             self.logger.warning("Launching diagnostic system in SAFEMODE (limited functionality)")
-            return self.core.launch_diagnostic_system()
+            return self.core.launch_diagnostic_system(smoke_mode=smoke_mode)
     
     def shutdown_diagnostic_system(self):
         """Shutdown system - CoreSystem does the work"""
@@ -306,6 +417,7 @@ if __name__ == "__main__":
     print(f"CAN-BUS Connected: {uds.bus_connected}")
     print(f"Core System Status: {uds.get_unified_status()}")
     
-    # Launch the diagnostic system
-    launch_result = uds.launch_diagnostic_system()
+    # Launch the diagnostic system in SMOKE MODE for optimized testing
+    # Smoke mode: instantiates parent modules, tests 6 priority systems, faster timeouts
+    launch_result = uds.launch_diagnostic_system(smoke_mode=True)
     print(f"Diagnostic System Launch: {'SUCCESS' if launch_result else 'FAILED'}")

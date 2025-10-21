@@ -8,10 +8,14 @@ import sys
 import os
 import logging
 import json
+import time
 from datetime import datetime
 
 # Add current directory to path
 sys.path.append(os.path.dirname(__file__))
+PACKAGE_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+if PACKAGE_ROOT not in sys.path:
+    sys.path.append(PACKAGE_ROOT)
 
 def test_routing_logic():
     """Test actual routing logic and file organization"""
@@ -24,6 +28,12 @@ def test_routing_logic():
         from __init__ import UnifiedDiagnosticSystem
         print("[INIT] Creating diagnostic system...")
         diagnostic_system = UnifiedDiagnosticSystem()
+        if getattr(diagnostic_system, 'enforcement', None) is None:
+            diagnostic_system.core.lazy_load_enforcement_module()
+            diagnostic_system.enforcement = diagnostic_system.core.enforcement
+        if getattr(diagnostic_system, 'recovery', None) is None:
+            diagnostic_system.core.lazy_load_recovery_module()
+            diagnostic_system.recovery = diagnostic_system.core.recovery
         
         # Test 1: Test fault routing to correct directories
         print("\n[TEST 1] Testing fault routing logic...")
@@ -49,9 +59,9 @@ def test_routing_logic():
             {
                 'fault_id': 'ROUTING-003',
                 'system_address': 'BUS-1',
-                'fault_code': 'BUS-1-90-123',
+                'fault_code': 'BUS-1-60-123',
                 'description': 'Bus communication critical failure',
-                'severity': 'CRITICAL',
+                'severity': 'FAILURE',
                 'timestamp': datetime.now().isoformat()
             }
         ]
@@ -66,6 +76,21 @@ def test_routing_logic():
             result = diagnostic_system.process_fault_report(fault)
             print(f"  [ROUTED] Fault processed: {result}")
         
+        # Force consolidated fault reporting so vault output is captured in baseline
+        print("\n[TEST 1B] Forcing consolidated fault report generation...")
+        try:
+            enforcement = diagnostic_system.enforcement
+            if hasattr(enforcement, 'force_consolidation'):
+                enforcement.force_consolidation()
+                if hasattr(enforcement, '_process_consolidation_queue'):
+                    enforcement._process_consolidation_queue()
+                # Give the background monitor a moment to persist files
+                time.sleep(2)
+            else:
+                print("[WARN] Enforcement module missing consolidation support")
+        except Exception as e:
+            print(f"[ERROR] Consolidation trigger failed: {e}")
+    
         # Test 2: Check what files were created and where
         print("\n[TEST 2] Checking file routing results...")
         
@@ -75,6 +100,11 @@ def test_routing_logic():
         fault_vault_files = list(core.fault_vault_path.glob("*.md"))
         print(f"[FAULT_VAULT] Files created: {len(fault_vault_files)}")
         for file_path in fault_vault_files:
+            print(f"  - {file_path.name}")
+
+        consolidated_reports = list(core.fault_vault_path.glob("consolidated_fault_report_*.json"))
+        print(f"[CONSOLIDATED] Reports generated: {len(consolidated_reports)}")
+        for file_path in consolidated_reports:
             print(f"  - {file_path.name}")
         
         # Check diagnostic_reports for repair summaries

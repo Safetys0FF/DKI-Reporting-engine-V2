@@ -1,0 +1,35 @@
+{
+  "success": true,
+  "total_time": 17.66117286682129,
+  "signals_received": 2,
+  "signal_names": [
+    "evidence.new",
+    "evidence.classified"
+  ],
+  "faults": [],
+  "ingestion_result": {
+    "evidence_id": "section_5-f8be7b6d6e46",
+    "file_path": "F:\\The Central Command\\Command Center\\Data Bus\\diagnostic_manager\\test_plans\\test_sample.pdf",
+    "filename": "test_sample.pdf",
+    "file_size": 1014,
+    "mime_type": "application/pdf",
+    "section_id": "section_5",
+    "tags": [
+      "pdf",
+      "section_5"
+    ],
+    "ingested_at": "2025-10-10T13:08:56.260344",
+    "metadata": {
+      "assigned_section": "section_5",
+      "confidence": 0.9,
+      "classification_method": "extension",
+      "keywords_found": [],
+      "file_path": "F:\\The Central Command\\Command Center\\Data Bus\\diagnostic_manager\\test_plans\\test_sample.pdf",
+      "tags": [
+        "pdf",
+        "section_5"
+      ]
+    }
+  },
+  "reason": ""
+}

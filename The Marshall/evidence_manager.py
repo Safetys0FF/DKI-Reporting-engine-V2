@@ -119,15 +119,51 @@ class EvidenceManager:
 
 
 
+        self.logger = logging.getLogger(__name__)
+        
+        # CANBUS CONNECTION (MAIN MODULE - INLINE)
         self.bus = bus or getattr(gateway, 'bus', None)
+        self.communicator = None
+        self.bus_connected = False
+        self.safemode_active = False
+        
+        if self.bus:
+            try:
+                # Add Bus Core Design to path for UniversalCommunicator
+                import sys
+                sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'Command Center', 'Data Bus', 'Bus Core Design'))
+                from universal_communicator import UniversalCommunicator
+                
+                # Create UniversalCommunicator (MAIN MODULE)
+                self.communicator = UniversalCommunicator("3-1", bus_connection=self.bus)
+                
+                # Register system address with CANBUS
+                self.bus.register_system_address("3-1", {
+                    "system_type": "evidence_manager",
+                    "capabilities": ["evidence_checkout", "evidence_validation", "section_delivery"],
+                    "status": "active",
+                    "mode": "primary",
+                    "registered_at": datetime.now().isoformat()
+                })
+                
+                # Set connection state BEFORE registering signals
+                self.bus_connected = True
+                
+                # Register signal handlers
+                self._register_marshall_signals()
+                
+                self.logger.info("[3-1] CANBUS CONNECTION ESTABLISHED")
+                
+            except Exception as e:
+                self.logger.critical(f"[3-1] CANBUS connection failed: {e}")
+                self.safemode_active = True
+        else:
+            self.logger.warning("[3-1] No bus provided - SAFEMODE")
+            self.safemode_active = True
 
 
 
         self.evidence_builder = evidence_builder
-
-
-
-        self.logger = logging.getLogger(__name__)
 
 
 
@@ -197,6 +233,145 @@ class EvidenceManager:
 
 
 
+    def _register_marshall_signals(self):
+        """Register Evidence Manager signal handlers with CANBUS"""
+        if not self.bus_connected or not self.bus:
+            self.logger.warning("[3-1] Cannot register signals - no CANBUS connection")
+            return
+        
+        try:
+            # Register Evidence Manager control signals
+            self.bus.register_signal("marshall.status", self._handle_status_signal)
+            self.bus.register_signal("marshall.process_evidence", self._handle_process_evidence_signal)
+            self.bus.register_signal("marshall.validate_evidence", self._handle_validate_evidence_signal)
+            self.bus.register_signal("evidence_submitted", self._handle_evidence_submitted_signal)
+            
+            self.logger.info("[3-1] Evidence Manager signal handlers registered")
+            
+        except Exception as e:
+            self.logger.error(f"[3-1] Failed to register signal handlers: {e}")
+    
+    def _handle_status_signal(self, payload: Dict[str, Any]) -> Dict[str, Any]:
+        """Handle marshall.status signal"""
+        return self.get_status()
+    
+    def _handle_process_evidence_signal(self, payload: Dict[str, Any]) -> Dict[str, Any]:
+        """Handle marshall.process_evidence signal"""
+        evidence_data = payload.get('evidence_data', {})
+        return self.process_evidence(evidence_data)
+    
+    def _handle_validate_evidence_signal(self, payload: Dict[str, Any]) -> Dict[str, Any]:
+        """Handle marshall.validate_evidence signal"""
+        evidence_data = payload.get('evidence_data', {})
+        return self.validate_evidence(evidence_data)
+    
+    def _handle_evidence_submitted_signal(self, payload: Dict[str, Any]) -> Dict[str, Any]:
+        """Handle evidence_submitted signal from GUI - entry point for evidence intake"""
+        self.logger.info("[3-1] Evidence submitted - processing intake with simple tags")
+        
+        try:
+            # Extract evidence data from GUI submission
+            file_path = payload.get('file_path')
+            category = payload.get('category', 'documents')  # Default to documents if not specified
+            manual_tags = payload.get('manual_tags', [])
+            case_data = payload.get('case', {})
+            case_id = case_data.get('id') if case_data else None
+            
+            if not file_path:
+                raise ValueError("File path required for evidence submission")
+            
+            # Create evidence record with simple categorization
+            evidence_id = str(uuid.uuid4())
+            evidence_record = {
+                'evidence_id': evidence_id,
+                'file_path': file_path,
+                'name': os.path.basename(file_path),
+                'category': category,
+                'simple_tags': manual_tags if isinstance(manual_tags, list) else [manual_tags] if manual_tags else [],
+                'case_id': case_id,
+                'case_data': case_data,
+                'submitted_at': datetime.now().isoformat(),
+                'status': 'intake',
+                'source': 'user_entry'
+            }
+            
+            # Add to processing queue for categorization and prescreening
+            self.processing_queue.append(evidence_record)
+            self.logger.info(f"[3-1] Evidence added to processing queue: {evidence_record['name']} ({category})")
+            
+            # Process evidence through simple categorization and send to Evidence Locker
+            self._process_evidence_intake(evidence_record)
+            
+            return {
+                'status': 'accepted',
+                'evidence_id': evidence_id,
+                'category': category,
+                'simple_tags': evidence_record['simple_tags'],
+                'message': f'Evidence {evidence_record["name"]} categorized and queued for Evidence Locker'
+            }
+            
+        except Exception as e:
+            self.logger.error(f"[3-1] Evidence submission failed: {e}")
+            return {
+                'status': 'error',
+                'error': str(e),
+                'message': f'Evidence submission failed: {e}'
+            }
+    
+    def _process_evidence_intake(self, evidence_record: Dict[str, Any]) -> bool:
+        """Process evidence intake - categorize, tag, prescreen, and send to Evidence Locker"""
+        try:
+            # Simple categorization is already done by GUI
+            category = evidence_record.get('category', 'documents')
+            simple_tags = evidence_record.get('simple_tags', [])
+            
+            self.logger.info(f"[3-1] Processing evidence intake: {evidence_record['name']} -> {category}")
+            
+            # Send to Evidence Locker for persistence
+            if self.bus and self.bus_connected:
+                locker_payload = {
+                    'evidence_id': evidence_record['evidence_id'],
+                    'file_path': evidence_record['file_path'],
+                    'category': category,
+                    'simple_tags': simple_tags,
+                    'case_id': evidence_record.get('case_id'),
+                    'case_data': evidence_record.get('case_data'),
+                    'source': 'evidence_manager',
+                    'status': 'ready_for_persistence'
+                }
+                
+                # Send to Evidence Locker via bus signal
+                self.bus.emit('evidence_locker.store', locker_payload)
+                self.logger.info(f"[3-1] Evidence sent to Evidence Locker: {evidence_record['name']}")
+                
+                # Mark as processed
+                evidence_record['status'] = 'sent_to_locker'
+                evidence_record['processed_at'] = datetime.now().isoformat()
+                
+                return True
+            else:
+                self.logger.warning(f"[3-1] Cannot send to Evidence Locker - no bus connection")
+                return False
+                
+        except Exception as e:
+            self.logger.error(f"[3-1] Evidence intake processing failed: {e}")
+            evidence_record['status'] = 'error'
+            evidence_record['error'] = str(e)
+            return False
+    
+    def get_status(self) -> Dict[str, Any]:
+        """Get Evidence Manager status"""
+        return {
+            "system_address": "1-2",
+            "bus_connected": self.bus_connected,
+            "safemode": self.safemode_active,
+            "processing_queue": len(self.processing_queue),
+            "processed_count": len(self.processed_evidence),
+            "failed_count": len(self.failed_evidence),
+            "delivery_queue": len(self.delivery_queue),
+            "timestamp": datetime.now().isoformat()
+        }
+    
     def _merge_nested(self, base: Dict[str, Any], updates: Dict[str, Any]) -> Dict[str, Any]:
 
 

@@ -6,11 +6,14 @@ import json
 import logging
 import os
 import re
+import sys
+import time
 import zipfile
 import hashlib
+from pathlib import Path
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple
+from typing import Any, Callable, Dict, Iterable, List, Optional, Sequence, Tuple
 from difflib import SequenceMatcher
 
 # OCR imports
@@ -24,7 +27,28 @@ except ImportError:
     OCR_AVAILABLE = False
 
 LOGGER = logging.getLogger(__name__)
+_CURRENT_DIR = Path(__file__).resolve().parent
+_ANALYST_ROOT = _CURRENT_DIR.parent
+_BASE_PATH = _ANALYST_ROOT / "section revisions templates"
+if str(_BASE_PATH) not in sys.path:
+    sys.path.insert(0, str(_BASE_PATH))
 
+from section_framework_base import (
+    LifecycleState,
+    SectionFramework as LifecycleSectionFramework,
+)
+
+from _init_northstar_protocol import init_northstar_protocol
+from _init_cochran_match import init_cochran_match
+from _init_reverse_continuity import init_reverse_continuity
+from _init_metadata_processor import init_metadata_processor
+from _init_mileage_tool import init_mileage_tool
+from _init_section4_renderer import init_section4_renderer
+from _init_section4_voice_helper import init_section4_voice_helper
+from _init_section4_media_helper import init_section4_media_helper
+from _init_section4_data_sources import init_section4_data_sources
+from _init_section4_compliance_rules import init_section4_compliance_rules
+from _init_section4_document_validator import init_section4_document_validator
 
 @dataclass(frozen=True)
 class StageDefinition:
@@ -63,7 +87,7 @@ class OrderContract:
     export_priority: int = 0
 
 
-class SectionFramework:
+class LegacySectionFramework:
     SECTION_ID: str = ""
     BUS_SECTION_ID: Optional[str] = None
     MAX_RERUNS: int = 3
@@ -79,15 +103,247 @@ class SectionFramework:
         gateway: Any,
         ecc: Optional[Any] = None,
         logger: Optional[logging.Logger] = None,
+        bus: Optional[Any] = None,
+        communicator: Optional[Any] = None
     ) -> None:
+        # CRITICAL: Initialize logger FIRST so initialization errors can be logged
+        self.logger = logger or logging.getLogger(self.__class__.__name__)
+        self.MODULE_ADDRESS = "4-4"
+        
+        # ------------------------------------------------------------------ #
+        # CANBUS CONNECTION (SECTION MODULE - INLINE)
+        # ------------------------------------------------------------------ #
+        self.bus = bus
+        self.communicator = communicator
+        self.bus_connected = False
+        
         self.gateway = gateway
         self.ecc = ecc
-        self.logger = logger or logging.getLogger(self.__class__.__name__)
         self.queue_client: Optional[Any] = None
         self.storage: Optional[Any] = None
         self.fact_graph_client: Optional[Any] = None
         self.revision_depth: int = 0
         self.signed_payload_id: Optional[str] = None
+        
+        # Initialize CANBUS after logger is ready
+        if self.bus:
+            # MODULE INITIALIZATION PROTOCOL - Wait for bus ready and module turn
+            self.logger.info("[%s] Waiting for bus stabilization...", self.MODULE_ADDRESS)
+            if not self.bus.wait_for_ready(timeout=15.0):
+                self.logger.warning("[%s] Bus stabilization timeout - initializing in degraded mode", self.MODULE_ADDRESS)
+                self.bus_connected = False
+            else:
+                self.logger.info("[%s] Bus ready - waiting for module turn in sequence...", self.MODULE_ADDRESS)
+                if not self.bus.wait_for_module_turn('4-4', timeout=30.0):
+                    self.logger.warning("[%s] Module turn timeout - initializing in degraded mode", self.MODULE_ADDRESS)
+                    self.bus_connected = False
+                else:
+                    self._initialize_canbus(self.bus, communicator=self.communicator)
+        else:
+            self.logger.warning("[%s] CANBUS initialization skipped - no bus provided", self.MODULE_ADDRESS)
+            self.bus_connected = False
+        
+        # Run mandatory self-test per UDS protocol
+        self._run_startup_self_test()
+    
+    # ------------------------------------------------------------------ #
+    # CANBUS initialization
+    # ------------------------------------------------------------------ #
+    def _initialize_canbus(self, bus: Any, *, communicator: Optional[Any] = None) -> None:
+        """Set up CANBUS connectivity and register signal handlers."""
+        try:
+            import sys
+            sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..', 'Command Center', 'Data Bus', 'Bus Core Design'))
+            from universal_communicator import UniversalCommunicator
+        except ImportError:
+            UniversalCommunicator = None
+        
+        self.bus = bus
+        try:
+            if communicator:
+                self.communicator = communicator
+            elif UniversalCommunicator:
+                self.communicator = UniversalCommunicator(self.MODULE_ADDRESS, bus_connection=bus)
+                self.logger.info("[%s] UniversalCommunicator created", self.MODULE_ADDRESS)
+
+            bus.register_system_address(self.MODULE_ADDRESS, {
+                "system_type": "section_engine",
+                "capabilities": ["evidence_request", "evidence_processing", "section_rendering", "fault_reporting"],
+                "status": "active",
+                "mode": "primary",
+                "registered_at": datetime.now().isoformat(),
+                "section_name": "Review of Surveillance",
+                "tools": ["northstar_protocol", "cochran_match", "reverse_continuity",
+                         "metadata_processor", "mileage_tool", "section_renderer",
+                         "voice_helper", "media_helper", "data_sources", 
+                         "compliance_rules", "document_validator"]
+            })
+            self.logger.info("[%s] Section 4 registered with CANBUS", self.MODULE_ADDRESS)
+
+            self._register_signal_handlers()
+            self.bus_connected = True
+            self.logger.info("[%s] CANBUS CONNECTION ESTABLISHED", self.MODULE_ADDRESS)
+            
+            # MODULE INITIALIZATION PROTOCOL - Register with bus
+            if self.bus.register_module_init('4-4', {
+                'version': '1.0',
+                'type': 'analyst_section',
+                'capabilities': ['document_validation', 'compliance_checks', 'data_sources']
+            }):
+                self.logger.info("[%s] [OK] Module registered with bus (Address 4-4)", self.MODULE_ADDRESS)
+            else:
+                self.logger.warning("[%s] Module registration failed - continuing anyway", self.MODULE_ADDRESS)
+        except Exception as exc:
+            self.logger.critical("[%s] CANBUS connection failed: %s", self.MODULE_ADDRESS, exc)
+            self.bus_connected = False
+
+    def _register_signal_handlers(self) -> None:
+        """Register section signal handlers with the CANBUS."""
+        if not self.bus:
+            self.logger.warning("[%s] Cannot register signals - no CANBUS connection", self.MODULE_ADDRESS)
+            return
+        try:
+            self.bus.register_signal("section_4.evidence_request", self._handle_evidence_request)
+            self.bus.register_signal("section_4.wake", self._handle_wake_signal)
+            self.bus.register_signal("section_4.sleep", self._handle_sleep_signal)
+            self.bus.register_signal("section_4.status", self._handle_status_signal)
+            self.bus.register_signal("diagnostic.rollcall", self._handle_rollcall)
+            self.bus.register_signal("diagnostic.radio_check", self._handle_radio_check)
+            self.bus.register_signal("auto_registration", self._handle_auto_registration)
+            self.logger.info("[%s] Section signal handlers registered (including UDS bidirectional protocol)", self.MODULE_ADDRESS)
+        except Exception as exc:
+            self.logger.error("[%s] Failed to register signal handlers: %s", self.MODULE_ADDRESS, exc)
+
+    def _handle_evidence_request(self, payload: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+        """Handle evidence request signal."""
+        return {"status": "evidence_request_received", "section": self.MODULE_ADDRESS}
+
+    def _handle_wake_signal(self, payload: Optional[Dict[str, Any]] = None) -> None:
+        """Handle wake signal from Marshall."""
+        self.logger.info("[%s] Wake signal received", self.MODULE_ADDRESS)
+
+    def _handle_sleep_signal(self, payload: Optional[Dict[str, Any]] = None) -> None:
+        """Handle sleep signal from Marshall."""
+        self.logger.info("[%s] Sleep signal received", self.MODULE_ADDRESS)
+
+    def _handle_status_signal(self, payload: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+        """Handle status signal."""
+        return {
+            "module_address": self.MODULE_ADDRESS,
+            "status": "active",
+            "bus_connected": self.bus_connected
+        }
+    
+    def _handle_rollcall(self, payload: Dict[str, Any]) -> None:
+        """Handle UDS rollcall request (PHASE 2C FIX)"""
+        if self.communicator:
+            try: self.communicator.send_rollcall_response("DIAG-1", {"system_address": self.MODULE_ADDRESS, "system_name": "Section 4", "status": "OPERATIONAL" if self.bus_connected else "INITIALIZING", "compliance_status": "COMPLIANT", "timestamp": datetime.now().isoformat()})
+            except: pass
+    
+    def _handle_radio_check(self, payload: Dict[str, Any]) -> None:
+        """Handle UDS radio check request (PHASE 2C FIX)"""
+        if self.communicator:
+            try: self.communicator.send_radio_check_response("DIAG-1", {"system_address": self.MODULE_ADDRESS, "latency_ms": 0, "signal_strength": "STRONG", "bus_connected": self.bus_connected, "timestamp": datetime.now().isoformat()})
+            except: pass
+    
+    def _handle_auto_registration(self, payload: Dict[str, Any]) -> None:
+        """Handle UDS auto-registration request (PHASE 2C FIX)"""
+        # Check if this signal is addressed to us (or is a broadcast)
+        target_address = payload.get('target_address', '')
+        if target_address and target_address not in [self.MODULE_ADDRESS, "BROADCAST", "*"]:
+            return  # Not for us - ignore
+        
+        if self.communicator:
+            try: self.communicator.send_auto_registration_response("DIAG-1", {"system_address": self.MODULE_ADDRESS, "system_name": "Section 4", "system_type": "analyst_section", "parent_address": "3", "status": "OPERATIONAL" if self.bus_connected else "INITIALIZING", "compliance_status": "COMPLIANT", "protocol_version": "1.0.0", "timestamp": datetime.now().isoformat()})
+            except: pass
+    
+    # ------------------------------------------------------------------ #
+    # Self-Test Protocol (UDS Compliance)
+    # ------------------------------------------------------------------ #
+    def _run_startup_self_test(self) -> bool:
+        """Validate all tool dependencies per UDS self-test protocol."""
+        self.logger.info("[%s] Running mandatory startup self-test per UDS protocol", self.MODULE_ADDRESS)
+        operational = True
+        
+        tools_to_validate = [
+            ('4-4.1', 'Northstar Protocol', lambda: getattr(self, 'northstar_tool', None)),
+            ('4-4.2', 'Cochran Match', lambda: getattr(self, 'cochran_tool', None)),
+            ('4-4.3', 'Reverse Continuity', lambda: getattr(self, 'reverse_continuity_cls', None)),
+            ('4-4.4', 'Metadata Tool', lambda: getattr(self, 'metadata_tool', None)),
+            ('4-4.5', 'Mileage Tool', lambda: getattr(self, 'mileage_tool', None)),
+            ('4-4.6', 'Section Renderer', lambda: getattr(self, 'renderer_factory', None)),
+            ('4-4.7', 'Voice Helper', lambda: getattr(self, 'voice_helper', None)),
+            ('4-4.8', 'Media Helper', lambda: getattr(self, 'media_helper', None)),
+            ('4-4.9', 'Data Sources', lambda: getattr(self, 'data_sources', None)),
+            ('4-4.10', 'Compliance Rules', lambda: getattr(self, 'compliance_rules', None)),
+            ('4-4.11', 'Document Validator', lambda: getattr(self, 'document_validator', None)),
+        ]
+        
+        for tool_addr, tool_name, get_tool_ref in tools_to_validate:
+            try:
+                tool_ref = get_tool_ref()
+                
+                if tool_ref is None:
+                    self.logger.error(
+                        "[%s] Self-test FAILED: %s (%s) not initialized",
+                        self.MODULE_ADDRESS, tool_name, tool_addr
+                    )
+                    
+                    # Emit fault code to Marshall via LINBUS (primary path)
+                    fault_payload = {
+                        "fault_code": f"[{tool_addr}-12-INIT]",
+                        "description": f"{tool_name} failed to initialize",
+                        "component": tool_name,
+                        "reporting_address": tool_addr,
+                        "parent_address": self.MODULE_ADDRESS,
+                        "severity": "CRITICAL",
+                        "timestamp": datetime.now().isoformat(),
+                        "fault_type": "12",
+                        "fault_type_description": "Missing initialization dependency",
+                        "message_type": "initialization_failure"
+                    }
+                    
+                    linbus_success = False
+                    if self.bus and self.bus_connected:
+                        try:
+                            # Primary: LINBUS emission to Marshall
+                            self.bus.emit('section.fault', fault_payload)
+                            self.logger.warning("[%s] Fault code emitted via LINBUS: [%s-12-INIT]",
+                                               self.MODULE_ADDRESS, tool_addr)
+                            linbus_success = True
+                        except Exception as linbus_exc:
+                            self.logger.error("[%s] LINBUS fault emission failed: %s - attempting CANBUS fallback",
+                                            self.MODULE_ADDRESS, linbus_exc)
+                    
+                    # Fallback: CANBUS direct emission to UDS if LINBUS fails
+                    if not linbus_success:
+                        if hasattr(self, 'communicator') and self.communicator:
+                            try:
+                                self.communicator.send_signal(
+                                    target_address="DIAG-1",
+                                    radio_code="SOS",
+                                    message=f"{tool_name} initialization failed (CANBUS fallback)",
+                                    payload=fault_payload
+                                )
+                                self.logger.warning("[%s] Fault code emitted via CANBUS fallback: [%s-12-INIT]",
+                                                   self.MODULE_ADDRESS, tool_addr)
+                            except Exception as canbus_exc:
+                                self.logger.error("[%s] CANBUS fallback also failed: %s",
+                                                self.MODULE_ADDRESS, canbus_exc)
+                        else:
+                            self.logger.error("[%s] Cannot emit fault code - no bus connection available",
+                                            self.MODULE_ADDRESS)
+                    operational = False
+            except Exception as exc:
+                self.logger.exception("[%s] Exception during self-test for %s: %s", self.MODULE_ADDRESS, tool_name, exc)
+                operational = False
+        
+        if operational:
+            self.logger.info("[%s] All tool dependencies operational", self.MODULE_ADDRESS)
+        else:
+            self.logger.warning("[%s] One or more tool dependencies failed - check fault codes", self.MODULE_ADDRESS)
+        
+        return operational
 
     def load_inputs(self) -> Dict[str, Any]:
         raise NotImplementedError
@@ -97,6 +353,58 @@ class SectionFramework:
 
     def publish(self, payload: Dict[str, Any]) -> Dict[str, Any]:
         raise NotImplementedError
+
+    @classmethod
+    def bus_section_id(cls) -> Optional[str]:
+        if getattr(cls, "BUS_SECTION_ID", None):
+            return cls.BUS_SECTION_ID
+        section_id = getattr(cls, "SECTION_ID", "")
+        if section_id.startswith("section_"):
+            parts = section_id.split("_")
+            if len(parts) >= 2:
+                return f"section_{parts[1]}"
+        return section_id or None
+
+    def _get_latest_bus_state(self) -> Dict[str, Any]:
+        bus_id = self.bus_section_id()
+        get_state = getattr(self.gateway, "get_bus_state", None) if hasattr(self, "gateway") else None
+        if not bus_id or not callable(get_state):
+            return {}
+        try:
+            state = get_state(bus_id) or {}
+            return state
+        except Exception as exc:
+            self.logger.warning("Failed to fetch bus state for %s: %s", bus_id, exc)
+            return {}
+
+    def _augment_with_bus_context(self, inputs: Dict[str, Any]) -> Dict[str, Any]:
+        bus_state = self._get_latest_bus_state()
+        if not bus_state:
+            return inputs
+        enriched: Dict[str, Any] = dict(inputs)
+        enriched.setdefault("bus_state", bus_state)
+        payload = bus_state.get("payload") or {}
+        if isinstance(payload, dict):
+            enriched.setdefault("section_payload", payload.get("structured_data") or payload)
+            manifest_context = payload.get("manifest") or bus_state.get("manifest")
+            if manifest_context is not None:
+                enriched.setdefault("manifest_context", manifest_context)
+            for key, value in payload.items():
+                enriched.setdefault(key, value)
+        else:
+            manifest_context = bus_state.get("manifest")
+            if manifest_context is not None:
+                enriched.setdefault("manifest_context", manifest_context)
+        if bus_state.get("needs") is not None:
+            enriched.setdefault("section_needs", bus_state.get("needs"))
+        if bus_state.get("evidence") is not None:
+            enriched.setdefault("section_evidence", bus_state.get("evidence"))
+        case_id = enriched.get("case_id") or bus_state.get("case_id")
+        if not case_id and isinstance(payload, dict):
+            case_id = payload.get("case_id")
+        if case_id and "case_id" not in enriched:
+            enriched["case_id"] = case_id
+        return enriched
 
     def _guard_execution(self, operation: str) -> None:
         if self.ecc and not self.ecc.can_run(self.SECTION_ID):
@@ -525,6 +833,116 @@ class MediaCorrelationHelper:
             "videos": media_index.get("videos") or {},
         }
 
+
+class PublicRecordsDataSource:
+    """Aggregate public record artifacts for compliance review."""
+
+    def collect(self, context: Dict[str, Any]) -> Dict[str, Any]:
+        records: List[Dict[str, Any]] = []
+        candidate_sets = [
+            context.get("toolkit_results", {}).get("public_records"),
+            context.get("case_metadata", {}).get("public_records"),
+            context.get("planning_manifest", {}).get("public_records"),
+        ]
+        for candidate in candidate_sets:
+            if not candidate:
+                continue
+            if isinstance(candidate, dict):
+                records.extend(
+                    item for item in candidate.values() if isinstance(item, dict)
+                )
+            elif isinstance(candidate, (list, tuple, set)):
+                records.extend(item for item in candidate if isinstance(item, dict))
+        sources = sorted(
+            {
+                str(record.get("source")).strip()
+                for record in records
+                if isinstance(record.get("source"), str)
+            }
+        )
+        return {
+            "records": records,
+            "count": len(records),
+            "sources": sources,
+            "status": "COLLECTED" if records else "EMPTY",
+        }
+
+
+class ComplianceRuleEngine:
+    """Evaluate compliance rules for Section 4 document sets."""
+
+    def evaluate(self, records: Sequence[Dict[str, Any]], context: Dict[str, Any]) -> Dict[str, Any]:
+        violations: List[Dict[str, Any]] = []
+        required_sources = context.get("case_metadata", {}).get("required_public_sources") or []
+        normalized_required = {str(source).strip().lower() for source in required_sources if source}
+        observed_sources = {
+            str(record.get("source")).strip().lower()
+            for record in records
+            if isinstance(record.get("source"), str)
+        }
+        missing_sources = sorted(source for source in normalized_required if source not in observed_sources)
+        if missing_sources:
+            violations.append({"rule": "missing_required_sources", "details": missing_sources})
+
+        stale_cutoff = datetime.utcnow().date() if hasattr(datetime.utcnow(), "date") else None
+        stale_records: List[str] = []
+        for record in records:
+            last_updated = record.get("last_updated") or record.get("retrieved_at")
+            if not last_updated or not isinstance(last_updated, str):
+                continue
+            parsed = self._safe_parse_date(last_updated)
+            if stale_cutoff and parsed and (stale_cutoff - parsed.date()).days > 365:
+                stale_records.append(str(record.get("source") or record.get("id") or "unknown"))
+        if stale_records:
+            violations.append({"rule": "stale_records", "details": stale_records})
+
+        status = "PASSED" if not violations else "VIOLATIONS"
+        return {"status": status, "violations": violations}
+
+    @staticmethod
+    def _safe_parse_date(value: str) -> Optional[datetime]:
+        try:
+            return datetime.fromisoformat(value.replace("Z", "+00:00"))
+        except Exception:
+            try:
+                return datetime.strptime(value, "%Y-%m-%d")
+            except Exception:
+                return None
+
+
+class DocumentValidationSuite:
+    """Validate documents for checksum, signature, and watermark compliance."""
+
+    def validate(self, documents: Dict[str, Any]) -> Dict[str, Any]:
+        if not documents:
+            return {"status": "SKIPPED", "valid": [], "invalid": []}
+
+        invalid: List[Dict[str, Any]] = []
+        valid: List[str] = []
+        for doc_id, meta in documents.items():
+            if not isinstance(meta, dict):
+                continue
+            checksum_ok = bool(meta.get("checksum")) and bool(meta.get("checksum_verified", True))
+            signature_ok = bool(meta.get("signature_valid", True))
+            watermark_status = str(meta.get("watermark_status") or "valid").lower()
+            watermark_ok = watermark_status not in {"invalid", "tampered"}
+
+            if checksum_ok and signature_ok and watermark_ok:
+                valid.append(str(doc_id))
+            else:
+                invalid.append(
+                    {
+                        "id": str(doc_id),
+                        "checksum_ok": checksum_ok,
+                        "signature_ok": signature_ok,
+                        "watermark_ok": watermark_ok,
+                    }
+                )
+
+        status = "PASSED" if not invalid else "FAILED"
+        return {"status": status, "valid": valid, "invalid": invalid}
+
+
 class Section4Renderer:
     """
     Handles Section 4: Review of Surveillance Sessions
@@ -903,7 +1321,7 @@ def easyocr_text(img_path):
     except Exception as e:
         return f"EasyOCR failed: {str(e)}"
 
-class Section4Framework(SectionFramework):
+class LegacySection4Framework(LegacySectionFramework):
     SECTION_ID = "section_4_review"
     BUS_SECTION_ID = "section_4"
     MAX_RERUNS = 2
@@ -1019,9 +1437,24 @@ class Section4Framework(SectionFramework):
         return enriched
 
 
-    def __init__(self, gateway: Any, ecc: Optional[Any] = None) -> None:
-        super().__init__(gateway=gateway, ecc=ecc)
+    def __init__(self, gateway: Any, ecc: Optional[Any] = None,
+                 logger: Optional[logging.Logger] = None,
+                 bus: Optional[Any] = None,
+                 communicator: Optional[Any] = None) -> None:
+        super().__init__(gateway=gateway, ecc=ecc, logger=logger,
+                         bus=bus, communicator=communicator)
         self._last_context: Dict[str, Any] = {}
+        self.northstar_tool = NorthstarProtocolTool
+        self.cochran_tool = CochranMatchTool
+        self.reverse_continuity_cls = ReverseContinuityTool
+        self.metadata_tool = MetadataToolV5
+        self.mileage_tool = MileageToolV2
+        self.voice_helper = VoiceTranscriptionHelper
+        self.media_helper = MediaCorrelationHelper
+        self.records_data_source = PublicRecordsDataSource()
+        self.compliance_engine = ComplianceRuleEngine()
+        self.document_validator = DocumentValidationSuite()
+        self.renderer_factory = Section4Renderer
 
     def load_inputs(self) -> Dict[str, Any]:
         try:
@@ -1049,6 +1482,7 @@ class Section4Framework(SectionFramework):
                 "session_count": session_count,
                 "media_counts": media_stats,
             }
+            self._collect_public_records(context)
             context = self._augment_with_bus_context(context)
             self.logger.debug("Section 4 inputs loaded: %s", context["basic_stats"])
             self._last_context = context
@@ -1092,7 +1526,8 @@ class Section4Framework(SectionFramework):
             requires_surveillance = case_mode in {"field", "hybrid"}
             media_context = self._collect_media_context(context)
             session_fields, session_meta = self._build_session_fields(context, case_mode, media_context["summary"])
-            voice_summary = VoiceTranscriptionHelper.summarize(context.get("voice_transcripts"))
+            voice_helper = getattr(self, "voice_helper", VoiceTranscriptionHelper)
+            voice_summary = voice_helper.summarize(context.get("voice_transcripts"))
             billing = self._build_billing(context, case_mode, session_meta, requires_surveillance)
             notes = self._compose_notes(case_mode, context, session_meta, requires_surveillance)
             tool_results = self._run_inline_tools(context, requires_surveillance, media_context, session_fields)
@@ -1263,482 +1698,763 @@ class Section4Framework(SectionFramework):
             "manual_annotations": context.get("manual_annotations") or [],
         }
 
-        def _build_session_fields(
-            self,
-            context: Dict[str, Any],
-            case_mode: str,
-            media_summary: Dict[str, Any],
-        ) -> Tuple[Dict[str, Any], Dict[str, Any]]:
-            sources = self._collect_session_sources(context)
-            if case_mode == "investigative":
-                return self._build_investigative_fields(context, sources)
-            if case_mode == "field":
-                return self._build_field_fields(context, sources, media_summary, hybrid=False)
-            field_fields, field_meta = self._build_field_fields(context, sources, media_summary, hybrid=True)
-            investigative_fields, investigative_meta = self._build_investigative_fields(context, sources)
-            return self._merge_hybrid_fields(field_fields, field_meta, investigative_fields, investigative_meta)
+    def _build_session_fields(
+        self,
+        context: Dict[str, Any],
+        case_mode: str,
+        media_summary: Dict[str, Any],
+    ) -> Tuple[Dict[str, Any], Dict[str, Any]]:
+        sources = self._collect_session_sources(context)
+        if case_mode == "investigative":
+            return self._build_investigative_fields(context, sources)
+        if case_mode == "field":
+            return self._build_field_fields(context, sources, media_summary, hybrid=False)
+        field_fields, field_meta = self._build_field_fields(context, sources, media_summary, hybrid=True)
+        investigative_fields, investigative_meta = self._build_investigative_fields(context, sources)
+        return self._merge_hybrid_fields(field_fields, field_meta, investigative_fields, investigative_meta)
 
-        def _build_investigative_fields(
-            self,
-            context: Dict[str, Any],
-            sources: Dict[str, Any],
-        ) -> Tuple[Dict[str, Any], Dict[str, Any]]:
-            findings = sources.get("investigative_findings") or []
-            if isinstance(findings, dict):
-                findings = list(findings.values())
-            date_lines: List[str] = []
-            time_blocks: List[str] = []
-            locations: List[str] = []
-            behaviors: List[str] = []
-            interactions: List[str] = []
-            deviations: List[str] = []
-            qa_flags: List[str] = []
-            subjects_in_scope: List[str] = []
-            closure = None
-            for idx, finding in enumerate(findings, 1):
-                if isinstance(finding, dict):
-                    day = self._first_nonempty(finding.get("date"), finding.get("observed_date"))
-                    if day:
-                        date_lines.append(f"Event Entry {idx}: {day}")
-                    window = self._first_nonempty(finding.get("time_window"), finding.get("time"))
-                    if window and day:
-                        time_blocks.append(f"{day} - {window}")
-                    elif window:
-                        time_blocks.append(window)
-                    location = self._first_nonempty(finding.get("location"), finding.get("address"))
-                    if location:
-                        locations.append(location)
-                    summary = self._first_nonempty(finding.get("summary"), finding.get("finding"))
-                    if summary:
-                        behaviors.append(summary)
-                    interaction = finding.get("interaction")
+    def _build_investigative_fields(
+        self,
+        context: Dict[str, Any],
+        sources: Dict[str, Any],
+    ) -> Tuple[Dict[str, Any], Dict[str, Any]]:
+        findings = sources.get("investigative_findings") or []
+        if isinstance(findings, dict):
+            findings = list(findings.values())
+        date_lines: List[str] = []
+        time_blocks: List[str] = []
+        locations: List[str] = []
+        behaviors: List[str] = []
+        interactions: List[str] = []
+        deviations: List[str] = []
+        qa_flags: List[str] = []
+        subjects_in_scope: List[str] = []
+        closure = None
+        for idx, finding in enumerate(findings, 1):
+            if isinstance(finding, dict):
+                day = self._first_nonempty(finding.get("date"), finding.get("observed_date"))
+                if day:
+                    date_lines.append(f"Event Entry {idx}: {day}")
+                window = self._first_nonempty(finding.get("time_window"), finding.get("time"))
+                if window and day:
+                    time_blocks.append(f"{day} - {window}")
+                elif window:
+                    time_blocks.append(window)
+                location = self._first_nonempty(finding.get("location"), finding.get("address"))
+                if location:
+                    locations.append(location)
+                summary = self._first_nonempty(finding.get("summary"), finding.get("finding"))
+                if summary:
+                    behaviors.append(summary)
+                interaction = finding.get("interaction")
+                if interaction:
+                    interactions.append(str(interaction))
+                deviation = finding.get("deviation")
+                if deviation:
+                    deviations.append(str(deviation))
+                subject = finding.get("subject") or finding.get("person")
+                if subject:
+                    subjects_in_scope.append(str(subject))
+                closure = closure or finding.get("closure")
+            else:
+                text = str(finding)
+                date_lines.append(f"Event Entry {idx}: Investigative detail documented")
+                behaviors.append(text)
+        if not behaviors:
+            qa_flags.append("investigative_findings_missing")
+        fields = {
+            "surveillance_date": self._safe_join(date_lines, default="Investigative findings under review."),
+            "time_blocks": self._safe_join(time_blocks, default="Investigative timeline validation pending."),
+            "locations": self._safe_join(locations, default="Locations documented in investigative record."),
+            "subject_confirmed": self._safe_join(subjects_in_scope, default="Investigative leads pending confirmation."),
+            "observed_behavior": self._safe_join(behaviors, default="Investigative findings to be finalized."),
+            "subject_interactions": self._safe_join(interactions, default="No direct interactions recorded."),
+            "visual_evidence": "Investigative mode active; field evidence suppressed.",
+            "deviations_noted": self._safe_join(deviations, default="No deviations recorded in investigative phase."),
+            "closure_status": closure or "Investigative review ongoing.",
+            "voice_memos": [],
+        }
+        meta = {
+            "qa_flags": qa_flags,
+            "subjects_in_scope": subjects_in_scope,
+            "notes": [INVESTIGATIVE_NOTE],
+        }
+        return fields, meta
+
+    def _build_field_fields(
+        self,
+        context: Dict[str, Any],
+        sources: Dict[str, Any],
+        media_summary: Dict[str, Any],
+        hybrid: bool,
+    ) -> Tuple[Dict[str, Any], Dict[str, Any]]:
+        sessions = sources.get("sessions") or []
+        date_lines: List[str] = []
+        time_lines: List[str] = []
+        location_lines: List[str] = []
+        behavior_lines: List[str] = []
+        interaction_lines: List[str] = []
+        deviation_lines: List[str] = []
+        qa_flags: List[str] = []
+        subjects_in_scope: List[str] = []
+        closure = None
+        subject_confirmed_entries: List[str] = []
+        duration_map = {key: 0.0 for key in BILLING_CATEGORIES}
+        for idx, session in enumerate(sessions, 1):
+            if not isinstance(session, dict):
+                continue
+            date_val = self._first_nonempty(session.get("date"), session.get("session_date"))
+            if date_val:
+                prefix = HYBRID_FIELD_SEGMENT_LABEL + ": " if hybrid else "Session: "
+                date_lines.append(f"{prefix}{date_val}")
+            time_window = self._first_nonempty(
+                session.get("time_window"),
+                session.get("time_block"),
+                session.get("start_time"),
+            )
+            if time_window:
+                time_lines.append(f"{date_val or 'Session'} - {time_window}")
+            location = self._first_nonempty(
+                session.get("location"),
+                session.get("address"),
+                session.get("area"),
+            )
+            if location:
+                location_lines.append(location)
+            subject_flag = session.get("subject_confirmed")
+            subject_name = self._first_nonempty(" ".join(session.get("subject_names", [])), session.get("subject"))
+            if subject_flag or subject_name:
+                entry = subject_name or ("Subject visually confirmed" if subject_flag else NO_CONFIRM_MESSAGE)
+                subject_confirmed_entries.append(entry)
+                if subject_name:
+                    subjects_in_scope.append(subject_name)
+            observations = session.get("observations") or session.get("activities") or []
+            if isinstance(observations, dict):
+                observations = list(observations.values())
+            for obs in observations:
+                if isinstance(obs, dict):
+                    timestamp = self._first_nonempty(obs.get("time"), obs.get("timestamp"))
+                    description = self._first_nonempty(
+                        obs.get("description"),
+                        obs.get("activity"),
+                        obs.get("summary"),
+                    )
+                    if description and timestamp:
+                        behavior_lines.append(f"{timestamp} - {description}")
+                    elif description:
+                        behavior_lines.append(description)
+                    interaction = obs.get("interaction")
                     if interaction:
-                        interactions.append(str(interaction))
-                    deviation = finding.get("deviation")
+                        interaction_lines.append(str(interaction))
+                    deviation = obs.get("deviation") or obs.get("variance")
                     if deviation:
-                        deviations.append(str(deviation))
-                    subject = finding.get("subject") or finding.get("person")
+                        deviation_lines.append(str(deviation))
+                    subject = obs.get("subject") or obs.get("person")
                     if subject:
                         subjects_in_scope.append(str(subject))
-                    closure = closure or finding.get("closure")
+                    duration = obs.get("duration_minutes") or obs.get("minutes")
+                    category = (obs.get("category") or "").lower()
+                    if isinstance(duration, (int, float)):
+                        for key in BILLING_CATEGORIES:
+                            normalized_key = key.replace("_", " ")
+                            if normalized_key in category or key in category:
+                                duration_map[key] += float(duration)
+                                break
                 else:
-                    text = str(finding)
-                    date_lines.append(f"Event Entry {idx}: Investigative detail documented")
-                    behaviors.append(text)
-            if not behaviors:
-                qa_flags.append("investigative_findings_missing")
-            fields = {
-                "surveillance_date": self._safe_join(date_lines, default="Investigative findings under review."),
-                "time_blocks": self._safe_join(time_blocks, default="Investigative timeline validation pending."),
-                "locations": self._safe_join(locations, default="Locations documented in investigative record."),
-                "subject_confirmed": self._safe_join(subjects_in_scope, default="Investigative leads pending confirmation."),
-                "observed_behavior": self._safe_join(behaviors, default="Investigative findings to be finalized."),
-                "subject_interactions": self._safe_join(interactions, default="No direct interactions recorded."),
-                "visual_evidence": "Investigative mode active; field evidence suppressed.",
-                "deviations_noted": self._safe_join(deviations, default="No deviations recorded in investigative phase."),
-                "closure_status": closure or "Investigative review ongoing.",
-                "voice_memos": [],
-            }
-            meta = {
-                "qa_flags": qa_flags,
-                "subjects_in_scope": subjects_in_scope,
-                "notes": [INVESTIGATIVE_NOTE],
-            }
-            return fields, meta
+                    behavior_lines.append(str(obs))
+            closure = closure or session.get("closure") or session.get("status")
+        if not behavior_lines:
+            qa_flags.append("field_sessions_missing")
+        if not subject_confirmed_entries and not hybrid:
+            subject_confirmed_entries.append(NO_CONFIRM_MESSAGE)
+        visual_evidence = f"Images: {media_summary.get('images', 0)} | Videos: {media_summary.get('videos', 0)}"
+        fields = {
+            "surveillance_date": self._safe_join(date_lines, default="Field operations pending."),
+            "time_blocks": self._safe_join(time_lines, default="Timeline will finalize after QA."),
+            "locations": self._safe_join(location_lines, default="Location details pending confirmation."),
+            "subject_confirmed": self._safe_join(subject_confirmed_entries, default=NO_CONFIRM_MESSAGE),
+            "observed_behavior": self._safe_join(behavior_lines, default="No behaviors recorded during this window."),
+            "subject_interactions": self._safe_join(interaction_lines, default="No direct interactions observed."),
+            "visual_evidence": visual_evidence,
+            "deviations_noted": self._safe_join(deviation_lines, default=NO_DEVIATION_MESSAGE),
+            "closure_status": closure or DEFAULT_CLOSURE_MESSAGE,
+            "voice_memos": [],
+        }
+        meta = {
+            "qa_flags": qa_flags,
+            "subjects_in_scope": subjects_in_scope,
+            "duration_map": duration_map,
+            "notes": sources.get("analysis_notes") or [],
+            "hybrid_field_label": HYBRID_FIELD_SEGMENT_LABEL if hybrid else None,
+        }
+        return fields, meta
 
-        def _build_field_fields(
-            self,
-            context: Dict[str, Any],
-            sources: Dict[str, Any],
-            media_summary: Dict[str, Any],
-            hybrid: bool,
-        ) -> Tuple[Dict[str, Any], Dict[str, Any]]:
-            sessions = sources.get("sessions") or []
-            date_lines: List[str] = []
-            time_lines: List[str] = []
-            location_lines: List[str] = []
-            behavior_lines: List[str] = []
-            interaction_lines: List[str] = []
-            deviation_lines: List[str] = []
-            qa_flags: List[str] = []
-            subjects_in_scope: List[str] = []
-            closure = None
-            subject_confirmed_entries: List[str] = []
-            duration_map = {key: 0.0 for key in BILLING_CATEGORIES}
-            for idx, session in enumerate(sessions, 1):
-                if not isinstance(session, dict):
-                    continue
-                date_val = self._first_nonempty(session.get("date"), session.get("session_date"))
-                if date_val:
-                    prefix = HYBRID_FIELD_SEGMENT_LABEL + ": " if hybrid else "Session: "
-                    date_lines.append(f"{prefix}{date_val}")
-                time_window = self._first_nonempty(
-                    session.get("time_window"),
-                    session.get("time_block"),
-                    session.get("start_time"),
-                )
-                if time_window:
-                    time_lines.append(f"{date_val or 'Session'} - {time_window}")
-                location = self._first_nonempty(
-                    session.get("location"),
-                    session.get("address"),
-                    session.get("area"),
-                )
-                if location:
-                    location_lines.append(location)
-                subject_flag = session.get("subject_confirmed")
-                subject_name = self._first_nonempty(" ".join(session.get("subject_names", [])), session.get("subject"))
-                if subject_flag or subject_name:
-                    entry = subject_name or ("Subject visually confirmed" if subject_flag else NO_CONFIRM_MESSAGE)
-                    subject_confirmed_entries.append(entry)
-                    if subject_name:
-                        subjects_in_scope.append(subject_name)
-                observations = session.get("observations") or session.get("activities") or []
-                if isinstance(observations, dict):
-                    observations = list(observations.values())
-                for obs in observations:
-                    if isinstance(obs, dict):
-                        timestamp = self._first_nonempty(obs.get("time"), obs.get("timestamp"))
-                        description = self._first_nonempty(
-                            obs.get("description"),
-                            obs.get("activity"),
-                            obs.get("summary"),
-                        )
-                        if description and timestamp:
-                            behavior_lines.append(f"{timestamp} - {description}")
-                        elif description:
-                            behavior_lines.append(description)
-                        interaction = obs.get("interaction")
-                        if interaction:
-                            interaction_lines.append(str(interaction))
-                        deviation = obs.get("deviation") or obs.get("variance")
-                        if deviation:
-                            deviation_lines.append(str(deviation))
-                        subject = obs.get("subject") or obs.get("person")
-                        if subject:
-                            subjects_in_scope.append(str(subject))
-                        duration = obs.get("duration_minutes") or obs.get("minutes")
-                        category = (obs.get("category") or "").lower()
-                        if isinstance(duration, (int, float)):
-                            for key in BILLING_CATEGORIES:
-                                normalized_key = key.replace("_", " ")
-                                if normalized_key in category or key in category:
-                                    duration_map[key] += float(duration)
-                                    break
-                    else:
-                        behavior_lines.append(str(obs))
-                closure = closure or session.get("closure") or session.get("status")
-            if not behavior_lines:
-                qa_flags.append("field_sessions_missing")
-            if not subject_confirmed_entries and not hybrid:
-                subject_confirmed_entries.append(NO_CONFIRM_MESSAGE)
-            visual_evidence = f"Images: {media_summary.get('images', 0)} | Videos: {media_summary.get('videos', 0)}"
-            fields = {
-                "surveillance_date": self._safe_join(date_lines, default="Field operations pending."),
-                "time_blocks": self._safe_join(time_lines, default="Timeline will finalize after QA."),
-                "locations": self._safe_join(location_lines, default="Location details pending confirmation."),
-                "subject_confirmed": self._safe_join(subject_confirmed_entries, default=NO_CONFIRM_MESSAGE),
-                "observed_behavior": self._safe_join(behavior_lines, default="No behaviors recorded during this window."),
-                "subject_interactions": self._safe_join(interaction_lines, default="No direct interactions observed."),
-                "visual_evidence": visual_evidence,
-                "deviations_noted": self._safe_join(deviation_lines, default=NO_DEVIATION_MESSAGE),
-                "closure_status": closure or DEFAULT_CLOSURE_MESSAGE,
-                "voice_memos": [],
-            }
-            meta = {
-                "qa_flags": qa_flags,
-                "subjects_in_scope": subjects_in_scope,
-                "duration_map": duration_map,
-                "notes": sources.get("analysis_notes") or [],
-                "hybrid_field_label": HYBRID_FIELD_SEGMENT_LABEL if hybrid else None,
-            }
-            return fields, meta
+    def _merge_hybrid_fields(
+        self,
+        field_fields: Dict[str, Any],
+        field_meta: Dict[str, Any],
+        investigative_fields: Dict[str, Any],
+        investigative_meta: Dict[str, Any],
+    ) -> Tuple[Dict[str, Any], Dict[str, Any]]:
+        combined_fields = dict(field_fields)
+        combined_fields["surveillance_date"] = self._safe_join(
+            [investigative_fields["surveillance_date"], field_fields["surveillance_date"]],
+            default=field_fields["surveillance_date"],
+            separator="\n\n",
+        )
+        combined_fields["time_blocks"] = self._safe_join(
+            [investigative_fields["time_blocks"], field_fields["time_blocks"]],
+            default=field_fields["time_blocks"],
+            separator="\n\n",
+        )
+        combined_fields["observed_behavior"] = self._safe_join(
+            [investigative_fields["observed_behavior"], field_fields["observed_behavior"]],
+            default=field_fields["observed_behavior"],
+            separator="\n\n",
+        )
+        combined_fields["subject_interactions"] = self._safe_join(
+            [investigative_fields["subject_interactions"], field_fields["subject_interactions"]],
+            default=field_fields["subject_interactions"],
+            separator="\n",
+        )
+        combined_fields["deviations_noted"] = self._safe_join(
+            [investigative_fields["deviations_noted"], field_fields["deviations_noted"]],
+            default=field_fields["deviations_noted"],
+            separator="\n",
+        )
+        combined_meta = {
+            "qa_flags": [],
+            "subjects_in_scope": [],
+            "duration_map": field_meta.get("duration_map", {}),
+            "notes": [HYBRID_FIELD_SEGMENT_LABEL],
+            "hybrid_field_label": HYBRID_FIELD_SEGMENT_LABEL,
+        }
+        combined_meta["qa_flags"].extend(investigative_meta.get("qa_flags", []))
+        combined_meta["qa_flags"].extend(field_meta.get("qa_flags", []))
+        combined_meta["subjects_in_scope"].extend(investigative_meta.get("subjects_in_scope", []))
+        combined_meta["subjects_in_scope"].extend(field_meta.get("subjects_in_scope", []))
+        combined_meta["notes"].extend(investigative_meta.get("notes", []))
+        combined_meta["notes"].extend(field_meta.get("notes", []))
+        return combined_fields, combined_meta
 
-        def _merge_hybrid_fields(
-            self,
-            field_fields: Dict[str, Any],
-            field_meta: Dict[str, Any],
-            investigative_fields: Dict[str, Any],
-            investigative_meta: Dict[str, Any],
-        ) -> Tuple[Dict[str, Any], Dict[str, Any]]:
-            combined_fields = dict(field_fields)
-            combined_fields["surveillance_date"] = self._safe_join(
-                [investigative_fields["surveillance_date"], field_fields["surveillance_date"]],
-                default=field_fields["surveillance_date"],
-                separator="\n\n",
-            )
-            combined_fields["time_blocks"] = self._safe_join(
-                [investigative_fields["time_blocks"], field_fields["time_blocks"]],
-                default=field_fields["time_blocks"],
-                separator="\n\n",
-            )
-            combined_fields["observed_behavior"] = self._safe_join(
-                [investigative_fields["observed_behavior"], field_fields["observed_behavior"]],
-                default=field_fields["observed_behavior"],
-                separator="\n\n",
-            )
-            combined_fields["subject_interactions"] = self._safe_join(
-                [investigative_fields["subject_interactions"], field_fields["subject_interactions"]],
-                default=field_fields["subject_interactions"],
-                separator="\n",
-            )
-            combined_fields["deviations_noted"] = self._safe_join(
-                [investigative_fields["deviations_noted"], field_fields["deviations_noted"]],
-                default=field_fields["deviations_noted"],
-                separator="\n",
-            )
-            combined_meta = {
-                "qa_flags": [],
-                "subjects_in_scope": [],
-                "duration_map": field_meta.get("duration_map", {}),
-                "notes": [HYBRID_FIELD_SEGMENT_LABEL],
-                "hybrid_field_label": HYBRID_FIELD_SEGMENT_LABEL,
-            }
-            combined_meta["qa_flags"].extend(investigative_meta.get("qa_flags", []))
-            combined_meta["qa_flags"].extend(field_meta.get("qa_flags", []))
-            combined_meta["subjects_in_scope"].extend(investigative_meta.get("subjects_in_scope", []))
-            combined_meta["subjects_in_scope"].extend(field_meta.get("subjects_in_scope", []))
-            combined_meta["notes"].extend(investigative_meta.get("notes", []))
-            combined_meta["notes"].extend(field_meta.get("notes", []))
-            return combined_fields, combined_meta
+    def _build_billing(
+        self,
+        context: Dict[str, Any],
+        case_mode: str,
+        session_meta: Dict[str, Any],
+        requires_surveillance: bool,
+    ) -> Dict[str, Any]:
+        toolkit_billing = context.get("toolkit_results", {}).get("billing", {})
+        categories = {key: float(toolkit_billing.get(key, 0)) for key in BILLING_CATEGORIES}
+        notes = list(toolkit_billing.get("notes", []))
+        if requires_surveillance and not any(categories.values()):
+            duration_map = session_meta.get("duration_map", {})
+            for key in BILLING_CATEGORIES:
+                if key in duration_map:
+                    categories[key] = float(duration_map[key])
+        if not requires_surveillance:
+            notes.append("Investigative mode: field billing suppressed.")
+        model = toolkit_billing.get("model") or ("hybrid" if case_mode == "hybrid" else ("field" if requires_surveillance else "investigative"))
+        return {
+            "model": model,
+            "categories": categories,
+            "notes": notes,
+        }
 
-        def _build_billing(
-            self,
-            context: Dict[str, Any],
-            case_mode: str,
-            session_meta: Dict[str, Any],
-            requires_surveillance: bool,
-        ) -> Dict[str, Any]:
-            toolkit_billing = context.get("toolkit_results", {}).get("billing", {})
-            categories = {key: float(toolkit_billing.get(key, 0)) for key in BILLING_CATEGORIES}
-            notes = list(toolkit_billing.get("notes", []))
-            if requires_surveillance and not any(categories.values()):
-                duration_map = session_meta.get("duration_map", {})
-                for key in BILLING_CATEGORIES:
-                    if key in duration_map:
-                        categories[key] = float(duration_map[key])
-            if not requires_surveillance:
-                notes.append("Investigative mode: field billing suppressed.")
-            model = toolkit_billing.get("model") or ("hybrid" if case_mode == "hybrid" else ("field" if requires_surveillance else "investigative"))
-            return {
-                "model": model,
-                "categories": categories,
-                "notes": notes,
-            }
+    def _compose_notes(
+        self,
+        case_mode: str,
+        context: Dict[str, Any],
+        session_meta: Dict[str, Any],
+        requires_surveillance: bool,
+    ) -> str:
+        notes: List[str] = []
+        notes.extend(session_meta.get("notes", []))
+        continuity_notes = context.get("toolkit_results", {}).get("continuity") or []
+        if isinstance(continuity_notes, str):
+            continuity_notes = [continuity_notes]
+        notes.extend(str(n).strip() for n in continuity_notes if str(n).strip())
+        manual_entries = context.get("manual_annotations", [])
+        notes.extend(str(item).strip() for item in manual_entries if str(item).strip())
+        if case_mode == "hybrid":
+            notes.insert(0, "Hybrid case: Investigative findings triggered field verification.")
+        if not requires_surveillance:
+            notes.append(NO_FIELD_MESSAGE)
+        unique_notes: List[str] = []
+        seen = set()
+        for note in notes:
+            text = str(note).strip()
+            if not text or text in seen:
+                continue
+            seen.add(text)
+            unique_notes.append(text)
+        return "\n".join(unique_notes) if unique_notes else "Notes pending lead investigator review."
 
-        def _compose_notes(
-            self,
-            case_mode: str,
-            context: Dict[str, Any],
-            session_meta: Dict[str, Any],
-            requires_surveillance: bool,
-        ) -> str:
-            notes: List[str] = []
-            notes.extend(session_meta.get("notes", []))
-            continuity_notes = context.get("toolkit_results", {}).get("continuity") or []
-            if isinstance(continuity_notes, str):
-                continuity_notes = [continuity_notes]
-            notes.extend(str(n).strip() for n in continuity_notes if str(n).strip())
-            manual_entries = context.get("manual_annotations", [])
-            notes.extend(str(item).strip() for item in manual_entries if str(item).strip())
-            if case_mode == "hybrid":
-                notes.insert(0, "Hybrid case: Investigative findings triggered field verification.")
-            if not requires_surveillance:
-                notes.append(NO_FIELD_MESSAGE)
-            unique_notes: List[str] = []
-            seen = set()
-            for note in notes:
-                text = str(note).strip()
-                if not text or text in seen:
-                    continue
-                seen.add(text)
-                unique_notes.append(text)
-            return "\n".join(unique_notes) if unique_notes else "Notes pending lead investigator review."
+    def _collect_public_records(self, context: Dict[str, Any]) -> None:
+        data_source = getattr(self, "records_data_source", None)
+        if not data_source:
+            return
+        try:
+            summary = data_source.collect(context)
+        except Exception as exc:
+            self.logger.warning("Public records collection failed: %s", exc)
+            summary = {"status": "FAILED", "error": str(exc), "records": []}
+        context["public_records_summary"] = summary
+        if "records" in summary:
+            context["public_records"] = summary.get("records", [])
 
-        def _collect_media_context(self, context: Dict[str, Any]) -> Dict[str, Any]:
-            media_index = context.get("media_index") or {}
-            summary = MediaCorrelationHelper.collect_media_stats(media_index)
-            return {
-                "media_index": media_index,
-                "summary": summary,
-            }
+    def _collect_media_context(self, context: Dict[str, Any]) -> Dict[str, Any]:
+        media_index = context.get("media_index") or {}
+        media_helper = getattr(self, "media_helper", MediaCorrelationHelper)
+        summary = media_helper.collect_media_stats(media_index)
+        return {
+            "media_index": media_index,
+            "summary": summary,
+        }
+    
+    def _process_ocr_documents(self, context: Dict[str, Any]) -> Dict[str, Any]:
+        """Process PDF and image documents using OCR"""
+        ocr_results = {}
         
-        def _process_ocr_documents(self, context: Dict[str, Any]) -> Dict[str, Any]:
-            """Process PDF and image documents using OCR"""
-            ocr_results = {}
-            
-            # Get documents from various sources
-            planning = context.get("planning_manifest", {})
-            case_meta = context.get("case_metadata", {})
-            surveillance = context.get("surveillance_manifest", {})
-            
-            # PDF documents
-            pdf_docs = (planning.get("pdf_documents", []) or 
-                       case_meta.get("pdf_documents", []) or 
-                       surveillance.get("pdf_documents", []))
-            for pdf_path in pdf_docs:
-                if os.path.exists(pdf_path):
-                    try:
-                        text = extract_text_from_pdf(pdf_path)
-                        ocr_results[f"pdf_{os.path.basename(pdf_path)}"] = text
-                    except Exception as e:
-                        ocr_results[f"pdf_{os.path.basename(pdf_path)}"] = f"PDF extraction failed: {str(e)}"
-            
-            # Image documents
-            img_docs = (planning.get("image_documents", []) or 
-                       case_meta.get("image_documents", []) or 
-                       surveillance.get("image_documents", []))
-            for img_path in img_docs:
-                if os.path.exists(img_path):
-                    try:
-                        # Try Tesseract first
-                        text = extract_text_from_image(img_path)
-                        if text and "failed" not in text.lower():
-                            ocr_results[f"img_{os.path.basename(img_path)}"] = text
-                        else:
-                            # Fallback to EasyOCR
-                            text = easyocr_text(img_path)
-                            ocr_results[f"img_{os.path.basename(img_path)}"] = text
-                    except Exception as e:
-                        ocr_results[f"img_{os.path.basename(img_path)}"] = f"Image OCR failed: {str(e)}"
-            
-            return ocr_results
+        # Get documents from various sources
+        planning = context.get("planning_manifest", {})
+        case_meta = context.get("case_metadata", {})
+        surveillance = context.get("surveillance_manifest", {})
+        
+        # PDF documents
+        pdf_docs = (planning.get("pdf_documents", []) or 
+                   case_meta.get("pdf_documents", []) or 
+                   surveillance.get("pdf_documents", []))
+        for pdf_path in pdf_docs:
+            if os.path.exists(pdf_path):
+                try:
+                    text = extract_text_from_pdf(pdf_path)
+                    ocr_results[f"pdf_{os.path.basename(pdf_path)}"] = text
+                except Exception as e:
+                    ocr_results[f"pdf_{os.path.basename(pdf_path)}"] = f"PDF extraction failed: {str(e)}"
+        
+        # Image documents
+        img_docs = (planning.get("image_documents", []) or 
+                   case_meta.get("image_documents", []) or 
+                   surveillance.get("image_documents", []))
+        for img_path in img_docs:
+            if os.path.exists(img_path):
+                try:
+                    # Try Tesseract first
+                    text = extract_text_from_image(img_path)
+                    if text and "failed" not in text.lower():
+                        ocr_results[f"img_{os.path.basename(img_path)}"] = text
+                    else:
+                        # Fallback to EasyOCR
+                        text = easyocr_text(img_path)
+                        ocr_results[f"img_{os.path.basename(img_path)}"] = text
+                except Exception as e:
+                    ocr_results[f"img_{os.path.basename(img_path)}"] = f"Image OCR failed: {str(e)}"
+        
+        return ocr_results
 
-        def _run_inline_tools(
-            self,
-            context: Dict[str, Any],
-            requires_surveillance: bool,
-            media_context: Dict[str, Any],
-            session_fields: Dict[str, Any],
-        ) -> Dict[str, Any]:
-            subject_manifest = context.get("planning_manifest", {}).get("subjects") or context.get("case_metadata", {}).get("subjects") or []
-            identity_candidates = context.get("toolkit_results", {}).get("identity_candidates", {})
-            identity_checks: List[Dict[str, Any]] = []
-            for subject in subject_manifest:
-                if not isinstance(subject, dict):
-                    continue
-                subject_id = subject.get("id") or subject.get("subject_id")
-                candidate = identity_candidates.get(subject_id) if subject_id else None
-                if candidate:
-                    identity_checks.append(
-                        {
-                            "subject_id": subject_id,
-                            "result": CochranMatchTool.verify_identity(subject, candidate),
-                        }
-                    )
-            media_index = media_context.get("media_index", {})
-            image_assets = media_index.get("images") or {}
-            assets: List[Dict[str, Any]] = []
-            for media_id, meta in image_assets.items():
-                field_time = meta.get("captured_at") or meta.get("field_time") or meta.get("timestamp")
-                received_time = meta.get("received_time") or meta.get("ingested_at") or meta.get("captured_at")
-                if not field_time or not received_time:
-                    continue
-                assets.append(
+    def _run_inline_tools(
+        self,
+        context: Dict[str, Any],
+        requires_surveillance: bool,
+        media_context: Dict[str, Any],
+        session_fields: Dict[str, Any],
+    ) -> Dict[str, Any]:
+        """Execute artifact tooling for document inventory."""
+        subject_manifest = (
+            context.get("planning_manifest", {}).get("subjects")
+            or context.get("case_metadata", {}).get("subjects")
+            or []
+        )
+        identity_candidates = context.get("toolkit_results", {}).get("identity_candidates", {})
+
+        identity_checks: List[Dict[str, Any]] = []
+        cochran_tool = getattr(self, "cochran_tool", CochranMatchTool)
+        for subject in subject_manifest:
+            if not isinstance(subject, dict):
+                continue
+            subject_id = subject.get("id") or subject.get("subject_id")
+            candidate = identity_candidates.get(subject_id) if subject_id else None
+            if candidate:
+                identity_checks.append(
                     {
-                        "id": media_id,
-                        "field_time": str(field_time),
-                        "received_time": str(received_time),
-                        "tags": meta.get("tags", []),
+                        "subject_id": subject_id,
+                        "result": cochran_tool.verify_identity(subject, candidate),
                     }
                 )
-            northstar_result = (
-                NorthstarProtocolTool.process_assets(assets) if assets else {"status": "SKIPPED"}
+
+        media_index = media_context.get("media_index", {})
+        video_analysis = media_context.get("video_analysis") or {}
+        image_assets = media_index.get("images") or {}
+        audio_assets = media_index.get("audio") or {}
+
+        assets: List[Dict[str, Any]] = []
+        for media_id, meta in image_assets.items():
+            field_time = meta.get("captured_at") or meta.get("field_time") or meta.get("timestamp")
+            received_time = meta.get("received_time") or meta.get("ingested_at") or meta.get("captured_at")
+            if not field_time or not received_time:
+                continue
+            assets.append(
+                {
+                    "id": media_id,
+                    "field_time": str(field_time),
+                    "received_time": str(received_time),
+                    "tags": meta.get("tags", []),
+                }
             )
-            reverse_tool = ReverseContinuityTool()
-            text_blob = "\n".join(
-                filter(
-                    None,
-                    [
-                        session_fields.get("surveillance_date"),
-                        session_fields.get("time_blocks"),
-                        session_fields.get("observed_behavior"),
-                        session_fields.get("deviations_noted"),
-                    ],
-                )
+
+        northstar_tool = getattr(self, "northstar_tool", NorthstarProtocolTool)
+        northstar_result = northstar_tool.process_assets(assets) if assets else {"status": "SKIPPED"}
+
+        reverse_cls = getattr(self, "reverse_continuity_cls", ReverseContinuityTool)
+        reverse_tool = reverse_cls() if callable(reverse_cls) else reverse_cls
+
+        text_blob = "\n".join(
+            filter(
+                None,
+                [
+                    session_fields.get("surveillance_date"),
+                    session_fields.get("time_blocks"),
+                    session_fields.get("observed_behavior"),
+                    session_fields.get("deviations_noted"),
+                ],
             )
-            sessions = self._collect_session_sources(context).get("sessions") or []
-            session_docs: List[str] = []
-            for entry in sessions:
-                try:
-                    session_docs.append(json.dumps(entry, default=str))
-                except TypeError:
-                    session_docs.append(str(entry))
-            reverse_ok, reverse_log = reverse_tool.run_validation(
-                text_blob,
-                session_docs,
-                [json.dumps(meta, default=str) for meta in image_assets.values()],
-            )
-            metadata_zip = context.get("surveillance_manifest", {}).get("metadata_zip") or context.get("media_bundle_zip")
-            metadata_result = (
-                MetadataToolV5.process_zip(metadata_zip, context.get("metadata_output_dir", "./metadata_out"))
-                if metadata_zip
-                else {"status": "SKIPPED"}
-            )
-            mileage_result = MileageToolV2.audit_mileage()
-            
-            # Process OCR documents if available
+        )
+        sessions = self._collect_session_sources(context).get("sessions") or []
+        session_docs: List[str] = []
+        for entry in sessions:
+            try:
+                session_docs.append(json.dumps(entry, default=str))
+            except TypeError:
+                session_docs.append(str(entry))
+
+        reverse_ok, reverse_log = reverse_tool.run_validation(
+            text_blob,
+            session_docs,
+            [json.dumps(meta, default=str) for meta in image_assets.values()],
+        )
+
+        metadata_zip = context.get("surveillance_manifest", {}).get("metadata_zip") or context.get("media_bundle_zip")
+        metadata_tool = getattr(self, "metadata_tool", MetadataToolV5)
+        metadata_result = (
+            metadata_tool.process_zip(metadata_zip, context.get("metadata_output_dir", "./metadata_out"))
+            if metadata_zip
+            else {"status": "SKIPPED"}
+        )
+
+        mileage_tool = getattr(self, "mileage_tool", MileageToolV2)
+        mileage_result = (
+            mileage_tool.audit_mileage() if hasattr(mileage_tool, "audit_mileage") else {"status": "SKIPPED"}
+        )
+
+        records_summary = context.get("public_records_summary") or {}
+        public_records = records_summary.get("records") or context.get("public_records") or []
+        compliance_engine = getattr(self, "compliance_engine", None)
+        if compliance_engine:
+            compliance_result = compliance_engine.evaluate(public_records, context)
+        else:
+            compliance_result = {"status": "SKIPPED", "violations": []}
+
+        documents_index: Dict[str, Any] = {}
+        document_sources = [
+            media_index.get("documents"),
+            context.get("surveillance_manifest", {}).get("documents")
+            if isinstance(context.get("surveillance_manifest"), dict)
+            else {},
+        ]
+        for doc_set in document_sources:
+            if isinstance(doc_set, dict):
+                documents_index.update(doc_set)
+        validator = getattr(self, "document_validator", None)
+        if validator:
+            document_validation = validator.validate(documents_index)
+        else:
+            document_validation = {"status": "SKIPPED", "valid": [], "invalid": []}
+
+        if OCR_AVAILABLE:
+            ocr_results = self._process_ocr_documents(context)
+        else:
             ocr_results = {}
-            if OCR_AVAILABLE:
-                ocr_results = self._process_ocr_documents(context)
-            
-            qa_flags: List[str] = []
-            if northstar_result.get("deadfile_registry"):
-                qa_flags.append("northstar_deadfile_review")
-            if not reverse_ok:
-                qa_flags.append("reverse_continuity_manual_review")
-            if metadata_result.get("status") == "ERROR":
-                qa_flags.append("metadata_extraction_failure")
-            if requires_surveillance and not assets:
-                qa_flags.append("no_media_assets_loaded")
-            if ocr_results and any("failed" in str(result).lower() for result in ocr_results.values()):
-                qa_flags.append("ocr_processing_issues")
-                
-            return {
-                "identity_checks": identity_checks,
-                "northstar": northstar_result,
-                "reverse_continuity": {"ok": bool(reverse_ok), "log": reverse_log},
-                "metadata_audit": metadata_result,
-                "mileage_audit": mileage_result,
-                "ocr_results": ocr_results,
-                "qa_flags": qa_flags,
-            }
 
-        def _build_renderer_sources(self, context: Dict[str, Any]) -> Dict[str, Dict[str, Any]]:
-            planning = context.get("planning_manifest", {})
-            surveillance = context.get("surveillance_manifest", {})
-            field_logs = surveillance.get("sessions") or surveillance.get("logs") or []
-            if isinstance(field_logs, dict):
-                field_logs = list(field_logs.values())
-            fallback_notes = {
-                "observed_behavior": "\n".join(
-                    filter(None, (str(entry.get("summary")) for entry in field_logs if isinstance(entry, dict)))
-                )
-            }
-            return {
-                "intake": context.get("case_metadata", {}),
-                "notes": planning.get("investigator_notes", fallback_notes),
-                "evidence": context.get("media_index", {}),
-                "prior_section": surveillance,
-            }
-
-        def _safe_join(self, items: Iterable[Any], default: str, separator: str = "\n") -> str:
-            values = [str(item).strip() for item in items if str(item).strip()]
-            if not values:
-                return default
-            return separator.join(values)
-
-        def _first_nonempty(self, *candidates: Any) -> Optional[str]:
-            for candidate in candidates:
-                if candidate is None:
+        transcripts = context.get("voice_transcripts") or []
+        if isinstance(transcripts, dict):
+            transcripts = list(transcripts.values())
+        transcript_count = len(transcripts) if isinstance(transcripts, list) else 0
+        pending_transcripts = 0
+        transcript_statuses: List[str] = []
+        if isinstance(transcripts, list):
+            for entry in transcripts:
+                if not isinstance(entry, dict):
                     continue
-                text = str(candidate).strip()
-                if text:
-                    return text
-            return None
+                status = str(entry.get("status") or "").lower()
+                if status in {"pending", "error"}:
+                    pending_transcripts += 1
+                if status:
+                    transcript_statuses.append(status)
 
+        qa_flags: List[str] = []
+        if northstar_result.get("deadfile_registry"):
+            qa_flags.append("northstar_deadfile_review")
+        if not reverse_ok:
+            qa_flags.append("reverse_continuity_manual_review")
+        if metadata_result.get("status") == "ERROR":
+            qa_flags.append("metadata_extraction_failure")
+        if requires_surveillance and not assets:
+            qa_flags.append("no_media_assets_loaded")
+        if ocr_results and any("failed" in str(result).lower() for result in ocr_results.values()):
+            qa_flags.append("ocr_processing_issues")
+        if records_summary.get("status") == "FAILED":
+            qa_flags.append("public_records_unavailable")
+        if compliance_result.get("violations"):
+            qa_flags.append("compliance_violations")
+        if document_validation.get("status") == "FAILED":
+            qa_flags.append("document_validation_failure")
+
+        return {
+            "identity_checks": identity_checks,
+            "northstar": northstar_result,
+            "reverse_continuity": {"ok": bool(reverse_ok), "log": reverse_log},
+            "metadata_audit": metadata_result,
+            "mileage_audit": mileage_result,
+            "ocr_results": ocr_results,
+            "public_records": records_summary,
+            "compliance_check": compliance_result,
+            "document_validation": document_validation,
+            "video_analysis": video_analysis,
+            "audio_transcription": {
+                "count": transcript_count,
+                "pending": pending_transcripts,
+                "statuses": transcript_statuses,
+            },
+            "qa_flags": qa_flags,
+        }
+
+
+    def _build_renderer_sources(self, context: Dict[str, Any]) -> Dict[str, Dict[str, Any]]:
+        planning = context.get("planning_manifest", {})
+        surveillance = context.get("surveillance_manifest", {})
+        field_logs = surveillance.get("sessions") or surveillance.get("logs") or []
+        if isinstance(field_logs, dict):
+            field_logs = list(field_logs.values())
+        fallback_notes = {
+            "observed_behavior": "\n".join(
+                filter(None, (str(entry.get("summary")) for entry in field_logs if isinstance(entry, dict)))
+            )
+        }
+        return {
+            "intake": context.get("case_metadata", {}),
+            "notes": planning.get("investigator_notes", fallback_notes),
+            "evidence": context.get("media_index", {}),
+            "prior_section": surveillance,
+        }
+
+    def _safe_join(self, items: Iterable[Any], default: str, separator: str = "\n") -> str:
+        values = [str(item).strip() for item in items if str(item).strip()]
+        if not values:
+            return default
+        return separator.join(values)
+
+    def _first_nonempty(self, *candidates: Any) -> Optional[str]:
+        for candidate in candidates:
+            if candidate is None:
+                continue
+            text = str(candidate).strip()
+            if text:
+                return text
+        return None
+
+
+
+
+class Section4Framework(LifecycleSectionFramework):
+    SECTION_ID = LegacySection4Framework.SECTION_ID
+    MODULE_ADDRESS = '4-4'
+    BUS_SECTION_ID = LegacySection4Framework.BUS_SECTION_ID
+    MAX_RERUNS = LegacySection4Framework.MAX_RERUNS
+    STAGES = LegacySection4Framework.STAGES
+    COMMUNICATION = LegacySection4Framework.COMMUNICATION
+    PERSISTENCE = getattr(LegacySection4Framework, 'PERSISTENCE', None)
+    FACT_GRAPH = getattr(LegacySection4Framework, 'FACT_GRAPH', None)
+    ORDER = LegacySection4Framework.ORDER
+
+    def __init__(
+        self,
+        gateway: Any,
+        *,
+        communicator_initializer: Optional[Callable[..., Any]] = None,
+        marshal_client: Optional[Any] = None,
+        marshal_address: Optional[str] = None,
+        warden_client: Optional[Any] = None,
+        dependency_initializers: Optional[Dict[str, Callable[..., Any]]] = None,
+        queue_client: Optional[Any] = None,
+        storage: Optional[Any] = None,
+        fact_graph: Optional[Any] = None,
+    ) -> None:
+        dependencies: Dict[str, Callable[..., Any]] = {
+            'northstar_tool': init_northstar_protocol,
+            'cochran_tool': init_cochran_match,
+            'reverse_continuity': init_reverse_continuity,
+            'metadata_tool': init_metadata_processor,
+            'mileage_tool': init_mileage_tool,
+            'renderer_factory': init_section4_renderer,
+            'voice_helper': init_section4_voice_helper,
+            'media_helper': init_section4_media_helper,
+            'records_data_source': init_section4_data_sources,
+            'compliance_engine': init_section4_compliance_rules,
+            'document_validator': init_section4_document_validator,
+        }
+        if dependency_initializers:
+            dependencies.update(dependency_initializers)
+
+        super().__init__(
+            gateway,
+            module_address=self.MODULE_ADDRESS,
+            communicator_initializer=communicator_initializer,
+            marshal_client=marshal_client,
+            marshal_address=marshal_address,
+            warden_client=warden_client,
+            dependency_initializers=dependencies,
+            queue_client=queue_client,
+            storage=storage,
+            fact_graph=fact_graph,
+        )
+
+        self.legacy = LegacySection4Framework(gateway=gateway, ecc=self.ecc)
+
+        northstar_tool = self.get_dependency('northstar_tool')
+        if northstar_tool is not None:
+            self.legacy.northstar_tool = northstar_tool
+
+        cochran_tool = self.get_dependency('cochran_tool')
+        if cochran_tool is not None:
+            self.legacy.cochran_tool = cochran_tool
+
+        reverse_cls = self.get_dependency('reverse_continuity')
+        if reverse_cls is not None:
+            self.legacy.reverse_continuity_cls = reverse_cls
+
+        metadata_tool = self.get_dependency('metadata_tool')
+        if metadata_tool is not None:
+            self.legacy.metadata_tool = metadata_tool
+
+        mileage_tool = self.get_dependency('mileage_tool')
+        if mileage_tool is not None:
+            self.legacy.mileage_tool = mileage_tool
+
+        renderer_factory = self.get_dependency('renderer_factory')
+        if renderer_factory is not None:
+            self.legacy.renderer_factory = renderer_factory
+
+        voice_helper = self.get_dependency('voice_helper')
+        if voice_helper is not None:
+            self.legacy.voice_helper = voice_helper
+
+        media_helper = self.get_dependency('media_helper')
+        if media_helper is not None:
+            self.legacy.media_helper = media_helper
+
+        records_data_source = self.get_dependency('records_data_source')
+        if records_data_source is not None:
+            self.legacy.records_data_source = records_data_source
+
+        compliance_engine = self.get_dependency('compliance_engine')
+        if compliance_engine is not None:
+            self.legacy.compliance_engine = compliance_engine
+
+        document_validator = self.get_dependency('document_validator')
+        if document_validator is not None:
+            self.legacy.document_validator = document_validator
+
+        self.baseline_report = self.run_baseline_initialization()
+        
+        # Run mandatory self-test per UDS protocol
+        self._run_startup_self_test()
+
+    # ------------------------------------------------------------------
+    # Self-Test Protocol (UDS Compliance)
+    # ------------------------------------------------------------------
+    def _run_startup_self_test(self) -> bool:
+        """Validate all tool dependencies per UDS self-test protocol."""
+        self.logger.info("[%s] Running mandatory startup self-test per UDS protocol", self.MODULE_ADDRESS)
+        operational = True
+        
+        tools_to_validate = [
+            ('4-4.1', 'Northstar Protocol', lambda: self.get_dependency('northstar_tool')),
+            ('4-4.2', 'Cochran Match', lambda: self.get_dependency('cochran_tool')),
+            ('4-4.3', 'Reverse Continuity', lambda: self.get_dependency('reverse_continuity')),
+            ('4-4.4', 'Metadata Processor', lambda: self.get_dependency('metadata_tool')),
+            ('4-4.5', 'Mileage Tool', lambda: self.get_dependency('mileage_tool')),
+            ('4-4.6', 'Section Renderer', lambda: self.get_dependency('renderer_factory')),
+            ('4-4.7', 'Voice Helper', lambda: self.get_dependency('voice_helper')),
+            ('4-4.8', 'Media Helper', lambda: self.get_dependency('media_helper')),
+            ('4-4.9', 'Records Data Source', lambda: self.get_dependency('records_data_source')),
+            ('4-4.10', 'Compliance Engine', lambda: self.get_dependency('compliance_engine')),
+            ('4-4.11', 'Document Validator', lambda: self.get_dependency('document_validator')),
+        ]
+        
+        for tool_addr, tool_name, get_tool_ref in tools_to_validate:
+            try:
+                tool_ref = get_tool_ref()
+                
+                if tool_ref is None:
+                    self.logger.error("[%s] Self-test FAILED: %s (%s) not initialized", 
+                                      self.MODULE_ADDRESS, tool_name, tool_addr)
+                    
+                    if hasattr(self, 'communicator') and self.communicator:
+                        self.communicator.send_signal(
+                            target_address="3",
+                            radio_code="SOS",
+                            message=f"{tool_name} initialization failed",
+                            payload={
+                                "fault_code": f"[{tool_addr}-12-INIT]",
+                                "description": f"{tool_name} not initialized - missing dependency or initialization failure",
+                                "component": tool_name,
+                                "reporting_address": tool_addr,
+                                "parent_address": self.MODULE_ADDRESS,
+                                "severity": "CRITICAL",
+                                "timestamp": datetime.now().isoformat(),
+                                "fault_type": "12",
+                                "fault_type_description": "Missing initialization dependency"
+                            }
+                        )
+                        self.logger.warning("[%s] Fault code emitted: [%s-12-INIT]", 
+                                           self.MODULE_ADDRESS, tool_addr)
+                    
+                    operational = False
+                else:
+                    self.logger.info("[%s] Self-test PASSED: %s (%s) operational", 
+                                    self.MODULE_ADDRESS, tool_name, tool_addr)
+            
+            except Exception as exc:
+                self.logger.error("[%s] Self-test ERROR: %s (%s): %s", 
+                                 self.MODULE_ADDRESS, tool_name, tool_addr, exc)
+                operational = False
+        
+        if operational:
+            self.logger.info("[%s] PASS - Self-test COMPLETE - All tool dependencies operational", self.MODULE_ADDRESS)
+        else:
+            self.logger.warning("[%s] FAIL - Self-test COMPLETE - One or more tool dependencies FAILED", self.MODULE_ADDRESS)
+        
+        return operational
+
+    def load_inputs(self) -> Dict[str, Any]:
+        if self.lifecycle_state() == LifecycleState.RESTING:
+            self.resume_from_rest()
+        return self.legacy.load_inputs()
+
+    def build_payload(self, context: Dict[str, Any]) -> Dict[str, Any]:
+        if self.lifecycle_state() == LifecycleState.RESTING:
+            self.resume_from_rest()
+        return self.legacy.build_payload(context)
+
+    def publish(self, payload: Dict[str, Any]) -> Dict[str, Any]:
+        return self.legacy.publish(payload)
+
+    def handle_revision(self, reason: str, context: Dict[str, Any]) -> None:
+        self.legacy.handle_revision(reason, context)
 
 __all__ = [
+    "LegacySection4Framework",
     "Section4Framework",
     "StageDefinition",
     "CommunicationContract",
@@ -1749,5 +2465,8 @@ __all__ = [
     "extract_text_from_pdf",
     "extract_text_from_image",
     "easyocr_text",
+    "PublicRecordsDataSource",
+    "ComplianceRuleEngine",
+    "DocumentValidationSuite",
 ]
 

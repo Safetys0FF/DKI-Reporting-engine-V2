@@ -10,7 +10,7 @@ import threading
 import uuid
 from datetime import datetime, date
 from pathlib import Path
-from typing import Any, Callable, Dict, Iterable, List, Optional, Sequence
+from typing import Any, Callable, Dict, Iterable, List, Optional, Sequence, Set
 
 try:  # Optional drag-and-drop support
     import tkinterdnd2 as tkdnd
@@ -26,14 +26,72 @@ from tkinter.scrolledtext import ScrolledText
 ROOT_DIR = Path(__file__).resolve().parents[2]
 if str(ROOT_DIR) not in sys.path:
     sys.path.insert(0, str(ROOT_DIR))
+UI_ROOT = Path(__file__).resolve().parent
+if str(UI_ROOT) not in sys.path:
+    sys.path.insert(0, str(UI_ROOT))
 
-from tag_taxonomy import normalize_tags
-from central_plugin import CentralPluginAdapter
 from case_session import CaseSession, SectionState, SECTION_TITLES
+from section_bus_adapter import SectionBusAdapter
 from profile_registry import ProfileRegistry, Profile
 from profile_manager.operator_manager import OperatorManager, AccessRules, OperatorProfile
 from profile_manager.auth_manager import issue_token
 from ui_components import StatusBar
+from components.setup_wizard import run_setup_wizard
+class InputPersistence:
+    """Store simple key/value dictionaries to a JSON file."""
+
+    def __init__(self, state_path: Path | str) -> None:
+        self._path = Path(state_path)
+        self._path.parent.mkdir(parents=True, exist_ok=True)
+        self._lock = threading.Lock()
+        self._cache: Optional[Dict[str, Dict[str, Any]]] = None
+
+    def get_section(self, section: str, default: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+        data = self._load()
+        stored = data.get(section, {})
+        return dict(stored) if stored else (dict(default) if default else {})
+
+    def update_section(self, section: str, payload: Dict[str, Any]) -> None:
+        if not isinstance(payload, dict):
+            raise TypeError("payload must be a dictionary")
+        with self._lock:
+            data = self._load()
+            target = dict(data.get(section, {}))
+            target.update({k: v for k, v in payload.items() if v is not None})
+            data[section] = target
+            self._write(data)
+
+    def _load(self) -> Dict[str, Dict[str, Any]]:
+        if self._cache is not None:
+            return self._cache
+        if not self._path.exists():
+            self._cache = {}
+            return self._cache
+        try:
+            self._cache = json.loads(self._path.read_text(encoding="utf-8"))
+        except Exception:
+            self._cache = {}
+        if not isinstance(self._cache, dict):
+            self._cache = {}
+        return self._cache
+
+    def _write(self, payload: Dict[str, Dict[str, Any]]) -> None:
+        self._cache = payload
+        tmp_path = self._path.with_suffix(".tmp")
+        tmp_path.write_text(json.dumps(payload, indent=2, ensure_ascii=False), encoding="utf-8")
+        tmp_path.replace(self._path)
+
+
+# Direct bus import
+ROOT_DIR = Path(__file__).resolve().parents[2]
+BUS_CORE_PATH = ROOT_DIR / "Command Center" / "Data Bus" / "Bus Core Design"
+if str(BUS_CORE_PATH) not in sys.path:
+    sys.path.insert(0, str(BUS_CORE_PATH))
+DATA_BUS_PATH = ROOT_DIR / "Command Center" / "Data Bus"
+if str(DATA_BUS_PATH) not in sys.path:
+    sys.path.insert(0, str(DATA_BUS_PATH))
+
+from bus_core import DKIReportBus
 
 APP_TITLE = "Central Command"
 MIN_WINDOW_SIZE = (1120, 720)
@@ -61,111 +119,292 @@ class LoginDialog:
         parent: tk.Tk,
         default_name: str,
         *,
+        gui_module: Optional[object] = None,
         operators: Optional[List[OperatorProfile]] = None,
         manager: Optional[OperatorManager] = None,
+        callback: Optional[Callable[[Optional[object]], None]] = None,
+        input_state: Optional[InputPersistence] = None,
+        initial: bool = False,
     ) -> None:
+        self.parent = parent
         self.manager = manager
-        self.operators = operators or []
+        if self.manager:
+            try:
+                self.operators = self.manager.list_all()
+            except Exception:
+                self.operators = operators or []
+        else:
+            self.operators = operators or []
         self.result: Optional[object] = None
         self.selected_profile: Optional[OperatorProfile] = None
+        self.callback = callback
+        self.input_state = input_state
+        self.gui_module = gui_module
+        self.initial_login = initial
 
-        self.window = tk.Toplevel(parent)
-        self.window.title("Central Command Login")
-        self.window.transient(parent)
-        self.window.resizable(False, False)
-        self.window.grab_set()
+        self._refresh_operator_cache()
 
-        container = ttk.Frame(self.window, padding=12)
+        persisted_login = self.input_state.get_section("login") if self.input_state else {}
+        if not default_name:
+            default_name = persisted_login.get("last_operator", "")
+        default_username = default_name or ""
+
+        self.username_var = tk.StringVar(value=default_username)
+        self.password_var = tk.StringVar()
+        self.show_password_var = tk.BooleanVar(value=False)
+        self.login_message_var = tk.StringVar(value="")
+        if self.gui_module:
+            self.window = self.gui_module.create_dialog_window(parent, "Central Command Login", size=(460, 340))
+        else:
+            self.window = tk.Toplevel(parent)
+            self.window.title("Central Command Login")
+            self.window.transient(parent)
+            self.window.resizable(False, False)
+        if self.initial_login:
+            try:
+                self.window.grab_set()
+            except Exception:
+                pass
+
+        container = ttk.Frame(self.window, padding=16)
         container.pack(fill="both", expand=True)
 
-        existing_frame = ttk.LabelFrame(container, text="Available Operators", padding=12)
-        existing_frame.pack(fill="both", expand=True)
-        existing_frame.columnconfigure(0, weight=1)
-        existing_frame.rowconfigure(0, weight=1)
+        ttk.Label(container, text="Central Command Login", font=("Segoe UI", 13, "bold")).pack(anchor="w")
+        ttk.Label(
+            container,
+            text="Enter your operator username and password to continue.",
+            foreground="#4b5563",
+            padding=(0, 6, 0, 10),
+        ).pack(anchor="w")
 
-        self.listbox = tk.Listbox(existing_frame, height=8, exportselection=False)
-        self.listbox.grid(row=0, column=0, sticky="nsew")
-        for profile in self.operators:
-            display = f"{profile.name} ({profile.role})"
-            self.listbox.insert(tk.END, display)
-        self.listbox.bind("<<ListboxSelect>>", self._on_select)
-        self.listbox.bind("<Double-Button-1>", lambda _e: self._accept())
+        credentials_frame = ttk.LabelFrame(container, text="Sign In", padding=12)
+        credentials_frame.pack(fill="x", pady=(12, 0))
+        credentials_frame.columnconfigure(1, weight=1)
 
-        if not self.operators:
-            self.listbox.insert(tk.END, "No operators registered yet")
-            self.listbox.configure(state="disabled")
+        ttk.Label(credentials_frame, text="Username").grid(row=0, column=0, sticky="w")
+        username_entry = ttk.Entry(credentials_frame, textvariable=self.username_var, width=32)
+        username_entry.grid(row=0, column=1, sticky="ew")
+        if default_username:
+            self.username_var.set(default_username)
+        username_entry.focus_set()
 
-        scroll = ttk.Scrollbar(existing_frame, orient="vertical", command=self.listbox.yview)
-        scroll.grid(row=0, column=1, sticky="ns")
-        self.listbox.configure(yscrollcommand=scroll.set)
+        ttk.Label(credentials_frame, text="Password").grid(row=1, column=0, sticky="w", pady=(6, 0))
+        self.password_entry = ttk.Entry(
+            credentials_frame, textvariable=self.password_var, width=32, show="*"
+        )
+        self.password_entry.grid(row=1, column=1, sticky="ew", pady=(6, 0))
 
-        new_frame = ttk.LabelFrame(container, text="Create Operator", padding=12)
-        new_frame.pack(fill="x", pady=(12, 0))
-        ttk.Label(new_frame, text="Name").grid(row=0, column=0, sticky="w")
-        self.new_name_var = tk.StringVar(value=default_name or "")
-        ttk.Entry(new_frame, textvariable=self.new_name_var, width=32).grid(row=0, column=1, sticky="ew")
-        new_frame.columnconfigure(1, weight=1)
+        ttk.Checkbutton(
+            credentials_frame,
+            text="Show password",
+            variable=self.show_password_var,
+            command=self._toggle_login_password,
+        ).grid(row=2, column=1, sticky="w", pady=(4, 0))
 
-        ttk.Label(new_frame, text="Role").grid(row=1, column=0, sticky="w", pady=(6, 0))
-        self.role_var = tk.StringVar(value="field_operator")
-        ttk.Combobox(
-            new_frame,
-            textvariable=self.role_var,
-            state="readonly",
-            values=["field_operator", "supervisor", "admin"],
-            width=30,
-        ).grid(row=1, column=1, sticky="ew", pady=(6, 0))
+        ttk.Label(
+            credentials_frame,
+            textvariable=self.login_message_var,
+            foreground="#dc2626",
+        ).grid(row=3, column=0, columnspan=2, sticky="w", pady=(8, 0))
 
         button_row = ttk.Frame(container)
         button_row.pack(fill="x", pady=(14, 0))
-        ttk.Button(button_row, text="Cancel", command=self._cancel).pack(side="right")
-        ttk.Button(button_row, text="Continue", command=self._accept).pack(side="right", padx=(8, 0))
+        ttk.Button(button_row, text="Cancel", command=self._cancel_and_exit, width=12).pack(side="right")
+        ttk.Button(button_row, text="Login", command=self._accept, width=12).pack(side="right", padx=(8, 0))
+        ttk.Button(button_row, text="New User...", command=self._open_registration_dialog, width=12).pack(side="left")
 
         self.window.bind("<Return>", lambda _e: self._accept())
-        self.window.protocol("WM_DELETE_WINDOW", self._cancel)
-        parent.wait_window(self.window)
+        self.window.protocol("WM_DELETE_WINDOW", self._cancel_and_exit)
+        # REMOVED: parent.wait_window(self.window) - non-blocking dialog
 
-    def _on_select(self, _event: object) -> None:
-        if not self.operators:
-            return
-        selection = self.listbox.curselection()
-        if selection:
-            index = selection[0]
-            self.selected_profile = self.operators[index]
-            self.new_name_var.set(self.selected_profile.name)
-            self.role_var.set(self.selected_profile.role or "field_operator")
-        else:
-            self.selected_profile = None
 
     def _accept(self) -> None:
+        username = self.username_var.get().strip()
+        password = self.password_var.get()
+        if not username:
+            self.login_message_var.set("Enter a username to sign in.")
+            return
+
         if self.manager:
-            if self.selected_profile is not None:
-                self.result = self.selected_profile
-                self.window.destroy()
+            if not password:
+                self.login_message_var.set("Enter your password.")
                 return
-            name = self.new_name_var.get().strip()
+            profile = self.manager.authenticate(username, password)
+            if not profile:
+                exists = False
+                try:
+                    exists = bool(self.manager.find_by_name(username))
+                except Exception:
+                    exists = False
+                if exists:
+                    self.login_message_var.set("Incorrect password. Try again.")
+                    messagebox.showerror(APP_TITLE, "Incorrect password for this account.")
+                else:
+                    self.login_message_var.set("Account not found. Create a new user.")
+                    messagebox.showerror(APP_TITLE, "No operator account exists with that username.")
+                return
+            self.selected_profile = profile
+            self.result = profile
+            self.login_message_var.set("")
+            self._persist_selection(profile.name, getattr(profile, "role", None))
+        else:
+            if not password:
+                messagebox.showwarning(APP_TITLE, "Enter a password to continue.")
+                return
+            self.result = username
+            self._persist_selection(username, "field_operator")
+
+        self.window.destroy()
+        if self.callback:
+            self.callback(self.result)
+
+    def _toggle_login_password(self) -> None:
+        self.password_entry.configure(show="" if self.show_password_var.get() else "*")
+
+    def _cancel_and_exit(self) -> None:
+        self.result = None
+        if self.callback:
+            self.callback(None)
+        try:
+            self.window.destroy()
+        except Exception:
+            pass
+        if self.initial_login:
+            try:
+                self.parent.destroy()
+            except Exception:
+                pass
+
+    def _refresh_operator_cache(self) -> None:
+        if not self.manager:
+            self.operators = []
+            return
+        try:
+            self.operators = self.manager.list_all()
+        except Exception:
+            self.operators = []
+
+    def _open_registration_dialog(self) -> None:
+        if not self.manager:
+            messagebox.showinfo(APP_TITLE, "Operator management is not available in this configuration.")
+            return
+
+        dialog = tk.Toplevel(self.window)
+        dialog.title("Create Operator Account")
+        dialog.transient(self.window)
+        dialog.resizable(False, False)
+        dialog.grab_set()
+
+        content = ttk.Frame(dialog, padding=16)
+        content.pack(fill="both", expand=True)
+        content.columnconfigure(1, weight=1)
+
+        name_var = tk.StringVar()
+        role_var = tk.StringVar(value="field_operator")
+        password_var = tk.StringVar()
+        confirm_var = tk.StringVar()
+        show_var = tk.BooleanVar(value=False)
+
+        ttk.Label(content, text="Name").grid(row=0, column=0, sticky="w")
+        ttk.Entry(content, textvariable=name_var, width=28).grid(row=0, column=1, sticky="ew")
+
+        ttk.Label(content, text="Role").grid(row=1, column=0, sticky="w", pady=(6, 0))
+        ttk.Combobox(
+            content,
+            textvariable=role_var,
+            state="readonly",
+            values=["field_operator", "supervisor", "admin"],
+            width=26,
+        ).grid(row=1, column=1, sticky="ew", pady=(6, 0))
+
+        ttk.Label(content, text="Password").grid(row=2, column=0, sticky="w", pady=(6, 0))
+        password_entry = ttk.Entry(content, textvariable=password_var, width=28, show="*")
+        password_entry.grid(row=2, column=1, sticky="ew", pady=(6, 0))
+
+        ttk.Label(content, text="Confirm Password").grid(row=3, column=0, sticky="w", pady=(6, 0))
+        confirm_entry = ttk.Entry(content, textvariable=confirm_var, width=28, show="*")
+        confirm_entry.grid(row=3, column=1, sticky="ew", pady=(6, 0))
+
+        def toggle_registration_password() -> None:
+            show = "" if show_var.get() else "*"
+            password_entry.configure(show=show)
+            confirm_entry.configure(show=show)
+
+        ttk.Checkbutton(
+            content,
+            text="Show password",
+            variable=show_var,
+            command=toggle_registration_password,
+        ).grid(row=4, column=1, sticky="w", pady=(4, 0))
+
+        status_var = tk.StringVar(value="")
+        ttk.Label(content, textvariable=status_var, foreground="#dc2626").grid(
+            row=5, column=0, columnspan=2, sticky="w", pady=(8, 0)
+        )
+
+        def submit() -> None:
+            name = name_var.get().strip()
+            role = role_var.get() or "field_operator"
+            pwd = password_var.get()
+            confirm = confirm_var.get()
+
             if not name:
-                messagebox.showwarning(APP_TITLE, "Enter an operator name or select an existing profile.")
+                status_var.set("Enter a name.")
+                return
+            if len(pwd) < 6:
+                status_var.set("Password must be at least 6 characters.")
+                return
+            if pwd != confirm:
+                status_var.set("Passwords do not match.")
+                return
+            if self.manager.find_by_name(name):
+                status_var.set("An operator with that name already exists.")
                 return
             try:
-                profile = self.manager.create(name=name, role=self.role_var.get())
+                profile = self.manager.create(name=name, role=role, password=pwd)
             except Exception as exc:
-                messagebox.showerror(APP_TITLE, f"Could not create operator:\n{exc}")
+                status_var.set(f"Failed to create operator: {exc}")
                 return
-            self.result = profile
-        else:
-            name = self.new_name_var.get().strip()
-            if not name:
-                messagebox.showwarning(APP_TITLE, "Enter an operator name to continue.")
-                return
-            self.result = name
-        self.window.destroy()
+            self._refresh_operator_cache()
+            self.username_var.set(profile.name)
+            self.password_var.set("")
+            self.login_message_var.set("Account created. Enter password to sign in.")
+            dialog.destroy()
+            try:
+                from components.setup_wizard import run_setup_wizard
+            except Exception:
+                run_setup_wizard = None
+            if run_setup_wizard and messagebox.askyesno(
+                APP_TITLE,
+                "Operator account created. Launch the Setup Wizard to complete the profile now?",
+            ):
+                run_setup_wizard(parent=self.window)
+            else:
+                messagebox.showinfo(APP_TITLE, "Operator account created. Sign in with the new credentials.")
+
+        buttons = ttk.Frame(content)
+        buttons.grid(row=6, column=0, columnspan=2, sticky="e", pady=(16, 0))
+        ttk.Button(buttons, text="Cancel", command=dialog.destroy).pack(side="right")
+        ttk.Button(buttons, text="Create", command=submit).pack(side="right", padx=(8, 0))
+
+        password_entry.focus_set()
+
+    def _persist_selection(self, operator_name: str, role: Optional[str]) -> None:
+        if not self.input_state:
+            return
+        payload = {"last_operator": operator_name}
+        if role:
+            payload["last_role"] = role
+        self.input_state.update_section("login", payload)
 
     def _cancel(self) -> None:
-        self.result = None
-        self.window.destroy()
+        self._cancel_and_exit()
 
     def show(self) -> Optional[object]:
+        try:
+            self.window.wait_window()
+        except Exception:
+            pass
         return self.result
 
 
@@ -176,6 +415,7 @@ class CaseCreationDialog:
         self,
         parent: tk.Misc,
         *,
+        gui_module: Optional[object] = None,
         default_case_id: str = "",
         default_investigator: str = "",
         subcontractor: bool = False,
@@ -183,15 +423,24 @@ class CaseCreationDialog:
         export_root: Optional[str] = None,
         metadata_defaults: Optional[Dict[str, Any]] = None,
         existing_ids: Optional[Iterable[str]] = None,
+        callback: Optional[Callable[[Optional[Dict[str, Any]]], None]] = None,
+        input_state: Optional[InputPersistence] = None,
     ) -> None:
         self.result: Optional[Dict[str, Any]] = None
         self._existing_ids = {sanitize_case_id(item).lower() for item in (existing_ids or []) if item}
+        self.callback = callback
+        self._input_state = input_state
+        self.gui_module = gui_module
+        persisted_defaults = self._input_state.get_section("case_creation") if self._input_state else {}
 
-        self.window = tk.Toplevel(parent)
-        self.window.title("Start New Case")
-        self.window.transient(parent)
-        self.window.resizable(False, False)
-        self.window.grab_set()
+        if self.gui_module:
+            self.window = self.gui_module.create_dialog_window(parent, "Start New Case", size=(560, 520))
+        else:
+            self.window = tk.Toplevel(parent)
+            self.window.title("Start New Case")
+            self.window.transient(parent)
+            self.window.resizable(False, False)
+        # REMOVED: self.window.grab_set() - non-blocking dialog
 
         self.window.columnconfigure(0, weight=1)
         self.window.rowconfigure(0, weight=1)
@@ -200,51 +449,109 @@ class CaseCreationDialog:
         container.grid(row=0, column=0, sticky="nsew")
         container.columnconfigure(0, weight=1)
 
-        basics = ttk.LabelFrame(container, text="Case Basics", padding=12)
-        basics.grid(row=0, column=0, sticky="ew")
-        basics.columnconfigure(1, weight=1)
+        if self.gui_module:
+            basics = self.gui_module.create_form_frame(container, "Case Basics")
+        else:
+            basics = ttk.LabelFrame(container, text="Case Basics", padding=12)
+            basics.columnconfigure(1, weight=1)
+            basics.grid(row=0, column=0, sticky="ew")
 
-        self.case_input_var = tk.StringVar(value=default_case_id)
-        self.case_preview_var = tk.StringVar(value=sanitize_case_id(default_case_id))
+        raw_case_prefill = default_case_id or persisted_defaults.get("case_id_input") or persisted_defaults.get("case_id") or ""
+        self.case_input_var = tk.StringVar(value=raw_case_prefill)
+        self.case_preview_var = tk.StringVar(value=sanitize_case_id(raw_case_prefill))
         self.case_warning_var = tk.StringVar(value="")
 
-        ttk.Label(basics, text="Case Number").grid(row=0, column=0, sticky="w")
-        case_entry = ttk.Entry(basics, textvariable=self.case_input_var, width=32)
-        case_entry.grid(row=0, column=1, sticky="ew", padx=(8, 0))
+        if self.gui_module:
+            case_entry = self.gui_module.create_labeled_field(
+                basics,
+                row=0,
+                label="Case Number",
+                var=self.case_input_var,
+                width=32,
+            )
+        else:
+            ttk.Label(basics, text="Case Number").grid(row=0, column=0, sticky="w")
+            case_entry = ttk.Entry(basics, textvariable=self.case_input_var, width=32)
+            case_entry.grid(row=0, column=1, sticky="ew", padx=(8, 0))
+            case_entry.grid_configure(padx=(8, 0))
 
         ttk.Label(basics, text="Canonical ID:").grid(row=1, column=0, sticky="w", pady=(2, 0))
         ttk.Label(basics, textvariable=self.case_preview_var, foreground="#2563eb").grid(row=1, column=1, sticky="w", padx=(8, 0), pady=(2, 0))
         ttk.Label(basics, textvariable=self.case_warning_var, foreground="#dc2626").grid(row=2, column=0, columnspan=2, sticky="w")
 
-        self.investigator_var = tk.StringVar(value=default_investigator)
-        ttk.Label(basics, text="Investigator").grid(row=3, column=0, sticky="w", pady=(8, 0))
-        ttk.Entry(basics, textvariable=self.investigator_var).grid(row=3, column=1, sticky="ew", padx=(8, 0), pady=(8, 0))
+        investigator_default = default_investigator or persisted_defaults.get("investigator") or "Investigator"
+        self.investigator_var = tk.StringVar(value=investigator_default)
+        if self.gui_module:
+            investigator_entry = self.gui_module.create_labeled_field(
+                basics,
+                row=3,
+                label="Investigator",
+                var=self.investigator_var,
+            )
+        else:
+            ttk.Label(basics, text="Investigator").grid(row=3, column=0, sticky="w", pady=(8, 0))
+            investigator_entry = ttk.Entry(basics, textvariable=self.investigator_var)
+            investigator_entry.grid(row=3, column=1, sticky="ew", padx=(8, 0), pady=(8, 0))
+        investigator_entry.grid_configure(padx=(8, 0), pady=(8, 0))
 
-        self.subcontractor_var = tk.BooleanVar(value=subcontractor)
+        subcontractor_default = bool(persisted_defaults.get("subcontractor", subcontractor))
+        self.subcontractor_var = tk.BooleanVar(value=subcontractor_default)
         ttk.Checkbutton(basics, text="Subcontractor engagement", variable=self.subcontractor_var).grid(row=4, column=0, columnspan=2, sticky="w", pady=(8, 0))
 
-        self.contract_var = tk.StringVar(value=contract_signed or "")
-        ttk.Label(basics, text="Contract signed (YYYY-MM-DD)").grid(row=5, column=0, sticky="w", pady=(8, 0))
-        ttk.Entry(basics, textvariable=self.contract_var).grid(row=5, column=1, sticky="ew", padx=(8, 0), pady=(8, 0))
+        contract_default = contract_signed or persisted_defaults.get("contract_signed") or ""
+        self.contract_var = tk.StringVar(value=contract_default)
+        if self.gui_module:
+            contract_entry = self.gui_module.create_labeled_field(
+                basics,
+                row=5,
+                label="Contract signed (YYYY-MM-DD)",
+                var=self.contract_var,
+            )
+        else:
+            ttk.Label(basics, text="Contract signed (YYYY-MM-DD)").grid(row=5, column=0, sticky="w", pady=(8, 0))
+            contract_entry = ttk.Entry(basics, textvariable=self.contract_var)
+            contract_entry.grid(row=5, column=1, sticky="ew", padx=(8, 0), pady=(8, 0))
+        contract_entry.grid_configure(padx=(8, 0), pady=(8, 0))
 
-        details = ttk.LabelFrame(container, text="Additional Details", padding=12)
-        details.grid(row=1, column=0, sticky="ew", pady=(12, 0))
-        details.columnconfigure(1, weight=1)
+        if self.gui_module:
+            details = self.gui_module.create_form_frame(container, "Additional Details")
+        else:
+            details = ttk.LabelFrame(container, text="Additional Details", padding=12)
+            details.columnconfigure(1, weight=1)
+            details.grid(row=1, column=0, sticky="ew", pady=(12, 0))
 
         metadata_defaults = metadata_defaults or {}
+        metadata_defaults = {
+            "client_name": persisted_defaults.get("client_name", metadata_defaults.get("client_name")),
+            "subject": persisted_defaults.get("subject", metadata_defaults.get("subject")),
+            "location": persisted_defaults.get("location", metadata_defaults.get("location")),
+        }
         self.client_var = tk.StringVar(value=str(metadata_defaults.get("client_name") or ""))
         self.subject_var = tk.StringVar(value=str(metadata_defaults.get("subject") or ""))
         self.location_var = tk.StringVar(value=str(metadata_defaults.get("location") or ""))
-        self.export_root_var = tk.StringVar(value=str(export_root or ""))
+        export_root_default = export_root or persisted_defaults.get("export_root") or ""
+        self.export_root_var = tk.StringVar(value=str(export_root_default))
 
-        ttk.Label(details, text="Client").grid(row=0, column=0, sticky="w")
-        ttk.Entry(details, textvariable=self.client_var).grid(row=0, column=1, sticky="ew", padx=(8, 0))
-        ttk.Label(details, text="Subject").grid(row=1, column=0, sticky="w", pady=(8, 0))
-        ttk.Entry(details, textvariable=self.subject_var).grid(row=1, column=1, sticky="ew", padx=(8, 0), pady=(8, 0))
-        ttk.Label(details, text="Location").grid(row=2, column=0, sticky="w")
-        ttk.Entry(details, textvariable=self.location_var).grid(row=2, column=1, sticky="ew", padx=(8, 0))
-        ttk.Label(details, text="Export root").grid(row=3, column=0, sticky="w", pady=(8, 0))
-        ttk.Entry(details, textvariable=self.export_root_var).grid(row=3, column=1, sticky="ew", padx=(8, 0), pady=(8, 0))
+        if self.gui_module:
+            client_entry = self.gui_module.create_labeled_field(details, row=0, label="Client", var=self.client_var)
+            subject_entry = self.gui_module.create_labeled_field(details, row=1, label="Subject", var=self.subject_var)
+            location_entry = self.gui_module.create_labeled_field(details, row=2, label="Location", var=self.location_var)
+            export_entry = self.gui_module.create_labeled_field(details, row=3, label="Export root", var=self.export_root_var)
+        else:
+            ttk.Label(details, text="Client").grid(row=0, column=0, sticky="w")
+            client_entry = ttk.Entry(details, textvariable=self.client_var)
+            client_entry.grid(row=0, column=1, sticky="ew", padx=(8, 0))
+            ttk.Label(details, text="Subject").grid(row=1, column=0, sticky="w", pady=(8, 0))
+            subject_entry = ttk.Entry(details, textvariable=self.subject_var)
+            subject_entry.grid(row=1, column=1, sticky="ew", padx=(8, 0), pady=(8, 0))
+            ttk.Label(details, text="Location").grid(row=2, column=0, sticky="w")
+            location_entry = ttk.Entry(details, textvariable=self.location_var)
+            location_entry.grid(row=2, column=1, sticky="ew", padx=(8, 0))
+            ttk.Label(details, text="Export root").grid(row=3, column=0, sticky="w", pady=(8, 0))
+            export_entry = ttk.Entry(details, textvariable=self.export_root_var)
+            export_entry.grid(row=3, column=1, sticky="ew", padx=(8, 0), pady=(8, 0))
+        for entry in (client_entry, subject_entry, location_entry, export_entry):
+            entry.grid_configure(padx=(8, 0))
 
         buttons = ttk.Frame(container)
         buttons.grid(row=2, column=0, sticky="e", pady=(16, 0))
@@ -255,7 +562,7 @@ class CaseCreationDialog:
         self.case_input_var.trace_add("write", self._sync_case_preview)
         self.window.bind("<Return>", lambda _e: self._accept())
         self.window.protocol("WM_DELETE_WINDOW", self._cancel)
-        parent.wait_window(self.window)
+        # REMOVED: parent.wait_window(self.window) - non-blocking dialog
 
     def _sync_case_preview(self, *_: object) -> None:
         preview = sanitize_case_id(self.case_input_var.get())
@@ -299,10 +606,29 @@ class CaseCreationDialog:
             "metadata": {k: v for k, v in metadata.items() if v},
         }
         self.window.destroy()
+        if self.callback:
+            self.callback(self.result)
+        if self._input_state:
+            snapshot = {
+                "case_id_input": raw_case,
+                "case_id": case_id,
+                "investigator": investigator,
+                "subcontractor": bool(self.subcontractor_var.get()),
+                "contract_signed": contract_value or None,
+                "client_name": self.client_var.get().strip() or None,
+                "subject": self.subject_var.get().strip() or None,
+                "location": self.location_var.get().strip() or None,
+                "export_root": self.export_root_var.get().strip() or None,
+            }
+            payload = {k: v for k, v in snapshot.items() if v not in (None, "")}
+            if payload:
+                self._input_state.update_section("case_creation", payload)
 
     def _cancel(self) -> None:
         self.result = None
         self.window.destroy()
+        if self.callback:
+            self.callback(None)
 
     def show(self) -> Optional[Dict[str, Any]]:
         return self.result
@@ -325,17 +651,35 @@ class ProfileEditor:
         ("preferred_intake_form", "Preferred Intake Form"),
     ]
 
-    def __init__(self, parent: tk.Tk, profile_data: Dict[str, object]) -> None:
-        self.window = tk.Toplevel(parent)
-        self.window.title("Edit Analyst Profile")
-        self.window.transient(parent)
-        self.window.grab_set()
+    def __init__(self, parent: tk.Tk, profile_data: Dict[str, object], *, gui_module: Optional[object] = None, callback: Optional[Callable[[Optional[Dict[str, object]]], None]] = None) -> None:
+        self.callback = callback
+        self.gui_module = gui_module
+        if self.gui_module:
+            self.window = self.gui_module.create_dialog_window(parent, "Edit Analyst Profile", size=(520, 560))
+        else:
+            self.window = tk.Toplevel(parent)
+            self.window.title("Edit Analyst Profile")
+            self.window.transient(parent)
+        # REMOVED: self.window.grab_set() - non-blocking dialog
 
         self._data = dict(profile_data)
         self._vars: Dict[str, tk.StringVar] = {}
 
         main = ttk.Frame(self.window, padding=12)
         main.pack(fill="both", expand=True)
+        
+        # Profile Picture Section
+        pic_frame = ttk.LabelFrame(main, text="Profile Picture", padding=10)
+        pic_frame.pack(fill="x", pady=(0, 10))
+        
+        pic_row = ttk.Frame(pic_frame)
+        pic_row.pack(fill="x")
+        
+        self.profile_pic_var = tk.StringVar(value=self._data.get("profile_picture", ""))
+        ttk.Label(pic_row, text="Image:").pack(side="left", padx=(0, 5))
+        pic_entry = ttk.Entry(pic_row, textvariable=self.profile_pic_var)
+        pic_entry.pack(side="left", fill="x", expand=True, padx=(0, 5))
+        ttk.Button(pic_row, text="Browse...", command=self._browse_picture).pack(side="left")
 
         for key, label in self.FIELD_DEFS:
             row = ttk.Frame(main)
@@ -353,14 +697,35 @@ class ProfileEditor:
 
         self.result: Optional[Dict[str, object]] = None
         self.window.protocol("WM_DELETE_WINDOW", self._cancel)
-        parent.wait_window(self.window)
+        # REMOVED: parent.wait_window(self.window) - non-blocking dialog
 
+    def _browse_picture(self) -> None:
+        """Browse for profile picture"""
+        from tkinter import filedialog
+        file_path = filedialog.askopenfilename(
+            title="Select Profile Picture",
+            filetypes=[
+                ("Image Files", "*.png *.jpg *.jpeg *.gif *.bmp"),
+                ("All Files", "*.*")
+            ]
+        )
+        if file_path:
+            self.profile_pic_var.set(file_path)
+    
     def _cancel(self) -> None:
         self.result = None
         self.window.destroy()
+        if self.callback:
+            self.callback(None)
 
     def _save(self) -> None:
         updated = dict(self._data)
+        
+        # Save profile picture
+        pic_path = self.profile_pic_var.get().strip()
+        if pic_path:
+            updated["profile_picture"] = pic_path
+        
         for key, _label in self.FIELD_DEFS:
             raw = self._vars[key].get().strip()
             if key == "labor_rate":
@@ -376,6 +741,8 @@ class ProfileEditor:
                 updated[key] = raw
         self.result = updated
         self.window.destroy()
+        if self.callback:
+            self.callback(self.result)
 
     def show(self) -> Optional[Dict[str, object]]:
         return self.result
@@ -389,8 +756,7 @@ class EvidenceCard:
         parent: tk.Widget,
         path: str,
         categories: List[Dict[str, object]],
-        on_advertise,
-        on_scan,
+        on_submit_evidence,
         on_remove,
         suggestion: Optional[Dict[str, Any]] = None,
         case_label: Optional[str] = None,
@@ -399,8 +765,7 @@ class EvidenceCard:
         self.parent = parent
         self.path = path
         self.categories = categories
-        self.on_advertise = on_advertise
-        self.on_scan = on_scan
+        self.on_submit_evidence = on_submit_evidence
         self.on_remove = on_remove
         self.suggestion = suggestion or {}
         self.case_label = case_label
@@ -481,10 +846,9 @@ class EvidenceCard:
 
         button_row = tk.Frame(self.frame, bg=CARD_BG)
         button_row.grid(row=5, column=0, sticky="ew")
-        button_row.columnconfigure((0, 1), weight=1)
+        button_row.columnconfigure(0, weight=1)
 
-        ttk.Button(button_row, text="Advertise Need", command=self._handle_advertise).grid(row=0, column=0, padx=4, sticky="ew")
-        ttk.Button(button_row, text="Scan Evidence", command=self._handle_scan).grid(row=0, column=1, padx=4, sticky="ew")
+        ttk.Button(button_row, text="Submit Evidence", command=self._handle_submit_evidence).grid(row=0, column=0, padx=4, sticky="ew")
 
     def _populate_categories(self) -> None:
         options = []
@@ -571,15 +935,18 @@ class EvidenceCard:
         )
         self.detail_label.configure(text=detail)
 
-    def _handle_advertise(self) -> None:
+    def _handle_submit_evidence(self) -> None:
         slug = self._selected_slug()
         if slug:
-            self.on_advertise(self, slug, self._current_tags())
-
-    def _handle_scan(self) -> None:
-        slug = self._selected_slug()
-        if slug:
-            self.on_scan(self, slug, self._current_tags())
+            # Auto-route based on predesignated tags
+            evidence_data = {
+                'path': self.path,
+                'category': slug,
+                'manual_tags': self._current_tags(),
+                'case_id': self.case_id,
+                'case_label': self.case_label
+            }
+            self.on_submit_evidence(self, evidence_data)
 
     def _handle_remove(self) -> None:
         self.on_remove(self)
@@ -591,23 +958,55 @@ class EvidenceCard:
 class EnhancedDKIGUI:
     """Main GUI class used by gui_main_application."""
 
-    def __init__(self) -> None:
+    def __init__(self, gui_module=None, bus=None) -> None:
+        import logging
+        self.logger = logging.getLogger("EnhancedDKIGUI")
+        self.gui_module = gui_module
+
+        # Tk root must exist before any other initialization so crashes
+        # never occur due to missing self.root (handoff requirement).
         self.root = tkdnd.Tk() if DND_AVAILABLE else tk.Tk()
         self.root.title(APP_TITLE)
         self.root.minsize(*MIN_WINDOW_SIZE)
         self.root.geometry("1280x820")
         self.root.configure(bg="#0f172a")
         ttk.Style(self.root).theme_use("clam")
+        self._root_shown = False
+        self.root.withdraw()
 
-        self.profile_registry = ProfileRegistry(Path(__file__).resolve().parent)
-        self.profile_data: Dict[str, object] = self.profile_registry.get_raw_profile()
-        self.profile: Profile = self.profile_registry.load_profile()
-        self.operator_name: str = self.profile.display_name
+        # CANBUS / parent module integration defaults
+        self._gui_bus_handlers_registered = False
+        self.bus: Optional[DKIReportBus] = None
+        self.communicator = None
+        self.bus_connected = False
+        self.safemode_active = False
 
-        self.plugin: Optional[CentralPluginAdapter] = None
+        if self.gui_module is not None:
+            self.bus = self.gui_module.bus
+            self.communicator = self.gui_module.communicator
+            self.bus_connected = bool(self.bus)
+            self.safemode_active = not self.bus_connected
+            if self.bus_connected:
+                self._register_gui_signals()
+        else:
+            self._bootstrap_standalone_bus(bus)
+
+        state_root = Path(__file__).resolve().parent
+        self.state_root = state_root
+        self.input_state = InputPersistence(state_root / "gui_state.json")
+
+        self.profile_registry = ProfileRegistry(state_root)
+        self.profile_data: Dict[str, object] = {}
+        self.profile: Optional[Profile] = None
+        login_defaults = self.input_state.get_section("login")
+        self.operator_role_default: Optional[str] = login_defaults.get("last_role")
+        self.operator_name: str = login_defaults.get("last_operator") or "Analyst"
+
+        self.section_adapter: Optional[SectionBusAdapter] = None
         self.categories: List[Dict[str, object]] = []
         self.cards: List[EvidenceCard] = []
         self.current_report: Optional[Dict[str, Any]] = None
+        self.case_session: Optional[CaseSession] = None
 
         self.report_text: Optional[ScrolledText] = None
         self.home_profile_text = tk.StringVar()
@@ -623,7 +1022,8 @@ class EnhancedDKIGUI:
         self.workspace_overview_text = tk.StringVar(value="Select a case to view details.")
         self.workspace_drop_message = tk.StringVar(value="Drop evidence files here or click to browse")
         self.operator_label_var = tk.StringVar(value=f"Operator: {self.operator_name}")
-        self.bus_state_var = tk.StringVar(value="Bus: pending")
+        bus_status = "connected" if self.bus_connected else ("SAFEMODE" if self.safemode_active else "pending")
+        self.bus_state_var = tk.StringVar(value=f"Bus: {bus_status}")
         self.status_message_var = tk.StringVar(value="Initializing UI...")
         self.active_space_title = tk.StringVar(value="Home Overview")
         self.home_status_var = tk.StringVar(value="Ready")
@@ -633,7 +1033,6 @@ class EnhancedDKIGUI:
         self.home_operator_summary_var = tk.StringVar(value="Operator: n/a")
         self.home_activity_tree: Optional[ttk.Treeview] = None
         self.background_jobs: Dict[str, Dict[str, Any]] = {}
-        self._gui_bus_handlers_registered = False
         self._home_refresh_after_id: Optional[str] = None
         self.access_rules: Optional[AccessRules] = None
         self.operator_manager: Optional[OperatorManager] = None
@@ -642,8 +1041,21 @@ class EnhancedDKIGUI:
         self.operator_feature_enabled: bool = False
         self.operator_profiles_cache: List[OperatorProfile] = []
         self._initialize_operator_scaffold()
+        if not self._ensure_initial_user():
+            self.root.destroy()
+            return
+
+        self.profile_data = self.profile_registry.get_raw_profile()
+        self.profile = self.profile_registry.load_profile()
+        if self.operator_profile:
+            self.operator_name = self.operator_profile.name
+        elif self.profile:
+            self.operator_name = self.profile.display_name
+        self.operator_role_default = self.operator_role_default or "field_operator"
+        self.operator_label_var.set(f"Operator: {self.operator_name}")
         self.active_case_id: Optional[str] = None
         self.active_case_data: Optional[Dict[str, Any]] = None
+        self.current_case_id: Optional[str] = None
         self.workspace_recent_limit = 6
         self.cases_canvas: Optional[tk.Canvas] = None
         self.case_list_frame: Optional[ttk.Frame] = None
@@ -668,12 +1080,203 @@ class EnhancedDKIGUI:
         self._review_bus_handlers_registered = False
         self._prompt_new_case = self._prompt_new_case_dialog
 
+        login_success = self._show_login_dialog(initial=True)
+        if not login_success:
+            self.root.destroy()
+            return
+
         self._build_layout()
         self._initialize_plugin()
         self._refresh_report_summary()
-        self._set_operator(self.operator_name)
+        self._set_operator(self.operator_name, self.operator_role_default)
         self._refresh_home_overview()
-        self._show_login_dialog(initial=True)
+        if not bus:
+            self.logger.warning("[GUI-1] No bus provided - SAFEMODE")
+            self.safemode_active = True
+            return
+
+        self.bus = bus
+
+        try:
+            # Add Bus Core Design to path for UniversalCommunicator
+            import sys
+            import os
+
+            bus_core_path = str(Path(__file__).resolve().parents[2] / "Command Center" / "Data Bus" / "Bus Core Design")
+            if bus_core_path not in sys.path:
+                sys.path.append(bus_core_path)
+            from universal_communicator import UniversalCommunicator
+
+            # Create UniversalCommunicator (legacy compatibility)
+            self.communicator = UniversalCommunicator("GUI-1", bus_connection=bus)
+
+            # Register system address with CANBUS
+            bus.register_system_address("GUI-1", {
+                "system_type": "user_interface",
+                "capabilities": ["case_management", "evidence_intake", "section_review", "report_assembly"],
+                "status": "active",
+                "mode": "primary",
+                "registered_at": datetime.now().isoformat()
+            })
+
+            # Set connection state BEFORE registering signals
+            self.bus_connected = True
+
+            # Register signal handlers
+            self._register_gui_signals()
+
+            self.logger.info("[GUI-1] CANBUS CONNECTION ESTABLISHED")
+
+        except Exception as exc:
+            self.logger.critical(f"[GUI-1] CANBUS connection failed: {exc}")
+            self.safemode_active = True
+
+    def _emit_child_event(self, message_type: str, payload: Optional[Dict[str, Any]] = None) -> None:
+        """
+        Relay GUI-level events through the parent module or fallback bus channel.
+        """
+        message_payload = dict(payload or {})
+
+        if self.gui_module:
+            self.gui_module.emit_child_event(message_type, message_payload)
+            return
+
+        if not self.bus:
+            self.logger.debug(f"[GUI-1] Dropping event {message_type} (no bus/module)")
+            return
+
+        message_payload["message_type"] = message_type
+        try:
+            self.bus.emit("gui.child.broadcast", message_payload)
+        except Exception as exc:
+            self.logger.error(f"[GUI-1] Failed to emit gui.child.broadcast: {exc}")
+
+    def _register_gui_signals(self):
+        """Register Enhanced GUI signal handlers with CANBUS"""
+        if self._gui_bus_handlers_registered:
+            return
+        if not self.bus_connected or not self.bus:
+            self.logger.warning("[GUI-1] Cannot register signals - no CANBUS connection")
+            return
+        
+        try:
+            # Register GUI control signals
+            self.bus.register_signal("gui.status", self._handle_status_signal)
+            self.bus.register_signal("gui.refresh", self._handle_refresh_signal)
+            self.bus.register_signal("gui.update_bus_state", self._handle_update_bus_state_signal)
+            self.bus.register_signal("gui.all_clear_case_start", self._handle_case_start_command)
+            
+            # Register UDS protocol signals
+            self.bus.register_signal("auto_registration", self._handle_auto_registration)
+            self.bus.register_signal("radio_check", self._handle_radio_check)
+            
+            self.logger.info("[GUI-1] Enhanced GUI signal handlers registered")
+            self._gui_bus_handlers_registered = True
+            
+        except Exception as e:
+            self.logger.error(f"[GUI-1] Failed to register signal handlers: {e}")
+            
+    def _handle_status_signal(self, payload: Dict[str, Any]) -> Dict[str, Any]:
+        """Handle gui.status signal"""
+        return {
+            "system_address": "GUI-1",
+            "bus_connected": self.bus_connected,
+            "safemode": self.safemode_active,
+            "active_case": self.active_case_id,
+            "evidence_cards": len(self.cards),
+            "timestamp": datetime.now().isoformat()
+        }
+            
+    def _handle_refresh_signal(self, payload: Dict[str, Any]) -> None:
+        """Handle gui.refresh signal"""
+        self._refresh_case_overview()
+            
+    def _handle_update_bus_state_signal(self, payload: Dict[str, Any]) -> None:
+        """Handle gui.update_bus_state signal"""
+        state = payload.get('state', 'unknown')
+        self.bus_state_var.set(f"Bus: {state}")
+    
+    def _handle_case_start_command(self, payload: Dict[str, Any]) -> None:
+        """Handle 'all clear report for mission ready, case start command' from main application"""
+        self.logger.info("[GUI-1] Received case start command - system ready for case operations")
+        
+        # Enable Start New Case button functionality
+        case_ready_status = {
+            "system_ready": payload.get('system_ready', False),
+            "mission_ready": payload.get('mission_ready', False), 
+            "case_operations_available": payload.get('case_operations_available', False)
+        }
+        
+        if case_ready_status['case_operations_available']:
+            self.logger.info("[GUI-1] Case start command processed - ready for user action")
+            # The Start New Case button is now ready to trigger system wake-up
+        else:
+            self.logger.warning("[GUI-1] Case start command received but not fully ready")
+    
+    def _handle_auto_registration(self, payload: Dict[str, Any]) -> None:
+        """Handle UDS auto-registration demand.
+        
+        LIFECYCLE FIX: Only responds to CALL_SENT messages to prevent infinite loops.
+        """
+        # Check message lifecycle state - only respond to requests
+        message_state = payload.get('message_state', '')
+        if message_state != "CALL_SENT":
+            return
+        
+        self.logger.info("[GUI-1] Auto-registration request received from UDS")
+        
+        if not self.communicator:
+            self.logger.warning("[GUI-1] Cannot respond - no communicator available")
+            return
+        
+        # Build registration response payload
+        response_payload = {
+            "system_address": "GUI-1",
+            "system_type": "gui_interface",
+            "status": "OPERATIONAL" if self.bus_connected else "INITIALIZING",
+            "capabilities": ["user_interface", "case_management", "evidence_visualization"],
+            "child_components": ["GUI-1.1", "GUI-1.2", "GUI-1.3", "GUI-1.4", "GUI-1.5", "GUI-1.6", "GUI-1.7", "GUI-1.8", "GUI-1.9"],
+            "compliance_status": "COMPLIANT",
+            "protocol_version": "1.0.0",
+            "timestamp": datetime.now().isoformat()
+        }
+        
+        # Send response using UniversalCommunicator
+        try:
+            self.communicator.send_auto_registration_response("DIAG-1", response_payload)
+            self.logger.info("[GUI-1] Auto-registration response sent to UDS")
+        except Exception as exc:
+            self.logger.error(f"[GUI-1] Auto-registration response failed: {exc}")
+    
+    def _handle_radio_check(self, payload: Dict[str, Any]) -> None:
+        """Handle UDS radio check request.
+        
+        LIFECYCLE FIX: Only responds to CALL_SENT messages.
+        """
+        # Check message lifecycle state
+        message_state = payload.get('message_state', '')
+        if message_state != "CALL_SENT":
+            return
+        
+        self.logger.info("[GUI-1] Radio check received from UDS")
+        
+        if not self.communicator:
+            self.logger.warning("[GUI-1] Cannot respond to radio check - no communicator available")
+            return
+        
+        # Build radio check response
+        connectivity_data = {
+            "system_address": "GUI-1",
+            "latency_ms": 0,
+            "bus_connected": self.bus_connected,
+            "timestamp": datetime.now().isoformat()
+        }
+        
+        try:
+            self.communicator.send_radio_check_response("DIAG-1", connectivity_data)
+            self.logger.info("[GUI-1] Radio check response sent to UDS")
+        except Exception as exc:
+            self.logger.error(f"[GUI-1] Radio check response failed: {exc}")
 
     def _initialize_operator_scaffold(self) -> None:
         try:
@@ -694,16 +1297,122 @@ class EnhancedDKIGUI:
             self._append_log(f"Unable to read operator profiles: {exc}")
 
         if not self.operator_profiles_cache:
-            default_name = self.profile.display_name or self.operator_name or 'Analyst'
-            try:
-                profile = self.operator_manager.create(name=default_name)
-                self.operator_profiles_cache.append(profile)
-            except Exception as exc:
-                self._append_log(f"Failed to bootstrap operator profile: {exc}")
+            self.logger.info("[GUI-1] No operator profiles detected; setup wizard will be required.")
 
-        if self.operator_profiles_cache and not self.operator_profile:
-            self.operator_profile = self.operator_profiles_cache[0]
-            self.operator_name = self.operator_profile.name
+    def _launch_setup_wizard(self, *, reset_state: bool) -> bool:
+        """Launch the setup wizard and surface any failures to the user."""
+        setup_completed = [False]
+        
+        def on_complete(profile_manager):
+            setup_completed[0] = True if profile_manager else False
+            self.logger.info("[GUI-1] Wizard completed: %s", setup_completed[0])
+        
+        try:
+            self.logger.info("[GUI-1] Launching setup wizard (reset_state=%s)", reset_state)
+            
+            # Clear old data if reset
+            if reset_state:
+                for f in [self.state_root / "user_profile.json", self.state_root / "user_profiles.db"]:
+                    if f.exists():
+                        f.unlink()
+                        self.logger.info("[GUI-1] Cleared: %s", f)
+            
+            # Show root window
+            self.root.deiconify()
+            self.root.lift()
+            
+            run_setup_wizard(
+                parent=self.root,
+                on_complete=on_complete,
+                profile_root=self.state_root,
+                reset_state=reset_state,
+            )
+            
+            return setup_completed[0]
+            
+        except Exception as exc:
+            self.logger.exception("[GUI-1] Setup wizard failed")
+            messagebox.showerror(APP_TITLE, f"Setup failed:\n{exc}", parent=self.root)
+            return False
+
+    def _ensure_initial_user(self) -> bool:
+        """Guarantee a persisted profile and operator exist before continuing."""
+        profile_data = self.profile_registry.get_raw_profile()
+        has_profile = bool(profile_data)
+        operator_records: List[OperatorProfile] = []
+        if self.operator_manager:
+            try:
+                operator_records = self.operator_manager.list_all()
+            except Exception as exc:
+                self._append_log(f"Unable to load operator registry: {exc}")
+                operator_records = []
+        has_operator = bool(operator_records)
+        if has_profile and has_operator:
+            self.operator_profiles_cache = operator_records
+            if operator_records and not self.operator_profile:
+                self.operator_profile = operator_records[0]
+            return True
+
+        message = (
+            "Central Command needs to run the Setup Wizard before first use.\n\n"
+            "The wizard will collect your agency profile and create the initial administrator login."
+        )
+        messagebox.showinfo(APP_TITLE, message, parent=self.root)
+        reset_required = has_profile or has_operator
+        if reset_required:
+            self.logger.info("[GUI-1] Existing setup artifacts detected; they will be replaced.")
+        if not self._launch_setup_wizard(reset_state=True):
+            return False
+
+        # Reload registry data after wizard completion
+        self.profile_registry = ProfileRegistry(self.state_root)
+        profile_data = self.profile_registry.get_raw_profile()
+        has_profile = bool(profile_data)
+        if self.operator_manager:
+            try:
+                self.operator_profiles_cache = self.operator_manager.list_all()
+            except Exception as exc:
+                self._append_log(f"Unable to refresh operator registry: {exc}")
+                self.operator_profiles_cache = []
+        else:
+            self.operator_profiles_cache = []
+        has_operator = bool(self.operator_profiles_cache)
+
+        if not has_profile or not has_operator:
+            self.logger.error(
+                "[GUI-1] Setup wizard completed without creating required profile/operator (profile=%s, operator=%s)",
+                has_profile,
+                has_operator,
+            )
+            messagebox.showerror(
+                APP_TITLE,
+                "Setup Wizard did not complete. Please rerun the application to try again.",
+                parent=self.root,
+            )
+            return False
+
+        preferred_profile = next(
+            (op for op in self.operator_profiles_cache if getattr(op, "role", "").lower() == "admin"),
+            self.operator_profiles_cache[0],
+        )
+        self.operator_profile = preferred_profile
+        self.operator_role_default = self.operator_profile.role or self.operator_role_default or "field_operator"
+        try:
+            self.input_state.update_section(
+                "login",
+                {
+                    "last_operator": self.operator_profile.name,
+                    "last_role": self.operator_profile.role or "field_operator",
+                },
+            )
+        except Exception:
+            pass
+        self.logger.info(
+            "[GUI-1] Setup wizard completed successfully; operator '%s' registered.",
+            self.operator_profile.name,
+        )
+        return True
+
 
     # -- Layout ---------------------------------------------------------
     def _build_layout(self) -> None:
@@ -713,12 +1422,52 @@ class EnhancedDKIGUI:
         style = ttk.Style(self.root)
         style.configure("MainArea.TFrame", background="#f8fafc")
         style.configure("Header.TFrame", background="#0f172a")
-        style.configure("Quick.TButton", padding=(12, 6), font=("Segoe UI", 10, "bold"))
+        style.configure("NavBar.TFrame", background="#0f172a")
+        style.configure(
+            "NavPrimary.TButton",
+            padding=(14, 8),
+            font=("Segoe UI", 10, "bold"),
+            background="#1e293b",
+            foreground="#e2e8f0",
+        )
+        style.map(
+            "NavPrimary.TButton",
+            background=[("pressed", "#1e40af"), ("active", "#2563eb"), ("!disabled", "#1e293b")],
+            foreground=[("disabled", "#94a3b8"), ("!disabled", "#e2e8f0")],
+        )
+        style.configure(
+            "NavPrimaryActive.TButton",
+            padding=(14, 8),
+            font=("Segoe UI", 10, "bold"),
+            background="#2563eb",
+            foreground="#f8fafc",
+        )
+        style.map(
+            "NavPrimaryActive.TButton",
+            background=[("pressed", "#1e3a8a"), ("active", "#1d4ed8"), ("!disabled", "#2563eb")],
+            foreground=[("disabled", "#cbd5f5"), ("!disabled", "#f8fafc")],
+        )
+        style.configure("HomeCard.TFrame", background="#ffffff")
+        style.configure("HomeTitle.TLabel", font=("Segoe UI", 22, "bold"), foreground="#0f172a")
+        style.configure("HomeSubtitle.TLabel", font=("Segoe UI", 11), foreground="#475569")
+        style.configure("HomeSectionHeading.TLabel", font=("Segoe UI", 10, "bold"), foreground="#1e293b")
+        style.configure("HomeBody.TLabel", font=("Segoe UI", 10), foreground="#334155")
+        style.configure("HomeMetricValue.TLabel", font=("Segoe UI", 10, "bold"), foreground="#0f172a")
+        style.configure("HomeMetricLabel.TLabel", font=("Segoe UI", 9), foreground="#64748b")
+        style.configure("HomeAction.TFrame", background="#f8fafc")
+        style.configure("HomeAction.TButton", padding=(22, 14), font=("Segoe UI", 12, "bold"))
+        style.map(
+            "HomeAction.TButton",
+            background=[("pressed", "#1e3a8a"), ("active", "#2563eb"), ("!disabled", "#1d4ed8")],
+            foreground=[("disabled", "#cbd5f5"), ("!disabled", "#f8fafc")],
+        )
+        style.configure("HomeActionHint.TLabel", font=("Segoe UI", 9), foreground="#64748b")
 
         self.root.columnconfigure(0, weight=1)
-        self.root.rowconfigure(0, weight=0)
-        self.root.rowconfigure(1, weight=1)
-        self.root.rowconfigure(2, weight=0)
+        self.root.rowconfigure(0, weight=0)  # Header
+        self.root.rowconfigure(1, weight=0)  # Navigation bar
+        self.root.rowconfigure(2, weight=1)  # Content area
+        self.root.rowconfigure(3, weight=0)  # Status bar
 
         header = ttk.Frame(self.root, style="Header.TFrame", padding=(22, 18, 22, 14))
         header.grid(row=0, column=0, sticky="ew")
@@ -761,16 +1510,6 @@ class EnhancedDKIGUI:
         )
         self.operator_label.grid(row=1, column=1, sticky="e")
 
-        quick_bar = ttk.Frame(header, padding=(0, 10, 0, 0), style="Header.TFrame")
-        quick_bar.grid(row=2, column=0, columnspan=2, sticky="ew")
-        for idx, (label, command) in enumerate((
-            ("New Case", self._prompt_new_case),
-            ("Open Workspace", self._open_workspace_tab),
-            ("Refresh Overview", self._refresh_case_overview),
-        )):
-            btn = ttk.Button(quick_bar, text=label, style="Quick.TButton", command=command)
-            btn.grid(row=0, column=idx, padx=(0 if idx == 0 else 10, 0))
-
         status_label = tk.Label(
             header,
             textvariable=self.status_message_var,
@@ -778,16 +1517,13 @@ class EnhancedDKIGUI:
             bg="#0f172a",
             font=("Segoe UI", 10),
         )
-        status_label.grid(row=3, column=0, columnspan=2, sticky="w", pady=(6, 0))
+        status_label.grid(row=2, column=0, columnspan=2, sticky="w", pady=(6, 0))
 
-        paned = ttk.Panedwindow(self.root, orient=tk.HORIZONTAL)
-        paned.grid(row=1, column=0, sticky="nsew")
+        nav_container = ttk.Frame(self.root, style="NavBar.TFrame", padding=(22, 8, 22, 12))
+        nav_container.grid(row=1, column=0, sticky="ew")
 
-        nav_container = tk.Frame(paned, bg="#0f172a", width=240)
-        content_container = ttk.Frame(paned, style="MainArea.TFrame", padding=(24, 24))
-        paned.add(nav_container, weight=0)
-        paned.add(content_container, weight=1)
-
+        content_container = ttk.Frame(self.root, style="MainArea.TFrame", padding=(24, 24))
+        content_container.grid(row=2, column=0, sticky="nsew")
         content_container.columnconfigure(0, weight=1)
         content_container.rowconfigure(0, weight=1)
 
@@ -814,11 +1550,11 @@ class EnhancedDKIGUI:
             builder(frame)
             self.spaces[key] = frame
 
-        self._build_touch_nav(nav_container)
+        self._build_nav_bar(nav_container)
         self._select_tab("home")
 
         self.status_bar = StatusBar(self.root)
-        self.status_bar.grid(row=2, column=0, sticky="ew")
+        self.status_bar.grid(row=3, column=0, sticky="ew")
         self.status_bar.add_section("profile", f"Operator: {self.operator_name}", weight=1)
         self.status_bar.add_section("status", self.status_message_var.get(), weight=2)
         self.status_bar.add_section("bus", self.bus_state_var.get(), weight=1)
@@ -846,42 +1582,92 @@ class EnhancedDKIGUI:
 
         self.root.config(menu=menubar)
 
-    def _build_touch_nav(self, parent: tk.Widget) -> None:
+    def _build_nav_bar(self, parent: tk.Widget) -> None:
+        """Create a horizontal navigation bar for switching workspaces."""
         for child in parent.winfo_children():
             child.destroy()
 
-        parent.configure(bg="#10172a")
         self.nav_buttons.clear()
 
-        style = ttk.Style(self.root)
-        style.configure("NavPrimary.TButton", padding=(18, 14), font=("Segoe UI", 11, "bold"), anchor="w")
-        style.map("NavPrimary.TButton", background=[("disabled", "#2563eb")], foreground=[("disabled", "#f8fafc")])
+        container = ttk.Frame(parent, style="NavBar.TFrame")
+        container.pack(fill="x")
 
-        tk.Label(
-            parent,
-            text="Command Navigation",
-            bg="#10172a",
-            fg="#e2e8f0",
-            font=("Segoe UI", 13, "bold"),
-            justify="left",
-        ).pack(fill="x", padx=18, pady=(24, 12))
-
-        subtitle = tk.Label(
-            parent,
-            text="Choose a workspace to continue.",
-            bg="#10172a",
-            fg="#94a3b8",
-            font=("Segoe UI", 10),
-            justify="left",
-        )
-        subtitle.pack(fill="x", padx=18, pady=(0, 18))
-
-        for key, label in getattr(self, '_nav_tab_order', []):
-            button = ttk.Button(parent, text=label, style="NavPrimary.TButton", command=lambda k=key: self._select_tab(k))
-            button.pack(fill="x", padx=18, pady=(0, 12))
+        for idx, (key, label) in enumerate(getattr(self, "_nav_tab_order", [])):
+            button = ttk.Button(
+                container,
+                text=label,
+                style="NavPrimary.TButton",
+                command=lambda k=key: self._select_tab(k),
+            )
+            button.pack(side="left", padx=(0 if idx == 0 else 12, 0))
             self.nav_buttons[key] = button
 
-        tk.Frame(parent, bg="#10172a").pack(expand=True, fill="both")
+    def _register_gui_signal_handlers(self) -> None:
+        """Register GUI bus signal handlers for async updates"""
+        if not self.bus:
+            return
+        try:
+            self.bus.register_signal("section.data.updated", self._handle_section_data_updated)
+            self.bus.register_signal("narrative.assembled", self._handle_narrative_assembled)
+            self.bus.register_signal("mission_debrief.section.complete", self._handle_section_complete)
+            self.bus.register_signal("evidence.processed", self._handle_evidence_processed)
+            self.bus.register_signal("report.generated", self._handle_report_generated)
+        except Exception as exc:
+            self.logger.error(f"Failed to register GUI signal handlers: {exc}")
+            
+    def _handle_section_data_updated(self, payload: Dict[str, Any]) -> None:
+        """Handle section data update signal from backend"""
+        section_id = payload.get("section_id")
+        if section_id and self.case_session:
+            section_state = self.case_session.ensure_section(section_id)
+            section_state.mark_status("ready", payload.get("content"))
+            self._append_log(f"Section {section_id} data updated")
+            
+    def _handle_narrative_assembled(self, payload: Dict[str, Any]) -> None:
+        """Handle narrative assembled signal from backend"""
+        section_id = payload.get("section_id")
+        narrative = payload.get("full_narrative") or payload.get("narrative")
+        if section_id and narrative and self.case_session:
+            section_state = self.case_session.ensure_section(section_id)
+            section_state.mark_status("ready", narrative)
+            self._append_log(f"Narrative assembled for {section_id}")
+            
+    def _handle_section_complete(self, payload: Dict[str, Any]) -> None:
+        """Handle section complete signal from Mission Debrief"""
+        section_id = payload.get("section_id")
+        if section_id:
+            self._append_log(f"Section {section_id} marked complete by Mission Debrief")
+            
+    def _handle_evidence_processed(self, payload: Dict[str, Any]) -> None:
+        """Handle evidence processed signal"""
+        evidence_id = payload.get("evidence_id")
+        if evidence_id:
+            self._append_log(f"Evidence {evidence_id} processed")
+            
+    def _handle_report_generated(self, payload: Dict[str, Any]) -> None:
+        """Handle report generated signal"""
+        self.current_report = payload
+        self._append_log("Report generated successfully")
+        self._refresh_report_summary()
+            
+    def _select_cases_tab(self) -> None:
+        """Navigate to cases tab"""
+        self._select_tab("cases")
+            
+    def _show_profile_manager(self) -> None:
+        """Open non-blocking profile manager window"""
+        raw_profile = self.profile_registry.get_raw_profile()
+        ProfileEditor(self.root, raw_profile, gui_module=self.gui_module, callback=self._on_profile_saved)
+            
+    def _on_profile_saved(self, result: Optional[Dict[str, object]]) -> None:
+        """Callback when profile is saved"""
+        if result:
+            try:
+                self.profile_registry.save_profile(result)
+                self._refresh_home_overview()
+                messagebox.showinfo(APP_TITLE, "Profile updated successfully")
+            except Exception as exc:
+                messagebox.showerror(APP_TITLE, f"Failed to save profile:\n{exc}")
 
     def _select_tab(self, key: str) -> None:
         target = self.spaces.get(key)
@@ -893,70 +1679,151 @@ class EnhancedDKIGUI:
         self.active_space_title.set(self.spaces_titles.get(key, key.title()))
 
         for space_key, button in self.nav_buttons.items():
-            if space_key == key:
-                button.state(["disabled"])
-            else:
-                button.state(["!disabled"])
+            target_style = "NavPrimaryActive.TButton" if space_key == key else "NavPrimary.TButton"
+            button.configure(style=target_style)
+            button.state(["!disabled"])
     def _build_home_tab(self, parent: ttk.Frame) -> None:
-        parent.columnconfigure(0, weight=2)
-        parent.columnconfigure(1, weight=1)
-        parent.rowconfigure(1, weight=1)
+        parent.columnconfigure(0, weight=1)
+        parent.rowconfigure(0, weight=1)
 
-        status_card = ttk.LabelFrame(parent, text="System Status", padding=18)
-        status_card.grid(row=0, column=0, sticky="ew", padx=(0, 18), pady=(0, 18))
-        status_card.columnconfigure(1, weight=1)
-        ttk.Label(status_card, text="Current State", font=("Segoe UI", 11, "bold")).grid(row=0, column=0, sticky="w")
-        ttk.Label(status_card, textvariable=self.home_status_var).grid(row=0, column=1, sticky="w")
-        ttk.Label(status_card, text="Bus Health", font=("Segoe UI", 11, "bold")).grid(row=1, column=0, sticky="w", pady=(8, 0))
-        ttk.Label(status_card, textvariable=self.home_bus_health_var).grid(row=1, column=1, sticky="w", pady=(8, 0))
-        ttk.Label(status_card, text="Jobs", font=("Segoe UI", 11, "bold")).grid(row=2, column=0, sticky="w", pady=(8, 0))
-        ttk.Label(status_card, textvariable=self.home_job_summary_var).grid(row=2, column=1, sticky="w", pady=(8, 0))
-        ttk.Label(status_card, text="Operator", font=("Segoe UI", 11, "bold")).grid(row=3, column=0, sticky="w", pady=(8, 0))
-        ttk.Label(status_card, textvariable=self.home_operator_summary_var).grid(row=3, column=1, sticky="w", pady=(8, 0))
-        ttk.Label(status_card, text="Active Case", font=("Segoe UI", 11, "bold")).grid(row=4, column=0, sticky="w", pady=(8, 0))
-        ttk.Label(status_card, textvariable=self.home_active_case_var).grid(row=4, column=1, sticky="w", pady=(8, 0))
+        card = ttk.Frame(parent, style="HomeCard.TFrame", padding=(32, 28))
+        card.grid(row=0, column=0, sticky="nsew")
+        card.columnconfigure(0, weight=1)
+        card.columnconfigure(1, weight=1)
+        card.rowconfigure(5, weight=1)
 
-        profile_card = ttk.LabelFrame(parent, text="Analyst Profile", padding=18)
-        profile_card.grid(row=1, column=0, sticky="nsew", padx=(0, 18))
-        profile_card.columnconfigure(0, weight=1)
-        ttk.Label(profile_card, textvariable=self.home_profile_text, justify="left").grid(row=0, column=0, sticky="w")
+        ttk.Label(card, text="Central Command Dashboard", style="HomeTitle.TLabel").grid(
+            row=0, column=0, columnspan=2, sticky="w"
+        )
+        ttk.Label(
+            card,
+            text="Review mission readiness, manage investigations, and resume operator workflows.",
+            style="HomeSubtitle.TLabel",
+            wraplength=720,
+            justify="left",
+        ).grid(row=1, column=0, columnspan=2, sticky="w", pady=(4, 20))
 
-        defaults_card = ttk.LabelFrame(parent, text="Case Defaults", padding=18)
-        defaults_card.grid(row=2, column=0, sticky="ew", padx=(0, 18), pady=(18, 0))
-        defaults_card.columnconfigure(0, weight=1)
-        ttk.Label(defaults_card, textvariable=self.home_case_text, justify="left").grid(row=0, column=0, sticky="w")
-        actions_row = ttk.Frame(defaults_card)
-        actions_row.grid(row=1, column=0, sticky="w", pady=(12, 0))
-        ttk.Button(actions_row, text="Open Workspace", command=self._open_workspace_tab).pack(side="left")
-        ttk.Button(actions_row, text="Refresh Profile", command=self._refresh_home_overview).pack(side="left", padx=(12, 0))
+        metrics = ttk.Frame(card, style="HomeCard.TFrame")
+        metrics.grid(row=2, column=0, columnspan=2, sticky="ew")
+        for idx in range(3):
+            metrics.columnconfigure(idx, weight=1)
+        ttk.Label(metrics, textvariable=self.home_status_var, style="HomeMetricValue.TLabel").grid(
+            row=0, column=0, sticky="w"
+        )
+        ttk.Label(metrics, text="System Status", style="HomeMetricLabel.TLabel").grid(
+            row=1, column=0, sticky="w", pady=(2, 0)
+        )
+        ttk.Label(metrics, textvariable=self.home_bus_health_var, style="HomeMetricValue.TLabel").grid(
+            row=0, column=1, sticky="w"
+        )
+        ttk.Label(metrics, text="Bus Link", style="HomeMetricLabel.TLabel").grid(
+            row=1, column=1, sticky="w", pady=(2, 0)
+        )
+        ttk.Label(metrics, textvariable=self.home_job_summary_var, style="HomeMetricValue.TLabel").grid(
+            row=0, column=2, sticky="w"
+        )
+        ttk.Label(metrics, text="Automation Jobs", style="HomeMetricLabel.TLabel").grid(
+            row=1, column=2, sticky="w", pady=(2, 0)
+        )
 
-        activity_card = ttk.LabelFrame(parent, text="Recent Automation Activity", padding=12)
-        activity_card.grid(row=0, column=1, rowspan=3, sticky="nsew")
-        activity_card.columnconfigure(0, weight=1)
-        activity_card.rowconfigure(0, weight=1)
+        summaries = ttk.Frame(card, style="HomeCard.TFrame")
+        summaries.grid(row=3, column=0, columnspan=2, sticky="nsew", pady=(20, 16))
+        summaries.columnconfigure(0, weight=1)
+        summaries.columnconfigure(1, weight=1)
+
+        operator_panel = ttk.LabelFrame(summaries, text="Operator", padding=(16, 12))
+        operator_panel.grid(row=0, column=0, sticky="nsew", padx=(0, 12))
+        operator_panel.columnconfigure(1, weight=1)
+        
+        # Profile Picture
+        self.profile_pic_label = tk.Label(operator_panel, bg="#f0f0f0", width=80, height=80)
+        self.profile_pic_label.grid(row=0, column=0, rowspan=2, sticky="nw", padx=(0, 12))
+        self._update_profile_picture()
+        
+        # Operator Info
+        ttk.Label(
+            operator_panel,
+            textvariable=self.home_operator_summary_var,
+            style="HomeSectionHeading.TLabel",
+        ).grid(row=0, column=1, sticky="w")
+        ttk.Label(
+            operator_panel,
+            textvariable=self.home_profile_text,
+            style="HomeBody.TLabel",
+            justify="left",
+            wraplength=340,
+        ).grid(row=1, column=1, sticky="w", pady=(8, 0))
+
+        case_panel = ttk.LabelFrame(summaries, text="Case Defaults", padding=(16, 12))
+        case_panel.grid(row=0, column=1, sticky="nsew")
+        case_panel.columnconfigure(0, weight=1)
+        ttk.Label(
+            case_panel,
+            textvariable=self.home_active_case_var,
+            style="HomeSectionHeading.TLabel",
+        ).grid(row=0, column=0, sticky="w")
+        ttk.Label(
+            case_panel,
+            textvariable=self.home_case_text,
+            style="HomeBody.TLabel",
+            justify="left",
+            wraplength=340,
+        ).grid(row=1, column=0, sticky="w", pady=(8, 0))
+
+        actions = ttk.Frame(card, style="HomeCard.TFrame")
+        actions.grid(row=4, column=0, columnspan=2, sticky="ew")
+        for idx in range(3):
+            actions.columnconfigure(idx, weight=1)
+
+        action_specs = [
+            ("New Case", "Launch a fresh investigative workspace with persisted defaults.", self._open_workspace_tab),
+            ("Review Cases", "Browse active missions and archived deliverables.", self._select_cases_tab),
+            ("Profile Manager", "Adjust operator credentials and access rules.", self._show_profile_manager),
+        ]
+
+        for idx, (label, hint, callback) in enumerate(action_specs):
+            pane = ttk.Frame(actions, style="HomeAction.TFrame", padding=(18, 16))
+            pane.grid(row=0, column=idx, sticky="nsew", padx=(0 if idx == 0 else 12, 0))
+            pane.columnconfigure(0, weight=1)
+            ttk.Button(pane, text=label, style="HomeAction.TButton", command=callback).grid(
+                row=0, column=0, sticky="ew"
+            )
+            ttk.Label(
+                pane,
+                text=hint,
+                style="HomeActionHint.TLabel",
+                wraplength=220,
+                justify="center",
+            ).grid(row=1, column=0, sticky="ew", pady=(10, 0))
+
+        activity = ttk.LabelFrame(card, text="Recent Automation Activity", padding=(0, 12))
+        activity.grid(row=5, column=0, columnspan=2, sticky="nsew", pady=(20, 0))
+        activity.columnconfigure(0, weight=1)
+        activity.rowconfigure(0, weight=1)
 
         columns = ("timestamp", "source", "message")
-        tree = ttk.Treeview(activity_card, columns=columns, show="headings", height=12)
-        tree.heading("timestamp", text="Time")
+        tree = ttk.Treeview(activity, columns=columns, show="headings", height=6)
+        tree.heading("timestamp", text="Timestamp")
         tree.heading("source", text="Source")
-        tree.heading("message", text="Summary")
-        tree.column("timestamp", width=150, anchor="w")
-        tree.column("source", width=120, anchor="w")
-        tree.column("message", anchor="w")
+        tree.heading("message", text="Message")
+        tree.column("timestamp", width=140, anchor="w")
+        tree.column("source", width=140, anchor="w")
+        tree.column("message", width=520, anchor="w")
         tree.grid(row=0, column=0, sticky="nsew")
-        scrollbar = ttk.Scrollbar(activity_card, orient="vertical", command=tree.yview)
+        scrollbar = ttk.Scrollbar(activity, orient="vertical", command=tree.yview)
         scrollbar.grid(row=0, column=1, sticky="ns")
         tree.configure(yscrollcommand=scrollbar.set)
-        self.home_activity_tree = tree
 
-        refresh_bar = ttk.Frame(activity_card)
-        refresh_bar.grid(row=1, column=0, columnspan=2, sticky="ew", pady=(10, 0))
-        ttk.Button(refresh_bar, text="Refresh Activity", command=self._refresh_home_overview).pack(side="right")
-
-        empty_notice = ttk.Label(activity_card, text="Automation events will appear here as the system processes tasks.", foreground="#6366f1")
-        empty_notice.grid(row=2, column=0, columnspan=2, sticky="ew", pady=(10, 0))
-        empty_notice.configure(anchor="center")
+        empty_notice = ttk.Label(
+            activity,
+            text="No recent automation activity. Events from the bus will appear here as they occur.",
+            style="HomeActionHint.TLabel",
+            justify="center",
+            wraplength=720,
+        )
+        empty_notice.grid(row=0, column=0, sticky="nsew")
         tree._empty_notice = empty_notice  # type: ignore[attr-defined]
+        self.home_activity_tree = tree
 
         self._refresh_home_overview()
     def _build_cases_tab(self, parent: ttk.Frame) -> None:
@@ -1006,6 +1873,10 @@ class EnhancedDKIGUI:
 
 
     def _refresh_case_overview(self) -> None:
+        workspace_defaults = self.input_state.get_section("workspace") if hasattr(self, "input_state") else {}
+        if not self.active_case_id and workspace_defaults.get("last_active_case"):
+            self.active_case_id = workspace_defaults["last_active_case"]
+
         overview = self._collect_case_overview()
         self.case_overview = overview
         open_cases = overview.get("open", [])
@@ -1045,11 +1916,21 @@ class EnhancedDKIGUI:
         except Exception:
             defaults = {}
         entries: List[Dict[str, Any]] = []
-        if self.plugin:
+        bus = self.bus
+        if bus:
             try:
-                entries = self.plugin.list_scanned_evidence()
+                manifest_payload = bus.get_evidence_manifest() if hasattr(bus, "get_evidence_manifest") else []
             except Exception as exc:
                 self._append_log(f"Failed to load scanned evidence: {exc}")
+            else:
+                for raw in manifest_payload or []:
+                    if not isinstance(raw, dict):
+                        continue
+                    entry = dict(raw)
+                    response = entry.get("response")
+                    if isinstance(response, dict):
+                        entry["response"] = dict(response)
+                    entries.append(entry)
         groups: Dict[str, Dict[str, Any]] = {}
         for entry in entries:
             response = entry.get("response") or {}
@@ -1094,6 +1975,123 @@ class EnhancedDKIGUI:
                 if record["last_seen"] is None or dt > record["last_seen"]:
                     record["last_seen"] = dt
                     record["last_seen_sort"] = dt.timestamp()
+        current_case_id: Optional[str] = None
+        case_metadata: Dict[str, Any] = {}
+        if bus:
+            raw_case_id = getattr(bus, "current_case_id", None)
+            if raw_case_id:
+                current_case_id = str(raw_case_id)
+            meta_candidate = getattr(bus, "case_metadata", None)
+            if isinstance(meta_candidate, dict):
+                case_metadata = dict(meta_candidate)
+        if current_case_id:
+            record = groups.setdefault(
+                current_case_id,
+                {
+                    "case_id": current_case_id,
+                    "display_name": current_case_id,
+                    "client": defaults.get("client_name") or self.profile_data.get("business_name", "Client"),
+                    "subject": defaults.get("subject") or "Primary Subject",
+                    "status": "open",
+                    "evidence": [],
+                    "tags": set(),
+                    "categories": set(),
+                    "last_seen": None,
+                    "last_seen_sort": None,
+                },
+            )
+            record["display_name"] = (
+                case_metadata.get("case_name")
+                or case_metadata.get("display_name")
+                or record.get("display_name")
+                or current_case_id
+            )
+            record["client"] = (
+                case_metadata.get("client_name")
+                or case_metadata.get("client")
+                or record.get("client")
+                or defaults.get("client_name")
+                or self.profile_data.get("business_name", "Client")
+            )
+            record["subject"] = (
+                case_metadata.get("subject")
+                or record.get("subject")
+                or defaults.get("subject")
+                or "Primary Subject"
+            )
+            status_hint = str(case_metadata.get("status") or record.get("status") or "open").lower()
+            record["status"] = status_hint
+        session = self.case_session
+        if session:
+            session_case_id = str(session.case_id)
+            record = groups.setdefault(
+                session_case_id,
+                {
+                    "case_id": session_case_id,
+                    "display_name": session_case_id,
+                    "client": defaults.get("client_name") or self.profile_data.get("business_name", "Client"),
+                    "subject": defaults.get("subject") or "Primary Subject",
+                    "status": "open",
+                    "evidence": [],
+                    "tags": set(),
+                    "categories": set(),
+                    "last_seen": None,
+                    "last_seen_sort": None,
+                },
+            )
+            if session.extra:
+                record["display_name"] = (
+                    session.extra.get("display_name")
+                    or session.extra.get("case_name")
+                    or record.get("display_name")
+                    or session_case_id
+                )
+            record["client"] = session.extra.get("client_name") or record.get("client")
+            record["subject"] = session.extra.get("subject") or record.get("subject")
+            record["status"] = str(session.status or record.get("status") or "open").lower()
+            reference_time = session.last_saved or session.created_at
+            if reference_time and isinstance(reference_time, datetime):
+                if record["last_seen"] is None or reference_time > record["last_seen"]:
+                    record["last_seen"] = reference_time
+                    record["last_seen_sort"] = reference_time.timestamp()
+        for case_key, snapshots in self.case_snapshots.items():
+            if not snapshots:
+                continue
+            latest_snapshot = snapshots[-1]
+            record = groups.setdefault(
+                case_key,
+                {
+                    "case_id": case_key,
+                    "display_name": case_key,
+                    "client": defaults.get("client_name") or self.profile_data.get("business_name", "Client"),
+                    "subject": defaults.get("subject") or "Primary Subject",
+                    "status": "open",
+                    "evidence": [],
+                    "tags": set(),
+                    "categories": set(),
+                    "last_seen": None,
+                    "last_seen_sort": None,
+                },
+            )
+            record["display_name"] = (
+                latest_snapshot.get("case_name")
+                or latest_snapshot.get("display_name")
+                or record.get("display_name")
+            )
+            record["client"] = latest_snapshot.get("client_name") or latest_snapshot.get("client") or record.get("client")
+            record["subject"] = latest_snapshot.get("subject") or record.get("subject")
+            status_hint = latest_snapshot.get("status") or latest_snapshot.get("case_status")
+            if isinstance(status_hint, str) and status_hint.strip():
+                record["status"] = status_hint.strip().lower()
+            snapshot_ts = (
+                latest_snapshot.get("timestamp")
+                or latest_snapshot.get("updated_at")
+                or latest_snapshot.get("created_at")
+            )
+            snapshot_dt = self._parse_timestamp(snapshot_ts)
+            if snapshot_dt and (record["last_seen"] is None or snapshot_dt > record["last_seen"]):
+                record["last_seen"] = snapshot_dt
+                record["last_seen_sort"] = snapshot_dt.timestamp()
         archived_states = {"closed", "archived", "complete", "completed", "inactive"}
         for record in groups.values():
             record["evidence_count"] = len(record["evidence"])
@@ -1273,11 +2271,21 @@ class EnhancedDKIGUI:
             if navigate:
                 self._select_tab("workspace")
             self._renew_operator_token(self.operator_profile)
+            if self.input_state:
+                self.input_state.update_section("workspace", {"last_active_case": ""})
+            if self.gui_module:
+                self.gui_module.update_state("active_case_id", None)
+                self.gui_module.update_state("active_case", None)
             return
 
         self.active_case_data = case_data
         case_identifier = case_data.get("case_id") or case_data.get("case_number") or ""
         self.active_case_id = case_identifier
+        if self.input_state:
+            self.input_state.update_section("workspace", {"last_active_case": case_identifier})
+        if self.gui_module:
+            self.gui_module.update_state("active_case_id", case_identifier)
+            self.gui_module.update_state("active_case", case_data)
         label = case_data.get("display_name") or case_identifier or "Case"
         if case_identifier:
             self.workspace_case_text.set(f"{label} ({case_identifier})")
@@ -1321,7 +2329,7 @@ class EnhancedDKIGUI:
         self.review_sections = []
         self.review_section_map = {}
         self._clear_review_display()
-        if not case_id or not self.plugin:
+        if not case_id or not self.bus:
             self.review_case_label.set("No case selected")
             self.review_status_text.set("Select a case to view sections.")
             return
@@ -1330,18 +2338,111 @@ class EnhancedDKIGUI:
         updates: List[Dict[str, Any]] = []
         completions: List[Dict[str, Any]] = []
         case_summary: Optional[Dict[str, Any]] = None
-        try:
-            updates = self.plugin.get_section_updates(case_id)
-        except Exception as exc:
-            self._append_log(f"Failed to fetch section updates: {exc}")
-        try:
-            completions = self.plugin.get_section_completion_log(case_id)
-        except Exception as exc:
-            self._append_log(f"Failed to fetch section completions: {exc}")
-        try:
-            case_summary = self.plugin.get_case_summary(case_id)
-        except Exception as exc:
-            self._append_log(f"Failed to fetch case summary: {exc}")
+        target_case = str(case_id) if case_id is not None else None
+        seen_sections: Set[str] = set()
+        completion_sections: Set[str] = set()
+        bus = self.bus
+        if bus:
+            try:
+                section_snapshot = bus.get_section_data() if hasattr(bus, "get_section_data") else {}
+            except Exception as exc:
+                self._append_log(f"Failed to fetch section updates: {exc}")
+            else:
+                if isinstance(section_snapshot, dict):
+                    for section_key, payload in section_snapshot.items():
+                        if isinstance(payload, dict):
+                            normalized: Dict[str, Any] = dict(payload)
+                        else:
+                            normalized = {"content": payload}
+                        normalized.setdefault("section_id", section_key)
+                        payload_case = normalized.get("case_id") or getattr(bus, "current_case_id", None)
+                        payload_case_str = str(payload_case) if payload_case is not None else None
+                        if target_case and payload_case_str and payload_case_str != target_case:
+                            continue
+                        seen_sections.add(section_key)
+                        received_at = (
+                            normalized.get("narrative_generated_at")
+                            or normalized.get("draft_generated_at")
+                            or normalized.get("updated_at")
+                            or normalized.get("timestamp")
+                        )
+                        updates.append(
+                            {
+                                "section_id": section_key,
+                                "payload": normalized,
+                                "received_at": received_at,
+                                "case_id": payload_case_str or target_case,
+                            }
+                        )
+                        status_value = str(normalized.get("status") or "").lower()
+                        if status_value in {"ready", "complete", "completed", "approved"}:
+                            completions.append(
+                                {
+                                    "section_id": section_key,
+                                    "case_id": payload_case_str or target_case,
+                                    "payload": normalized,
+                                }
+                            )
+                            completion_sections.add(section_key)
+        session = self.case_session
+        if session and (not target_case or str(session.case_id) == target_case):
+            approved, total = session.approval_counts()
+            case_summary = {
+                "status": session.status,
+                "steps_completed": [
+                    state.section_id for state in session.sections.values() if state.status in {"ready", "approved"}
+                ],
+                "approved_sections": approved,
+                "total_sections": total,
+            }
+            for section_id, state in session.sections.items():
+                summary_text = (state.narrative or "").strip()
+                if summary_text and len(summary_text) > 360:
+                    summary_text = summary_text[:357].rstrip() + "..."
+                payload = {
+                    "section_id": section_id,
+                    "case_id": str(session.case_id),
+                    "status": state.status,
+                    "updated_at": state.last_updated.isoformat() if state.last_updated else None,
+                    "summary": summary_text,
+                    "title": state.title,
+                }
+                received_at = payload.get("updated_at")
+                if section_id not in seen_sections:
+                    updates.append(
+                        {
+                            "section_id": section_id,
+                            "payload": payload,
+                            "received_at": received_at,
+                            "case_id": str(session.case_id),
+                        }
+                    )
+                    seen_sections.add(section_id)
+                if state.status in {"ready", "approved"} and section_id not in completion_sections:
+                    completions.append(
+                        {
+                            "section_id": section_id,
+                            "case_id": str(session.case_id),
+                            "payload": payload,
+                        }
+                    )
+                    completion_sections.add(section_id)
+        if case_summary is None and bus and target_case:
+            meta_candidate = getattr(bus, "case_metadata", {})
+            current_case = getattr(bus, "current_case_id", None)
+            if isinstance(meta_candidate, dict) and current_case and str(current_case) == target_case:
+                case_summary = {
+                    "status": meta_candidate.get("status") or meta_candidate.get("phase") or "pending",
+                    "steps_completed": meta_candidate.get("steps_completed") or [],
+                }
+        def _row_sort_key(entry: Dict[str, Any]) -> float:
+            value = entry.get("received_at")
+            if value is None:
+                value = (entry.get("payload") or {}).get("updated_at")
+            dt = self._parse_timestamp(value)
+            return dt.timestamp() if dt else 0.0
+        if updates:
+            updates.sort(key=_row_sort_key, reverse=True)
 
         rows = self._prepare_review_rows(case_id, updates, completions)
         self.review_sections = rows
@@ -1728,7 +2829,7 @@ class EnhancedDKIGUI:
     def _register_review_bus_handlers(self) -> None:
         if self._review_bus_handlers_registered:
             return
-        bus = getattr(self.plugin, "bus", None)
+        bus = self.bus
         if not bus:
             return
         try:
@@ -1741,11 +2842,11 @@ class EnhancedDKIGUI:
             self._append_log(f"Failed to register review bus handlers: {exc}")
 
     def _register_gui_bus_handlers(self) -> None:
-        if not self.plugin or not getattr(self.plugin, 'bus', None):
+        if not self.bus:
             return
         if self._gui_bus_handlers_registered:
             return
-        bus = self.plugin.bus
+        bus = self.bus
         signal_map = {
             'narrative.assembled': self._handle_gui_narrative_assembled,
             'section.data.updated': self._handle_gui_section_data,
@@ -1963,9 +3064,9 @@ class EnhancedDKIGUI:
             f"Last activity: {case_data.get('last_seen_display', 'n/a')}",
         ]
         summary_detail = None
-        if self.plugin and case_id:
+        if self.bus and case_id:
             try:
-                summary_detail = self.plugin.get_case_summary(case_id)
+                summary_detail = {}  # TODO: Get via bus signal
             except Exception as exc:
                 self._append_log(f"Case summary unavailable for {case_id}: {exc}")
         if isinstance(summary_detail, dict) and summary_detail:
@@ -2171,8 +3272,13 @@ class EnhancedDKIGUI:
         self.report_text.grid(row=1, column=0, sticky="nsew")
 
     # -- Profile actions ------------------------------------------------
-    def _set_operator(self, name: str) -> None:
+    def _set_operator(self, name: str, role: Optional[str] = None) -> None:
         self.operator_name = name
+        if self.input_state:
+            payload = {"last_operator": name}
+            if role:
+                payload["last_role"] = role
+            self.input_state.update_section("login", payload)
         profile_text = f"Operator: {name}"
         self.operator_label_var.set(profile_text)
         self.home_operator_summary_var.set(profile_text)
@@ -2180,10 +3286,14 @@ class EnhancedDKIGUI:
             self.operator_label.configure(textvariable=self.operator_label_var)
         if self.status_bar:
             self.status_bar.update_section("profile", profile_text)
+        if self.gui_module:
+            self.gui_module.update_state("operator_name", name)
+            if role:
+                self.gui_module.update_state("operator_role", role)
         self._schedule_home_refresh()
 
     def _prompt_new_case_dialog(self) -> None:
-        if not self.plugin:
+        if not self.bus:
             messagebox.showerror(APP_TITLE, "Central Plugin unavailable. Restart the GUI and try again.")
             return
 
@@ -2194,15 +3304,40 @@ class EnhancedDKIGUI:
         except Exception:
             defaults = {}
 
+        persisted_case = self.input_state.get_section("case_creation")
+
+
         metadata_defaults = {
             "client_name": defaults.get("client_name"),
             "subject": defaults.get("subject"),
             "location": defaults.get("location"),
         }
+        if persisted_case.get("client_name"):
+            metadata_defaults["client_name"] = persisted_case["client_name"]
+        if persisted_case.get("subject"):
+            metadata_defaults["subject"] = persisted_case["subject"]
+        if persisted_case.get("location"):
+            metadata_defaults["location"] = persisted_case["location"]
+
+        default_case_id_value = str(
+            defaults.get("case_number")
+            or persisted_case.get("case_id_input")
+            or persisted_case.get("case_id")
+            or ""
+        )
+        default_investigator_value = (
+            persisted_case.get("investigator")
+            or self.operator_name
+            or getattr(self.profile, "display_name", "")
+            or "Investigator"
+        )
+        subcontractor_flag = bool(persisted_case.get("subcontractor", defaults.get("subcontractor", False)))
+        contract_value = persisted_case.get("contract_signed") or str(defaults.get("sign_date") or "") or ""
+        export_root_value = persisted_case.get("export_root") or defaults.get("export_root")
 
         existing_ids: List[str] = []
         try:
-            existing_records = self.plugin.list_cases()
+            existing_records = []  # TODO: Get from bus via case.list signal
             for record in existing_records or []:
                 if not isinstance(record, dict):
                     continue
@@ -2226,15 +3361,15 @@ class EnhancedDKIGUI:
 
         dialog = CaseCreationDialog(
             self.root,
-            default_case_id=str(defaults.get("case_number") or ""),
-            default_investigator=self.operator_name
-            or getattr(self.profile, "display_name", "")
-            or "Investigator",
-            subcontractor=bool(defaults.get("subcontractor", False)),
-            contract_signed=str(defaults.get("sign_date") or "") or None,
-            export_root=defaults.get("export_root"),
+            gui_module=self.gui_module,
+            default_case_id=default_case_id_value,
+            default_investigator=default_investigator_value,
+            subcontractor=subcontractor_flag,
+            contract_signed=contract_value or None,
+            export_root=export_root_value,
             metadata_defaults=metadata_defaults,
             existing_ids=existing_ids,
+            input_state=self.input_state,
         )
 
         payload = dialog.show()
@@ -2242,14 +3377,26 @@ class EnhancedDKIGUI:
             return
 
         try:
-            session = self.plugin.start_case(
+            # Create case session directly
+            session = CaseSession(
                 case_id=payload["case_id"],
                 investigator=payload["investigator"],
-                subcontractor=payload["subcontractor"],
-                contract_signed=payload["contract_signed"],
-                export_root=payload["export_root"],
-                metadata=payload["metadata"],
+                subcontractor=payload.get("subcontractor", False),
+                contract_signed=date.fromisoformat(payload["contract_signed"]) if payload.get("contract_signed") else None,
             )
+            # Emit case creation signal through parent module
+            self._emit_child_event("case_created", {
+                "case_id": session.case_id,
+                "investigator": session.investigator,
+                "timestamp": datetime.now().isoformat()
+            })
+            # Store case session
+            self.case_session = session
+            self.active_case_id = session.case_id
+            self.current_case_id = session.case_id
+            if self.gui_module:
+                self.gui_module.update_state("active_case_id", session.case_id)
+                self.gui_module.update_state("active_case", payload)
         except Exception as exc:
             self._append_log(f"Failed to start case {payload['case_id']}: {exc}")
             messagebox.showerror(APP_TITLE, f"Unable to start case:\n{exc}")
@@ -2267,7 +3414,7 @@ class EnhancedDKIGUI:
             }
             self.case_overview.setdefault("open", []).insert(0, record)
         self._set_active_case(record, navigate=True)
-    def _show_login_dialog(self, initial: bool = False) -> None:
+    def _show_login_dialog(self, initial: bool = False) -> bool:
         operators: List[OperatorProfile] = []
         if self.operator_manager:
             try:
@@ -2275,30 +3422,40 @@ class EnhancedDKIGUI:
                 self.operator_profiles_cache = operators
             except Exception as exc:
                 self._append_log(f"Failed to load operator profiles: {exc}")
+        login_defaults = self.input_state.get_section("login")
+        default_operator = login_defaults.get("last_operator") or self.operator_name
         dialog = LoginDialog(
             self.root,
-            self.operator_name,
+            default_operator,
+            gui_module=self.gui_module,
             operators=operators,
             manager=self.operator_manager,
+            input_state=self.input_state,
+            initial=initial,
         )
         result = dialog.show()
+        login_success = False
+        default_role = self.operator_role_default or "field_operator"
         if isinstance(result, OperatorProfile):
             self.operator_profile = result
             self._renew_operator_token(result)
-            self._set_operator(result.name)
+            self.operator_role_default = result.role or default_role
+            self._set_operator(result.name, self.operator_role_default)
             self._append_log(f"Operator switched to {result.name}.")
+            login_success = True
         elif isinstance(result, str) and result:
             self.operator_profile = None
             self.operator_token_payload = None
-            self._set_operator(result)
+            self.operator_role_default = default_role
+            self._set_operator(result, self.operator_role_default)
             self._append_log(f"Operator switched to {result}.")
-        elif initial and not self.operator_name:
-            fallback = self.profile.display_name or "Analyst"
-            self.operator_profile = None
-            self.operator_token_payload = None
-            self._set_operator(fallback)
+            login_success = True
+        if initial and login_success and not self._root_shown:
+            self.root.deiconify()
+            self._root_shown = True
+        return login_success
     def _open_profile_editor(self) -> None:
-        editor = ProfileEditor(self.root, dict(self.profile_data))
+        editor = ProfileEditor(self.root, dict(self.profile_data), gui_module=self.gui_module)
         result = editor.show()
         if not result:
             return
@@ -2312,6 +3469,29 @@ class EnhancedDKIGUI:
         except Exception as exc:
             messagebox.showerror(APP_TITLE, f"Failed to save profile:\n{exc}")
 
+    def _update_profile_picture(self) -> None:
+        """Load and display the profile picture"""
+        try:
+            from PIL import Image, ImageTk
+            pic_path = self.profile_data.get("profile_picture", "")
+            
+            if pic_path and Path(pic_path).exists():
+                # Load user's profile picture
+                img = Image.open(pic_path)
+                img = img.resize((80, 80), Image.Resampling.LANCZOS)
+                photo = ImageTk.PhotoImage(img)
+                self.profile_pic_label.config(image=photo)
+                self.profile_pic_label.image = photo
+            else:
+                # Default placeholder
+                img = Image.new('RGB', (80, 80), color='#2c3e50')
+                photo = ImageTk.PhotoImage(img)
+                self.profile_pic_label.config(image=photo, text="No Image", compound="center", fg="white")
+                self.profile_pic_label.image = photo
+        except Exception as exc:
+            self.logger.warning(f"[GUI-1] Failed to load profile picture: {exc}")
+            self.profile_pic_label.config(text="No Image", bg="#f0f0f0")
+    
     def _refresh_home_overview(self) -> None:
         profile_payload = getattr(self.profile, "payload", {}) if self.profile else {}
         reporting = profile_payload.get("reporting", {})
@@ -2349,7 +3529,7 @@ class EnhancedDKIGUI:
         status_message = self.status_message_var.get() or "Ready"
         self.home_status_var.set(status_message)
 
-        bus_state = "connected" if self.plugin and getattr(self.plugin, 'bus', None) else "disconnected"
+        bus_state = "connected" if self.bus else "disconnected"
         self.bus_state_var.set(f"Bus: {bus_state}")
         self.home_bus_health_var.set(f"Connection: {bus_state.title()}")
 
@@ -2371,9 +3551,9 @@ class EnhancedDKIGUI:
         if tree is not None:
             tree.delete(*tree.get_children())
             entries: List[Dict[str, Any]] = []
-            if self.plugin:
+            if self.bus:
                 try:
-                    entries = self.plugin.get_activity_log(limit=15)
+                    entries = []  # TODO: Get from bus event log
                 except Exception as exc:
                     self._append_log(f"Activity log fetch failed: {exc}")
                     entries = []
@@ -2403,22 +3583,59 @@ class EnhancedDKIGUI:
                         pass
 
     def _open_workspace_tab(self) -> None:
+        """Handle Start New Case button - send system wake-up signal"""
+        self.logger.info("[GUI-1] Start New Case button clicked - sending system wake-up signal")
+        
+        # Send system wake-up signal to all modules
+        if self.bus and self.bus_connected:
+            try:
+                wake_up_signal = {
+                    "command": "case_started",
+                    "source": "GUI-1",
+                    "target": "all_modules",
+                    "timestamp": datetime.now().isoformat(),
+                    "message": "User initiated case start - wake up system for orchestrated workflow",
+                    "case_operations_started": True,
+                    "user_action": "start_new_case"
+                }
+                
+                # Send wake-up signal to system
+                self.bus.emit('system.case_started', wake_up_signal)
+                self.logger.info("[GUI-1] System wake-up signal sent - all modules should activate case workflow")
+                
+            except Exception as e:
+                self.logger.error(f"[GUI-1] Failed to send system wake-up signal: {e}")
+        
+        # Open workspace tab for user to begin case work
         self._select_tab("workspace")
+        self.logger.info("[GUI-1] Workspace tab opened - ready for case operations")
 
     # -- Backend init ---------------------------------------------------
     def _initialize_plugin(self) -> None:
         try:
-            self.plugin = CentralPluginAdapter()
-            self.categories = self.plugin.get_available_tag_categories()
-            self.category_label_lookup = {
-                entry.get("slug"): entry.get("label") or entry.get("slug")
-                for entry in self.categories
-                if entry.get("slug")
-            }
+            # Initialize bus handlers
+            if self.bus is None:
+                self.bus = DKIReportBus()
+            else:
+                self.bus_connected = True
+
+            self.section_adapter = SectionBusAdapter(self)
+            self.section_adapter.register_bus_handlers()
+            self._register_gui_signal_handlers()
+            # Initialize SIMPLE evidence categories - no overwhelming dropdowns
+            self.categories = [
+                {"slug": "documents", "label": "Documents", "tags": ["document", "paper", "file"], "primary_section": "general_processing"},
+                {"slug": "photos", "label": "Photos", "tags": ["photo", "image", "picture"], "primary_section": "multimedia_processing"},
+                {"slug": "videos", "label": "Videos", "tags": ["video", "recording", "footage"], "primary_section": "multimedia_processing"},
+                {"slug": "contracts", "label": "Contracts", "tags": ["contract", "agreement", "legal"], "primary_section": "legal_review"},
+                {"slug": "communication", "label": "Communication", "tags": ["message", "email", "text", "phone"], "primary_section": "communication_analysis"},
+                {"slug": "financial", "label": "Financial", "tags": ["money", "bank", "tax", "finance"], "primary_section": "financial_analysis"},
+            ]
+            self.category_label_lookup = {cat["slug"]: cat["label"] for cat in self.categories}
             self._register_review_bus_handlers()
             self._register_gui_bus_handlers()
             try:
-                bus_snapshots = self.plugin.bus.get_case_snapshots() if hasattr(self.plugin.bus, "get_case_snapshots") else []
+                bus_snapshots = self.bus.get_case_snapshots() if hasattr(self.bus, "get_case_snapshots") else []
                 if isinstance(bus_snapshots, list):
                     for snapshot in bus_snapshots:
                         if isinstance(snapshot, dict):
@@ -2432,7 +3649,7 @@ class EnhancedDKIGUI:
                 self._append_log(f"Unable to load existing case snapshots: {exc}")
             self._refresh_case_overview()
             self._refresh_review_view(self.active_case_id)
-            bus_state = "connected" if self.plugin and self.plugin.bus else "disconnected"
+            bus_state = "connected" if self.bus else "disconnected"
             self._update_status("Ready", bus_state=bus_state)
             self._append_log("Central Plugin initialized. Tag taxonomy loaded.")
         except Exception as exc:  # pragma: no cover - defensive
@@ -2488,9 +3705,10 @@ class EnhancedDKIGUI:
             normalized = os.path.abspath(path)
             if normalized not in existing_paths and os.path.isfile(normalized):
                 suggestion = None
-                if self.plugin:
+                if self.bus:
                     try:
-                        suggestion = self.plugin.suggest_category_for_file(normalized)
+                        # TODO: Get category suggestion via bus signal
+                        suggestion = {}
                     except Exception as exc:
                         self._append_log(f"Category suggestion failed for {os.path.basename(normalized)}: {exc}")
                 active_case_id = self.active_case_id or None
@@ -2507,8 +3725,7 @@ class EnhancedDKIGUI:
                     parent=self.cards_frame,
                     path=normalized,
                     categories=self.categories,
-                    on_advertise=self._advertise_card_need,
-                    on_scan=self._scan_card,
+                    on_submit_evidence=self._submit_evidence_card,
                     on_remove=self._remove_card,
                     suggestion=suggestion,
                     case_label=active_case_label,
@@ -2523,13 +3740,13 @@ class EnhancedDKIGUI:
                     label = suggestion.get("label") or suggestion.get("category")
                     case_context = active_case_label or active_case_id or "unassigned"
                     self._append_log(f"Suggested category '{label}' for {os.path.basename(normalized)} (case: {case_context}).")
-                if applied_slug and self.plugin:
+                if applied_slug and self.section_adapter:
                     try:
                         tags_for_advertise = suggestion.get("tags") if isinstance(suggestion, dict) else None
                         kwargs: Dict[str, Any] = {"tags": tags_for_advertise}
                         if active_case_id:
                             kwargs["case_id"] = active_case_id
-                        result = self.plugin.advertise_category_need(applied_slug, **kwargs)
+                        result = self.section_adapter.publish_category_need(applied_slug, **kwargs)
                         if result:
                             case_context = active_case_label or active_case_id or "unassigned"
                             self._append_log(f"Auto-advertised {applied_slug} for {os.path.basename(normalized)} (case: {case_context}).")
@@ -2560,67 +3777,77 @@ class EnhancedDKIGUI:
             self._apply_workspace_card_filter()
 
     # -- Card interactions ----------------------------------------------
-    def _advertise_card_need(self, card: EvidenceCard, slug: str, extra_tags: Iterable[str]) -> None:
-        if not self.plugin:
+    def _submit_evidence_card(self, card: EvidenceCard, evidence_data: Dict[str, Any]) -> None:
+        """Submit evidence with auto-routing based on predesignated tags."""
+        if not self.bus:
             messagebox.showerror(APP_TITLE, "Central Plugin unavailable. Restart the GUI and try again.")
             return
+        
         try:
-            tags_payload = list(extra_tags)
-            kwargs: Dict[str, Any] = {"tags": tags_payload}
-            case_id = card.case_id or self.active_case_id
+            # Auto-route based on category and tags
+            category = evidence_data.get('category')
+            manual_tags = evidence_data.get('manual_tags', [])
+            file_path = evidence_data.get('path')
+            case_id = evidence_data.get('case_id') or self.active_case_id
+            
+            # Determine processing workflow based on SIMPLE categories
+            if category == 'financial':
+                # Route to financial analysis
+                workflow = 'financial_analysis'
+            elif category == 'communication':
+                # Route to communication analysis
+                workflow = 'communication_analysis'
+            elif category == 'contracts':
+                # Route to legal review
+                workflow = 'legal_review'
+            elif category in ['photos', 'videos']:
+                # Route to multimedia processing
+                workflow = 'multimedia_processing'
+            else:
+                # Default to general evidence processing (includes 'documents')
+                workflow = 'general_processing'
+            
+            payload: Dict[str, Any] = {
+                "file_path": file_path,
+                "name": os.path.basename(file_path),
+                "category": category,
+                "manual_tags": manual_tags,
+                "workflow": workflow,
+                "auto_routed": True
+            }
+            
             if case_id:
-                kwargs["case_id"] = case_id
-            result = self.plugin.advertise_category_need(slug, **kwargs)
-            case_context = card.case_label or case_id or "unassigned"
-            self._append_log(f"Advertised category '{slug}' for {os.path.basename(card.path)} (case: {case_context}): {result}")
-            self._update_status(f"Advertised {slug}")
-        except Exception as exc:
-            self._append_log(f"Failed to advertise {slug}: {exc}")
-            messagebox.showerror(APP_TITLE, f"Failed to advertise category need:\n{exc}")
-
-    def _scan_card(self, card: EvidenceCard, slug: str, extra_tags: Iterable[str]) -> None:
-        if not self.plugin:
-            messagebox.showerror(APP_TITLE, "Central Plugin unavailable. Restart the GUI and try again.")
-            return
-        payload: Dict[str, Any] = {
-            "file_path": card.path,
-            "name": os.path.basename(card.path),
-            "category": slug,
-        }
-        case_id = card.case_id or self.active_case_id
-        case_record: Optional[Dict[str, Any]] = None
-        if case_id:
-            payload["case_id"] = case_id
-            case_record = self._find_case_by_id(self.case_overview, case_id)
-            if not case_record and self.active_case_data and self.active_case_id == case_id:
-                case_record = self.active_case_data
-            case_payload = {"id": case_id}
-            display_name = (case_record or {}).get("display_name") if case_record else None
-            if not display_name:
-                display_name = card.case_label or case_id
-            if display_name:
-                case_payload["name"] = display_name
-            client_name = (case_record or {}).get("client") if case_record else None
-            if client_name:
-                case_payload["client"] = client_name
-            subject_name = (case_record or {}).get("subject") if case_record else None
-            if subject_name:
-                case_payload["subject"] = subject_name
-            payload["case"] = case_payload
-        tags_list = list(extra_tags)
-        if tags_list:
-            payload["tags"] = tags_list
-            payload["extra_tags"] = tags_list
-        try:
-            response = self.plugin.scan_evidence(payload)
-            case_context = card.case_label or case_id or "unassigned"
+                payload["case_id"] = case_id
+                case_record = self._find_case_by_id(self.case_overview, case_id)
+                if not case_record and self.active_case_data and self.active_case_id == case_id:
+                    case_record = self.active_case_data
+                case_payload = {"id": case_id}
+                display_name = (case_record or {}).get("display_name") if case_record else None
+                if not display_name:
+                    display_name = evidence_data.get('case_label') or case_id
+                if display_name:
+                    case_payload["name"] = display_name
+                client_name = (case_record or {}).get("client") if case_record else None
+                if client_name:
+                    case_payload["client"] = client_name
+                subject_name = (case_record or {}).get("subject") if case_record else None
+                if subject_name:
+                    case_payload["subject"] = subject_name
+                payload["case"] = case_payload
+            
+            # Emit unified evidence submission signal
+            self._emit_child_event("evidence_submitted", payload)
+            response = {"status": "queued", "workflow": workflow}  # Async - will get response via signal
+            
+            case_context = evidence_data.get('case_label') or case_id or "unassigned"
             self._append_log(
-                f"Scan submitted for '{os.path.basename(card.path)}' in category '{slug}' (case: {case_context}): {response}"
+                f"Evidence submitted: '{os.path.basename(file_path)}' -> {workflow} (case: {case_context})"
             )
-            self._update_status(f"Scanned {os.path.basename(card.path)}")
+            self._update_status(f"Submitted {os.path.basename(file_path)} ({workflow})")
+            
         except Exception as exc:
-            self._append_log(f"Evidence scan failed for {card.path}: {exc}")
-            messagebox.showerror(APP_TITLE, f"Evidence scan failed:\n{exc}")
+            self._append_log(f"Evidence submission failed for {evidence_data.get('path', 'unknown')}: {exc}")
+            messagebox.showerror(APP_TITLE, f"Evidence submission failed:\n{exc}")
             return
 
         self._refresh_report_summary()
@@ -2636,10 +3863,12 @@ class EnhancedDKIGUI:
         self.report_text.configure(state="disabled")
 
     def _refresh_report_summary(self) -> None:
-        if not self.plugin:
+        if not self.bus:
             return
         try:
-            report = self.plugin.generate_full_report()
+            # Emit report generation signal
+            self._emit_child_event("report_requested", {"case_id": self.current_case_id})
+            report = {}  # Async - will get report via signal
         except Exception as exc:
             self._append_log(f"Report summary refresh failed: {exc}")
             return
@@ -2674,8 +3903,12 @@ class EnhancedDKIGUI:
         )
         if not target_path:
             return
+        payload = {"report": self.current_report, "file_path": target_path}
         try:
-            exported = self.plugin.export_report(self.current_report, file_path=target_path)
+            if not self.gui_module and self.bus:
+                self.bus.emit("report.export", payload)
+            self._emit_child_event("report_exported", payload)
+            exported = {"status": "queued"}  # Async
         except Exception as exc:
             self._append_log(f"Report export failed: {exc}")
             messagebox.showerror(APP_TITLE, f"Report export failed: {exc}")
@@ -2731,7 +3964,23 @@ class EnhancedDKIGUI:
 
 def main(argv: Sequence[str] | None = None) -> int:
     try:
-        gui = EnhancedDKIGUI()
+        # Initialize CANBUS for GUI connection
+        bus = None
+        try:
+            data_bus_path = str(
+                Path(__file__).resolve().parents[2] / "Command Center" / "Data Bus" / "Bus Core Design"
+            )
+            if data_bus_path not in sys.path:
+                sys.path.append(data_bus_path)
+            from bus_core import DKIReportBus
+
+            bus = DKIReportBus()
+        except Exception as e:
+            print(f"WARNING: Failed to initialize CANBUS for GUI: {e}")
+            print("GUI will launch in SAFEMODE")
+
+        # Launch GUI with CANBUS connection
+        gui = EnhancedDKIGUI(bus=bus)
         gui.mainloop()
     except Exception:
         traceback.print_exc()
@@ -2745,14 +3994,3 @@ EnhancedDKIGUIApp = EnhancedDKIGUI
 
 if __name__ == "__main__":  # pragma: no cover
     sys.exit(main())
-
-
-
-
-
-
-
-
-
-
-

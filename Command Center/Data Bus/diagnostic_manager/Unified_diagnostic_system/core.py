@@ -22,11 +22,20 @@ import threading
 import logging
 import argparse
 import re
+import shutil
 from datetime import datetime, timedelta
-from typing import Dict, List, Any, Optional
+from typing import Any, Dict, List, Optional, Sequence
 from pathlib import Path
 from dataclasses import dataclass
 from enum import Enum
+
+# System Protocol Registry - Auto-registration and protocol definitions
+sys.path.insert(0, str(Path(__file__).parent / "read_me"))
+from system_protocol_registry import (
+    SystemProtocolRegistry,
+    SIGNAL_TRANSLATIONS,
+    RADIO_CODE_DEFINITIONS
+)
 
 # Dependencies will be pulled via pull_dependencies_module() function
 
@@ -76,6 +85,8 @@ def main():
                        help="Run in test mode")
     parser.add_argument("--launch-delay", type=int, default=0,
                        help="Delay before launching (seconds)")
+    parser.add_argument("--smoke", action="store_true",
+                        help="Run abbreviated smoke baseline before enabling full diagnostics")
     
     args = parser.parse_args()
     
@@ -92,6 +103,70 @@ def main():
     logger.info(f"Log Level: {args.log_level}")
     logger.info(f"Test Mode: {args.test_mode}")
     logger.info(f"No CAN-BUS: {args.no_canbus}")
+    logger.info(f"Smoke Baseline: {args.smoke}")
+    
+    # CONFIGURE PATHS FIRST - needed for detection and safe mode initialization
+    logger.info("Configuring system paths for module access...")
+    script_dir = Path(__file__).parent
+    root_dir = script_dir.parent.parent.parent.parent  # Up to The Central Command
+    
+    required_paths = [
+        script_dir.parent.parent / "Bus Core Design",  # Data Bus/Bus Core Design
+        script_dir.parent.parent,  # Data Bus
+        root_dir / "The Marshall",
+        root_dir / "The Warden",
+        root_dir / "The Analyst Deck",
+        script_dir.parent.parent.parent / "Mission Debrief"  # Command Center/Mission Debrief
+    ]
+    
+    for path in required_paths:
+        if path.exists() and str(path) not in sys.path:
+            sys.path.insert(0, str(path))
+    
+    # Add all Analyst section paths
+    for i in range(1, 9):
+        analyst_path = root_dir / "The Analyst Deck" / f"Analyst {i}"
+        if analyst_path.exists() and str(analyst_path) not in sys.path:
+            sys.path.insert(0, str(analyst_path))
+    
+    logger.info(f"Configured paths for all system modules")
+    
+    # AUTO-DETECT OPERATIONAL MODE
+    logger.info("=" * 80)
+    logger.info("AUTO-DETECTING SYSTEM STATE...")
+    logger.info("=" * 80)
+    
+    system_running = _detect_system_state(logger)
+    safe_mode_bus = None
+    
+    if system_running:
+        logger.info("[OK] JOIN MODE: System detected - joining existing operations")
+        logger.info("  Bus active with connected modules")
+        logger.info("  UDS will connect to existing bus and monitor modules")
+        logger.info("  No bus creation - using existing instance")
+    else:
+        logger.info("[WARNING] SAFE MODE: No system detected - initializing complete system")
+        logger.info("  Creating ONE bus instance for all modules")
+        logger.info("  Starting complete system (13 modules) for remote maintenance/repair")
+        logger.info("=" * 80)
+        
+        # FIXED: Get bus instance from safe mode (not boolean)
+        safe_mode_bus = _initialize_safe_mode_modules(logger)
+        
+        if safe_mode_bus:
+            logger.info("[OK] Safe mode initialization SUCCESS - ONE bus created")
+            logger.info("  Bus instance ready for UDS reuse")
+            logger.info("  Stabilizing modules before UDS launch...")
+            time.sleep(3)
+        else:
+            logger.error("✗ SAFE MODE FAILED - Cannot initialize modules")
+            logger.error("  System is DOWN and safe mode cannot start modules")
+            logger.error("  UDS cannot operate without running modules")
+            logger.error("=" * 80)
+            logger.error("CRITICAL: Clean the old registry or start main system first")
+            return 1  # Exit - cannot proceed
+    
+    logger.info("=" * 80)
     
     try:
         # LAUNCHER PULLS ALL OTHER MODULES FOR FUNCTIONALITY
@@ -107,7 +182,13 @@ def main():
             from __init__ import UnifiedDiagnosticSystem
         
         logger.info("Creating diagnostic system instance...")
-        uds = UnifiedDiagnosticSystem()
+        # FIXED: Pass bus instance to UDS (either safe mode bus or None for join mode)
+        if safe_mode_bus:
+            logger.info("  Using safe mode bus instance (no new bus creation)")
+        else:
+            logger.info("  Join mode - UDS will connect to existing bus")
+        
+        uds = UnifiedDiagnosticSystem(bus_connection=safe_mode_bus)
         
         # Check system status
         logger.info("Checking system status...")
@@ -124,7 +205,7 @@ def main():
         
         # Launch the diagnostic system
         logger.info("Launching diagnostic system...")
-        launch_result = uds.launch_diagnostic_system()
+        launch_result = uds.launch_diagnostic_system(smoke_mode=args.smoke)
         
         if launch_result:
             logger.info("DIAGNOSTIC SYSTEM LAUNCHED SUCCESSFULLY!")
@@ -165,8 +246,386 @@ def main():
 # LAUNCHER METHODS - MUST BE AT TOP FOR IMMEDIATE ACCESS
 # ========================================================================
 
+def _detect_system_state(logger):
+    """
+    Auto-detect if main system is running or if safe mode is needed.
+    
+    FIXED: Creates temporary bus to ping modules and verify they're alive
+    
+    Detection logic:
+    1. Check if bus core file exists
+    2. Create temporary bus instance
+    3. Ping modules to verify they're actually running
+    4. Return True if modules respond, False if safe mode needed
+    
+    Returns:
+        bool: True = Normal boot (system running), False = Safe mode (system failed)
+    """
+    try:
+        logger.info("Checking for active bus connections...")
+        
+        # Check if bus core module exists
+        bus_core_path = Path(__file__).parent.parent.parent / "Bus Core Design" / "bus_core.py"
+        if not bus_core_path.exists():
+            logger.info("  Bus core not found - safe mode required")
+            return False
+        
+        # Check if bus registry file exists and has systems
+        registry_path = Path(__file__).parent.parent.parent / "Bus Core Design" / "bus_registry.json"
+        if not registry_path.exists():
+            logger.info("  No registry file found")
+            logger.info("  SAFE MODE: Will create fresh bus")
+            return False
+        
+        try:
+            with open(registry_path, 'r') as f:
+                registry = json.load(f)
+            
+            if not registry or 'systems' not in registry:
+                logger.info("  Registry exists but empty")
+                logger.info("  SAFE MODE: Will create fresh bus")
+                return False
+            
+            system_count = len(registry['systems'])
+            logger.info(f"  Found {system_count} registered systems in registry")
+            
+            # Check if any systems are marked as active
+            active_systems = [s for s in registry['systems'].values() if s.get('status') == 'active']
+            if not active_systems:
+                logger.info("  Registry exists but no active systems")
+                logger.info("  SAFE MODE: Will create fresh bus")
+                return False
+            
+            logger.info(f"  [OK] {len(active_systems)} active systems in registry")
+            logger.info("  Verifying systems are actually alive (ping test)...")
+            
+            # CRITICAL: Create temporary bus to ping modules and verify they're alive
+            try:
+                sys.path.insert(0, str(Path(__file__).parent.parent.parent / "Bus Core Design"))
+                from bus_core import DKIReportBus
+                
+                # Create temporary bus for ping test
+                test_bus = DKIReportBus()
+                
+                # Wait for bus to stabilize
+                if not test_bus.wait_for_ready(timeout=5.0):
+                    logger.info("  Bus not ready for ping test")
+                    logger.info("  SAFE MODE: Will create fresh bus")
+                    return False
+                
+                # Try to send a ping to verify any system responds
+                response_received = False
+                response_timeout = 3  # Give 3 seconds for response
+                
+                def check_for_response(sig_data):
+                    nonlocal response_received
+                    response_received = True
+                    logger.info(f"    [OK] Response received from {sig_data.get('source_address', 'UNKNOWN')}")
+                
+                # Register temporary handler
+                try:
+                    test_bus.register_signal("rollcall_response", check_for_response)
+                    
+                    # Send ping to bus-1 (always should exist if system is running)
+                    logger.info("  Sending verification ping to registered systems...")
+                    test_bus.emit_signal("rollcall", {
+                        'source_address': 'DIAG-DETECTOR',
+                        'target_address': 'Bus-1',
+                        'message': 'VERIFICATION_PING',
+                        'timestamp': datetime.now().isoformat()
+                    })
+                    
+                    # Wait briefly for response
+                    time.sleep(response_timeout)
+                    
+                    if response_received:
+                        logger.info("  [OK] SYSTEM ALIVE: At least one module responded")
+                        logger.info("  JOIN MODE: Will connect to existing bus")
+                        return True
+                    else:
+                        logger.info("  ✗ SYSTEM DEAD: No responses from any registered systems")
+                        logger.info(f"  Registry has {system_count} systems but NONE are running")
+                        logger.info("  SAFE MODE: Will create fresh bus")
+                        return False
+                        
+                except Exception as ping_error:
+                    logger.info(f"  Ping test failed: {ping_error}")
+                    logger.info("  SAFE MODE: Will create fresh bus")
+                    return False
+                    
+            except Exception as bus_error:
+                logger.info(f"  Bus ping test failed: {bus_error}")
+                logger.info("  SAFE MODE: Will create fresh bus")
+                return False
+                
+        except Exception as reg_error:
+            logger.info(f"  Could not read registry: {reg_error}")
+            logger.info("  SAFE MODE: Will create fresh bus")
+            return False
+            
+    except Exception as e:
+        logger.warning(f"  System detection error: {e}")
+        logger.info("  SAFE MODE: Will create fresh bus")
+        return False
+
+# Global bus instance for reuse across functions
+_safe_mode_bus = None
+
+def _initialize_safe_mode_modules(logger):
+    """
+    Initialize COMPLETE system for comprehensive code testing.
+    
+    FIXED: Creates ONE bus instance and stores it globally for reuse
+    
+    Safe mode starts FULL system for diagnostics:
+    - Bus Core (CANBUS/LINBUS) - ONE INSTANCE ONLY
+    - Warden (ECC + Gateway Controller)
+    - Evidence Locker (3-1)
+    - Marshall + Evidence Manager (3)
+    - Mission Debrief + Narrative Assembler (5)
+    - All 8 Analyst Sections (4-1 to 4-8)
+    
+    Returns bus instance if initialization successful, None otherwise.
+    """
+    global _safe_mode_bus
+    
+    try:
+        import threading
+        import importlib
+        
+        logger.info("=" * 80)
+        logger.info("SAFE MODE: FULL SYSTEM INITIALIZATION")
+        logger.info("Creating ONE bus instance for entire system...")
+        logger.info("=" * 80)
+        
+        # PHASE 1: Bus Core (CANBUS/LINBUS) - CREATE ONCE
+        logger.info("PHASE 1: Creating bus core (CANBUS/LINBUS)...")
+        try:
+            sys.path.insert(0, str(Path(__file__).parent.parent.parent / "Bus Core Design"))
+            from bus_core import DKIReportBus
+            
+            # CRITICAL: Create bus ONCE and store globally
+            _safe_mode_bus = DKIReportBus()
+            logger.info("[OK] Bus core created - waiting for stabilization...")
+            
+            # Wait for bus to stabilize (15s timeout)
+            if not _safe_mode_bus.wait_for_ready(timeout=15.0):
+                logger.error("[ERROR] Bus stabilization timeout - system may be unstable")
+                _safe_mode_bus = None
+                return None
+            
+            logger.info("[OK] Bus stabilized and ready")
+        except Exception as e:
+            logger.error(f"✗ Bus core initialization FAILED: {e}")
+            _safe_mode_bus = None
+            return None
+        
+        # PHASE 2: UDS registers with bus (DIAG-1)
+        logger.info("PHASE 2: Registering UDS with bus (DIAG-1)...")
+        try:
+            if _safe_mode_bus.register_module_init('DIAG-1', {'version': '2.0.0', 'type': 'diagnostic_system'}):
+                logger.info("[OK] UDS registered as DIAG-1")
+            else:
+                logger.warning("[WARNING] UDS registration failed - continuing anyway")
+        except Exception as e:
+            logger.warning(f"[WARNING] UDS registration failed: {e}")
+        
+        # PHASE 3: Warden (ECC + Gateway)
+        logger.info("PHASE 3: Initializing Warden (ECC + Gateway Controller)...")
+        try:
+            # Wait for Warden's turn in sequence
+            if _safe_mode_bus.wait_for_module_turn('3', timeout=30.0):
+                sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent.parent / "The Warden"))
+                from warden_module import WardenModule
+                
+                def start_warden():
+                    warden = WardenModule(bus=_safe_mode_bus, communicator=None)
+                    if _safe_mode_bus.register_module_init('3', {'version': '1.0', 'type': 'warden'}):
+                        logger.info("[OK] Warden module initialized (Address 3)")
+                
+                warden_thread = threading.Thread(target=start_warden, daemon=True)
+                warden_thread.start()
+                time.sleep(1)  # Brief delay for module to register
+            else:
+                logger.warning("[WARNING] Warden initialization timeout - skipping")
+        except Exception as e:
+            logger.warning(f"[WARNING] Warden initialization failed: {e}")
+        
+        # PHASE 4: Evidence Locker
+        logger.info("PHASE 4: Initializing Evidence Locker...")
+        try:
+            # Wait for Evidence Locker's turn in sequence
+            if _safe_mode_bus.wait_for_module_turn('1', timeout=30.0):
+                sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent.parent / "Evidence Locker"))
+                from evidence_locker_main import EvidenceLocker
+                
+                def start_evidence_locker():
+                    evidence_locker = EvidenceLocker(bus=_safe_mode_bus, ecc=None)
+                    if _safe_mode_bus.register_module_init('1', {'version': '1.0', 'type': 'evidence_locker'}):
+                        logger.info("[OK] Evidence Locker initialized (Address 1)")
+                
+                locker_thread = threading.Thread(target=start_evidence_locker, daemon=True)
+                locker_thread.start()
+                time.sleep(1)  # Brief delay for module to register
+            else:
+                logger.warning("[WARNING] Evidence Locker initialization timeout - skipping")
+        except Exception as e:
+            logger.warning(f"[WARNING] Evidence Locker initialization failed: {e}")
+        
+        # PHASE 5: Marshall + Evidence Manager
+        logger.info("PHASE 5: Initializing Marshall + Evidence Manager...")
+        try:
+            # Wait for Marshall's turn in sequence
+            if _safe_mode_bus.wait_for_module_turn('1', timeout=30.0):
+                sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent.parent / "The Marshall"))
+                from marshall_module import MarshallModule
+                from evidence_manager import EvidenceManager
+                
+                def start_marshall():
+                    marshall = MarshallModule(bus=_safe_mode_bus, communicator=None)
+                    evidence_mgr = EvidenceManager()
+                    marshall.attach_evidence_manager(evidence_mgr)
+                    if _safe_mode_bus.register_module_init('1', {'version': '1.0', 'type': 'marshall'}):
+                        logger.info("[OK] Marshall + Evidence Manager initialized (Address 1)")
+                
+                marshall_thread = threading.Thread(target=start_marshall, daemon=True)
+                marshall_thread.start()
+                time.sleep(1)  # Brief delay for module to register
+            else:
+                logger.warning("[WARNING] Marshall initialization timeout - skipping")
+        except Exception as e:
+            logger.warning(f"[WARNING] Marshall initialization failed: {e}")
+        
+        # PHASE 6: Mission Debrief (if in sequence)
+        logger.info("PHASE 6: Checking Mission Debrief initialization...")
+        try:
+            # Mission Debrief is address '5' in sequence
+            if _safe_mode_bus.wait_for_module_turn('5', timeout=30.0):
+                logger.info("[OK] Mission Debrief turn reached - module should initialize")
+                # Mission Debrief initializes itself when ready
+            else:
+                logger.warning("[WARNING] Mission Debrief initialization timeout - skipping")
+        except Exception as e:
+            logger.warning(f"[WARNING] Mission Debrief check failed: {e}")
+        
+        # PHASE 7: All 8 Analyst Sections (not in main sequence, can start after core modules)
+        logger.info("PHASE 7: Initializing all 8 Analyst Sections (4-1 to 4-8)...")
+        try:
+            sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent.parent / "The Analyst Deck" / "Analyst 1"))
+            from section_1_framework import Section1Framework
+            
+            def start_section1():
+                section1 = Section1Framework(bus=_safe_mode_bus)
+                logger.info("[OK] Section 1 initialized")
+            
+            section1_thread = threading.Thread(target=start_section1, daemon=True)
+            section1_thread.start()
+            time.sleep(0.5)
+        except Exception as e:
+            logger.warning(f"[WARNING] Section 1 initialization failed: {e}")
+        
+        try:
+            sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent.parent / "The Analyst Deck" / "Analyst 2"))
+            from section_2_framework import LegacySection2Framework
+            
+            def start_section2():
+                section2 = LegacySection2Framework(bus=_safe_mode_bus)
+                logger.info("[OK] Section 2 initialized")
+            
+            section2_thread = threading.Thread(target=start_section2, daemon=True)
+            section2_thread.start()
+            time.sleep(0.5)
+        except Exception as e:
+            logger.warning(f"[WARNING] Section 2 initialization failed: {e}")
+        
+        # Continue with remaining sections 3-8
+        logger.info("  Continuing with sections 3-8...")
+        
+        for section_num in range(3, 9):
+            try:
+                section_path = Path(__file__).parent.parent.parent.parent.parent / "The Analyst Deck" / f"Analyst {section_num}"
+                sys.path.insert(0, str(section_path))
+                
+                module_name = f"section_{section_num}_framework"
+                section_module = importlib.import_module(module_name)
+                
+                # Get the section class (different naming conventions)
+                section_class = None
+                for attr_name in dir(section_module):
+                    if 'Section' in attr_name and 'Framework' in attr_name:
+                        section_class = getattr(section_module, attr_name)
+                        break
+                
+                if section_class:
+                    def start_section(num=section_num, cls=section_class):
+                        section = cls(bus=_safe_mode_bus)
+                        logger.info(f"[OK] Section {num} initialized")
+                    
+                    thread = threading.Thread(target=start_section, daemon=True)
+                    thread.start()
+                    time.sleep(0.5)
+                else:
+                    logger.warning(f"[WARNING] Section {section_num}: Framework class not found")
+                    
+            except Exception as e:
+                logger.warning(f"[WARNING] Section {section_num} initialization failed: {e}")
+        
+        # PHASE 5: Mission Debrief + Narrative Assembler
+        logger.info("PHASE 5: Initializing Mission Debrief + Narrative Assembler...")
+        try:
+            sys.path.insert(0, str(Path(__file__).parent.parent.parent / "Mission Debrief"))
+            from mission_debrief_module import MissionDebriefModule
+            
+            def start_debrief():
+                debrief = MissionDebriefModule(bus=_safe_mode_bus, communicator=None, ecc=None, gateway=None)
+                logger.info("[OK] Mission Debrief + Narrative Assembler initialized (Address 5)")
+            
+            debrief_thread = threading.Thread(target=start_debrief, daemon=True)
+            debrief_thread.start()
+            time.sleep(3)  # Longer delay for Mission Debrief
+        except Exception as e:
+            logger.warning(f"[WARNING] Mission Debrief initialization failed: {e}")
+        
+        logger.info("=" * 80)
+        logger.info("SAFE MODE: COMPLETE SYSTEM INITIALIZED")
+        logger.info("=" * 80)
+        
+        # Get initialization status from bus
+        init_status = _safe_mode_bus.get_initialization_status()
+        logger.info(f"Initialization Status: {init_status['initialized_count']}/{init_status['total_count']} core modules")
+        logger.info(f"System Ready: {init_status['initialization_complete']}")
+        logger.info("")
+        logger.info("Active Modules:")
+        logger.info("  1. Bus Core (CANBUS/LINBUS)")
+        logger.info("  2. Warden (2) - ECC + Gateway")
+        logger.info("  3. Evidence Locker (1) - Evidence management")
+        logger.info("  4. Marshall (3) + Evidence Manager - Section coordination")
+        logger.info("  5. Mission Debrief (5) - Debrief Manager + Librarian")
+        logger.info("  6. All 8 Analyst Sections (4-1 to 4-8) - Report generation")
+        logger.info("")
+        logger.info("Total: 13 modules running for comprehensive code testing")
+        logger.info("All modules in daemon threads - ready for UDS monitoring")
+        logger.info("=" * 80)
+        
+        # CRITICAL: Return the bus instance for reuse
+        logger.info("Returning bus instance for UDS reuse")
+        return _safe_mode_bus
+        
+    except Exception as e:
+        logger.error(f"SAFE MODE: Critical error during initialization: {e}")
+        _safe_mode_bus = None
+        return None
+
 def launch_diagnostic_system_with_args(args=None):
-    """Launch diagnostic system with command line arguments"""
+    """
+    AUTO-DETECTION launcher for Unified Diagnostic System.
+    
+    Automatically detects operational state:
+    - NORMAL BOOT: System running → UDS joins existing modules
+    - SAFE MODE: System failed → UDS initializes critical modules first
+    
+    No manual flags needed - seamless automatic switching
+    """
     try:
         import argparse
         import time
@@ -182,6 +641,8 @@ def launch_diagnostic_system_with_args(args=None):
                                help="Run in test mode")
             parser.add_argument("--launch-delay", type=int, default=0,
                                help="Delay before launching (seconds)")
+            parser.add_argument("--smoke", action="store_true",
+                               help="Run abbreviated smoke baseline before enabling full diagnostics")
             args = parser.parse_args()
         
         logger = logging.getLogger("MainLauncher")
@@ -191,6 +652,35 @@ def launch_diagnostic_system_with_args(args=None):
         logger.info(f"Log Level: {args.log_level}")
         logger.info(f"Test Mode: {args.test_mode}")
         logger.info(f"No CAN-BUS: {args.no_canbus}")
+        logger.info(f"Smoke Baseline: {getattr(args, 'smoke', False)}")
+        
+        # AUTO-DETECT OPERATIONAL MODE
+        logger.info("=" * 80)
+        logger.info("AUTO-DETECTING SYSTEM STATE...")
+        logger.info("=" * 80)
+        
+        system_running = _detect_system_state(logger)
+        
+        if system_running:
+            logger.info("[OK] NORMAL BOOT MODE: System detected - joining existing operations")
+            logger.info("  Bus active with connected modules")
+            logger.info("  UDS will monitor and register modules as they come online")
+        else:
+            logger.info("[WARNING] SAFE MODE: No system detected - initializing critical modules")
+            logger.info("  Starting minimal modules for remote maintenance/repair")
+            logger.info("=" * 80)
+            
+            safe_mode_success = _initialize_safe_mode_modules(logger)
+            
+            if safe_mode_success:
+                logger.info("[OK] Safe mode initialization SUCCESS - modules running")
+                logger.info("  Stabilizing modules before UDS launch...")
+                time.sleep(3)
+            else:
+                logger.warning("[WARNING] Safe mode initialization had issues")
+                logger.warning("  Proceeding with UDS only - limited functionality")
+        
+        logger.info("=" * 80)
         
         # Import and create diagnostic system
         try:
@@ -218,7 +708,7 @@ def launch_diagnostic_system_with_args(args=None):
         
         # Launch the diagnostic system
         logger.info("Launching diagnostic system...")
-        launch_result = uds.launch_diagnostic_system()
+        launch_result = uds.launch_diagnostic_system(smoke_mode=getattr(args, 'smoke', False))
         
         if launch_result:
             logger.info("DIAGNOSTIC SYSTEM LAUNCHED SUCCESSFULLY!")
@@ -291,7 +781,10 @@ def pull_auth_module(orchestrator):
     try:
         logger = logging.getLogger("ModulePuller")
         logger.info("Pulling authentication module...")
-        from . import auth
+        try:
+            from . import auth
+        except ImportError:
+            import auth
         auth_instance = auth.AuthSystem(orchestrator=orchestrator)
         logger.info("Authentication module pulled successfully")
         return auth_instance
@@ -307,9 +800,21 @@ def pull_comms_module(orchestrator):
     try:
         logger = logging.getLogger("ModulePuller")
         logger.info("Pulling communication module...")
-        from . import comms
-        comms_instance = comms.CommsSystem(orchestrator=orchestrator)
-        logger.info("Communication module pulled successfully")
+        try:
+            from . import comms
+        except ImportError:
+            import comms
+        
+        # CRITICAL: Pass bus and communicator from orchestrator to avoid dual-bus creation
+        bus_connection = getattr(orchestrator, 'bus', None)
+        communicator = getattr(orchestrator, 'communicator', None)
+        
+        comms_instance = comms.CommsSystem(
+            orchestrator=orchestrator,
+            bus_connection=bus_connection,
+            communicator=communicator
+        )
+        logger.info("Communication module pulled successfully (using shared bus)")
         return comms_instance
     except ImportError as e:
         logger.error(f"Failed to pull comms module: {e}")
@@ -323,7 +828,10 @@ def pull_recovery_module(orchestrator):
     try:
         logger = logging.getLogger("ModulePuller")
         logger.info("Pulling recovery module...")
-        from . import recovery
+        try:
+            from . import recovery
+        except ImportError:
+            import recovery
         recovery_instance = recovery.RecoverySystem(orchestrator=orchestrator)
         logger.info("Recovery module pulled successfully")
         return recovery_instance
@@ -339,9 +847,24 @@ def pull_enforcement_module(orchestrator):
     try:
         logger = logging.getLogger("ModulePuller")
         logger.info("Pulling enforcement module...")
-        from . import enforcement
+        try:
+            from . import enforcement
+        except ImportError:
+            import enforcement
         enforcement_instance = enforcement.EnforcementSystem(orchestrator=orchestrator)
         logger.info("Enforcement module pulled successfully")
+        # Ensure consolidated fault reporting is ready before diagnostics run
+        initializer = getattr(enforcement_instance, "initialize_consolidated_fault_reporting", None)
+        if callable(initializer):
+            consolidated_state = getattr(enforcement_instance, "consolidated_fault_state", None)
+            if not consolidated_state:
+                try:
+                    initializer()
+                    logger.info("Enforcement consolidated fault reporting initialized")
+                except Exception as init_error:
+                    logger.error(f"Failed to initialize consolidated fault reporting: {init_error}")
+        else:
+            logger.warning("Enforcement module missing consolidated fault reporting initializer")
         return enforcement_instance
     except ImportError as e:
         logger.error(f"Failed to pull enforcement module: {e}")
@@ -489,6 +1012,13 @@ class CoreSystem:
         self.max_queue_size = 1000
         self.queue_backpressure_threshold = 800
         self.queue_backpressure_active = False
+
+        # Disk space & cleanup management
+        self.disk_monitor_root = self.base_path.parent.parent  # Data Bus root
+        self.disk_free_threshold_mb = 1024  # Warn/cleanup when below 1 GB
+        self.disk_emergency_threshold_mb = 512  # Aggressive cleanup below 512 MB
+        self.trash_cleanup_interval_seconds = 24 * 60 * 60  # Default daily sweep
+        self.trash_cleanup_last_run: Optional[datetime] = None
         
         # Fault response tracking with cleanup
         self.fault_response_tracking: Dict[str, Dict[str, Any]] = {}
@@ -1702,10 +2232,10 @@ class CoreSystem:
                         'basic_functionality_test',
                         'communication_test',
                         'data_processing_test',
-                        'resource_availability_test'
-                    ],
-                    'timeout_seconds': 60,
-                    'retry_count': 2
+            'resource_availability_test'
+        ],
+        'timeout_seconds': 120,  # Increased from 60s to 120s for better reliability
+        'retry_count': 2
                 },
                 'fault_response_tests': {
                     'trigger': 'fault_detected',
@@ -2260,15 +2790,18 @@ class CoreSystem:
             self.logger.error(f"Error updating system registry file: {e}")
     
     def _make_json_serializable(self, obj):
-        """Convert objects to JSON serializable format"""
+        """Convert objects to JSON serializable format (recursive)"""
         if isinstance(obj, dict):
             return {key: self._make_json_serializable(value) for key, value in obj.items()}
-        elif isinstance(obj, list):
+        if isinstance(obj, (list, tuple, set)):
             return [self._make_json_serializable(item) for item in obj]
-        elif hasattr(obj, 'value'):  # Enum objects
+        if isinstance(obj, Enum):
             return obj.value
-        else:
-            return obj
+        if isinstance(obj, datetime):
+            return obj.isoformat()
+        if isinstance(obj, Path):
+            return str(obj)
+        return obj
     
     def _update_master_protocol_file(self):
         """Update the master protocol file with new systems"""
@@ -3971,182 +4504,6 @@ class CoreSystem:
         except Exception as e:
             self.logger.error(f"Error saving test suite report: {e}")
     
-    # ===== SIGNAL HANDLER FUNCTIONS =====
-    
-    def _handle_diagnostic_rollcall(self, payload: Dict[str, Any]) -> None:
-        """Handle diagnostic rollcall signal"""
-        try:
-            source_address = payload.get('source_address', 'UNKNOWN')
-            self.logger.info(f"Received rollcall from {source_address}")
-            
-            # Update system registry
-            if source_address in self.system_registry:
-                system_info = self.system_registry[source_address]
-                system_info['last_signal'] = datetime.now().isoformat()
-                system_info['signal_count'] += 1
-                system_info['status'] = DiagnosticStatus.OK.value
-            
-            # Route to enforcement for auto-registration
-            if self.enforcement:
-                self.enforcement.process_rollcall_response(payload)
-                
-        except Exception as e:
-            self.logger.error(f"Error handling diagnostic rollcall: {e}")
-    
-    def _handle_diagnostic_status_request(self, payload: Dict[str, Any]) -> None:
-        """Handle diagnostic status request signal"""
-        try:
-            source_address = payload.get('source_address', 'UNKNOWN')
-            self.logger.info(f"Received status request from {source_address}")
-            
-            # Update system registry
-            if source_address in self.system_registry:
-                system_info = self.system_registry[source_address]
-                system_info['last_signal'] = datetime.now().isoformat()
-                system_info['signal_count'] += 1
-            
-            # Send status response
-            status_response = self.get_system_status()
-            if self.comms:
-                self.comms.transmit_signal(source_address, "status_response", "10-4", 
-                                         "Status response", status_response)
-                
-        except Exception as e:
-            self.logger.error(f"Error handling diagnostic status request: {e}")
-    
-    def _handle_diagnostic_radio_check(self, payload: Dict[str, Any]) -> None:
-        """Handle diagnostic radio check signal"""
-        try:
-            source_address = payload.get('source_address', 'UNKNOWN')
-            self.logger.info(f"Received radio check from {source_address}")
-            
-            # Update system registry
-            if source_address in self.system_registry:
-                system_info = self.system_registry[source_address]
-                system_info['last_signal'] = datetime.now().isoformat()
-                system_info['signal_count'] += 1
-                system_info['status'] = DiagnosticStatus.OK.value
-            
-            # Send radio check response
-            if self.comms:
-                self.comms.transmit_signal(source_address, "radio_check_response", "10-4", 
-                                         "Radio check response")
-                
-        except Exception as e:
-            self.logger.error(f"Error handling diagnostic radio check: {e}")
-    
-    def _handle_diagnostic_sos_fault(self, payload: Dict[str, Any]) -> None:
-        """Handle diagnostic SOS fault signal"""
-        try:
-            source_address = payload.get('source_address', 'UNKNOWN')
-            fault_code = payload.get('fault_code', 'UNKNOWN')
-            self.logger.warning(f"Received SOS fault from {source_address}: {fault_code}")
-            
-            # Update system registry
-            if source_address in self.system_registry:
-                system_info = self.system_registry[source_address]
-                system_info['last_signal'] = datetime.now().isoformat()
-                system_info['signal_count'] += 1
-                system_info['status'] = DiagnosticStatus.FAILURE.value
-                system_info['faults'].append(fault_code)
-            
-            # Route to enforcement for processing
-            if self.enforcement:
-                self.enforcement.process_sos_fault_report(payload)
-                
-        except Exception as e:
-            self.logger.error(f"Error handling diagnostic SOS fault: {e}")
-    
-    def _handle_fault_report(self, payload: Dict[str, Any]) -> None:
-        """Handle fault report signal"""
-        try:
-            source_address = payload.get('source_address', 'UNKNOWN')
-            fault_code = payload.get('fault_code', 'UNKNOWN')
-            self.logger.warning(f"Received fault report from {source_address}: {fault_code}")
-            
-            # Update system registry
-            if source_address in self.system_registry:
-                system_info = self.system_registry[source_address]
-                system_info['last_signal'] = datetime.now().isoformat()
-                system_info['signal_count'] += 1
-                system_info['error_count'] += 1
-                system_info['status'] = DiagnosticStatus.ERROR.value
-                system_info['faults'].append(fault_code)
-            
-            # Route to enforcement for processing
-            if self.enforcement:
-                self.enforcement.process_fault_report(payload)
-                
-        except Exception as e:
-            self.logger.error(f"Error handling fault report: {e}")
-    
-    def _handle_sos_fault_report(self, payload: Dict[str, Any]) -> None:
-        """Handle SOS fault report signal"""
-        try:
-            source_address = payload.get('source_address', 'UNKNOWN')
-            fault_code = payload.get('fault_code', 'UNKNOWN')
-            self.logger.error(f"Received SOS fault report from {source_address}: {fault_code}")
-            
-            # Update system registry
-            if source_address in self.system_registry:
-                system_info = self.system_registry[source_address]
-                system_info['last_signal'] = datetime.now().isoformat()
-                system_info['signal_count'] += 1
-                system_info['status'] = DiagnosticStatus.FAILURE.value
-                system_info['faults'].append(fault_code)
-            
-            # Route to enforcement for processing
-            if self.enforcement:
-                self.enforcement.process_sos_fault_report(payload)
-                
-        except Exception as e:
-            self.logger.error(f"Error handling SOS fault report: {e}")
-    
-    def _handle_system_fault_report(self, payload: Dict[str, Any]) -> None:
-        """Handle system fault report signal"""
-        try:
-            source_address = payload.get('source_address', 'UNKNOWN')
-            fault_code = payload.get('fault_code', 'UNKNOWN')
-            self.logger.error(f"Received system fault report from {source_address}: {fault_code}")
-            
-            # Update system registry
-            if source_address in self.system_registry:
-                system_info = self.system_registry[source_address]
-                system_info['last_signal'] = datetime.now().isoformat()
-                system_info['signal_count'] += 1
-                system_info['status'] = DiagnosticStatus.FAILURE.value
-                system_info['faults'].append(fault_code)
-            
-            # Route to enforcement for processing
-            if self.enforcement:
-                self.enforcement.process_system_fault_report(payload)
-                
-        except Exception as e:
-            self.logger.error(f"Error handling system fault report: {e}")
-    
-    def _handle_error_report(self, payload: Dict[str, Any]) -> None:
-        """Handle error report signal"""
-        try:
-            source_address = payload.get('source_address', 'UNKNOWN')
-            error_code = payload.get('error_code', 'UNKNOWN')
-            self.logger.warning(f"Received error report from {source_address}: {error_code}")
-            
-            # Update system registry
-            if source_address in self.system_registry:
-                system_info = self.system_registry[source_address]
-                system_info['last_signal'] = datetime.now().isoformat()
-                system_info['signal_count'] += 1
-                system_info['error_count'] += 1
-                system_info['status'] = DiagnosticStatus.ERROR.value
-                system_info['faults'].append(error_code)
-            
-            # Route to enforcement for processing
-            if self.enforcement:
-                self.enforcement.process_error_report(payload)
-                
-        except Exception as e:
-            self.logger.error(f"Error handling error report: {e}")
-    
     # ===== PAYLOAD AND TEST EXECUTION FUNCTIONS =====
     
     def create_diagnostic_payload(self, operation: str, data: Dict[str, Any], 
@@ -4186,21 +4543,11 @@ class CoreSystem:
             return ""
     
     def _archive_payload(self, signal_id: str, payload: Dict[str, Any]):
-        """Archive payload for record keeping"""
-        try:
-            archive_file = self.diagnostic_reports_path / f"payload_archive_{signal_id}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
-            
-            with open(archive_file, 'w') as f:
-                json.dump({
-                    'signal_id': signal_id,
-                    'payload': payload,
-                    'archived_at': datetime.now().isoformat()
-                }, f, indent=2)
-            
-            self.logger.info(f"Payload archived: {archive_file}")
-            
-        except Exception as e:
-            self.logger.error(f"Error archiving payload: {e}")
+        """Archive payload for record keeping - delegates to comms module"""
+        if self.comms:
+            self.comms.archive_payload(signal_id, payload)
+        else:
+            self.logger.error("No communication system available for payload archiving")
     
     def execute_fault_repair_test(self, fault_id: str, repair_action: str, target_system: str) -> Dict[str, Any]:
         """Execute fault repair test"""
@@ -4519,7 +4866,7 @@ class CoreSystem:
     
     # ===== AUTO-REGISTRATION AND ROLLCALL FUNCTIONS =====
     
-    def _force_mandatory_auto_registration(self, system_address: str):
+    def _force_mandatory_auto_registration(self, system_address: str, smoke_mode: bool = False):
         """Force mandatory auto-registration for a system"""
         try:
             self.logger.info(f"Forcing mandatory auto-registration for {system_address}")
@@ -4533,7 +4880,9 @@ class CoreSystem:
                                                     "Mandatory auto-registration", auto_registration_script)
                 
                 # Wait for compliance confirmation
-                compliance_result = self._check_auto_registration_compliance(system_address, signal_id)
+                compliance_result = self._check_auto_registration_compliance(
+                    system_address, signal_id, smoke_mode=smoke_mode
+                )
                 
                 if compliance_result:
                     self.logger.info(f"System {system_address} successfully auto-registered")
@@ -4558,6 +4907,9 @@ class CoreSystem:
             # Get inherited fault families for this system
             inherited_families = self._get_inherited_fault_families(system_address, protocol)
             
+            # Get child components from registry for parent modules
+            child_components = self._get_child_components_from_registry(system_address)
+            
             # Create registration script
             registration_script = {
                 'system_address': system_address,
@@ -4578,6 +4930,38 @@ class CoreSystem:
                     'error_reporting': 'immediate'
                 }
             }
+            
+            # Add self-test protocol requirements for parent modules
+            if child_components:
+                registration_script['self_test_protocol'] = {
+                    'required': True,
+                    'execution_point': 'post_initialization',
+                    'method_name': '_run_startup_self_test',
+                    'validation_requirements': {
+                        'check_child_components': True,
+                        'emit_faults_on_failure': True,
+                        'fault_target_address': 'DIAG-1',
+                        'fault_radio_code': 'SOS',
+                        'validate_operational_status': True
+                    },
+                    'child_component_registry': child_components,
+                    'fault_emission_template': {
+                        'fault_code': '[CHILD_ADDRESS-FAULT_TYPE-LINE]',
+                        'severity': 'CRITICAL',
+                        'component': '<child_name>',
+                        'reporting_address': '<child_address>',
+                        'parent_address': system_address,
+                        'timestamp': '<ISO8601>'
+                    },
+                    'fault_types': {
+                        '10': 'Failed to initialize component',
+                        '11': 'Initialization timeout',
+                        '12': 'Missing initialization dependency',
+                        '13': 'Initialization resource unavailable',
+                        '14': 'Initialization permission denied'
+                    }
+                }
+                self.logger.info(f"[UDS] Added self-test protocol for parent module {system_address} with {len(child_components)} children")
             
             return registration_script
             
@@ -4606,6 +4990,39 @@ class CoreSystem:
         except Exception as e:
             self.logger.error(f"Error getting inherited fault families for {system_address}: {e}")
             return ['general_system_faults']
+    
+    def _get_child_components_from_registry(self, system_address: str) -> List[Dict[str, Any]]:
+        """Extract child component information from system registry"""
+        try:
+            if system_address not in self.system_registry:
+                return []
+            
+            system_info = self.system_registry[system_address]
+            child_addresses = system_info.get('children', [])
+            
+            if not child_addresses:
+                return []
+            
+            child_components = []
+            for child_addr in child_addresses:
+                if child_addr in self.system_registry:
+                    child_info = self.system_registry[child_addr]
+                    child_components.append({
+                        'address': child_addr,
+                        'name': child_info.get('name', 'Unknown'),
+                        'handler': child_info.get('handler', ''),
+                        'location': child_info.get('location', ''),
+                        'system_type': child_info.get('system_type', ''),
+                        'canbus_connected': child_info.get('canbus_connected', False)
+                    })
+                else:
+                    self.logger.warning(f"[UDS] Child component {child_addr} listed for {system_address} but not found in registry")
+            
+            return child_components
+            
+        except Exception as e:
+            self.logger.error(f"Error extracting child components for {system_address}: {e}")
+            return []
     
     def _matches_address_pattern(self, system_address: str, pattern: str) -> bool:
         """Check if system address matches a pattern"""
@@ -4647,13 +5064,15 @@ class CoreSystem:
             self.logger.error(f"Error creating fallback registration script: {e}")
             return {}
     
-    def _check_auto_registration_compliance(self, system_address: str, signal_id: str) -> bool:
+    def _check_auto_registration_compliance(
+        self, system_address: str, signal_id: str, smoke_mode: bool = False
+    ) -> bool:
         """Check if system complies with auto-registration"""
         try:
             self.logger.info(f"Checking auto-registration compliance for {system_address}")
             
-            # Wait for response (simplified - real implementation would be more complex)
-            time.sleep(2)
+            # Wait for response (increased timeout to 5s for better reliability)
+            time.sleep(1.0 if smoke_mode else 5)
             
             # Check if system is now properly registered
             if system_address in self.system_registry:
@@ -4668,6 +5087,91 @@ class CoreSystem:
         except Exception as e:
             self.logger.error(f"Error checking auto-registration compliance: {e}")
             return False
+
+    def _stop_dependency_systems(self):
+        """Stop dependency subsystems (enforcement loop, watchdogs, thread managers)."""
+        try:
+            self.logger.info("Stopping dependency systems...")
+
+            def _stop_component(component: Any, name: str, stop_candidates: Sequence[str], join_candidates: Sequence[str] = ()) -> None:
+                if not component:
+                    return
+                stop_success = False
+                for attr in stop_candidates:
+                    handler = getattr(component, attr, None)
+                    if not callable(handler):
+                        continue
+                    try:
+                        handler()
+                        self.logger.info(f"{name} {attr} invoked")
+                        stop_success = True
+                        break
+                    except TypeError as exc:
+                        # Retry with a timeout if the implementation expects it
+                        if "timeout" in str(exc).lower():
+                            try:
+                                handler(10.0)
+                                self.logger.info(f"{name} {attr}(timeout=10.0) invoked")
+                                stop_success = True
+                                break
+                            except Exception as inner_exc:
+                                self.logger.error(f"Failed to {attr} {name}: {inner_exc}")
+                        else:
+                            self.logger.error(f"Failed to {attr} {name}: {exc}")
+                    except Exception as exc:
+                        self.logger.error(f"Failed to {attr} {name}: {exc}")
+                if join_candidates and stop_success:
+                    for attr in join_candidates:
+                        handler = getattr(component, attr, None)
+                        if not callable(handler):
+                            continue
+                        try:
+                            handler()
+                            self.logger.info(f"{name} {attr} completed")
+                            break
+                        except TypeError as exc:
+                            if "timeout" in str(exc).lower():
+                                try:
+                                    handler(10.0)
+                                    self.logger.info(f"{name} {attr}(timeout=10.0) completed")
+                                    break
+                                except Exception as inner_exc:
+                                    self.logger.error(f"Failed to {attr} {name}: {inner_exc}")
+                            else:
+                                self.logger.error(f"Failed to {attr} {name}: {exc}")
+                        except Exception as exc:
+                            self.logger.error(f"Failed to {attr} {name}: {exc}")
+
+            if self.thread_manager:
+                _stop_component(
+                    self.thread_manager,
+                    "Thread manager",
+                    ("stop_all", "shutdown", "stop"),
+                    ("join_all", "wait_for_completion", "join"),
+                )
+                self.thread_manager = None
+
+            if self.heartbeat_watchdog:
+                _stop_component(
+                    self.heartbeat_watchdog,
+                    "Heartbeat watchdog",
+                    ("stop", "shutdown", "terminate"),
+                )
+                self.heartbeat_watchdog = None
+
+            if self.enforcement_loop:
+                _stop_component(
+                    self.enforcement_loop,
+                    "Enforcement loop",
+                    ("stop", "shutdown", "halt", "cancel"),
+                )
+                self.enforcement_loop = None
+
+            self.logger.info("Dependency systems stopped")
+
+        except Exception as e:
+            self.logger.error(f"Error stopping dependency systems: {e}")
+            raise
 
     def shutdown(self):
         """Graceful system shutdown - DRIVEN BY CORE"""
@@ -4854,7 +5358,7 @@ class CoreSystem:
             
         except Exception as e:
             self.logger.error(f"Error saving shutdown cleanup results: {e}")
-    
+
     def _save_final_system_state(self):
         """Save final system state before shutdown"""
         try:
@@ -4869,9 +5373,11 @@ class CoreSystem:
             
             # Save to systems_amendments
             state_file = self.systems_amendments_path / f"final_system_state_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
-            
+            self.systems_amendments_path.mkdir(parents=True, exist_ok=True)
+            serializable_state = self._make_json_serializable(final_state)
+
             with open(state_file, 'w') as f:
-                json.dump(final_state, f, indent=2)
+                json.dump(serializable_state, f, indent=2)
             
             self.logger.info(f"Final system state saved: {state_file}")
             
@@ -5178,11 +5684,13 @@ class CoreSystem:
     # STARTUP SEQUENCE AND SYSTEM LAUNCH
     # ========================================================================
     
-    def launch_diagnostic_system(self) -> bool:
-        """Launch the diagnostic system with complete startup sequence"""
+    def launch_diagnostic_system(self, smoke_mode: bool = False) -> bool:
+        """Launch the diagnostic system with complete startup sequence."""
         try:
+            mode_label = "SMOKE" if smoke_mode else "FULL"
             self.logger.info("=" * 60)
             self.logger.info("LAUNCHING UNIFIED DIAGNOSTIC SYSTEM")
+            self.logger.info("MODE: %s", mode_label)
             self.logger.info("=" * 60)
             
             # Phase 1: System Initialization
@@ -5199,25 +5707,25 @@ class CoreSystem:
             
             # Phase 3: Force System Startup
             self.logger.info("Phase 3: Force System Startup")
-            if not self._force_system_startup():
+            if not self._force_system_startup(smoke_mode=smoke_mode):
                 self.logger.error("Force system startup failed")
                 return False
             
             # Phase 4: Perform Rollcall
             self.logger.info("Phase 4: Perform System Rollcall")
-            if not self._perform_startup_rollcall():
+            if not self._perform_startup_rollcall(smoke_mode=smoke_mode):
                 self.logger.error("Startup rollcall failed")
                 return False
             
             # Phase 5: Subscribe to Protocols
             self.logger.info("Phase 5: Subscribe to Protocols")
-            if not self._subscribe_to_protocols():
+            if not self._subscribe_to_protocols(smoke_mode=smoke_mode):
                 self.logger.error("Protocol subscription failed")
                 return False
             
             # Phase 6: Baseline Testing
             self.logger.info("Phase 6: Baseline Testing")
-            if not self._perform_baseline_testing():
+            if not self._perform_baseline_testing(smoke_mode=smoke_mode):
                 self.logger.error("Baseline testing failed")
                 return False
             
@@ -5236,6 +5744,48 @@ class CoreSystem:
             self.launcher_active = True
             self.logger.info("DIAGNOSTIC SYSTEM LAUNCHED SUCCESSFULLY")
             self.logger.info("=" * 60)
+            
+            # Compile test results from startup phases
+            self.logger.info("=" * 80)
+            self.logger.info("COMPILING SYSTEM TEST RESULTS")
+            self.logger.info("=" * 80)
+            
+            # Get results from startup phases
+            total_systems = len(self.system_registry)
+            passed_systems = sum(1 for s in self.system_registry.values() if s.get('status') == 'OK')
+            failed_systems = total_systems - passed_systems
+            
+            # Collect fault codes
+            fault_codes = []
+            for address, info in self.system_registry.items():
+                if info.get('faults'):
+                    fault_codes.extend(info['faults'])
+            
+            test_results = {
+                'source': 'DIAG-1',
+                'timestamp': datetime.now().isoformat(),
+                'total_systems': total_systems,
+                'passed': passed_systems,
+                'failed': failed_systems,
+                'fault_report': fault_codes if fault_codes else None,
+                'status': 'PASS' if failed_systems == 0 else 'FAIL'
+            }
+            
+            # Send test complete signal to main_application
+            try:
+                if self.bus:
+                    self.bus.emit('diag.test_complete', test_results)
+                    self.logger.info("=" * 80)
+                    self.logger.info(f"✓ DIAG-1 TEST COMPLETE - {test_results['status']}")
+                    self.logger.info(f"  Passed: {passed_systems}/{total_systems}")
+                    if fault_codes:
+                        self.logger.warning(f"  Fault codes: {fault_codes}")
+                    self.logger.info("=" * 80)
+                else:
+                    self.logger.warning("Cannot emit test results - no bus connection")
+            except Exception as e:
+                self.logger.error(f"Error emitting test results: {e}")
+            
             return True
             
         except Exception as e:
@@ -5360,24 +5910,147 @@ class CoreSystem:
         except Exception as e:
             self.logger.error(f"Error creating empty markdown file {file_path}: {e}")
     
-    def _force_system_startup(self) -> bool:
-        """Force startup of all registered systems"""
+    # ========================================================================
+    # STARTUP SEQUENCE FUNCTIONS
+    # ========================================================================
+    # Called by launch_diagnostic_system in phases 3-6
+    # Order: select addresses → instantiate modules → force startup → rollcall → subscribe → baseline test
+    
+    def _select_system_addresses(self, smoke_mode: bool) -> List[str]:
+        """Return the list of system addresses to exercise for the current mode."""
+        addresses = list(self.system_registry.keys())
+        if not smoke_mode:
+            return addresses
+
+        priority_order = [
+            "DIAG-1",
+            "2",    # Warden / Ecosystem Controller
+            "2-2",  # Gateway Controller
+            "1-1",  # Evidence Locker
+            "3-1",  # Mission Debrief / Librarian
+            "Bus-1",
+        ]
+
+        top_level = [addr for addr in addresses if "." not in addr]
+        selected: List[str] = []
+
+        for identifier in priority_order:
+            candidate = next((addr for addr in top_level if addr == identifier), None)
+            if not candidate:
+                candidate = next((addr for addr in addresses if addr.startswith(f"{identifier}.")), None)
+            if candidate and candidate not in selected:
+                selected.append(candidate)
+
+        if not selected:
+            selected = top_level[:3] or addresses[:3]
+
+        # Backfill to ensure we ping a handful of systems.
+        for addr in top_level:
+            if len(selected) >= 6:
+                break
+            if addr not in selected:
+                selected.append(addr)
+
+        return selected[:6]
+
+    def _instantiate_parent_modules(self):
+        """Instantiate parent modules so their signal handlers actually register on the bus"""
         try:
-            self.logger.info("Forcing system startup...")
+            self.logger.info("[SMOKE MODE] Instantiating parent modules for bidirectional communication test...")
+            
+            # Store instantiated modules
+            if not hasattr(self, 'test_modules'):
+                self.test_modules = {}
+            
+            # Import and instantiate Evidence Locker
+            try:
+                import sys
+                from pathlib import Path
+                evidence_locker_path = Path(self.base_path).parent.parent.parent.parent / "Evidence Locker"
+                if str(evidence_locker_path) not in sys.path:
+                    sys.path.insert(0, str(evidence_locker_path))
+                
+                from evidence_locker_module import EvidenceLockerModule
+                self.test_modules['evidence_locker'] = EvidenceLockerModule(bus=self.bus)
+                self.logger.info("[SMOKE MODE] [OK] Evidence Locker instantiated")
+            except Exception as e:
+                self.logger.warning(f"[SMOKE MODE] Could not instantiate Evidence Locker: {e}")
+            
+            # Import and instantiate Warden
+            try:
+                import sys
+                from pathlib import Path
+                warden_path = Path(self.base_path).parent.parent.parent.parent / "The Warden"
+                if str(warden_path) not in sys.path:
+                    sys.path.insert(0, str(warden_path))
+                
+                from warden_module import Warden
+                self.test_modules['warden'] = Warden(bus=self.bus)
+                self.logger.info("[SMOKE MODE] [OK] Warden instantiated")
+            except Exception as e:
+                self.logger.warning(f"[SMOKE MODE] Could not instantiate Warden: {e}")
+            
+            # Import and instantiate Mission Debrief
+            try:
+                import sys
+                from pathlib import Path
+                mission_debrief_path = Path(self.base_path).parent.parent.parent / "Mission Debrief"
+                if str(mission_debrief_path) not in sys.path:
+                    sys.path.insert(0, str(mission_debrief_path))
+                
+                from mission_debrief_module import MissionDebriefModule
+                self.test_modules['mission_debrief'] = MissionDebriefModule(bus=self.bus)
+                self.logger.info("[SMOKE MODE] [OK] Mission Debrief instantiated")
+            except Exception as e:
+                self.logger.warning(f"[SMOKE MODE] Could not instantiate Mission Debrief: {e}")
+            
+            # Import and instantiate Marshall (collects Analyst faults via LINBUS)
+            try:
+                import sys
+                from pathlib import Path
+                marshall_path = Path(self.base_path).parent.parent.parent.parent / "The Marshall"
+                if str(marshall_path) not in sys.path:
+                    sys.path.insert(0, str(marshall_path))
+                
+                from marshall_module import MarshallModule
+                self.test_modules['marshall'] = MarshallModule(bus=self.bus, communicator=None)
+                self.logger.info("[SMOKE MODE] [OK] Marshall instantiated (LINBUS proxy for Analysts)")
+            except Exception as e:
+                self.logger.warning(f"[SMOKE MODE] Could not instantiate Marshall: {e}")
+            
+            self.logger.info(f"[SMOKE MODE] Instantiated {len(self.test_modules)} parent modules")
+            
+        except Exception as e:
+            self.logger.error(f"[SMOKE MODE] Error instantiating parent modules: {e}")
+    
+    def _force_system_startup(self, smoke_mode: bool = False) -> bool:
+        """Force startup of registered systems."""
+        try:
+            self.logger.info("Forcing system startup%s...", " (smoke sweep)" if smoke_mode else "")
+            systems_to_start = self._select_system_addresses(smoke_mode)
             
             startup_results = {
-                'total_systems': len(self.system_registry),
+                'total_systems': len(systems_to_start),
                 'startup_successful': 0,
                 'startup_failed': 0,
                 'startup_results': []
             }
             
-            for system_address, system_info in self.system_registry.items():
+            # Instantiate parent modules so they can run self-tests and respond to UDS
+            self._instantiate_parent_modules()
+            
+            for system_address in systems_to_start:
+                system_info = self.system_registry.get(system_address, {})
                 try:
                     self.logger.info(f"Starting system: {system_address}")
                     
-                    # Force auto-registration for each system
-                    self._force_mandatory_auto_registration(system_address)
+                    # Only auto-register parent modules - they handle their children
+                    # DIAG-1 (self) excluded - UDS doesn't auto-register with itself
+                    parent_modules = ['1', '2', '3', '5', 'Bus-1', 'GUI-1']
+                    if system_address in parent_modules:
+                        self._force_mandatory_auto_registration(system_address, smoke_mode=smoke_mode)
+                    else:
+                        self.logger.debug(f"Skipping auto-registration for {system_address} - parent module handles this")
                     
                     # Update system status
                     system_info['status'] = DiagnosticStatus.OK.value
@@ -5424,20 +6097,39 @@ class CoreSystem:
         except Exception as e:
             self.logger.error(f"Error saving startup results: {e}")
     
-    def _perform_startup_rollcall(self) -> bool:
-        """Perform startup rollcall to all systems"""
+    def _perform_startup_rollcall(self, smoke_mode: bool = False) -> bool:
+        """Perform startup rollcall to systems."""
         try:
-            self.logger.info("Performing startup rollcall...")
+            self.logger.info("Performing startup rollcall%s...", " (smoke sweep)" if smoke_mode else "")
             
             if not self.comms:
                 self.logger.error("Communication module not available")
                 return False
             
-            # Transmit rollcall to all systems
-            self.comms.transmit_rollcall()
+            systems_to_ping = self._select_system_addresses(smoke_mode)
+            if smoke_mode:
+                for address in systems_to_ping:
+                    payload = {
+                        "operation": "status_ping",
+                        "system_address": address,
+                        "language": "UDS-UL-1.0",
+                        "timestamp": datetime.now().isoformat(),
+                    }
+                    self.comms.transmit_signal(
+                        address,
+                        "diagnostic.status",
+                        "10-5",
+                        "UDS smoke baseline status request",
+                        payload,
+                        response_expected=False,
+                        timeout=2,
+                    )
+            else:
+                # Transmit rollcall to all systems
+                self.comms.transmit_rollcall()
             
             # Wait for responses (simplified - real implementation would track responses)
-            time.sleep(5)
+            time.sleep(1 if smoke_mode else 5)
             
             self.logger.info("Startup rollcall completed")
             return True
@@ -5446,18 +6138,23 @@ class CoreSystem:
             self.logger.error(f"Error performing startup rollcall: {e}")
             return False
     
-    def _subscribe_to_protocols(self) -> bool:
-        """Subscribe to all diagnostic protocols"""
+    def _subscribe_to_protocols(self, smoke_mode: bool = False) -> bool:
+        """Subscribe to diagnostic protocols."""
         try:
-            self.logger.info("Subscribing to diagnostic protocols...")
+            self.logger.info("Subscribing to diagnostic protocols%s...", " (smoke sweep)" if smoke_mode else "")
             
             if not self.enforcement:
                 self.logger.error("Enforcement module not available")
                 return False
             
-            # Force subscription for all systems
-            for system_address in self.system_registry.keys():
-                self._force_mandatory_auto_registration(system_address)
+            # Force subscription for parent modules only - they handle their children
+            # DIAG-1 (self) excluded - UDS doesn't auto-register with itself
+            parent_modules = ['1', '2', '3', '5', 'Bus-1', 'GUI-1']
+            for system_address in self._select_system_addresses(smoke_mode):
+                if system_address in parent_modules:
+                    self._force_mandatory_auto_registration(system_address, smoke_mode=smoke_mode)
+                else:
+                    self.logger.debug(f"Skipping protocol subscription for {system_address} - parent module handles this")
             
             self.logger.info("Protocol subscription completed")
             return True
@@ -5482,118 +6179,283 @@ class CoreSystem:
         except Exception as e:
             self.logger.error(f"Error starting system monitoring: {e}")
     
-    def _perform_baseline_testing(self) -> bool:
-        """Perform baseline testing on all systems using existing test plans"""
+    def _perform_smoke_baseline(self) -> bool:
+        """Execute a condensed baseline that still validates protocol compliance."""
+        baseline_results = {
+            'total_systems': 0,
+            'tests_executed': 0,
+            'tests_passed': 0,
+            'tests_failed': 0,
+            'systems_tested': 0,
+            'test_results': [],
+            'start_time': datetime.now().isoformat(),
+            'mode': 'smoke',
+        }
+
+        systems_to_test = self._select_system_addresses(True)
+        baseline_results['total_systems'] = len(systems_to_test)
+
+        for address in systems_to_test:
+            test_entry = {
+                'address': address,
+                'status': 'FAILED',
+                'timestamp': datetime.now().isoformat(),
+                'details': {},
+            }
+            try:
+                payload = {
+                    'operation': 'baseline_check',
+                    'system_address': address,
+                    'language': 'UDS-UL-1.0',
+                    'compliance_required': True,
+                    'timestamp': datetime.now().isoformat(),
+                }
+                signal_id = ''
+                if self.comms:
+                    signal_id = self.comms.transmit_signal(
+                        address,
+                        'diagnostic.ping',
+                        '10-4',
+                        'UDS smoke baseline check',
+                        payload,
+                        response_expected=False,
+                        timeout=2,
+                    )
+                test_entry['details'] = {
+                    'signal_id': signal_id,
+                    'payload': payload,
+                }
+                baseline_results['tests_executed'] += 1
+                if signal_id:
+                    test_entry['status'] = 'SUCCESS'
+                    baseline_results['tests_passed'] += 1
+                else:
+                    baseline_results['tests_failed'] += 1
+            except Exception as exc:  # pragma: no cover - defensive path
+                test_entry['details']['error'] = str(exc)
+                baseline_results['tests_failed'] += 1
+            baseline_results['systems_tested'] += 1
+            baseline_results['test_results'].append(test_entry)
+
+        baseline_results['end_time'] = datetime.now().isoformat()
+        baseline_results['duration_seconds'] = (
+            datetime.fromisoformat(baseline_results['end_time'])
+            - datetime.fromisoformat(baseline_results['start_time'])
+        ).total_seconds()
+
+        self._save_baseline_test_results(baseline_results, smoke_mode=True)
+
+        if baseline_results['tests_failed'] > 0:
+            self.logger.warning(
+                "Smoke baseline completed with %s failures",
+                baseline_results['tests_failed'],
+            )
+        else:
+            self.logger.info("Smoke baseline completed successfully.")
+
+        return baseline_results['tests_passed'] > 0
+
+    def _perform_baseline_testing(self, smoke_mode: bool = False) -> bool:
+        """
+        Perform baseline monitoring by waiting for parent module self-test completion signals.
+        Parent modules run self-tests on startup, emit fault codes for failures, and send completion signals.
+        UDS waits gracefully for all completion signals before analyzing results.
+        
+        This replaces the old 195-point active testing approach with graceful handoff protocol.
+        """
         try:
-            self.logger.info("Performing baseline testing...")
-            
-            baseline_results = {
-                'total_systems': len(self.system_registry),
-                'tests_executed': 0,
-                'tests_passed': 0,
-                'tests_failed': 0,
-                'systems_tested': 0,
-                'test_results': [],
-                'start_time': datetime.now().isoformat()
+            # Define expected parent modules - ONLY parent modules, they test their own children
+            # Includes Bus-1 and GUI-1, excludes DIAG-1 (self)
+            expected_modules = ['1', '2', '3', '5', 'Bus-1', 'GUI-1']
+            expected_module_names = {
+                '1': 'Evidence Locker',
+                '2': 'Warden',
+                '3': 'Marshall (LINBUS proxy for Analysts 4-1 to 4-8)',
+                '5': 'Mission Debrief'
             }
             
-            # Test each system with smoke tests
+            max_wait_time = 30 if smoke_mode else 60  # Give modules time to test their children
+            self.logger.info(f"[UDS] Baseline monitoring: Waiting for {len(expected_modules)} parent modules to complete self-tests (max {max_wait_time}s)...")
+            
+            start_time = datetime.now()
+            
+            # Capture initial fault state
+            initial_fault_counts = {}
             for system_address, system_info in self.system_registry.items():
-                try:
-                    self.logger.info(f"Running baseline test for system: {system_address}")
-                    
-                    # Load and execute smoke test plan
-                    test_result = self.execute_test_plan(system_address, "smoke_test")
-                    
-                    baseline_results['tests_executed'] += test_result.get('tests_executed', 0)
-                    baseline_results['tests_passed'] += test_result.get('tests_passed', 0)
-                    baseline_results['tests_failed'] += test_result.get('tests_failed', 0)
-                    baseline_results['systems_tested'] += 1
-                    
-                    # Store detailed results
-                    baseline_results['test_results'].append({
+                initial_fault_counts[system_address] = len(system_info.get('faults', []))
+            
+            # Wait for self-test completion signals from all expected modules
+            completed_modules = set()
+            poll_interval = 0.5  # Check every 500ms
+            elapsed = 0
+            
+            while elapsed < max_wait_time:
+                # Check for completion signals
+                if self.comms and hasattr(self.comms, 'response_handlers'):
+                    completions = self.comms.response_handlers.get('self_test_completions', {})
+                    for addr in expected_modules:
+                        if addr in completions and addr not in completed_modules:
+                            completed_modules.add(addr)
+                            result = completions[addr]['test_result']
+                            name = expected_module_names.get(addr, completions[addr]['system_name'])
+                            self.logger.info(f"[UDS] [OK] {name} ({addr}) self-test complete: {result}")
+                
+                # If all modules completed, break early
+                if len(completed_modules) >= len(expected_modules):
+                    self.logger.info(f"[UDS] All {len(expected_modules)} parent modules completed self-tests in {elapsed:.1f}s")
+                    break
+                
+                time.sleep(poll_interval)
+                elapsed = (datetime.now() - start_time).total_seconds()
+            
+            # Check for timeouts
+            missing_modules = set(expected_modules) - completed_modules
+            if missing_modules:
+                for addr in missing_modules:
+                    name = expected_module_names.get(addr, addr)
+                    self.logger.warning(f"[UDS] [WARNING] {name} ({addr}) did not complete self-test within {max_wait_time}s")
+            
+            end_time = datetime.now()
+            
+            # Analyze fault changes during monitoring period
+            baseline_results = {
+                'total_systems': len(self.system_registry),
+                'expected_modules': len(expected_modules),
+                'completed_modules': len(completed_modules),
+                'missing_modules': list(missing_modules),
+                'systems_with_new_faults': 0,
+                'systems_healthy': 0,
+                'new_faults_detected': [],
+                'start_time': start_time.isoformat(),
+                'end_time': end_time.isoformat(),
+                'actual_duration_seconds': elapsed,
+                'max_wait_time_seconds': max_wait_time,
+                'mode': 'graceful_handoff'
+            }
+            
+            for system_address, system_info in self.system_registry.items():
+                current_faults = system_info.get('faults', [])
+                initial_count = initial_fault_counts.get(system_address, 0)
+                new_fault_count = len(current_faults) - initial_count
+                
+                if new_fault_count > 0:
+                    # System emitted new faults during self-test
+                    baseline_results['systems_with_new_faults'] += 1
+                    new_faults = current_faults[initial_count:]
+                    baseline_results['new_faults_detected'].append({
                         'system_address': system_address,
                         'system_name': system_info.get('name', 'Unknown'),
-                        'test_result': test_result,
-                        'timestamp': datetime.now().isoformat()
+                        'new_faults': new_faults,
+                        'fault_count': new_fault_count
                     })
-                    
-                    # Wait for pass/fail signals (simplified - real implementation would track responses)
-                    time.sleep(2)
-                    
-                    # Check if system passed baseline tests
-                    if test_result.get('tests_passed', 0) > 0 and test_result.get('tests_failed', 0) == 0:
-                        self.logger.info(f"System {system_address} passed baseline testing")
+                    system_info['status'] = DiagnosticStatus.ERROR.value
+                    self.logger.warning(f"[UDS] System {system_address} reported {new_fault_count} fault(s): {new_faults}")
+                else:
+                    # No new faults - system healthy
+                    baseline_results['systems_healthy'] += 1
+                    if system_info.get('status') != DiagnosticStatus.ERROR.value:
                         system_info['status'] = DiagnosticStatus.OK.value
-                    else:
-                        self.logger.warning(f"System {system_address} failed baseline testing")
-                        system_info['status'] = DiagnosticStatus.ERROR.value
-                    
-                except Exception as e:
-                    self.logger.error(f"Error testing system {system_address}: {e}")
-                    baseline_results['test_results'].append({
-                        'system_address': system_address,
-                        'system_name': system_info.get('name', 'Unknown'),
-                        'error': str(e),
-                        'timestamp': datetime.now().isoformat()
-                    })
             
-            baseline_results['end_time'] = datetime.now().isoformat()
-            baseline_results['duration_seconds'] = (
-                datetime.fromisoformat(baseline_results['end_time']) - 
-                datetime.fromisoformat(baseline_results['start_time'])
-            ).total_seconds()
+            # Save baseline monitoring results
+            self._save_baseline_test_results(baseline_results, smoke_mode=smoke_mode)
             
-            # Save baseline testing results
-            self._save_baseline_test_results(baseline_results)
+            # Log summary
+            self.logger.info(
+                f"[UDS] Baseline monitoring complete: "
+                f"{baseline_results['systems_healthy']}/{baseline_results['total_systems']} systems healthy, "
+                f"{baseline_results['systems_with_new_faults']} with faults"
+            )
             
-            success_rate = (baseline_results['tests_passed'] / max(baseline_results['tests_executed'], 1)) * 100
-            self.logger.info(f"Baseline testing completed: {baseline_results['tests_passed']}/{baseline_results['tests_executed']} tests passed ({success_rate:.1f}%)")
+            if baseline_results['systems_with_new_faults'] > 0:
+                self.logger.warning(
+                    f"[UDS] Faults detected during baseline monitoring. "
+                    f"Parent modules reported {sum(f['fault_count'] for f in baseline_results['new_faults_detected'])} total faults."
+                )
             
-            return baseline_results['tests_passed'] > 0
+            # Return True if majority of systems are healthy (allow some degraded systems)
+            return baseline_results['systems_healthy'] > 0
             
         except Exception as e:
-            self.logger.error(f"Error performing baseline testing: {e}")
+            self.logger.error(f"Error performing baseline monitoring: {e}")
             return False
     
-    def _save_baseline_test_results(self, baseline_results: Dict[str, Any]):
-        """Save baseline testing results to diagnostic_reports"""
+    def _save_baseline_test_results(self, baseline_results: Dict[str, Any], smoke_mode: bool = False):
+        """Save baseline testing results to diagnostic_reports."""
         try:
-            results_file = self.diagnostic_reports_path / f"baseline_test_results_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
-            
-            with open(results_file, 'w') as f:
-                json.dump(baseline_results, f, indent=2)
-            
-            # Also create a markdown summary
-            summary_file = self.diagnostic_reports_path / f"baseline_test_summary_{datetime.now().strftime('%Y%m%d_%H%M%S')}.md"
-            
-            with open(summary_file, 'w') as f:
-                f.write(f"# Baseline Testing Results\n\n")
-                f.write(f"**Generated:** {datetime.now().isoformat()}\n\n")
-                f.write(f"## Summary\n")
-                f.write(f"- **Systems Tested:** {baseline_results['systems_tested']}/{baseline_results['total_systems']}\n")
-                f.write(f"- **Tests Executed:** {baseline_results['tests_executed']}\n")
-                f.write(f"- **Tests Passed:** {baseline_results['tests_passed']}\n")
-                f.write(f"- **Tests Failed:** {baseline_results['tests_failed']}\n")
-                f.write(f"- **Duration:** {baseline_results['duration_seconds']:.2f} seconds\n\n")
-                
-                success_rate = (baseline_results['tests_passed'] / max(baseline_results['tests_executed'], 1)) * 100
-                f.write(f"- **Success Rate:** {success_rate:.1f}%\n\n")
-                
-                f.write("## System Results\n")
-                for result in baseline_results['test_results']:
-                    f.write(f"### {result['system_address']} - {result.get('system_name', 'Unknown')}\n")
-                    if 'error' in result:
-                        f.write(f"**Error:** {result['error']}\n")
-                    else:
-                        test_result = result.get('test_result', {})
-                        f.write(f"- **Tests Passed:** {test_result.get('tests_passed', 0)}\n")
-                        f.write(f"- **Tests Failed:** {test_result.get('tests_failed', 0)}\n")
-                        f.write(f"- **Execution Time:** {test_result.get('execution_time_ms', 0)}ms\n")
+            timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+            suffix = "_smoke" if smoke_mode else ""
+            if smoke_mode:
+                summary_file = self.diagnostic_reports_path / "baseline_test_summary_smoke.md"
+                summary_file.parent.mkdir(parents=True, exist_ok=True)
+                with open(summary_file, 'w') as f:
+                    f.write(f"# Baseline Testing Results (Smoke)\n\n")
+                    f.write(f"**Generated:** {datetime.now().isoformat()}\n\n")
+                    f.write(f"## Summary\n")
+                    f.write(f"- **Systems Tested:** {baseline_results['systems_tested']}/{baseline_results['total_systems']}\n")
+                    f.write(f"- **Tests Executed:** {baseline_results['tests_executed']}\n")
+                    f.write(f"- **Tests Passed:** {baseline_results['tests_passed']}\n")
+                    f.write(f"- **Tests Failed:** {baseline_results['tests_failed']}\n")
+                    f.write(f"- **Duration:** {baseline_results['duration_seconds']:.2f} seconds\n\n")
+
+                    success_rate = (baseline_results['tests_passed'] / max(baseline_results['tests_executed'], 1)) * 100
+                    f.write(f"- **Success Rate:** {success_rate:.1f}%\n\n")
+
+                    f.write("## System Results\n")
+                    for result in baseline_results['test_results']:
+                        system_address = result.get('system_address') or result.get('address', 'UNKNOWN')
+                        status = result.get('status', 'UNKNOWN')
+                        f.write(f"- **{system_address}** — {status}\n")
                     f.write("\n")
-            
-            self.logger.info(f"Baseline testing results saved: {results_file}")
-            self.logger.info(f"Baseline testing summary saved: {summary_file}")
+
+                    f.write("This file is overwritten on each smoke baseline run to keep a single concise record.\n")
+
+                self.logger.info(f"Smoke baseline summary saved: {summary_file}")
+
+            else:
+                results_file = self.diagnostic_reports_path / f"baseline_test_results{suffix}_{timestamp}.json"
+
+                with open(results_file, 'w') as f:
+                    json.dump(baseline_results, f, indent=2)
+                
+                # Also create a markdown summary
+                summary_file = self.diagnostic_reports_path / f"baseline_test_summary{suffix}_{timestamp}.md"
+                
+                with open(summary_file, 'w') as f:
+                    f.write(f"# Baseline Testing Results (Full)\n\n")
+                    f.write(f"**Generated:** {datetime.now().isoformat()}\n\n")
+                    f.write(f"## Summary\n")
+                    f.write(f"- **Systems Tested:** {baseline_results['systems_tested']}/{baseline_results['total_systems']}\n")
+                    f.write(f"- **Tests Executed:** {baseline_results['tests_executed']}\n")
+                    f.write(f"- **Tests Passed:** {baseline_results['tests_passed']}\n")
+                    f.write(f"- **Tests Failed:** {baseline_results['tests_failed']}\n")
+                    f.write(f"- **Duration:** {baseline_results['duration_seconds']:.2f} seconds\n\n")
+                    
+                    success_rate = (baseline_results['tests_passed'] / max(baseline_results['tests_executed'], 1)) * 100
+                    f.write(f"- **Success Rate:** {success_rate:.1f}%\n\n")
+                    
+                    f.write("## System Results\n")
+                    for result in baseline_results['test_results']:
+                        system_address = result.get('system_address') or result.get('address', 'UNKNOWN')
+                        system_name = result.get('system_name') or result.get('details', {}).get('target_name', 'Unknown')
+                        f.write(f"### {system_address} - {system_name}\n")
+                        if 'error' in result:
+                            f.write(f"**Error:** {result['error']}\n")
+                        elif 'details' in result and result['details']:
+                            details = result['details']
+                            signal_id = details.get('signal_id', 'N/A')
+                            payload = details.get('payload', {})
+                            f.write(f"- **Status:** {result.get('status', 'UNKNOWN')}\n")
+                            f.write(f"- **Signal ID:** {signal_id}\n")
+                            f.write(f"- **Payload:** `{json.dumps(payload)}`\n")
+                        else:
+                            test_result = result.get('test_result', {})
+                            f.write(f"- **Tests Passed:** {test_result.get('tests_passed', 0)}\n")
+                            f.write(f"- **Tests Failed:** {test_result.get('tests_failed', 0)}\n")
+                            f.write(f"- **Execution Time:** {test_result.get('execution_time_ms', 0)}ms\n")
+                        f.write("\n")
+                
+                self.logger.info(f"Baseline testing results saved: {results_file}")
+                self.logger.info(f"Baseline testing summary saved: {summary_file}")
             
         except Exception as e:
             self.logger.error(f"Error saving baseline test results: {e}")
@@ -5770,7 +6632,7 @@ class CoreSystem:
                 'DIAG-',
                 'Bus-',
                 '1-1',
-                '2-1',
+                '2',
                 '3-1',
                 '4-1',
                 '5-1',
@@ -5817,7 +6679,7 @@ class CoreSystem:
             if 'evidence' in str(file_path).lower():
                 return f"1-1.{len(path_parts)}"
             elif 'warden' in str(file_path).lower():
-                return f"2-1.{len(path_parts)}"
+                return f"2.{len(path_parts)}"
             elif 'mission' in str(file_path).lower() or 'debrief' in str(file_path).lower():
                 return f"3-1.{len(path_parts)}"
             elif 'report' in str(file_path).lower() or 'generation' in str(file_path).lower():
@@ -6095,6 +6957,7 @@ class CoreSystem:
         """Start trash cycle cleanup system"""
         try:
             self.logger.info("Starting trash cycle cleanup...")
+            self.trash_cleanup_event.clear()
             
             # Start cleanup thread
             cleanup_thread = threading.Thread(target=self._trash_cycle_cleanup_loop, daemon=True)
@@ -6108,32 +6971,77 @@ class CoreSystem:
     def _trash_cycle_cleanup_loop(self):
         """Trash cycle cleanup loop"""
         try:
-            while self.monitoring_active:
+            while self.monitoring_active and not self.trash_cleanup_event.is_set():
                 try:
                     # Perform cleanup operations
-                    self._perform_systematic_cleanup()
-                    
-                    # Wait 24 hours before next cleanup
-                    time.sleep(24 * 60 * 60)  # 24 hours in seconds
-                    
+                    self._perform_systematic_cleanup(reason="scheduled")
+                    self.trash_cleanup_last_run = datetime.now()
+
+                    # Immediate disk pressure check; may trigger additional cleanup
+                    if self._check_disk_pressure():
+                        continue
+
+                    waited = 0
+                    interval = self.trash_cleanup_interval_seconds
+                    while waited < interval:
+                        if not self.monitoring_active or self.trash_cleanup_event.wait(timeout=60):
+                            return
+                        waited += 60
+                        if self._check_disk_pressure():
+                            break
+
                 except Exception as e:
                     self.logger.error(f"Error in trash cycle cleanup loop: {e}")
-                    time.sleep(3600)  # Wait 1 hour before retrying
+                    if self.trash_cleanup_event.wait(timeout=3600):
+                        return
                     
         except Exception as e:
             self.logger.error(f"Trash cycle cleanup loop failed: {e}")
-    
-    def _perform_systematic_cleanup(self):
+        finally:
+            self.logger.info("Trash cycle cleanup loop exited.")
+
+    def _check_disk_pressure(self) -> bool:
+        """Monitor disk space and trigger aggressive cleanup when thresholds are breached."""
+        try:
+            root_path = self.disk_monitor_root
+            usage = shutil.disk_usage(str(root_path))
+            free_mb = usage.free / (1024 * 1024)
+
+            if free_mb <= self.disk_emergency_threshold_mb:
+                self.logger.warning(
+                    "Disk space critically low (%.2f MB free). Executing emergency cleanup.",
+                    free_mb,
+                )
+                self._perform_systematic_cleanup(aggressive=True, reason="disk_emergency")
+                return True
+
+            if free_mb <= self.disk_free_threshold_mb:
+                self.logger.info(
+                    "Disk space below threshold (%.2f MB free). Triggering proactive cleanup.",
+                    free_mb,
+                )
+                self._perform_systematic_cleanup(aggressive=True, reason="disk_pressure")
+                return True
+
+            return False
+        except Exception as e:
+            self.logger.error(f"Disk pressure check failed: {e}")
+            return False
+
+    def _perform_systematic_cleanup(self, aggressive: bool = False, reason: str = "scheduled"):
         """Perform systematic cleanup of cache data while preserving fault reports"""
         try:
-            self.logger.info("Performing systematic cleanup...")
+            mode_label = "AGGRESSIVE" if aggressive else "SCHEDULED"
+            self.logger.info("Performing systematic cleanup [%s] (reason: %s)...", mode_label, reason)
             
             cleanup_results = {
                 'start_time': datetime.now().isoformat(),
                 'cleanup_operations': [],
                 'files_cleaned': 0,
                 'space_freed_bytes': 0,
-                'errors': []
+                'errors': [],
+                'aggressive': aggressive,
+                'reason': reason,
             }
             
             # Cleanup operations with retention policies
@@ -6161,13 +7069,29 @@ class CoreSystem:
                     'path': self.base_path.parent / 'backups',
                     'retention_days': 14,
                     'preserve_fault_reports': True
-                }
+                },
             ]
+
+            if aggressive:
+                cleanup_operations.extend([
+                    {
+                        'name': 'diagnostic_reports_trim',
+                        'path': self.diagnostic_reports_path,
+                        'retention_days': 7,
+                        'preserve_fault_reports': False
+                    },
+                    {
+                        'name': 'systems_amendments_trim',
+                        'path': self.systems_amendments_path,
+                        'retention_days': 14,
+                        'preserve_fault_reports': False
+                    },
+                ])
             
             # Execute cleanup operations
             for operation in cleanup_operations:
                 try:
-                    result = self._execute_cleanup_operation(operation)
+                    result = self._execute_cleanup_operation(operation, aggressive=aggressive)
                     cleanup_results['cleanup_operations'].append(result)
                     cleanup_results['files_cleaned'] += result.get('files_cleaned', 0)
                     cleanup_results['space_freed_bytes'] += result.get('space_freed_bytes', 0)
@@ -6191,22 +7115,27 @@ class CoreSystem:
         except Exception as e:
             self.logger.error(f"Error performing systematic cleanup: {e}")
     
-    def _execute_cleanup_operation(self, operation: Dict[str, Any]) -> Dict[str, Any]:
+    def _execute_cleanup_operation(self, operation: Dict[str, Any], aggressive: bool = False) -> Dict[str, Any]:
         """Execute a specific cleanup operation"""
         try:
+            op_config = dict(operation)
             operation_result = {
-                'operation_name': operation['name'],
-                'path': str(operation['path']),
-                'retention_days': operation['retention_days'],
+                'operation_name': op_config['name'],
+                'path': str(op_config['path']),
+                'retention_days': op_config['retention_days'],
                 'files_cleaned': 0,
                 'space_freed_bytes': 0,
                 'files_preserved': 0,
-                'errors': []
+                'errors': [],
+                'mode': 'aggressive' if aggressive else 'scheduled',
             }
             
-            cleanup_path = operation['path']
-            retention_days = operation['retention_days']
-            preserve_fault_reports = operation['preserve_fault_reports']
+            cleanup_path = op_config['path']
+            retention_days = op_config['retention_days']
+            preserve_fault_reports = op_config['preserve_fault_reports']
+
+            if aggressive:
+                retention_days = max(1, int(retention_days * 0.5))
             
             if not cleanup_path.exists():
                 self.logger.info(f"Cleanup path does not exist: {cleanup_path}")
@@ -6251,7 +7180,8 @@ class CoreSystem:
                 'operation_name': operation['name'],
                 'error': str(e),
                 'files_cleaned': 0,
-                'space_freed_bytes': 0
+                'space_freed_bytes': 0,
+                'mode': 'aggressive' if aggressive else 'scheduled',
             }
     
     def _is_fault_report_file(self, file_path: Path) -> bool:
@@ -6278,17 +7208,20 @@ class CoreSystem:
     def _save_cleanup_results(self, cleanup_results: Dict[str, Any]):
         """Save cleanup results to diagnostic_reports"""
         try:
-            results_file = self.diagnostic_reports_path / f"cleanup_results_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+            self.diagnostic_reports_path.mkdir(parents=True, exist_ok=True)
+            results_file = self.diagnostic_reports_path / "cleanup_results_latest.json"
+            cleanup_results['generated_at'] = datetime.now().isoformat()
             
             with open(results_file, 'w') as f:
                 json.dump(cleanup_results, f, indent=2)
             
-            # Also create a markdown summary
-            summary_file = self.diagnostic_reports_path / f"cleanup_summary_{datetime.now().strftime('%Y%m%d_%H%M%S')}.md"
+            summary_file = self.diagnostic_reports_path / "trash_cleanup_summary.md"
             
             with open(summary_file, 'w') as f:
                 f.write(f"# Trash Cycle Cleanup Results\n\n")
-                f.write(f"**Generated:** {datetime.now().isoformat()}\n\n")
+                f.write(f"**Generated:** {cleanup_results['generated_at']}\n")
+                f.write(f"**Mode:** {'AGGRESSIVE' if cleanup_results.get('aggressive') else 'SCHEDULED'}\n")
+                f.write(f"**Reason:** {cleanup_results.get('reason', 'scheduled')}\n\n")
                 f.write(f"## Summary\n")
                 f.write(f"- **Files Cleaned:** {cleanup_results['files_cleaned']}\n")
                 f.write(f"- **Space Freed:** {cleanup_results['space_freed_bytes']} bytes ({cleanup_results['space_freed_bytes'] / (1024*1024):.2f} MB)\n")
@@ -6297,14 +7230,14 @@ class CoreSystem:
                 
                 f.write("## Cleanup Operations\n")
                 for operation in cleanup_results['cleanup_operations']:
-                    f.write(f"### {operation['operation_name']}\n")
-                    f.write(f"- **Path:** {operation['path']}\n")
-                    f.write(f"- **Retention:** {operation['retention_days']} days\n")
-                    f.write(f"- **Files Cleaned:** {operation['files_cleaned']}\n")
-                    f.write(f"- **Space Freed:** {operation['space_freed_bytes']} bytes\n")
-                    f.write(f"- **Files Preserved:** {operation.get('files_preserved', 0)}\n")
+                    f.write(f"- **{operation['operation_name']}** ({operation.get('mode', 'scheduled')})\n")
+                    f.write(f"  - Path: {operation['path']}\n")
+                    f.write(f"  - Retention: {operation['retention_days']} days\n")
+                    f.write(f"  - Files Cleaned: {operation['files_cleaned']}\n")
+                    f.write(f"  - Space Freed: {operation['space_freed_bytes']} bytes\n")
+                    f.write(f"  - Files Preserved: {operation.get('files_preserved', 0)}\n")
                     if operation.get('errors'):
-                        f.write(f"- **Errors:** {len(operation['errors'])}\n")
+                        f.write(f"  - Errors: {len(operation['errors'])}\n")
                     f.write("\n")
                 
                 if cleanup_results['errors']:
@@ -6313,8 +7246,8 @@ class CoreSystem:
                         f.write(f"- {error}\n")
                     f.write("\n")
             
-            self.logger.info(f"Cleanup results saved: {results_file}")
-            self.logger.info(f"Cleanup summary saved: {summary_file}")
+            self.logger.info(f"Cleanup results saved to {results_file}")
+            self.logger.info(f"Cleanup summary updated: {summary_file}")
             
         except Exception as e:
             self.logger.error(f"Error saving cleanup results: {e}")

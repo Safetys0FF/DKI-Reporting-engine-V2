@@ -85,19 +85,56 @@ This document serves as the **definitive reference** for all diagnostic protocol
 | 6-1 | Dev Environment | dev_environment.DevEnvironment | - | ACTIVE | - |
 | 6-2 | Tool Dependencies | tool_dependencies.ToolDependencies | - | ACTIVE | - |
 
-### **Enhanced Functional GUI (7-x)**
+### **Enhanced Functional GUI (GUI-1)**
 | Address | System Name | Handler | Parent | Status | Last Check |
 |---------|-------------|---------|--------|--------|------------|
-| 7-1 | Enhanced Functional GUI | enhanced_functional_gui.EnhancedFunctionalGUI | - | ACTIVE | - |
-| 7-1.1 | User Interface Controller | ui_controller.UIController | 7-1 | ACTIVE | - |
-| 7-1.2 | Case Management Interface | case_management_interface.CaseManagementInterface | 7-1 | ACTIVE | - |
-| 7-1.3 | Evidence Display Interface | evidence_display_interface.EvidenceDisplayInterface | 7-1 | ACTIVE | - |
-| 7-1.4 | Section Review Interface | section_review_interface.SectionReviewInterface | 7-1 | ACTIVE | - |
-| 7-1.5 | Report Generation Interface | report_generation_interface.ReportGenerationInterface | 7-1 | ACTIVE | - |
-| 7-1.6 | System Status Interface | system_status_interface.SystemStatusInterface | 7-1 | ACTIVE | - |
-| 7-1.7 | Error Display Interface | error_display_interface.ErrorDisplayInterface | 7-1 | ACTIVE | - |
-| 7-1.8 | Progress Monitoring Interface | progress_monitoring_interface.ProgressMonitoringInterface | 7-1 | ACTIVE | - |
-| 7-1.9 | Health Monitor | health_monitor.HealthMonitor | 7-1 | ACTIVE | - |
+| GUI-1 | Enhanced Functional GUI (CANBUS Connected) | enhanced_functional_gui.EnhancedDKIGUI | - | ACTIVE | 2025-10-10 |
+| 7-1 | Enhanced Functional GUI (Legacy) | enhanced_functional_gui.EnhancedFunctionalGUI | - | DEPRECATED | - |
+| GUI-1.1 | User Interface Controller | ui_controller.UIController | GUI-1 | ACTIVE | 2025-10-10 |
+| GUI-1.2 | Case Management Interface | case_management_interface.CaseManagementInterface | GUI-1 | ACTIVE | 2025-10-10 |
+| GUI-1.3 | Evidence Display Interface | evidence_display_interface.EvidenceDisplayInterface | GUI-1 | ACTIVE | 2025-10-10 |
+| GUI-1.4 | Section Review Interface | section_review_interface.SectionReviewInterface | GUI-1 | ACTIVE | 2025-10-10 |
+| GUI-1.5 | Report Generation Interface | report_generation_interface.ReportGenerationInterface | GUI-1 | ACTIVE | 2025-10-10 |
+| GUI-1.6 | System Status Interface | system_status_interface.SystemStatusInterface | GUI-1 | ACTIVE | 2025-10-10 |
+| GUI-1.7 | Error Display Interface | error_display_interface.ErrorDisplayInterface | GUI-1 | ACTIVE | 2025-10-10 |
+| GUI-1.8 | Progress Monitoring Interface | progress_monitoring_interface.ProgressMonitoringInterface | GUI-1 | ACTIVE | 2025-10-10 |
+| GUI-1.9 | Health Monitor | health_monitor.HealthMonitor | GUI-1 | ACTIVE | 2025-10-10 |
+
+---
+
+## **UNIVERSAL SIGNAL TRANSLATION PROTOCOL**
+
+**Updated:** October 10, 2025  
+**Architect:** DEESCALATION Agent
+
+### **Radio Code Callout Protocol**
+
+Based on UniversalCommunicator RadioCode enum and gateway callbox logic:
+
+| Radio Code | Meaning | Parent Module Usage | Gateway Action | UDS Monitoring |
+|------------|---------|---------------------|----------------|----------------|
+| **10-4** | ACKNOWLEDGED | Message received and understood / Section approved / Ready signals | Unlock next section | System operational |
+| **10-6** | EVIDENCE_RECEIVED | Evidence received and being processed / Toolkit initialized | Broadcast toolkit context | Processing started |
+| **10-8** | EVIDENCE_COMPLETE | Evidence processing complete / Section finished / Output ready | Collect output payload | Processing complete |
+| **10-9** | REPEAT | Please repeat last message / Manual review requested / Communication retry | Trigger manual review | Communication issue |
+| **10-10** | STANDBY | Processing in progress / System waiting / Emergency halt | Freeze gateway, notify lead | System waiting |
+| **SOS** | EMERGENCY | System failure detected / Critical error | Escalate to diagnostics | Fault detected |
+| **MAYDAY** | CRITICAL_FAILURE | System down / Complete failure / Unrecoverable error | Emergency shutdown protocol | System down |
+| **STATUS** | STATUS_REQUEST | Request system status / Health check | Return status payload | Health monitoring |
+| **ROLLCALL** | ROLLCALL | All systems respond / System discovery | Registry update | System registration |
+| **RADIO_CHECK** | COMMUNICATION_TEST | Communication test / Connectivity validation | Acknowledge receipt | Connectivity test |
+
+### **Parent Module Signal Translations**
+
+All parent modules translate child wildcard broadcasts to universal CANBUS signals:
+
+- **Evidence Locker (1):** `locker.child.broadcast` → universal signals
+- **Warden (2-1):** `warden.child.broadcast` → universal signals  
+- **Marshall (3):** `marshall.child.broadcast` → universal signals
+- **Mission Debrief (5):** `mission.child.broadcast` → universal signals
+- **GUI (GUI-1):** `gui.child.broadcast` → universal signals (pending)
+
+See Command Center protocol documentation for complete translation tables.
 
 ---
 

@@ -845,10 +845,182 @@ class AuthSystem:
         
         return re.sub(mission_pattern, add_row, content, flags=re.MULTILINE | re.DOTALL)
     
+    def force_diagnostic_report(self):
+        """Force generation of diagnostic report based on last run cycle"""
+        try:
+            self.logger.info("Forcing diagnostic report generation...")
+            
+            # Get orchestrator reference
+            if not hasattr(self, 'orchestrator') or not self.orchestrator:
+                self.logger.error("No orchestrator reference available")
+                return False
+            
+            # Ensure enforcement module is loaded
+            if not hasattr(self.orchestrator, 'enforcement') or not self.orchestrator.enforcement:
+                self.logger.error("Enforcement module not available")
+                return False
+            
+            # Force consolidation of all current faults
+            if hasattr(self.orchestrator.enforcement, 'force_consolidation'):
+                success = self.orchestrator.enforcement.force_consolidation()
+                if success:
+                    self.logger.info("Diagnostic report generation triggered successfully")
+                    return True
+                else:
+                    self.logger.error("Failed to trigger diagnostic report generation")
+                    return False
+            else:
+                self.logger.error("Enforcement module does not have force_consolidation method")
+                return False
+                
+        except Exception as e:
+            self.logger.error(f"Error forcing diagnostic report: {e}")
+            return False
+
+    def get_last_run_faults(self):
+        """Get faults from the last run cycle for manual report generation"""
+        try:
+            self.logger.info("Retrieving faults from last run cycle...")
+            
+            # Get orchestrator reference
+            if not hasattr(self, 'orchestrator') or not self.orchestrator:
+                self.logger.error("No orchestrator reference available")
+                return []
+            
+            # Ensure enforcement module is loaded
+            if not hasattr(self.orchestrator, 'enforcement') or not self.orchestrator.enforcement:
+                self.logger.error("Enforcement module not available")
+                return []
+            
+            # Get faults from the consolidation buffer
+            if hasattr(self.orchestrator.enforcement, 'consolidated_fault_state'):
+                fault_buffer = self.orchestrator.enforcement.consolidated_fault_state.get('fault_buffer', [])
+                self.logger.info(f"Retrieved {len(fault_buffer)} faults from last run cycle")
+                return fault_buffer
+            else:
+                # Initialize consolidated fault state if it doesn't exist
+                self.orchestrator.enforcement.consolidated_fault_state = {
+                    'fault_buffer': [],
+                    'consolidation_queue': [],
+                    'active_consolidations': {},
+                    'consolidation_history': [],
+                    'encryption_keys': {},
+                    'report_statistics': {
+                        'total_reports_generated': 0,
+                        'total_faults_consolidated': 0,
+                        'encryption_operations': 0,
+                        'compression_operations': 0
+                    }
+                }
+                fault_buffer = self.orchestrator.enforcement.consolidated_fault_state.get('fault_buffer', [])
+                self.logger.info(f"Initialized consolidated fault state, retrieved {len(fault_buffer)} faults")
+                return fault_buffer
+                
+        except Exception as e:
+            self.logger.error(f"Error retrieving last run faults: {e}")
+            return []
+
+    def generate_manual_report(self, report_name: str = None):
+        """Generate a manual diagnostic report from current fault data"""
+        try:
+            if not report_name:
+                report_name = f"manual_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+            
+            self.logger.info(f"Generating manual diagnostic report: {report_name}")
+            
+            # Get orchestrator reference
+            if not hasattr(self, 'orchestrator') or not self.orchestrator:
+                self.logger.error("No orchestrator reference available")
+                return False
+            
+            # Ensure enforcement module is loaded
+            if not hasattr(self.orchestrator, 'enforcement') or not self.orchestrator.enforcement:
+                self.logger.error("Enforcement module not available")
+                return False
+            
+            # Get current faults
+            current_faults = self.get_last_run_faults()
+            
+            # If no faults in buffer, try to load from existing fault vault files
+            if not current_faults:
+                self.logger.info("No faults in buffer, loading from existing fault vault files...")
+                current_faults = self._load_faults_from_vault()
+                
+            if not current_faults:
+                self.logger.warning("No faults found for manual report generation")
+                return False
+            
+            # Generate consolidated report manually
+            if hasattr(self.orchestrator.enforcement, '_generate_consolidated_report'):
+                consolidated_report = self.orchestrator.enforcement._generate_consolidated_report(current_faults, report_name)
+                
+                # Save the report
+                if hasattr(self.orchestrator.enforcement, '_save_consolidated_reports'):
+                    # Generate encrypted data (empty for manual reports)
+                    encrypted_data = b''  # No encryption for manual reports
+                    self.orchestrator.enforcement._save_consolidated_reports(consolidated_report, encrypted_data, report_name)
+                    self.logger.info(f"Manual diagnostic report generated successfully: {report_name}")
+                    return True
+                else:
+                    self.logger.error("Enforcement module does not have _save_consolidated_reports method")
+                    return False
+            else:
+                self.logger.error("Enforcement module does not have _generate_consolidated_report method")
+                return False
+                
+        except Exception as e:
+            self.logger.error(f"Error generating manual report: {e}")
+            return False
+
+    def _load_faults_from_vault(self):
+        """Load faults from existing fault vault files"""
+        try:
+            import json
+            from pathlib import Path
+            
+            # Get the correct fault vault path
+            fault_vault_path = self.orchestrator.fault_vault_path if hasattr(self.orchestrator, 'fault_vault_path') else self.orchestrator.core.fault_vault_path
+            fault_vault = Path(fault_vault_path)
+            
+            if not fault_vault.exists():
+                self.logger.warning("Fault vault directory does not exist")
+                return []
+            
+            # Load all JSON fault files
+            fault_files = list(fault_vault.glob("*.json"))
+            faults = []
+            
+            for fault_file in fault_files:
+                try:
+                    with open(fault_file, 'r', encoding='utf-8') as f:
+                        fault_data = json.load(f)
+                        
+                    # Convert to expected format
+                    fault_record = {
+                        'timestamp': fault_data.get('timestamp', datetime.now().isoformat()),
+                        'system_address': fault_data.get('system_address', 'unknown'),
+                        'fault_code': fault_data.get('fault_code', 'unknown'),
+                        'severity': fault_data.get('severity', 'unknown'),
+                        'fault_data': fault_data,
+                        'buffer_entry_id': f"{fault_file.stem}_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+                    }
+                    faults.append(fault_record)
+                    
+                except Exception as e:
+                    self.logger.warning(f"Could not load fault file {fault_file.name}: {e}")
+                    continue
+            
+            self.logger.info(f"Loaded {len(faults)} faults from vault files")
+            return faults
+            
+        except Exception as e:
+            self.logger.error(f"Error loading faults from vault: {e}")
+            return []
+
     def _add_to_analyst_deck_table(self, content, address, name, handler, parent):
-        """Add system to Analyst Deck Complex table"""
+        """Add system to The Analyst Deck Complex table"""
         import re
-        analyst_pattern = r'(### \*\*Analyst Deck Complex \(4-x\)\*\*\s*\n\| Address \| System Name \| Handler \| Parent \| Status \| Last Check \|\s*\n\|-+\|-+\|-+\|-+\|-+\|-+\|\s*\n)'
+        analyst_pattern = r'(### \*\*The Analyst Deck Complex \(4-x\)\*\*\s*\n\| Address \| System Name \| Handler \| Parent \| Status \| Last Check \|\s*\n\|-+\|-+\|-+\|-+\|-+\|-+\|\s*\n)'
         
         def add_row(match):
             table_header = match.group(1)
@@ -888,9 +1060,9 @@ class AuthSystem:
         return re.sub(war_room_pattern, add_row, content, flags=re.MULTILINE | re.DOTALL)
     
     def _add_to_gui_table(self, content, address, name, handler, parent):
-        """Add system to Enhanced Functional GUI table"""
+        """Add system to Command Center UI table"""
         import re
-        gui_pattern = r'(### \*\*Enhanced Functional GUI \(7-x\)\*\*\s*\n\| Address \| System Name \| Handler \| Parent \| Status \| Last Check \|\s*\n\|-+\|-+\|-+\|-+\|-+\|-+\|\s*\n)'
+        gui_pattern = r'(### \*\*Command Center UI \(7-x\)\*\*\s*\n\| Address \| System Name \| Handler \| Parent \| Status \| Last Check \|\s*\n\|-+\|-+\|-+\|-+\|-+\|-+\|\s*\n)'
         
         def add_row(match):
             table_header = match.group(1)

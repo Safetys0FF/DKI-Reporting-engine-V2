@@ -1,0 +1,16 @@
+{
+  "timestamp": "2025-10-08T21:43:32.422460",
+  "system_address": "GATEWAY-1",
+  "fault_code": "GATEWAY-1-10-456",
+  "severity": "ERROR",
+  "fault_data": {
+    "fault_id": "ROUTING-001",
+    "system_address": "GATEWAY-1",
+    "fault_code": "GATEWAY-1-10-456",
+    "description": "Gateway initialization failure",
+    "severity": "ERROR",
+    "timestamp": "2025-10-08T21:43:32.422369"
+  },
+  "recorded_by": "enforcement_system",
+  "analysis_required": true
+}

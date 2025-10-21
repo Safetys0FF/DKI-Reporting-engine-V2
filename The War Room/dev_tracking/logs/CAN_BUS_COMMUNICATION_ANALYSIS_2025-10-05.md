@@ -258,3 +258,4 @@ The entire CAN-bus communication system is being ignored. Components need to be 
 
 This will restore the **proper CAN-bus architecture** and enable **loose coupling** between components.
 
+

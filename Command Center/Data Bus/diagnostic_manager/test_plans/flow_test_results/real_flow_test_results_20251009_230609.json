@@ -1,0 +1,9 @@
+{
+  "success": false,
+  "total_time": null,
+  "signals_received": null,
+  "signal_names": [],
+  "faults": [],
+  "ingestion_result": {},
+  "reason": "Evidence ingestion failed"
+}

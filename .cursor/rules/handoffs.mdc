@@ -1,0 +1,59 @@
+# agent-handoff-protocol.mdc
+# Description: Enforces agent-to-agent handshake structure, folder logic, and lifecycle commitment
+# Attachments: Central Command > dev_tracking/Handshakes
+# Tags: handoff, handshake, request, ack, confirm, debrief, lifecycle
+# Apply: Always
+
+rule: "All handoff communications must use structured handshake files"
+description: >
+  Agents must use predefined Markdown templates for initiating, acknowledging, and confirming handoffs. These are created inside the `dev_tracking/Handshakes/` directory.
+
+enforce:
+  - Handoff phases and files:
+      - Request: `request_<from>_to_<to>_<timestamp>.md`
+      - ACK: `ack_<to>_from_<from>_<timestamp>.md`
+      - Confirm: `confirm_<to>_<subject>_<timestamp>.md`
+      - Debrief: `debrief_<agent>_<subject>_<timestamp>.md`
+  - File format must match template structure (header, fields)
+  - All handshake files must be saved to:
+      - `dev_tracking/Handshakes/`
+
+rule: "Handshake files must be auto-committed with action"
+description: >
+  When an agent triggers a handoff event (request, confirm, etc.), the file must be committed automatically with the related system or fault action.
+
+enforce:
+  - No handoff file should be staged or held separately
+  - Commit includes:
+      - `.md` file
+      - any related change, repair, or message
+
+rule: "All confirmed handshakes must be archived by end of day"
+description: >
+  All `confirm_*.md` and `debrief_*.md` files must be moved to an archive folder at the end of each agent’s work session.
+
+enforce:
+  - Archive path format:
+      - `dev_tracking/archives/YYYY-MM-DD/`
+  - At EOD, move:
+      - All handshake files with status: CONFIRMED or COMPLETED
+  - UDS nightly job may automate the archive move
+
+rule: "Session summaries must be written as Markdown README files"
+description: >
+  Each agent session (from handoff to handoff) must be summarized in a README-style Markdown log saved in `dev_tracking/logs/`.
+
+enforce:
+  - File format: `session_<agent>_<timestamp>.md`
+  - Must include sections:
+      - ## Summary
+      - ## Systems Touched
+      - ## Faults Resolved
+      - ## Key Actions
+      - ## Next Steps
+      - ## Observations
+  - Save location:
+      - `dev_tracking/logs/`
+---
+alwaysApply: true
+---

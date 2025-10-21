@@ -8,9 +8,15 @@ import sys
 import os
 import logging
 import time
+from datetime import datetime
+from pathlib import Path
+import importlib.util as import_util
 
 # Add current directory to path
 sys.path.append(os.path.dirname(__file__))
+UNIFIED_ROOT = Path(__file__).resolve().parents[2]
+if str(UNIFIED_ROOT) not in sys.path:
+    sys.path.insert(0, str(UNIFIED_ROOT))
 
 def test_full_system_function():
     """Test full system function with actual operations"""
@@ -130,8 +136,76 @@ def test_full_system_function():
         except Exception as e:
             print(f"[VALIDATION] Validation error: {e}")
         
-        # Test 9: Test system shutdown
-        print("\n[TEST 9] Testing system shutdown...")
+        # Test 9: Test ECC gating flow with synthetic evidence
+        print("\n[TEST 9] Testing ECC gating flow with synthetic evidence...")
+        try:
+            repo_root = Path(__file__).resolve().parents[6]
+            warden_root = repo_root / "The Warden"
+
+            ecc_spec = import_util.spec_from_file_location(
+                "warden.ecosystem_controller", str(warden_root / "ecosystem_controller.py")
+            )
+            if ecc_spec is None or ecc_spec.loader is None:
+                raise RuntimeError("Failed to build ECC module spec")
+            ecc_module = import_util.module_from_spec(ecc_spec)
+            ecc_spec.loader.exec_module(ecc_module)  # type: ignore[attr-defined]
+            EcosystemController = getattr(ecc_module, "EcosystemController")
+            ecc_instance = EcosystemController()
+
+            bus_events = []
+            gateway_ready_records = []
+
+            class _BusStub:
+                def emit(self_inner, signal, payload):
+                    bus_events.append((signal, payload))
+
+            class _GatewayStub:
+                def register_section_ready(self_inner, section, context):
+                    gateway_ready_records.append((section, context))
+
+            class _OCRStub:
+                def process_file(self_inner, file_path, file_type):
+                    return {"text": "intake surveillance analysis financial legal media billing"}
+
+            ecc_instance.bus = _BusStub()
+            ecc_instance.gateway = _GatewayStub()
+            ecc_instance.ocr_engine = _OCRStub()
+
+            gating_sequence = list(ecc_instance.section_gate_sequence)
+            synthetic_tags = {
+                "section_1": ["intake"],
+                "section_2": ["intake"],
+                "section_3": ["surveillance"],
+                "section_4": ["analysis"],
+                "section_5": ["financial"],
+                "section_7": ["legal"],
+                "section_8": ["media"],
+                "section_6": ["financial"],
+            }
+
+            sample_file = Path(__file__).resolve()
+            for section_key in gating_sequence:
+                payload = {
+                    "evidence_id": f"SIM-{section_key}",
+                    "section_hint": section_key,
+                    "classification": {"tags": synthetic_tags.get(section_key, [])},
+                    "file_path": str(sample_file),
+                    "timestamp": datetime.now().isoformat(),
+                }
+                ecc_instance._handle_bus_evidence_event("evidence.updated", payload)
+
+            released_flags = {sec: ecc_instance.section_release_flags.get(sec) for sec in gating_sequence}
+            print(f"[RESULT] Release flags: {released_flags}")
+            print(f"[RESULT] Gateway ready records: {len(gateway_ready_records)} entries")
+            assert all(released_flags.values()), "Not all sections were authorised by ECC gating"
+            assert any(event[0] == "gateway.section.authorized" for event in bus_events), "No gating bus event emitted"
+            print("[OK] ECC gating flow authorised sequential sections")
+        except Exception as ecc_exc:
+            print(f"[FAIL] ECC gating flow test error: {ecc_exc}")
+            raise
+        
+        # Test 10: Test system shutdown
+        print("\n[TEST 10] Testing system shutdown...")
         shutdown_result = diagnostic_system.shutdown_diagnostic_system()
         print(f"[RESULT] Shutdown successful: {shutdown_result}")
         

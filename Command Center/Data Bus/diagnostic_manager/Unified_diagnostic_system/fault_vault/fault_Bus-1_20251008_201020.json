@@ -1,0 +1,15 @@
+{
+  "timestamp": "2025-10-08T20:10:20.499228",
+  "system_address": "Bus-1",
+  "fault_code": "[1-1-10-001]",
+  "severity": "ERROR",
+  "fault_data": {
+    "fault_id": "TEST-FAULT-002",
+    "system_address": "Bus-1",
+    "fault_code": "[1-1-10-001]",
+    "description": "Test error fault for consolidated reporting",
+    "timestamp": "2025-10-08T20:10:20"
+  },
+  "recorded_by": "enforcement_system",
+  "analysis_required": true
+}

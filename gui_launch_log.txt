@@ -1,0 +1,160 @@
+============================================================================
+                 DKI Central Command - GUI Launcher
+============================================================================
+Using Python : F:\The Central Command\.venv\Scripts\python.exe
+Entry Script : F:\The Central Command\Command Center\UI\gui_main_application.py
+
+Starting GUI application...
+
+[LAUNCH] Initializing GUI-1 parent module...
+2025-10-10 19:46:37,966 - GUIModule - INFO - [CREATED] GUI-1 module created
+[LAUNCH] Running startup sequence...
+2025-10-10 19:46:37,966 - GUIModule - INFO - [STARTUP] GUI-1 initialization sequence starting...
+2025-10-10 19:46:37,966 - GUIModule - INFO - [STARTUP 1/7] Initialize CANBUS...
+2025-10-10 19:46:37,966 - UniversalCommunicator-Bus-1 - INFO - Universal Communicator initialized for Bus-1
+2025-10-10 19:46:37,966 - bus_core - INFO - Central Command Bus initialized with Universal Communication Protocol
+2025-10-10 19:46:37,966 - bus_core - INFO - [BUS] Signal 'case_create' bound to _handle_case_create_signal
+2025-10-10 19:46:37,969 - bus_core - INFO - [BUS] Signal 'files_add' bound to _handle_files_add_signal
+2025-10-10 19:46:37,969 - bus_core - INFO - [BUS] Signal 'evidence.new' bound to _handle_evidence_new_signal
+2025-10-10 19:46:37,969 - bus_core - INFO - [BUS] Signal 'evidence.annotated' bound to _handle_evidence_annotated_signal
+2025-10-10 19:46:37,969 - bus_core - INFO - [BUS] Signal 'evidence.request' bound to _handle_evidence_request_signal
+2025-10-10 19:46:37,969 - bus_core - INFO - [BUS] Signal 'evidence.deliver' bound to _handle_evidence_deliver_signal
+2025-10-10 19:46:37,969 - bus_core - INFO - [BUS] Signal 'evidence.updated' bound to _handle_evidence_updated_signal
+2025-10-10 19:46:37,969 - bus_core - INFO - [BUS] Signal 'evidence.tagged' bound to _handle_evidence_tagged_signal
+2025-10-10 19:46:37,969 - bus_core - INFO - [BUS] Signal 'evidence.stored' bound to _handle_evidence_stored_signal
+2025-10-10 19:46:37,969 - bus_core - INFO - [BUS] Signal 'evidence_locker.call_out' bound to _handle_evidence_call_out_signal
+2025-10-10 19:46:37,969 - bus_core - INFO - [BUS] Signal 'evidence_locker.accept' bound to _handle_evidence_accept_signal
+2025-10-10 19:46:37,969 - bus_core - INFO - [BUS] Signal 'section.needs' bound to _handle_section_needs_signal
+2025-10-10 19:46:37,969 - bus_core - INFO - [BUS] Signal 'case.snapshot' bound to _handle_case_snapshot_signal
+2025-10-10 19:46:37,969 - bus_core - INFO - [BUS] Signal 'gateway.status' bound to _handle_gateway_status_signal
+2025-10-10 19:46:37,969 - bus_core - INFO - [BUS] Signal 'locker.status' bound to _handle_locker_status_signal
+2025-10-10 19:46:37,969 - bus_core - INFO - [BUS] Signal 'mission.status' bound to _handle_mission_status_signal
+2025-10-10 19:46:37,969 - bus_core - INFO - [BUS] Signal 'narrative.assembled' bound to _handle_narrative_assembled_signal
+2025-10-10 19:46:37,970 - bus_core - INFO - [BUS] Signal 'sos_fault' bound to _handle_sos_fault_signal
+2025-10-10 19:46:37,970 - bus_core - INFO - [BUS] Signal 'radio_check' bound to _handle_radio_check_signal
+2025-10-10 19:46:37,970 - bus_core - INFO - [BUS] Signal 'rollcall' bound to _handle_rollcall_signal
+2025-10-10 19:46:37,970 - bus_core - INFO - [BUS] Signal 'status_request' bound to _handle_status_request_signal
+2025-10-10 19:46:37,970 - UniversalCommunicator-GUI-1 - INFO - Universal Communicator initialized for GUI-1
+2025-10-10 19:46:37,970 - GUIModule - INFO - [OK] CANBUS initialized
+2025-10-10 19:46:37,970 - GUIModule - INFO - [STARTUP 2/7] Register to CANBUS...
+2025-10-10 19:46:37,970 - bus_core - INFO - [BUS][bus.register_address] Registered system address: GUI-1
+2025-10-10 19:46:37,970 - bus_core - WARNING - [BUS] No handlers for topic: communication
+2025-10-10 19:46:37,970 - UniversalCommunicator-GUI-1 - INFO - Signal sent: GUI-1-1-1760143597 -> ALL
+2025-10-10 19:46:37,970 - GUIModule - INFO - [OK] Registered to CANBUS as GUI-1 parent module
+2025-10-10 19:46:37,970 - GUIModule - INFO - [STARTUP 3/7] Start heartbeat monitor...
+2025-10-10 19:46:37,971 - bus_core - WARNING - [BUS] No handlers for topic: communication
+2025-10-10 19:46:37,971 - GUIModule - INFO - [OK] Heartbeat monitor thread started
+2025-10-10 19:46:37,971 - UniversalCommunicator-GUI-1 - INFO - Signal sent: GUI-1-2-1760143597 -> Bus-1.5
+2025-10-10 19:46:37,971 - GUIModule - INFO - [STARTUP 4/7] Start health monitor...
+2025-10-10 19:46:37,971 - GUIModule - INFO - [OK] Health monitor integrated with heartbeat
+2025-10-10 19:46:37,971 - GUIModule - INFO - [STARTUP 5/7] Register signal handlers...
+2025-10-10 19:46:37,971 - bus_core - INFO - [BUS] Signal 'gui.child.broadcast' bound to _handle_child_broadcast
+2025-10-10 19:46:37,979 - bus_core - INFO - [BUS] Signal 'evidence.classified' bound to _on_evidence_classified
+2025-10-10 19:46:37,979 - bus_core - INFO - [BUS] Signal 'case.created' bound to _on_case_created
+2025-10-10 19:46:37,979 - bus_core - INFO - [BUS] Signal 'section.routed' bound to _on_section_routed
+2025-10-10 19:46:37,979 - bus_core - INFO - [BUS] Signal 'gateway.ready' bound to _on_gateway_ready
+2025-10-10 19:46:37,979 - bus_core - INFO - [BUS] Signal 'evidence.processed' bound to _on_evidence_processed
+2025-10-10 19:46:37,979 - bus_core - INFO - [BUS] Signal 'evidence.ready_for_debrief' bound to _on_evidence_ready
+2025-10-10 19:46:37,979 - bus_core - INFO - [BUS] Signal 'report.ready' bound to _on_report_ready
+2025-10-10 19:46:37,979 - bus_core - INFO - [BUS] Signal 'narrative.assembled' bound to _on_narrative_ready
+2025-10-10 19:46:37,979 - bus_core - INFO - [BUS] Signal 'uds.health_check' bound to _on_health_check
+2025-10-10 19:46:37,979 - GUIModule - INFO - [OK] Signal handlers registered (10 handlers)
+2025-10-10 19:46:37,979 - GUIModule - INFO - [STARTUP 6/7] Load component registry...
+2025-10-10 19:46:37,979 - GUIModule - INFO - [OK] Component registry initialized
+2025-10-10 19:46:37,979 - GUIModule - INFO - [STARTUP 7/7] Announce readiness...
+2025-10-10 19:46:37,979 - bus_core - WARNING - [BUS] No handlers for topic: communication
+2025-10-10 19:46:37,979 - UniversalCommunicator-GUI-1 - INFO - Signal sent: GUI-1-3-1760143597 -> Bus-1
+2025-10-10 19:46:37,979 - GUIModule - INFO - [OK] GUI-1 readiness announced
+2025-10-10 19:46:37,979 - GUIModule - INFO - [OK] GUI-1 system initialized successfully
+[LAUNCH] GUI-1 ready - starting Enhanced GUI...
+2025-10-10 19:46:37,980 - bus_core - INFO - [BUS] Signal 'gui.status' bound to _handle_status_signal
+2025-10-10 19:46:37,980 - bus_core - INFO - [BUS] Signal 'gui.refresh' bound to _handle_refresh_signal
+2025-10-10 19:46:37,980 - bus_core - INFO - [BUS] Signal 'gui.update_bus_state' bound to _handle_update_bus_state_signal
+2025-10-10 19:46:37,980 - EnhancedDKIGUI - INFO - [GUI-1] Enhanced GUI signal handlers registered
+2025-10-10 19:46:38,126 - profile_registry - WARNING - Profile file missing at F:\The Central Command\Command Center\UI\user_profile.json
+2025-10-10 19:46:38,126 - profile_registry - WARNING - Profile file missing at F:\The Central Command\Command Center\UI\user_profile.json
+2025-10-10 19:46:38,193 - UniversalCommunicator-Bus-1 - INFO - Universal Communicator initialized for Bus-1
+2025-10-10 19:46:38,193 - bus_core - INFO - Central Command Bus initialized with Universal Communication Protocol
+2025-10-10 19:46:38,193 - bus_core - INFO - [BUS] Signal 'case_create' bound to _handle_case_create_signal
+2025-10-10 19:46:38,193 - bus_core - INFO - [BUS] Signal 'files_add' bound to _handle_files_add_signal
+2025-10-10 19:46:38,193 - bus_core - INFO - [BUS] Signal 'evidence.new' bound to _handle_evidence_new_signal
+2025-10-10 19:46:38,193 - bus_core - INFO - [BUS] Signal 'evidence.annotated' bound to _handle_evidence_annotated_signal
+2025-10-10 19:46:38,193 - bus_core - INFO - [BUS] Signal 'evidence.request' bound to _handle_evidence_request_signal
+2025-10-10 19:46:38,193 - bus_core - INFO - [BUS] Signal 'evidence.deliver' bound to _handle_evidence_deliver_signal
+2025-10-10 19:46:38,194 - bus_core - INFO - [BUS] Signal 'evidence.updated' bound to _handle_evidence_updated_signal
+2025-10-10 19:46:38,194 - bus_core - INFO - [BUS] Signal 'evidence.tagged' bound to _handle_evidence_tagged_signal
+2025-10-10 19:46:38,194 - bus_core - INFO - [BUS] Signal 'evidence.stored' bound to _handle_evidence_stored_signal
+2025-10-10 19:46:38,194 - bus_core - INFO - [BUS] Signal 'evidence_locker.call_out' bound to _handle_evidence_call_out_signal
+2025-10-10 19:46:38,200 - bus_core - INFO - [BUS] Signal 'evidence_locker.accept' bound to _handle_evidence_accept_signal
+2025-10-10 19:46:38,200 - bus_core - INFO - [BUS] Signal 'section.needs' bound to _handle_section_needs_signal
+2025-10-10 19:46:38,201 - bus_core - INFO - [BUS] Signal 'case.snapshot' bound to _handle_case_snapshot_signal
+2025-10-10 19:46:38,201 - bus_core - INFO - [BUS] Signal 'gateway.status' bound to _handle_gateway_status_signal
+2025-10-10 19:46:38,201 - bus_core - INFO - [BUS] Signal 'locker.status' bound to _handle_locker_status_signal
+2025-10-10 19:46:38,201 - bus_core - INFO - [BUS] Signal 'mission.status' bound to _handle_mission_status_signal
+2025-10-10 19:46:38,201 - bus_core - INFO - [BUS] Signal 'narrative.assembled' bound to _handle_narrative_assembled_signal
+2025-10-10 19:46:38,201 - bus_core - INFO - [BUS] Signal 'sos_fault' bound to _handle_sos_fault_signal
+2025-10-10 19:46:38,201 - bus_core - INFO - [BUS] Signal 'radio_check' bound to _handle_radio_check_signal
+2025-10-10 19:46:38,201 - bus_core - INFO - [BUS] Signal 'rollcall' bound to _handle_rollcall_signal
+2025-10-10 19:46:38,201 - bus_core - INFO - [BUS] Signal 'status_request' bound to _handle_status_request_signal
+2025-10-10 19:46:38,201 - bus_core - INFO - [BUS] Signal 'section.needs' bound to _handle_section_needs_signal
+2025-10-10 19:46:38,201 - bus_core - INFO - [BUS] Signal 'evidence.deliver' bound to _handle_evidence_deliver_signal
+2025-10-10 19:46:38,201 - bus_core - INFO - [BUS] Signal 'section.data.updated' bound to _handle_section_data_updated
+2025-10-10 19:46:38,201 - bus_core - INFO - [BUS] Signal 'narrative.assembled' bound to _handle_narrative_assembled
+2025-10-10 19:46:38,201 - bus_core - INFO - [BUS] Signal 'mission_debrief.section.complete' bound to _handle_section_complete
+2025-10-10 19:46:38,201 - bus_core - INFO - [BUS] Signal 'evidence.processed' bound to _handle_evidence_processed
+2025-10-10 19:46:38,202 - bus_core - INFO - [BUS] Signal 'report.generated' bound to _handle_report_generated
+2025-10-10 19:46:38,202 - bus_core - INFO - [BUS] Signal 'section.data.updated' bound to _handle_review_signal
+2025-10-10 19:46:38,202 - bus_core - INFO - [BUS] Signal 'mission_debrief.section.update' bound to _handle_review_signal
+2025-10-10 19:46:38,202 - bus_core - INFO - [BUS] Signal 'mission_debrief.section.complete' bound to _handle_review_signal
+2025-10-10 19:46:38,202 - bus_core - INFO - [BUS] Signal 'case.snapshot' bound to _handle_case_snapshot_signal
+2025-10-10 19:47:07,971 - bus_core - WARNING - [BUS] No handlers for topic: communication
+2025-10-10 19:47:07,972 - UniversalCommunicator-GUI-1 - INFO - Signal sent: GUI-1-4-1760143627 -> Bus-1.5
+2025-10-10 19:47:37,972 - bus_core - WARNING - [BUS] No handlers for topic: communication
+2025-10-10 19:47:37,972 - UniversalCommunicator-GUI-1 - INFO - Signal sent: GUI-1-5-1760143657 -> Bus-1.5
+2025-10-10 19:48:07,973 - bus_core - WARNING - [BUS] No handlers for topic: communication
+2025-10-10 19:48:07,973 - UniversalCommunicator-GUI-1 - INFO - Signal sent: GUI-1-6-1760143687 -> Bus-1.5
+2025-10-10 19:48:37,974 - bus_core - WARNING - [BUS] No handlers for topic: communication
+2025-10-10 19:48:37,974 - UniversalCommunicator-GUI-1 - INFO - Signal sent: GUI-1-7-1760143717 -> Bus-1.5
+2025-10-10 19:49:07,974 - bus_core - WARNING - [BUS] No handlers for topic: communication
+2025-10-10 19:49:07,975 - UniversalCommunicator-GUI-1 - INFO - Signal sent: GUI-1-8-1760143747 -> Bus-1.5
+2025-10-10 19:49:37,975 - bus_core - WARNING - [BUS] No handlers for topic: communication
+2025-10-10 19:49:37,975 - UniversalCommunicator-GUI-1 - INFO - Signal sent: GUI-1-9-1760143777 -> Bus-1.5
+2025-10-10 19:50:07,976 - bus_core - WARNING - [BUS] No handlers for topic: communication
+2025-10-10 19:50:07,976 - UniversalCommunicator-GUI-1 - INFO - Signal sent: GUI-1-10-1760143807 -> Bus-1.5
+2025-10-10 19:50:37,976 - bus_core - WARNING - [BUS] No handlers for topic: communication
+2025-10-10 19:50:37,981 - UniversalCommunicator-GUI-1 - INFO - Signal sent: GUI-1-11-1760143837 -> Bus-1.5
+2025-10-10 19:51:07,982 - bus_core - WARNING - [BUS] No handlers for topic: communication
+2025-10-10 19:51:07,982 - UniversalCommunicator-GUI-1 - INFO - Signal sent: GUI-1-12-1760143867 -> Bus-1.5
+2025-10-10 19:51:10,114 - GUIModule - INFO - [SIGNAL] GUI-1 received child broadcast: report_requested
+2025-10-10 19:51:10,115 - bus_core - WARNING - [BUS] No handlers for topic: communication
+2025-10-10 19:51:10,115 - UniversalCommunicator-GUI-1 - INFO - Signal sent: GUI-1-13-1760143870 -> 5
+2025-10-10 19:51:10,115 - bus_core - WARNING - [BUS] No handlers for signal: report.generate
+2025-10-10 19:51:10,115 - GUIModule - INFO - [OK] Routed report_requested to Mission Debrief
+2025-10-10 19:51:10,115 - GUIModule - INFO - [SIGNAL] GUI-1 received child broadcast: report_requested
+2025-10-10 19:51:10,115 - bus_core - WARNING - [BUS] No handlers for topic: communication
+2025-10-10 19:51:10,115 - UniversalCommunicator-GUI-1 - INFO - Signal sent: GUI-1-14-1760143870 -> 5
+2025-10-10 19:51:10,115 - bus_core - WARNING - [BUS] No handlers for signal: report.generate
+2025-10-10 19:51:10,115 - GUIModule - INFO - [OK] Routed report_requested to Mission Debrief
+Traceback (most recent call last):
+  File "F:\The Central Command\Command Center\UI\gui_main_application.py", line 29, in main
+    gui = EnhancedDKIGUI(gui_module=gui_module)
+  File "F:\The Central Command\Command Center\UI\enhanced_functional_gui.py", line 890, in __init__
+    self._refresh_report_summary()
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "F:\The Central Command\Command Center\UI\enhanced_functional_gui.py", line 3417, in _refresh_report_summary
+    text_content = report.get("report_text", "")
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\DTKra\AppData\Local\Programs\Python\Python313\Lib\tkinter\__init__.py", line 1828, in configure
+    return self._configure('configure', cnf, kw)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\DTKra\AppData\Local\Programs\Python\Python313\Lib\tkinter\__init__.py", line 1812, in _configure
+    self.tk.call(_flatten((self._w, cmd)) + self._options(cnf))
+    ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_tkinter.TclError: invalid command name ".!frame3.!frame.!frame5.!frame2.!scrolledtext"
+[ERROR] GUI launch failed: invalid command name ".!frame3.!frame.!frame5.!frame2.!scrolledtext"
+
+Application exited with error code 1.
+Review the console output for details.
+
+Central Command session ended.
+Press any key to continue . . . 

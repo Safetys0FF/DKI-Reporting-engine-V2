@@ -1,0 +1,16 @@
+{
+  "timestamp": "2025-10-08T21:45:06.693342",
+  "system_address": "EVIDENCE-1",
+  "fault_code": "EVIDENCE-1-50-789",
+  "severity": "FAILURE",
+  "fault_data": {
+    "fault_id": "ROUTING-002",
+    "system_address": "EVIDENCE-1",
+    "fault_code": "EVIDENCE-1-50-789",
+    "description": "Evidence processing failure",
+    "severity": "FAILURE",
+    "timestamp": "2025-10-08T21:45:06.666866"
+  },
+  "recorded_by": "enforcement_system",
+  "analysis_required": true
+}

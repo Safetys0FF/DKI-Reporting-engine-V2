@@ -1,0 +1,48 @@
+# repair-procedures.mdc
+# Description: Governs agent repair behavior within the Unified Diagnostic System
+# Attachments: All projects under Central Command
+# Tags: repair, uds, fault-resolution, diagnostic
+# Apply: Always
+
+rule: "Agents repair systems; UDS decides when it's fixed"
+description: >
+  Agents are responsible for observing, repairing, and committing changes to their assigned systems. The UDS monitors behavior and emits fault codes. If no fault is triggered, the repair is accepted as complete.
+
+applies_to: all
+enforce:
+  - Agents must save the broken code
+  - Write the repair into the system folder
+  - Restart or trigger the system
+  - UDS will observe behavior
+  - No fault = success
+  - Fault emitted = repair failed
+
+rule: "The absence of a fault is the pass condition"
+description: >
+  The UDS does not approve changes. It only responds when something breaks. Agents do not need to validate — they just need to repair and let the system speak.
+
+enforce:
+  - If the fix works, no `[fault_code]` will be triggered
+  - If it fails, UDS will issue a new code
+  - Agent resumes work
+
+rule: "Agents handle code-level issues"
+description: >
+  Syntax, indentation, and formatting are not UDS concerns. Agents are expected to fix these before triggering any system behavior.
+
+enforce:
+  - Agents fix:
+    - Indentation
+    - Syntax
+    - Imports
+  - UDS ignores code that won’t run
+
+rule: "UDS is not a validator — it's a signal observer"
+description: >
+  UDS does not run tests, simulations, or approvals. It simply watches the system run. If no fault arises, the job is done.
+
+enforce:
+  - No manual validation calls
+  - No test harness submissions
+  - Just run the system
+  - Let the UDS report silently or raise alarms

@@ -1,0 +1,24 @@
+{
+  "system_address": "1-2",
+  "system_name": "Evidence Manager",
+  "test_timestamp": "2025-10-08T20:52:52.098632",
+  "tests": {
+    "initialization": {
+      "status": "PASS",
+      "bus_connected": true,
+      "safemode": false
+    },
+    "registration": {
+      "status": "PASS",
+      "address": "1-2"
+    },
+    "signal_response": {
+      "status": "PASS",
+      "response_received": true
+    },
+    "uds_compliance": {
+      "status": "PASS",
+      "communicator": true
+    }
+  }
+}

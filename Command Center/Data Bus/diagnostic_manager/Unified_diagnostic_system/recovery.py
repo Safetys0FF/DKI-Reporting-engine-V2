@@ -2445,8 +2445,8 @@ class RecoverySystem:
         return re.sub(mission_pattern, add_row, content)
     
     def _add_to_analyst_deck_table(self, content, address, name, handler, parent):
-        """Add system to Analyst Deck Complex table"""
-        analyst_pattern = r'(### \*\*Analyst Deck Complex \(4-x\)\*\*\s*\n\| Address \| System Name \| Handler \| Parent \| Status \| Last Check \|\s*\n\|-+\|-+\|-+\|-+\|-+\|-+\|\s*\n)'
+        """Add system to The Analyst Deck Complex table"""
+        analyst_pattern = r'(### \*\*The Analyst Deck Complex \(4-x\)\*\*\s*\n\| Address \| System Name \| Handler \| Parent \| Status \| Last Check \|\s*\n\|-+\|-+\|-+\|-+\|-+\|-+\|\s*\n)'
         
         def add_row(match):
             table_header = match.group(1)
@@ -2478,8 +2478,8 @@ class RecoverySystem:
         return re.sub(war_room_pattern, add_row, content)
     
     def _add_to_gui_table(self, content, address, name, handler, parent):
-        """Add system to Enhanced Functional GUI table"""
-        gui_pattern = r'(### \*\*Enhanced Functional GUI \(7-x\)\*\*\s*\n\| Address \| System Name \| Handler \| Parent \| Status \| Last Check \|\s*\n\|-+\|-+\|-+\|-+\|-+\|-+\|\s*\n)'
+        """Add system to Command Center UI table"""
+        gui_pattern = r'(### \*\*Command Center UI \(7-x\)\*\*\s*\n\| Address \| System Name \| Handler \| Parent \| Status \| Last Check \|\s*\n\|-+\|-+\|-+\|-+\|-+\|-+\|\s*\n)'
         
         def add_row(match):
             table_header = match.group(1)

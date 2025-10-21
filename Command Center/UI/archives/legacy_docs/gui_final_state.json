@@ -1,0 +1,26 @@
+{
+  "active_case_id": "CASE-20251013",
+  "active_case": {
+    "case_id": "CASE-20251013",
+    "display_name": "CASE-20251013",
+    "client": "DKI Services",
+    "subject": "Primary Subject",
+    "status": "open",
+    "status_label": "OPEN",
+    "evidence": [],
+    "evidence_count": 0,
+    "tags": [],
+    "categories": [],
+    "last_seen": null,
+    "last_seen_display": "n/a",
+    "last_seen_sort": null
+  },
+  "operator_name": "DKrash",
+  "operator_role": "admin",
+  "evidence_pool": [],
+  "last_heartbeat": "2025-10-13T13:50:51.621493",
+  "components_loaded": 0,
+  "bus_connected": true,
+  "shutdown_timestamp": "2025-10-13T13:50:59.118477",
+  "uptime_seconds": 3607.545632123947
+}

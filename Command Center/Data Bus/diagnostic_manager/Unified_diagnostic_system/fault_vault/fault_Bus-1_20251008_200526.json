@@ -1,0 +1,15 @@
+{
+  "timestamp": "2025-10-08T20:05:26.660521",
+  "system_address": "Bus-1",
+  "fault_code": "[1-1-95-001]",
+  "severity": "CRITICAL",
+  "fault_data": {
+    "fault_id": "TEST-FAULT-000",
+    "system_address": "Bus-1",
+    "fault_code": "[1-1-95-001]",
+    "description": "Test critical fault for consolidated reporting",
+    "timestamp": "2025-10-08T20:05:26"
+  },
+  "recorded_by": "enforcement_system",
+  "analysis_required": true
+}

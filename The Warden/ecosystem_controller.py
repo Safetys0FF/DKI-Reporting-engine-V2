@@ -5,14 +5,26 @@ Manages section lifecycle, execution order, and inter-ecosystem communication
 """
 
 import os
+import sys
 import uuid
 import json
 import logging
 from datetime import datetime
 from typing import Dict, List, Any, Optional, Set
 from enum import Enum
-from dataclasses import dataclass
 from pathlib import Path
+from functools import partial
+
+WAR_ROOM_ROOT = Path(__file__).resolve().parents[1] / "The War Room"
+BUILD_SPECS_PATH = WAR_ROOM_ROOT / "SOPs" / "READ FILES" / "Build Specs"
+if str(BUILD_SPECS_PATH) not in sys.path:
+# pragma: no branch
+    sys.path.insert(0, str(BUILD_SPECS_PATH))
+
+try:
+    from ocr_flow_engine import OCRFlowEngine  # type: ignore
+except ImportError:  # pragma: no cover - optional dependency
+    OCRFlowEngine = None  # type: ignore
 
 DEFAULT_REQUIRED = False
 
@@ -75,18 +87,6 @@ class EcosystemState(Enum):
     FAILED = "failed"
     REVISION_REQUESTED = "revision_requested"
 
-@dataclass(frozen=True)
-class FrozenSectionData:
-    """Immutable section data wrapper"""
-    data: Dict[str, Any]
-    completed_at: str
-    completed_by: str
-    revision_count: int
-    
-    def __post_init__(self):
-        """Ensure data is also frozen"""
-        object.__setattr__(self, 'data', dict(self.data))
-
 class EcosystemController:
     """Root boot node - Core controller for managing section ecosystems and their lifecycle"""
     
@@ -97,14 +97,31 @@ class EcosystemController:
         
         # Core ecosystem management
         self.ecosystems = {}
-        self.section_states = {}  # Current state of each module
-        self.execution_order = []
-        self.completed_ecosystems = set()
-        self.failed_ecosystems = set()
-        self.revision_queue = []
-        
-        # Immutable section data storage
-        self.frozen_sections = {}  # Completed sections wrapped in FrozenSectionData
+        self.section_states: Dict[str, EcosystemState] = {}
+        self.section_execution_order = [
+            "section_1",
+            "section_2",
+            "section_3",
+            "section_4",
+            "section_5",
+            "section_7",
+            "section_8",
+            "section_6",
+        ]
+        self.section_gate_sequence: List[str] = list(self.section_execution_order)
+        self.completed_sections: Set[str] = set()
+        self.completed_ecosystems = self.completed_sections  # Back-compat alias
+        self.failed_sections: Set[str] = set()
+        self.section_revision_counts: Dict[str, int] = {}
+        self.section_release_flags: Dict[str, bool] = {
+            section: False for section in self.section_gate_sequence
+        }
+        self.section_tag_registry: Dict[str, Set[str]] = {
+            section: set() for section in self.section_gate_sequence
+        }
+        self.section_tag_registry.setdefault("unassigned", set())
+        self.revision_queue: List[str] = []
+        self.persistence_pool: Dict[str, Dict[str, Any]] = {}
         
         # Core execution tracking
         self.current_ecosystem = None
@@ -113,10 +130,16 @@ class EcosystemController:
         
         # State management
         self.downstream_dependencies = {}  # Track which sections depend on each section
+        self.failed_ecosystems: Set[str] = set()
         
         # Section registration tracking
         self.registration_log = []
         self.active_sections = set()
+        self.registered_modules: Dict[str, Dict[str, Any]] = {}
+        self.permission_matrix: Dict[str, Set[str]] = {}
+        self.permission_audit: List[Dict[str, Any]] = []
+        self.active_cases: Dict[str, Dict[str, Any]] = {}
+        self.case_history: List[str] = []
         
         # Gateway reference for reverse calls (optional)
         self.gateway = None
@@ -146,11 +169,28 @@ class EcosystemController:
             "section_dp": {"depends_on": ["section_8"], "title": "Data Processing", "priority": 11},
             "section_fr": {"depends_on": ["section_dp"], "title": "Final Report", "priority": 12}
         }
+        self.section_tag_requirements: Dict[str, Set[str]] = {
+            "section_1": set(),
+            "section_2": {"intake"},
+            "section_3": {"surveillance"},
+            "section_4": {"analysis"},
+            "section_5": {"financial"},
+            "section_6": {"financial"},
+            "section_7": {"legal"},
+            "section_8": {"media"},
+        }
+        self._known_requirement_tags: Set[str] = set()
+        for requirements in self.section_tag_requirements.values():
+            self._known_requirement_tags.update(requirements)
         
         self.logger = logging.getLogger(__name__)
         self.logger.debug(f" EcosystemController initialized as ROOT BOOT NODE at {self.boot_time}")
         self.logger.debug(f" Preloaded {len(self.section_contracts)} section contracts")
         self.logger.info(f"EcosystemController initialized with {len(self.section_contracts)} section contracts")
+
+        self.ocr_engine: Optional[OCRFlowEngine] = self._initialise_ocr_engine()
+        self.api_clients: Dict[str, Any] = {}
+
         self._attach_bus(bus)
     
     def is_section_required(self, section_name: str) -> bool:
@@ -170,11 +210,32 @@ class EcosystemController:
             return
         self.bus = bus
         try:
+            evidence_handlers = {
+                "evidence.new": partial(self._handle_bus_evidence_event, "evidence.new"),
+                "evidence.updated": partial(self._handle_bus_evidence_event, "evidence.updated"),
+            }
+            self._evidence_signal_handlers = evidence_handlers
+
             bus.register_signal("section.data.updated", self._handle_bus_section_data_updated)
             bus.register_signal("gateway.section.complete", self._handle_bus_gateway_section_complete)
+            bus.register_signal("evidence.new", evidence_handlers["evidence.new"])
+            bus.register_signal("evidence.updated", evidence_handlers["evidence.updated"])
             self._bus_handlers_registered = True
         except Exception as exc:
             logger.warning("Failed to register EcosystemController bus handlers: %s", exc)
+
+    def _initialise_ocr_engine(self) -> Optional[OCRFlowEngine]:
+        """Initialise OCR tooling for classification/tagging."""
+        if OCRFlowEngine is None:
+            self.logger.info("OCR Flow Engine unavailable; running without OCR supervision.")
+            return None
+        try:
+            engine = OCRFlowEngine()
+            self.logger.info("OCR Flow Engine initialised for ecosystem supervision")
+            return engine
+        except Exception as exc:  # pragma: no cover - defensive
+            self.logger.error("Failed to initialise OCR Flow Engine: %s", exc)
+            return None
 
     def _handle_bus_section_data_updated(self, payload: Dict[str, Any]) -> None:
         if not isinstance(payload, dict):
@@ -218,9 +279,240 @@ class EcosystemController:
             except Exception as exc:
                 self.logger.warning("Failed to auto-activate %s: %s", next_section, exc)
 
+    def _handle_bus_evidence_event(self, event_name: str, payload: Dict[str, Any]) -> None:
+        if not isinstance(payload, dict):
+            return
+
+        normalized = self._normalize_evidence_payload(event_name, payload)
+        evidence_id = normalized.get("evidence_id")
+        if not evidence_id:
+            return
+
+        section_id = normalized.get("section_id")
+        ocr_result = self._run_ocr_tagging(normalized)
+        event_tags = self._collect_event_tags(normalized, ocr_result)
+        normalized["tags"] = sorted(event_tags)
+
+        self._update_persistence_pool(section_id, evidence_id, normalized, ocr_result)
+
+        if section_id:
+            self._evaluate_release_gates(section_id)
+
+        self._emit_status_update(
+            reason=f"bus.{event_name}",
+            context={
+                "evidence_id": evidence_id,
+                "section_id": section_id,
+                "tags": sorted(event_tags),
+            },
+        )
+
+    def _normalize_evidence_payload(self, event_name: str, payload: Dict[str, Any]) -> Dict[str, Any]:
+        inner_payload = payload.get("payload") if isinstance(payload.get("payload"), dict) else {}
+        normalized: Dict[str, Any] = {}
+        if isinstance(payload, dict):
+            normalized.update(payload)
+        if inner_payload:
+            normalized.update(inner_payload)
+        normalized.pop("payload", None)
+
+        normalized["event"] = event_name
+        evidence_id = (
+            normalized.get("evidence_id")
+            or normalized.get("artifact_id")
+            or normalized.get("id")
+        )
+        if evidence_id is not None:
+            normalized["evidence_id"] = str(evidence_id)
+
+        section_hint = (
+            normalized.get("section_id")
+            or normalized.get("section")
+            or normalized.get("section_hint")
+            or normalized.get("assigned_section")
+            or (normalized.get("classification") or {}).get("assigned_section")
+        )
+        if section_hint:
+            normalized["section_id"] = str(section_hint)
+
+        tag_sources: List[Any] = []
+        for candidate_key in ("tags", "tag_list", "labels"):
+            candidate_value = normalized.get(candidate_key)
+            if candidate_value:
+                tag_sources.append(candidate_value)
+        classification = normalized.get("classification") or {}
+        if isinstance(classification, dict):
+            class_tags = classification.get("tags")
+            if class_tags:
+                tag_sources.append(class_tags)
+
+        flattened_tags: List[str] = []
+        for source in tag_sources:
+            if isinstance(source, (list, tuple, set)):
+                flattened_tags.extend(str(tag) for tag in source)
+            else:
+                flattened_tags.append(str(source))
+        normalized["tags"] = normalize_tags(flattened_tags)
+        normalized["timestamp"] = normalized.get("timestamp") or datetime.now().isoformat()
+
+        # Preserve original file metadata for OCR processing
+        file_path = normalized.get("file_path") or normalized.get("path")
+        if file_path:
+            normalized["file_path"] = file_path
+        if "file_type" not in normalized and isinstance(file_path, str):
+            normalized["file_type"] = Path(file_path).suffix.lstrip(".")
+
+        return normalized
+
+    def _collect_event_tags(
+        self,
+        evidence: Dict[str, Any],
+        ocr_result: Optional[Dict[str, Any]],
+    ) -> Set[str]:
+        tags: Set[str] = set(evidence.get("tags") or [])
+
+        classification = evidence.get("classification")
+        if isinstance(classification, dict):
+            tags.update(normalize_tags(classification.get("tags") or []))
+
+        tags.update(self._derive_tags_from_ocr(ocr_result))
+        return {tag for tag in tags if tag}
+
+    def _derive_tags_from_ocr(self, ocr_result: Optional[Dict[str, Any]]) -> Set[str]:
+        if not ocr_result:
+            return set()
+        text_content = str(ocr_result.get("text") or "").lower()
+        derived: Set[str] = set()
+        for requirement in self._known_requirement_tags:
+            if requirement and requirement in text_content:
+                derived.add(requirement)
+        return derived
+
+    def _run_ocr_tagging(self, evidence: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+        if not self.ocr_engine:
+            return None
+        file_path = evidence.get("file_path")
+        if not file_path:
+            return None
+
+        candidate_path = Path(str(file_path))
+        if not candidate_path.exists():
+            return None
+
+        file_type = evidence.get("file_type") or candidate_path.suffix.lstrip(".") or "auto"
+        try:
+            return self.ocr_engine.process_file(str(candidate_path), file_type)
+        except Exception as exc:  # pragma: no cover - OCR failures should not stop processing
+            self.logger.warning("OCR processing failed for %s: %s", candidate_path, exc)
+            return None
+
+    def _update_persistence_pool(
+        self,
+        section_id: Optional[str],
+        evidence_id: str,
+        evidence_record: Dict[str, Any],
+        ocr_result: Optional[Dict[str, Any]],
+    ) -> None:
+        section_key = section_id or "unassigned"
+        entry = self.persistence_pool.setdefault(
+            section_key,
+            {"evidence": {}, "tags": set(), "last_event": None, "last_seen": None},
+        )
+
+        tags: Set[str] = set(evidence_record.get("tags") or [])
+        entry["evidence"][evidence_id] = {
+            "event": evidence_record.get("event"),
+            "timestamp": evidence_record.get("timestamp"),
+            "tags": sorted(tags),
+            "file_path": evidence_record.get("file_path"),
+            "classification": evidence_record.get("classification"),
+            "ocr": ocr_result,
+        }
+
+        entry["tags"] = set(entry.get("tags", set()))
+        entry["tags"].update(tags)
+        entry["last_event"] = evidence_record.get("event")
+        entry["last_seen"] = evidence_record.get("timestamp")
+
+        # Retain only the most recent 25 evidence payloads per section for lightweight persistence
+        if len(entry["evidence"]) > 25:
+            ordered_ids = sorted(
+                entry["evidence"].items(),
+                key=lambda item: item[1].get("timestamp") or "",
+            )
+            for stale_id, _ in ordered_ids[:-25]:
+                entry["evidence"].pop(stale_id, None)
+
+        self.section_tag_registry.setdefault(section_key, set()).update(tags)
+
+    def _current_tags_for_section(self, section_id: str) -> Set[str]:
+        return set(self.section_tag_registry.get(section_id, set()))
+
+    def _requirements_satisfied(self, requirements: Set[str], tags: Set[str]) -> bool:
+        if not requirements:
+            return True
+        return requirements.issubset(tags)
+
+    def _evaluate_release_gates(self, source_section: str) -> None:
+        ready_now: List[str] = []
+        prior_required_clear = True
+
+        for section in self.section_gate_sequence:
+            tags = self._current_tags_for_section(section)
+            requirements = self.section_tag_requirements.get(section, set())
+            required_section = self.is_section_required(section)
+
+            upstream_clear = prior_required_clear
+            candidate_ready = upstream_clear and self._requirements_satisfied(requirements, tags)
+            current_ready = self.section_release_flags.get(section, False)
+
+            if candidate_ready and not current_ready:
+                self.section_release_flags[section] = True
+                ready_now.append(section)
+            elif not candidate_ready and current_ready:
+                self.section_release_flags[section] = False
+
+            if required_section:
+                prior_required_clear = prior_required_clear and self.section_release_flags.get(section, False)
+
+        for section in ready_now:
+            self._authorise_gateway_handoff(section)
+
+    def _authorise_gateway_handoff(self, section_id: str) -> None:
+        timestamp = datetime.now().isoformat()
+        payload = {
+            "section_id": section_id,
+            "timestamp": timestamp,
+            "status": "ready",
+            "source": "ecosystem_controller",
+            "gate_sequence": list(self.section_gate_sequence),
+        }
+
+        record = {
+            "event": "section.release.ready",
+            "section_id": section_id,
+            "timestamp": timestamp,
+        }
+        self.section_activity_log.append(record)
+        if len(self.section_activity_log) > 100:
+            self.section_activity_log = self.section_activity_log[-100:]
+
+        if self.bus:
+            try:
+                self.bus.emit("gateway.section.authorized", payload)
+            except Exception as exc:  # pragma: no cover - bus failures logged for diagnostics
+                self.logger.warning("Failed to emit gateway.section.authorized for %s: %s", section_id, exc)
+
+        if self.gateway and hasattr(self.gateway, "register_section_ready"):
+            try:
+                self.gateway.register_section_ready(section_id, payload)
+            except Exception as exc:  # pragma: no cover - keep ECC resilient
+                self.logger.debug("Gateway controller register_section_ready(%s) failed: %s", section_id, exc)
 
     def _mark_section_complete(self, section_id: str, case_id: Optional[str], timestamp: str) -> None:
         self.section_states[section_id] = "completed"
+        self.section_release_flags[section_id] = True
+        self.section_tag_registry.setdefault(section_id, set())
         self.completed_ecosystems.add(section_id)
         record = {
             "event": "gateway.section.complete",
@@ -231,6 +523,7 @@ class EcosystemController:
         self.section_activity_log.append(record)
         if len(self.section_activity_log) > 100:
             self.section_activity_log = self.section_activity_log[-100:]
+        self.section_revision_counts.setdefault(section_id, 0)
         self._emit_status_update(reason="gateway.section.complete", context=record)
 
     def _get_ordered_sections(self) -> List[str]:
@@ -397,6 +690,9 @@ class EcosystemController:
             "section_states": dict(self.section_states),
             "completed_sections": list(self.completed_ecosystems),
             "active_sections": list(self.active_sections),
+            "section_release_flags": dict(self.section_release_flags),
+            "section_revision_counts": dict(self.section_revision_counts),
+            "gate_sequence": list(self.section_gate_sequence),
         }
         if context:
             payload["context"] = context
@@ -466,6 +762,9 @@ class EcosystemController:
                 'registered_at': datetime.now().isoformat()
             }
             ecosystem_data = self.ecosystems[ecosystem_id]
+            self.section_revision_counts[ecosystem_id] = 0
+            self.section_release_flags.setdefault(ecosystem_id, False)
+            self.section_tag_registry.setdefault(ecosystem_id, set())
             
             # Initialize section state
             self.section_states[ecosystem_id] = EcosystemState.IDLE
@@ -678,6 +977,172 @@ class EcosystemController:
             'max_reruns': ecosystem_data['max_reruns'],
             'registered_at': ecosystem_data['registered_at']
         }
+
+    # ------------------------------------------------------------------ #
+    # Public API surface for UDS/Warden compliance
+    # ------------------------------------------------------------------ #
+    def initialize_system(self, *, bus: Optional[Any] = None, reinitialize: bool = False) -> Dict[str, Any]:
+        """Initialise the ECC environment and verify orchestration readiness."""
+        target_bus = bus or self.bus
+        if target_bus is None:
+            raise ValueError("initialize_system requires a bus connection.")
+
+        if reinitialize or target_bus is not self.bus:
+            self._attach_bus(target_bus)
+
+        status = {
+            "status": "SUCCESS",
+            "bus_connected": bool(self.bus),
+            "registered_sections": len(self.ecosystems),
+            "active_sections": len(self.active_sections),
+            "completed_sections": len(self.completed_ecosystems),
+        }
+        self.logger.info("[2-1] EcosystemController initialize_system -> %s", status)
+        return status
+
+    def validate_section(self, section_id: Optional[str]) -> bool:
+        """Public wrapper around validate_section_id/can_run."""
+        if not section_id:
+            raise ValueError("validate_section requires a section identifier.")
+        valid = bool(self.validate_section_id(section_id))
+        self.logger.debug("validate_section(%s) -> %s", section_id, valid)
+        return valid
+
+    def check_permissions(self, module_id: Optional[str], operation: Optional[str]) -> Dict[str, Any]:
+        """Evaluate whether a module can perform an operation."""
+        if not module_id or not operation:
+            raise ValueError("check_permissions requires module_id and operation.")
+        module = self.registered_modules.get(module_id)
+        allowed_ops = self.permission_matrix.get(module_id, set())
+        permitted = operation in allowed_ops
+        audit_entry = {
+            "module_id": module_id,
+            "operation": operation,
+            "permitted": permitted,
+            "timestamp": datetime.now().isoformat(),
+        }
+        self.permission_audit.append(audit_entry)
+        return {
+            "status": "SUCCESS",
+            "module_id": module_id,
+            "operation": operation,
+            "permitted": permitted,
+            "audit_log_size": len(self.permission_audit),
+        }
+
+    def authorize_operation(self, module_id: Optional[str], operation: Optional[str]) -> bool:
+        """Shortcut for permission checks returning a boolean."""
+        result = self.check_permissions(module_id, operation)
+        return result["permitted"]
+
+    def get_system_status(self) -> Dict[str, Any]:
+        """Return a high-level health snapshot."""
+        status = {
+            "registered_modules": len(self.registered_modules),
+            "active_cases": len(self.active_cases),
+            "active_sections": len(self.active_sections),
+            "completed_sections": len(self.completed_ecosystems),
+            "failed_sections": len(self.failed_ecosystems),
+            "bus_connected": bool(self.bus),
+        }
+        self.logger.debug("get_system_status -> %s", status)
+        return status
+
+    def get_module_status(self, module_id: Optional[str]) -> Dict[str, Any]:
+        """Return metadata for a registered module."""
+        if not module_id:
+            raise ValueError("get_module_status requires module_id.")
+        module = self.registered_modules.get(module_id)
+        if not module:
+            raise ValueError(f"Module {module_id} is not registered.")
+        status = dict(module)
+        status["allowed_operations"] = sorted(self.permission_matrix.get(module_id, set()))
+        return status
+
+    def start_new_case(self, case_data: Optional[Dict[str, Any]]) -> Dict[str, Any]:
+        """Track a new case lifecycle entry."""
+        if not isinstance(case_data, dict):
+            raise ValueError("start_new_case expects a dictionary payload.")
+        case_id = case_data.get("case_id")
+        if not case_id:
+            raise ValueError("start_new_case payload requires 'case_id'.")
+        case_record = dict(case_data)
+        case_record.setdefault("created_at", datetime.now().isoformat())
+        case_record.setdefault("status", "active")
+        self.active_cases[case_id] = case_record
+        self.case_history.append(case_id)
+        self.logger.info("ECC tracked new case %s", case_id)
+        return {"status": "SUCCESS", "case_id": case_id}
+
+    def end_case(self, case_id: Optional[str]) -> Dict[str, Any]:
+        """Close a tracked case."""
+        if not case_id:
+            raise ValueError("end_case requires a case identifier.")
+        case = self.active_cases.get(case_id)
+        if not case:
+            raise ValueError(f"Case {case_id} is not active.")
+        case["status"] = "completed"
+        case["completed_at"] = datetime.now().isoformat()
+        return {"status": "SUCCESS", "case_id": case_id}
+
+    def get_active_cases(self) -> List[Dict[str, Any]]:
+        """Return live cases."""
+        return [dict(record) for record in self.active_cases.values()]
+
+    def register_module(self, module_data: Optional[Dict[str, Any]]) -> Dict[str, Any]:
+        """Register a module with ECC."""
+        if not isinstance(module_data, dict):
+            raise ValueError("register_module expects a dictionary.")
+        module_id = module_data.get("module_id")
+        if not module_id:
+            raise ValueError("register_module payload requires 'module_id'.")
+        record = dict(module_data)
+        record.setdefault("registered_at", datetime.now().isoformat())
+        record.setdefault("status", "active")
+        self.registered_modules[module_id] = record
+        capabilities = record.get("capabilities") or []
+        self.permission_matrix[module_id] = set(capabilities)
+        self.logger.info("ECC registered module %s with capabilities %s", module_id, capabilities)
+        return {"status": "SUCCESS", "module_id": module_id, "capabilities": capabilities}
+
+    def unregister_module(self, module_id: Optional[str]) -> Dict[str, Any]:
+        """Remove a module from the registry."""
+        if not module_id:
+            raise ValueError("unregister_module requires module_id.")
+        self.registered_modules.pop(module_id, None)
+        self.permission_matrix.pop(module_id, None)
+        self.logger.info("ECC unregistered module %s", module_id)
+        return {"status": "SUCCESS", "module_id": module_id}
+
+    def get_registered_modules(self) -> List[Dict[str, Any]]:
+        """Return a snapshot of the registered module table."""
+        return [dict(record) for record in self.registered_modules.values()]
+
+    def broadcast_signal(
+        self,
+        message_type: str,
+        payload: Optional[Dict[str, Any]] = None,
+        *,
+        target: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        """Broadcast a structured payload via the Gateway wildcard channel."""
+        if not message_type:
+            raise ValueError("broadcast_signal requires a message type.")
+        broadcast_payload = dict(payload or {})
+        broadcast_payload.setdefault("message_type", message_type)
+        broadcast_payload.setdefault("source", "ecosystem_controller")
+        broadcast_payload.setdefault("target", target or "gateway")
+        broadcast_payload.setdefault("timestamp", datetime.now().isoformat())
+
+        if self.gateway and hasattr(self.gateway, "_emit_bus_event"):
+            try:
+                self.gateway._emit_bus_event("warden.child.broadcast", broadcast_payload)
+            except Exception as exc:  # pragma: no cover - defensive
+                self.logger.warning("ECC broadcast via gateway failed: %s", exc)
+        else:
+            self._emit_status_update(reason="broadcast_signal", context=broadcast_payload)
+
+        return {"status": "SUCCESS", "payload": broadcast_payload}
     
     def can_run(self, section_id: str) -> bool:
         """Only allows progression if logic passes"""
@@ -752,19 +1217,12 @@ class EcosystemController:
             
             # Add to completed set
             self.completed_ecosystems.add(section_id)
+            self.section_release_flags[section_id] = True
+            self.section_tag_registry.setdefault(section_id, set())
             
             # Remove from failed if it was there
             if section_id in self.failed_ecosystems:
                 self.failed_ecosystems.remove(section_id)
-            
-            # Freeze section data to prevent mutation
-            frozen_data = FrozenSectionData(
-                data=ecosystem_data.get('data', {}),
-                completed_at=datetime.now().isoformat(),
-                completed_by=by_user,
-                revision_count=ecosystem_data['revision_count']
-            )
-            self.frozen_sections[section_id] = frozen_data
             
             # Record completion
             completion_record = {
@@ -774,11 +1232,12 @@ class EcosystemController:
                 'completion_method': 'manual_mark_complete'
             }
             self.execution_history.append(completion_record)
+            self.section_revision_counts[section_id] = ecosystem_data['revision_count']
             
             # Notify downstream dependencies
             self._notify_downstream_completion(section_id)
             
-            self.logger.debug(f"Section {section_id} marked complete by {by_user} - DATA FROZEN")
+            self.logger.debug(f"Section {section_id} marked complete by {by_user} - release flag asserted")
             self.logger.info(f"Section {section_id} marked complete by {by_user}")
             return True
             
@@ -809,12 +1268,14 @@ class EcosystemController:
             # Remove from completed
             self.completed_ecosystems.remove(section_id)
             
-            # Unfreeze section data to allow mutation
-            if section_id in self.frozen_sections:
-                del self.frozen_sections[section_id]
+            # Reset release state so gating logic can re-evaluate
+            self.section_release_flags[section_id] = False
+            self.section_tag_registry[section_id] = set()
+            self.persistence_pool.pop(section_id, None)
             
             # Increment revision count
             ecosystem_data['revision_count'] += 1
+            self.section_revision_counts[section_id] = ecosystem_data['revision_count']
             
             # Record reopen action
             reopen_record = {
@@ -829,7 +1290,7 @@ class EcosystemController:
             # Reset downstream dependencies
             self._reset_downstream_dependencies(section_id)
             
-            self.logger.debug(f" Section {section_id} reopened by {by_user} - reason: {reason} - DATA UNFROZEN")
+            self.logger.debug(f" Section {section_id} reopened by {by_user} - reason: {reason} - release flag dropped")
             self.logger.info(f"Section {section_id} reopened by {by_user} - reason: {reason}")
             return True
             

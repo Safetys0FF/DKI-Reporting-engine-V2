@@ -1,0 +1,16 @@
+{
+  "timestamp": "2025-10-08T21:43:32.464785",
+  "system_address": "BUS-1",
+  "fault_code": "BUS-1-90-123",
+  "severity": "CRITICAL",
+  "fault_data": {
+    "fault_id": "ROUTING-003",
+    "system_address": "BUS-1",
+    "fault_code": "BUS-1-90-123",
+    "description": "Bus communication critical failure",
+    "severity": "CRITICAL",
+    "timestamp": "2025-10-08T21:43:32.422376"
+  },
+  "recorded_by": "enforcement_system",
+  "analysis_required": true
+}

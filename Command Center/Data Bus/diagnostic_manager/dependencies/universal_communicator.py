@@ -168,7 +168,7 @@ class UniversalCommunicator:
     def send_sos_fault(self, fault_code: str, description: str) -> str:
         """Send SOS fault signal"""
         return self.send_signal(
-            target_address="Bus-1",
+            target_address="DIAG-1",
             radio_code=RadioCode.SOS.value,
             message=f"SOS fault from {self.system_address}",
             payload={
@@ -178,6 +178,80 @@ class UniversalCommunicator:
                 'severity': 'CRITICAL'
             },
             timeout=5
+        )
+    
+    def _send_on_topic(self, topic: str, target_address: str, radio_code: str, 
+                       message: str = "", payload: Dict[str, Any] = None) -> str:
+        """Internal method to send signal on specific topic (PHASE 2 BIDIRECTIONAL FIX)
+        
+        This bypasses send_signal() which hardcodes topic to 'communication'.
+        Required for UDS protocol compliance - responses must be on correct topics.
+        """
+        self.signal_counter += 1
+        signal_id = f"{self.system_address}-{self.signal_counter}-{int(time.time())}"
+        
+        if self.bus_connection:
+            try:
+                self.bus_connection.send(topic, {
+                    'signal_id': signal_id,
+                    'sender': self.system_address,
+                    'caller_address': self.system_address,
+                    'target_address': target_address,
+                    'radio_code': radio_code,
+                    'message': message,
+                    'payload': payload or {},
+                    'timestamp': datetime.now().isoformat()
+                })
+                self.logger.info(f"[{topic}] Response sent: {signal_id} -> {target_address} [{radio_code}]")
+            except Exception as e:
+                self.logger.error(f"Failed to send on topic {topic}: {e}")
+                return None
+        else:
+            self.logger.warning(f"No bus connection - cannot send {topic} response")
+            return None
+        
+        return signal_id
+    
+    def send_rollcall_response(self, target_address: str, status_data: Dict[str, Any]) -> str:
+        """Send rollcall response on correct topic (PHASE 2 FIX)
+        
+        Called by modules responding to UDS rollcall requests.
+        Must send on 'rollcall_response' topic for UDS to receive.
+        """
+        return self._send_on_topic(
+            topic="rollcall_response",
+            target_address=target_address,
+            radio_code=RadioCode.ACKNOWLEDGED.value,
+            message=f"Rollcall response from {self.system_address}",
+            payload=status_data
+        )
+    
+    def send_radio_check_response(self, target_address: str, connectivity_data: Dict[str, Any]) -> str:
+        """Send radio check response on correct topic (PHASE 2 FIX)
+        
+        Called by modules responding to UDS radio check requests.
+        Must send on 'radio_check_response' topic for UDS to receive.
+        """
+        return self._send_on_topic(
+            topic="radio_check_response",
+            target_address=target_address,
+            radio_code=RadioCode.ACKNOWLEDGED.value,
+            message=f"Radio check response from {self.system_address}",
+            payload=connectivity_data
+        )
+    
+    def send_auto_registration_response(self, target_address: str, system_metadata: Dict[str, Any]) -> str:
+        """Send auto-registration response on correct topic (PHASE 2 FIX)
+        
+        Called by modules responding to UDS auto-registration requests.
+        Must send on 'auto_registration' topic (same as request) for UDS to receive.
+        """
+        return self._send_on_topic(
+            topic="auto_registration",
+            target_address=target_address,
+            radio_code=RadioCode.ACKNOWLEDGED.value,
+            message=f"Auto-registration response from {self.system_address}",
+            payload=system_metadata
         )
     
     def send_response(self, original_signal_id: str, radio_code: str, message: str = "", 

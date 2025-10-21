@@ -6,12 +6,15 @@ import json
 import logging
 import os
 import re
+import sys
+import time
 import zipfile
 import hashlib
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any, Dict, Iterable, List, Optional, Sequence, Set, Tuple
+from typing import Any, Callable, Dict, Iterable, List, Optional, Sequence, Set, Tuple
 from difflib import SequenceMatcher
+from pathlib import Path
 
 # OCR imports
 try:
@@ -25,6 +28,21 @@ except ImportError:
 
 LOGGER = logging.getLogger(__name__)
 
+_CURRENT_DIR = Path(__file__).resolve().parent
+_ANALYST_ROOT = _CURRENT_DIR.parent
+_BASE_PATH = _ANALYST_ROOT / "section revisions templates"
+if str(_BASE_PATH) not in sys.path:
+    sys.path.insert(0, str(_BASE_PATH))
+
+from section_framework_base import (
+    LifecycleState,
+    SectionFramework as LifecycleSectionFramework,
+)
+
+from _init_cochran_match import init_cochran_match
+from _init_reverse_continuity import init_reverse_continuity
+from _init_metadata_processor import init_metadata_processor
+from _init_section5_renderer import init_section5_renderer
 
 @dataclass(frozen=True)
 class StageDefinition:
@@ -63,7 +81,7 @@ class OrderContract:
     export_priority: int = 0
 
 
-class SectionFramework:
+class LegacySectionFramework:
     SECTION_ID: str = ""
     BUS_SECTION_ID: Optional[str] = None
     MAX_RERUNS: int = 3
@@ -79,15 +97,237 @@ class SectionFramework:
         gateway: Any,
         ecc: Optional[Any] = None,
         logger: Optional[logging.Logger] = None,
+        bus: Optional[Any] = None,
+        communicator: Optional[Any] = None
     ) -> None:
+        # CRITICAL: Initialize logger FIRST so initialization errors can be logged
+        self.logger = logger or logging.getLogger(self.__class__.__name__)
+        self.MODULE_ADDRESS = "4-5"
+        
+        # ------------------------------------------------------------------ #
+        # CANBUS CONNECTION (SECTION MODULE - INLINE)
+        # ------------------------------------------------------------------ #
+        self.bus = bus
+        self.communicator = communicator
+        self.bus_connected = False
+        
         self.gateway = gateway
         self.ecc = ecc
-        self.logger = logger or logging.getLogger(self.__class__.__name__)
         self.queue_client: Optional[Any] = None
         self.storage: Optional[Any] = None
         self.fact_graph_client: Optional[Any] = None
         self.revision_depth: int = 0
         self.signed_payload_id: Optional[str] = None
+        
+        # Initialize CANBUS after logger is ready
+        if self.bus:
+            # MODULE INITIALIZATION PROTOCOL - Wait for bus ready and module turn
+            self.logger.info("[%s] Waiting for bus stabilization...", self.MODULE_ADDRESS)
+            if not self.bus.wait_for_ready(timeout=15.0):
+                self.logger.warning("[%s] Bus stabilization timeout - initializing in degraded mode", self.MODULE_ADDRESS)
+                self.bus_connected = False
+            else:
+                self.logger.info("[%s] Bus ready - waiting for module turn in sequence...", self.MODULE_ADDRESS)
+                if not self.bus.wait_for_module_turn('4-5', timeout=30.0):
+                    self.logger.warning("[%s] Module turn timeout - initializing in degraded mode", self.MODULE_ADDRESS)
+                    self.bus_connected = False
+                else:
+                    self._initialize_canbus(self.bus, communicator=self.communicator)
+        else:
+            self.logger.warning("[%s] CANBUS initialization skipped - no bus provided", self.MODULE_ADDRESS)
+            self.bus_connected = False
+        
+        # Run mandatory self-test per UDS protocol
+        self._run_startup_self_test()
+    
+    # ------------------------------------------------------------------ #
+    # CANBUS initialization
+    # ------------------------------------------------------------------ #
+    def _initialize_canbus(self, bus: Any, *, communicator: Optional[Any] = None) -> None:
+        """Set up CANBUS connectivity and register signal handlers."""
+        try:
+            import sys
+            sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..', 'Command Center', 'Data Bus', 'Bus Core Design'))
+            from universal_communicator import UniversalCommunicator
+        except ImportError:
+            UniversalCommunicator = None
+        
+        self.bus = bus
+        try:
+            if communicator:
+                self.communicator = communicator
+            elif UniversalCommunicator:
+                self.communicator = UniversalCommunicator(self.MODULE_ADDRESS, bus_connection=bus)
+                self.logger.info("[%s] UniversalCommunicator created", self.MODULE_ADDRESS)
+
+            bus.register_system_address(self.MODULE_ADDRESS, {
+                "system_type": "section_engine",
+                "capabilities": ["evidence_request", "evidence_processing", "section_rendering", "fault_reporting"],
+                "status": "active",
+                "mode": "primary",
+                "registered_at": datetime.now().isoformat(),
+                "section_name": "Document Processing",
+                "tools": ["metadata_processor", "document_classifier", "ocr_engine", "section_renderer"]
+            })
+            self.logger.info("[%s] Section 5 registered with CANBUS", self.MODULE_ADDRESS)
+
+            self._register_signal_handlers()
+            self.bus_connected = True
+            self.logger.info("[%s] CANBUS CONNECTION ESTABLISHED", self.MODULE_ADDRESS)
+            
+            # MODULE INITIALIZATION PROTOCOL - Register with bus
+            if self.bus.register_module_init('4-5', {
+                'version': '1.0',
+                'type': 'analyst_section',
+                'capabilities': ['witness_statements', 'testimony_analysis', 'deposition_review']
+            }):
+                self.logger.info("[%s] [OK] Module registered with bus (Address 4-5)", self.MODULE_ADDRESS)
+            else:
+                self.logger.warning("[%s] Module registration failed - continuing anyway", self.MODULE_ADDRESS)
+        except Exception as exc:
+            self.logger.critical("[%s] CANBUS connection failed: %s", self.MODULE_ADDRESS, exc)
+            self.bus_connected = False
+
+    def _register_signal_handlers(self) -> None:
+        """Register section signal handlers with the CANBUS."""
+        if not self.bus:
+            self.logger.warning("[%s] Cannot register signals - no CANBUS connection", self.MODULE_ADDRESS)
+            return
+        try:
+            self.bus.register_signal("section_5.evidence_request", self._handle_evidence_request)
+            self.bus.register_signal("section_5.wake", self._handle_wake_signal)
+            self.bus.register_signal("section_5.sleep", self._handle_sleep_signal)
+            self.bus.register_signal("section_5.status", self._handle_status_signal)
+            self.bus.register_signal("diagnostic.rollcall", self._handle_rollcall)
+            self.bus.register_signal("diagnostic.radio_check", self._handle_radio_check)
+            self.bus.register_signal("auto_registration", self._handle_auto_registration)
+            self.logger.info("[%s] Section signal handlers registered (including UDS bidirectional protocol)", self.MODULE_ADDRESS)
+        except Exception as exc:
+            self.logger.error("[%s] Failed to register signal handlers: %s", self.MODULE_ADDRESS, exc)
+
+    def _handle_evidence_request(self, payload: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+        """Handle evidence request signal."""
+        return {"status": "evidence_request_received", "section": self.MODULE_ADDRESS}
+
+    def _handle_wake_signal(self, payload: Optional[Dict[str, Any]] = None) -> None:
+        """Handle wake signal from Marshall."""
+        self.logger.info("[%s] Wake signal received", self.MODULE_ADDRESS)
+
+    def _handle_sleep_signal(self, payload: Optional[Dict[str, Any]] = None) -> None:
+        """Handle sleep signal from Marshall."""
+        self.logger.info("[%s] Sleep signal received", self.MODULE_ADDRESS)
+
+    def _handle_status_signal(self, payload: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+        """Handle status signal."""
+        return {
+            "module_address": self.MODULE_ADDRESS,
+            "status": "active",
+            "bus_connected": self.bus_connected
+        }
+    
+    def _handle_rollcall(self, payload: Dict[str, Any]) -> None:
+        """Handle UDS rollcall request (PHASE 2C FIX)"""
+        if self.communicator:
+            try: self.communicator.send_rollcall_response("DIAG-1", {"system_address": self.MODULE_ADDRESS, "system_name": "Section 5", "status": "OPERATIONAL" if self.bus_connected else "INITIALIZING", "compliance_status": "COMPLIANT", "timestamp": datetime.now().isoformat()})
+            except: pass
+    
+    def _handle_radio_check(self, payload: Dict[str, Any]) -> None:
+        """Handle UDS radio check request (PHASE 2C FIX)"""
+        if self.communicator:
+            try: self.communicator.send_radio_check_response("DIAG-1", {"system_address": self.MODULE_ADDRESS, "latency_ms": 0, "signal_strength": "STRONG", "bus_connected": self.bus_connected, "timestamp": datetime.now().isoformat()})
+            except: pass
+    
+    def _handle_auto_registration(self, payload: Dict[str, Any]) -> None:
+        """Handle UDS auto-registration request (PHASE 2C FIX)"""
+        # Check if this signal is addressed to us (or is a broadcast)
+        target_address = payload.get('target_address', '')
+        if target_address and target_address not in [self.MODULE_ADDRESS, "BROADCAST", "*"]:
+            return  # Not for us - ignore
+        
+        if self.communicator:
+            try: self.communicator.send_auto_registration_response("DIAG-1", {"system_address": self.MODULE_ADDRESS, "system_name": "Section 5", "system_type": "analyst_section", "parent_address": "3", "status": "OPERATIONAL" if self.bus_connected else "INITIALIZING", "compliance_status": "COMPLIANT", "protocol_version": "1.0.0", "timestamp": datetime.now().isoformat()})
+            except: pass
+    
+    # ------------------------------------------------------------------ #
+    # Self-Test Protocol (UDS Compliance)
+    # ------------------------------------------------------------------ #
+    def _run_startup_self_test(self) -> bool:
+        """Validate all tool dependencies per UDS self-test protocol."""
+        self.logger.info("[%s] Running mandatory startup self-test per UDS protocol", self.MODULE_ADDRESS)
+        operational = True
+        
+        tools_to_validate = [
+            ('4-5.1', 'Metadata Processor', lambda: getattr(self, 'metadata_tool', None)),
+            ('4-5.2', 'Document Classifier', lambda: getattr(self, 'document_classifier', None)),
+            ('4-5.3', 'OCR Engine', lambda: getattr(self, 'ocr_engine', None)),
+            ('4-5.4', 'Section Renderer', lambda: getattr(self, 'renderer_factory', None)),
+        ]
+        
+        for tool_addr, tool_name, get_tool_ref in tools_to_validate:
+            try:
+                tool_ref = get_tool_ref()
+                
+                if tool_ref is None:
+                    self.logger.error(
+                        "[%s] Self-test FAILED: %s (%s) not initialized",
+                        self.MODULE_ADDRESS, tool_name, tool_addr
+                    )
+                    
+                    # Emit fault code to Marshall via LINBUS (primary path)
+                    fault_payload = {
+                        "fault_code": f"[{tool_addr}-12-INIT]",
+                        "description": f"{tool_name} failed to initialize",
+                        "component": tool_name,
+                        "reporting_address": tool_addr,
+                        "parent_address": self.MODULE_ADDRESS,
+                        "severity": "CRITICAL",
+                        "timestamp": datetime.now().isoformat(),
+                        "fault_type": "12",
+                        "fault_type_description": "Missing initialization dependency",
+                        "message_type": "initialization_failure"
+                    }
+                    
+                    linbus_success = False
+                    if self.bus and self.bus_connected:
+                        try:
+                            # Primary: LINBUS emission to Marshall
+                            self.bus.emit('section.fault', fault_payload)
+                            self.logger.warning("[%s] Fault code emitted via LINBUS: [%s-12-INIT]",
+                                               self.MODULE_ADDRESS, tool_addr)
+                            linbus_success = True
+                        except Exception as linbus_exc:
+                            self.logger.error("[%s] LINBUS fault emission failed: %s - attempting CANBUS fallback",
+                                            self.MODULE_ADDRESS, linbus_exc)
+                    
+                    # Fallback: CANBUS direct emission to UDS if LINBUS fails
+                    if not linbus_success:
+                        if hasattr(self, 'communicator') and self.communicator:
+                            try:
+                                self.communicator.send_signal(
+                                    target_address="DIAG-1",
+                                    radio_code="SOS",
+                                    message=f"{tool_name} initialization failed (CANBUS fallback)",
+                                    payload=fault_payload
+                                )
+                                self.logger.warning("[%s] Fault code emitted via CANBUS fallback: [%s-12-INIT]",
+                                                   self.MODULE_ADDRESS, tool_addr)
+                            except Exception as canbus_exc:
+                                self.logger.error("[%s] CANBUS fallback also failed: %s",
+                                                self.MODULE_ADDRESS, canbus_exc)
+                        else:
+                            self.logger.error("[%s] Cannot emit fault code - no bus connection available",
+                                            self.MODULE_ADDRESS)
+                    operational = False
+            except Exception as exc:
+                self.logger.exception("[%s] Exception during self-test for %s: %s", self.MODULE_ADDRESS, tool_name, exc)
+                operational = False
+        
+        if operational:
+            self.logger.info("[%s] All tool dependencies operational", self.MODULE_ADDRESS)
+        else:
+            self.logger.warning("[%s] One or more tool dependencies failed - check fault codes", self.MODULE_ADDRESS)
+        
+        return operational
 
     def load_inputs(self) -> Dict[str, Any]:
         raise NotImplementedError
@@ -97,6 +337,58 @@ class SectionFramework:
 
     def publish(self, payload: Dict[str, Any]) -> Dict[str, Any]:
         raise NotImplementedError
+
+    @classmethod
+    def bus_section_id(cls) -> Optional[str]:
+        if getattr(cls, "BUS_SECTION_ID", None):
+            return cls.BUS_SECTION_ID
+        section_id = getattr(cls, "SECTION_ID", "")
+        if section_id.startswith("section_"):
+            parts = section_id.split("_")
+            if len(parts) >= 2:
+                return f"section_{parts[1]}"
+        return section_id or None
+
+    def _get_latest_bus_state(self) -> Dict[str, Any]:
+        bus_id = self.bus_section_id()
+        get_state = getattr(self.gateway, "get_bus_state", None) if hasattr(self, "gateway") else None
+        if not bus_id or not callable(get_state):
+            return {}
+        try:
+            state = get_state(bus_id) or {}
+            return state
+        except Exception as exc:
+            self.logger.warning("Failed to fetch bus state for %s: %s", bus_id, exc)
+            return {}
+
+    def _augment_with_bus_context(self, inputs: Dict[str, Any]) -> Dict[str, Any]:
+        bus_state = self._get_latest_bus_state()
+        if not bus_state:
+            return inputs
+        enriched: Dict[str, Any] = dict(inputs)
+        enriched.setdefault("bus_state", bus_state)
+        payload = bus_state.get("payload") or {}
+        if isinstance(payload, dict):
+            enriched.setdefault("section_payload", payload.get("structured_data") or payload)
+            manifest_context = payload.get("manifest") or bus_state.get("manifest")
+            if manifest_context is not None:
+                enriched.setdefault("manifest_context", manifest_context)
+            for key, value in payload.items():
+                enriched.setdefault(key, value)
+        else:
+            manifest_context = bus_state.get("manifest")
+            if manifest_context is not None:
+                enriched.setdefault("manifest_context", manifest_context)
+        if bus_state.get("needs") is not None:
+            enriched.setdefault("section_needs", bus_state.get("needs"))
+        if bus_state.get("evidence") is not None:
+            enriched.setdefault("section_evidence", bus_state.get("evidence"))
+        case_id = enriched.get("case_id") or bus_state.get("case_id")
+        if not case_id and isinstance(payload, dict):
+            case_id = payload.get("case_id")
+        if case_id and "case_id" not in enriched:
+            enriched["case_id"] = case_id
+        return enriched
 
     def _guard_execution(self, operation: str) -> None:
         if self.ecc and not self.ecc.can_run(self.SECTION_ID):
@@ -813,7 +1105,7 @@ REQUIRED_FINAL_DOCS = (
 REQUIRED_FIELDS = ("subject_name", "record_type", "jurisdiction", "record_date")
 
 
-class Section5Framework(SectionFramework):
+class LegacySection5Framework(LegacySectionFramework):
         SECTION_ID = "section_5_documents"
         BUS_SECTION_ID = "section_5"
         MAX_RERUNS = 2
@@ -929,9 +1221,17 @@ class Section5Framework(SectionFramework):
                 enriched["case_id"] = case_id
             return enriched
 
-        def __init__(self, gateway: Any, ecc: Optional[Any] = None) -> None:
-            super().__init__(gateway=gateway, ecc=ecc)
+        def __init__(self, gateway: Any, ecc: Optional[Any] = None,
+                     logger: Optional[logging.Logger] = None,
+                     bus: Optional[Any] = None,
+                     communicator: Optional[Any] = None) -> None:
+            super().__init__(gateway=gateway, ecc=ecc, logger=logger,
+                             bus=bus, communicator=communicator)
             self._last_context: Dict[str, Any] = {}
+            self.cochran_tool = CochranMatchTool
+            self.reverse_continuity_cls = ReverseContinuityTool
+            self.metadata_tool = MetadataToolV5
+            self.renderer_factory = Section5Renderer
 
         def load_inputs(self) -> Dict[str, Any]:
             try:
@@ -1036,9 +1336,11 @@ class Section5Framework(SectionFramework):
         def publish(self, payload: Dict[str, Any]) -> Dict[str, Any]:
             try:
                 self._guard_execution("publishing")
-                renderer = Section5Renderer()
+                renderer_factory = getattr(self, "renderer_factory", Section5Renderer)
+                renderer = renderer_factory() if callable(renderer_factory) else renderer_factory
                 case_sources = self._build_renderer_sources(self._last_context)
                 model = renderer.render_model(payload, case_sources)
+
                 narrative_lines: List[str] = []
                 for block in model["render_tree"]:
                     if block["type"] == "field":
@@ -1046,6 +1348,7 @@ class Section5Framework(SectionFramework):
                     else:
                         narrative_lines.append(str(block["text"]))
                 narrative = "\n".join(narrative_lines)
+
                 section_bus_id = self.bus_section_id()
                 timestamp = datetime.now().isoformat()
                 summary = narrative.splitlines()[0] if narrative else ""
@@ -1054,21 +1357,23 @@ class Section5Framework(SectionFramework):
                     "section_id": section_bus_id,
                     "case_id": payload.get("case_id"),
                     "payload": payload,
-                    "manifest": model["manifest"],
-                    "render_tree": model["render_tree"],
+                    "manifest": model.get("manifest", {}),
+                    "render_tree": model.get("render_tree", []),
                     "narrative": narrative,
                     "summary": summary,
                     "metadata": {"published_at": timestamp, "section": self.SECTION_ID},
                     "source": "section_5_framework",
                 }
-                if self.gateway:
+
+                if getattr(self.gateway, "publish_section_result", None):
                     self.gateway.publish_section_result(section_bus_id, result)
                     emit_payload = dict(result)
                     emit_payload.setdefault("published_at", timestamp)
                     if self.COMMUNICATION and self.COMMUNICATION.output_signal:
                         self.gateway.emit(self.COMMUNICATION.output_signal, emit_payload)
-                    self.gateway.emit("document_inventory_ready", model["manifest"])
-                if self.ecc:
+                    self.gateway.emit("document_inventory_ready", result["manifest"])
+
+                if self.ecc and hasattr(self.ecc, "mark_complete"):
                     self.ecc.mark_complete(self.SECTION_ID)
 
                 return {
@@ -1350,7 +1655,7 @@ class Section5Framework(SectionFramework):
                     identity_checks.append(
                         {
                             "subject_id": subject_id,
-                            "result": CochranMatchTool.verify_identity(subject, candidate),
+                            "result": getattr(self, "cochran_tool", CochranMatchTool).verify_identity(subject, candidate),
                         }
                     )
             text_blob = "\n".join(
@@ -1362,7 +1667,8 @@ class Section5Framework(SectionFramework):
                     ],
                 )
             )
-            reverse_tool = ReverseContinuityTool()
+            reverse_cls = getattr(self, "reverse_continuity_cls", ReverseContinuityTool)
+            reverse_tool = reverse_cls() if callable(reverse_cls) else reverse_cls
             continuity_docs = [json.dumps(record, default=str) for record in documents]
             planning_docs = context.get("planning_manifest", {}).get("supporting_documents") or []
             reverse_ok, reverse_log = reverse_tool.run_validation(
@@ -1371,8 +1677,9 @@ class Section5Framework(SectionFramework):
                 [json.dumps(doc, default=str) for doc in planning_docs],
             )
             metadata_zip = context.get("metadata_bundle_zip") or context.get("raw_inputs", {}).get("metadata_bundle_zip")
+            metadata_tool = getattr(self, "metadata_tool", MetadataToolV5)
             metadata_result = (
-                MetadataToolV5.process_zip(metadata_zip, context.get("metadata_output_dir", "./metadata_out"))
+                metadata_tool.process_zip(metadata_zip, context.get("metadata_output_dir", "./metadata_out"))
                 if metadata_zip
                 else {"status": "SKIPPED"}
             )
@@ -1487,7 +1794,155 @@ class Section5Framework(SectionFramework):
             return f"{last}, {first_middle}"
 
 
+
+
+class Section5Framework(LifecycleSectionFramework):
+    SECTION_ID = LegacySection5Framework.SECTION_ID
+    MODULE_ADDRESS = '4-5'
+    BUS_SECTION_ID = LegacySection5Framework.BUS_SECTION_ID
+    MAX_RERUNS = LegacySection5Framework.MAX_RERUNS
+    STAGES = LegacySection5Framework.STAGES
+    COMMUNICATION = LegacySection5Framework.COMMUNICATION
+    PERSISTENCE = getattr(LegacySection5Framework, 'PERSISTENCE', None)
+    FACT_GRAPH = getattr(LegacySection5Framework, 'FACT_GRAPH', None)
+    ORDER = LegacySection5Framework.ORDER
+
+    def __init__(
+        self,
+        gateway: Any,
+        *,
+        communicator_initializer: Optional[Callable[..., Any]] = None,
+        marshal_client: Optional[Any] = None,
+        marshal_address: Optional[str] = None,
+        warden_client: Optional[Any] = None,
+        dependency_initializers: Optional[Dict[str, Callable[..., Any]]] = None,
+        queue_client: Optional[Any] = None,
+        storage: Optional[Any] = None,
+        fact_graph: Optional[Any] = None,
+    ) -> None:
+        dependencies: Dict[str, Callable[..., Any]] = {
+            'cochran_tool': init_cochran_match,
+            'reverse_continuity': init_reverse_continuity,
+            'metadata_tool': init_metadata_processor,
+            'renderer_factory': init_section5_renderer,
+        }
+        if dependency_initializers:
+            dependencies.update(dependency_initializers)
+
+        super().__init__(
+            gateway,
+            module_address=self.MODULE_ADDRESS,
+            communicator_initializer=communicator_initializer,
+            marshal_client=marshal_client,
+            marshal_address=marshal_address,
+            warden_client=warden_client,
+            dependency_initializers=dependencies,
+            queue_client=queue_client,
+            storage=storage,
+            fact_graph=fact_graph,
+        )
+
+        self.legacy = LegacySection5Framework(gateway=gateway, ecc=self.ecc)
+
+        cochran_tool = self.get_dependency('cochran_tool')
+        if cochran_tool is not None:
+            self.legacy.cochran_tool = cochran_tool
+
+        reverse_cls = self.get_dependency('reverse_continuity')
+        if reverse_cls is not None:
+            self.legacy.reverse_continuity_cls = reverse_cls
+
+        metadata_tool = self.get_dependency('metadata_tool')
+        if metadata_tool is not None:
+            self.legacy.metadata_tool = metadata_tool
+
+        renderer_factory = self.get_dependency('renderer_factory')
+        if renderer_factory is not None:
+            self.legacy.renderer_factory = renderer_factory
+
+        self.baseline_report = self.run_baseline_initialization()
+        
+        # Run mandatory self-test per UDS protocol
+        self._run_startup_self_test()
+
+    # ------------------------------------------------------------------
+    # Self-Test Protocol (UDS Compliance)
+    # ------------------------------------------------------------------
+    def _run_startup_self_test(self) -> bool:
+        """Validate all tool dependencies per UDS self-test protocol."""
+        self.logger.info("[%s] Running mandatory startup self-test per UDS protocol", self.MODULE_ADDRESS)
+        operational = True
+        
+        tools_to_validate = [
+            ('4-5.1', 'Cochran Match', lambda: self.get_dependency('cochran_tool')),
+            ('4-5.2', 'Reverse Continuity', lambda: self.get_dependency('reverse_continuity')),
+            ('4-5.3', 'Metadata Processor', lambda: self.get_dependency('metadata_tool')),
+            ('4-5.4', 'Section Renderer', lambda: self.get_dependency('renderer_factory')),
+        ]
+        
+        for tool_addr, tool_name, get_tool_ref in tools_to_validate:
+            try:
+                tool_ref = get_tool_ref()
+                
+                if tool_ref is None:
+                    self.logger.error("[%s] Self-test FAILED: %s (%s) not initialized", 
+                                      self.MODULE_ADDRESS, tool_name, tool_addr)
+                    
+                    if hasattr(self, 'communicator') and self.communicator:
+                        self.communicator.send_signal(
+                            target_address="3",
+                            radio_code="SOS",
+                            message=f"{tool_name} initialization failed",
+                            payload={
+                                "fault_code": f"[{tool_addr}-12-INIT]",
+                                "description": f"{tool_name} not initialized - missing dependency or initialization failure",
+                                "component": tool_name,
+                                "reporting_address": tool_addr,
+                                "parent_address": self.MODULE_ADDRESS,
+                                "severity": "CRITICAL",
+                                "timestamp": datetime.now().isoformat(),
+                                "fault_type": "12",
+                                "fault_type_description": "Missing initialization dependency"
+                            }
+                        )
+                        self.logger.warning("[%s] Fault code emitted: [%s-12-INIT]", 
+                                           self.MODULE_ADDRESS, tool_addr)
+                    
+                    operational = False
+                else:
+                    self.logger.info("[%s] Self-test PASSED: %s (%s) operational", 
+                                    self.MODULE_ADDRESS, tool_name, tool_addr)
+            
+            except Exception as exc:
+                self.logger.error("[%s] Self-test ERROR: %s (%s): %s", 
+                                 self.MODULE_ADDRESS, tool_name, tool_addr, exc)
+                operational = False
+        
+        if operational:
+            self.logger.info("[%s] PASS - Self-test COMPLETE - All tool dependencies operational", self.MODULE_ADDRESS)
+        else:
+            self.logger.warning("[%s] FAIL - Self-test COMPLETE - One or more tool dependencies FAILED", self.MODULE_ADDRESS)
+        
+        return operational
+
+    def load_inputs(self) -> Dict[str, Any]:
+        if self.lifecycle_state() == LifecycleState.RESTING:
+            self.resume_from_rest()
+        return self.legacy.load_inputs()
+
+    def build_payload(self, context: Dict[str, Any]) -> Dict[str, Any]:
+        if self.lifecycle_state() == LifecycleState.RESTING:
+            self.resume_from_rest()
+        return self.legacy.build_payload(context)
+
+    def publish(self, payload: Dict[str, Any]) -> Dict[str, Any]:
+        return self.legacy.publish(payload)
+
+    def handle_revision(self, reason: str, context: Dict[str, Any]) -> None:
+        self.legacy.handle_revision(reason, context)
+
 __all__ = [
+    "LegacySection5Framework",
     "Section5Framework",
     "StageDefinition",
     "CommunicationContract",

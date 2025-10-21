@@ -23,65 +23,67 @@ This document serves as the **definitive reference** for all diagnostic protocol
 ### **Evidence Locker Complex (1-x)**
 | Address | System Name | Handler | Parent | Status | Last Check |
 |---------|-------------|---------|--------|--------|------------|
-| 1-1 | Evidence Locker Main | evidence_locker_main.EvidenceLocker | - | ACTIVE | - |
-| 1-1.1 | Evidence Classifier | evidence_classifier.EvidenceClassifier | 1-1 | ACTIVE | - |
-| 1-1.2 | Evidence Identifier | evidence_identifier.EvidenceIdentifier | 1-1 | ACTIVE | - |
-| 1-1.3 | Static Data Flow | static_data_flow.StaticDataFlow | 1-1 | ACTIVE | - |
-| 1-1.4 | Evidence Index | evidence_index.EvidenceIndex | 1-1 | ACTIVE | - |
-| 1-1.5 | Evidence Manifest | evidence_manifest.EvidenceManifest | 1-1 | ACTIVE | - |
-| 1-1.6 | Evidence Class Builder | evidence_class_builder.EvidenceClassBuilder | 1-1 | ACTIVE | - |
-| 1-1.7 | Case Manifest Builder | case_manifest_builder.CaseManifestBuilder | 1-1 | ACTIVE | - |
-| 1-1.8 | OCR Processor | ocr_processor.OCRProcessor | 1-1 | ACTIVE | - |
+| 1 | Evidence Locker Main | evidence_locker_main.EvidenceLocker | - | ACTIVE | 2025-10-09 |
+| 1.1 | Evidence Classifier | evidence_classifier.EvidenceClassifier | 1 | ACTIVE | - |
+| 1.2 | Evidence Identifier | evidence_identifier.EvidenceIdentifier | 1 | ACTIVE | - |
+| 1.3 | Static Data Flow | static_data_flow.StaticDataFlow | 1 | ACTIVE | - |
+| 1.4 | Evidence Index | evidence_index.EvidenceIndex | 1 | ACTIVE | - |
+| 1.5 | Evidence Manifest | evidence_manifest.EvidenceManifest | 1 | ACTIVE | - |
+| 1.6 | Evidence Class Builder | evidence_class_builder.EvidenceClassBuilder | 1 | ACTIVE | - |
+| 1.7 | Case Manifest Builder | case_manifest_builder.CaseManifestBuilder | 1 | ACTIVE | - |
+| 1.8 | OCR Processor | ocr_processor.OCRProcessor | 1 | ACTIVE | - |
 
 ### **Warden Complex (2-x)**
 | Address | System Name | Handler | Parent | Status | Last Check |
 |---------|-------------|---------|--------|--------|------------|
-| 2-1 | Ecosystem Controller | ecosystem_controller.EcosystemController | - | ACTIVE | - |
-| 2-1.1 | ECC State Manager | ecc_state_manager.ECCStateManager | 2-1 | ACTIVE | - |
-| 2-1.2 | ECC Dependency Tracker | ecc_dependency_tracker.ECCDependencyTracker | 2-1 | ACTIVE | - |
-| 2-1.3 | ECC Execution Order | ecc_execution_order.ECCExecutionOrder | 2-1 | ACTIVE | - |
-| 2-1.4 | ECC Permission Controller | ecc_permission_controller.ECCPermissionController | 2-1 | ACTIVE | - |
-| 2-2 | Gateway Controller | gateway_controller.GatewayController | - | ACTIVE | - |
-| 2-2.1 | Gateway Signal Dispatcher | gateway_signal_dispatcher.GatewaySignalDispatcher | 2-2 | ACTIVE | - |
-| 2-2.2 | Gateway Section Router | gateway_section_router.GatewaySectionRouter | 2-2 | ACTIVE | - |
-| 2-2.3 | Gateway Evidence Pipeline | gateway_evidence_pipeline.GatewayEvidencePipeline | 2-2 | ACTIVE | - |
-| 2-2.4 | Gateway Bottleneck Monitor | gateway_bottleneck_monitor.GatewayBottleneckMonitor | 2-2 | ACTIVE | - |
+| 2 | Warden Module (CANBUS Connected) | warden_module.Warden | - | ACTIVE | 2025-10-09 |
+| 2-2 | Ecosystem Controller (Driven) | ecosystem_controller.EcosystemController | 2 | ACTIVE | 2025-10-09 |
+| 2-2.1 | ECC State Manager | ecc_state_manager.ECCStateManager | 2-2 | ACTIVE | - |
+| 2-2.2 | ECC Dependency Tracker | ecc_dependency_tracker.ECCDependencyTracker | 2-2 | ACTIVE | - |
+| 2-2.3 | ECC Execution Order | ecc_execution_order.ECCExecutionOrder | 2-2 | ACTIVE | - |
+| 2-2.4 | ECC Permission Controller | ecc_permission_controller.ECCPermissionController | 2-2 | ACTIVE | - |
+| 2-3 | Gateway Controller (Driven, Fault Relay Handler) | gateway_controller.GatewayController | 2 | ACTIVE | 2025-10-09 |
+| 2-3.1 | Gateway Signal Dispatcher | gateway_signal_dispatcher.GatewaySignalDispatcher | 2-3 | ACTIVE | - |
+| 2-3.2 | Gateway Section Router | gateway_section_router.GatewaySectionRouter | 2-3 | ACTIVE | - |
+| 2-3.3 | Gateway Evidence Pipeline | gateway_evidence_pipeline.GatewayEvidencePipeline | 2-3 | ACTIVE | - |
+| 2-3.4 | Gateway Bottleneck Monitor | gateway_bottleneck_monitor.GatewayBottleneckMonitor | 2-3 | ACTIVE | - |
 
-### **Mission Debrief Complex (3-x)**
+### **Marshall Complex (3-x)**
 | Address | System Name | Handler | Parent | Status | Last Check |
 |---------|-------------|---------|--------|--------|------------|
-| 3-1 | Mission Debrief Manager | mission_debrief_manager.MissionDebriefManager | - | ACTIVE | - |
-| 3-1.1 | Report Generator | report_generator.ReportGenerator | 3-1 | ACTIVE | - |
-| 3-1.2 | Digital Signing | digital_signing.DigitalSigning | 3-1 | ACTIVE | - |
-| 3-1.3 | Template Engine | template_engine.TemplateEngine | 3-1 | ACTIVE | - |
-| 3-1.4 | Watermark System | watermark_system.WatermarkSystem | 3-1 | ACTIVE | - |
-| 3-2 | The Librarian | narrative_assembler.NarrativeAssembler | - | ACTIVE | - |
-| 3-2.1 | Narrative Assembler | narrative_assembler.NarrativeAssembler | 3-2 | ACTIVE | - |
-| 3-2.2 | Template Cache | template_cache.TemplateCache | 3-2 | ACTIVE | - |
-| 3-2.3 | Document Processor | document_processor.DocumentProcessor | 3-2 | ACTIVE | - |
-| 3-2.4 | OSINT Engine | osint_engine.OSINTEngine | 3-2 | ACTIVE | - |
+| 3 | Marshall Module (CANBUS Connected) | marshall_module.MarshallModule | - | ACTIVE | 2025-10-09 |
+| 3-1 | Evidence Manager (Driven) | evidence_manager.EvidenceManager | 3 | ACTIVE | 2025-10-09 |
+| 3-2 | Evidence Checkout (Driven) | section_controller.SectionController | 3 | ACTIVE | - |
+| 3-3 | Gateway (Driven) | gateway.Gateway | 3 | ACTIVE | - |
 
-### **Analyst Deck Complex (4-x)**
+### **Analyst Deck Complex (4-x)** — All CANBUS Connected via Base Class
+| Address | System Name | Handler | Parent | Fault Relay Parent | Status | Last Check |
+|---------|-------------|---------|--------|---------------------|--------|------------|
+| 4-1 | Section 1 - Case Profile (CANBUS Connected) | section_1_framework.Section1Framework | - | 2-3 (Gateway) | ACTIVE | 2025-10-09 |
+| 4-2 | Section 2 - Investigation Planning (CANBUS Connected) | section_2_framework.Section2Framework | - | 2-3 (Gateway) | ACTIVE | 2025-10-09 |
+| 4-3 | Section 3 - Surveillance Operations (CANBUS Connected) | section_3_framework.Section3Framework | - | 2-3 (Gateway) | ACTIVE | 2025-10-09 |
+| 4-4 | Section 4 - Session Review (CANBUS Connected) | section_4_framework.Section4Framework | - | 2-3 (Gateway) | ACTIVE | 2025-10-09 |
+| 4-5 | Section 5 - Document Inventory (CANBUS Connected) | section_5_framework.Section5Framework | - | 2-3 (Gateway) | ACTIVE | 2025-10-09 |
+| 4-6 | Section 6 - Billing Summary (CANBUS Connected) | section_6_framework.Section6Framework | - | 2-3 (Gateway) | ACTIVE | 2025-10-09 |
+| 4-7 | Section 7 - Conclusion (CANBUS Connected) | section_7_framework.Section7Framework | - | 2-3 (Gateway) | ACTIVE | 2025-10-09 |
+| 4-8 | Section 8 - Media Documentation (CANBUS Connected) | section_8_framework.Section8Framework | - | 2-3 (Gateway) | ACTIVE | 2025-10-09 |
+
+### **Mission Debrief Complex (5-x)**
 | Address | System Name | Handler | Parent | Status | Last Check |
 |---------|-------------|---------|--------|--------|------------|
-| 4-1 | Section 1 - Case Profile | section_1_framework.Section1Framework | - | ACTIVE | - |
-| 4-2 | Section 2 - Investigation Planning | section_2_framework.Section2Framework | - | ACTIVE | - |
-| 4-3 | Section 3 - Surveillance Operations | section_3_framework.Section3Framework | - | ACTIVE | - |
-| 4-4 | Section 4 - Session Review | section_4_framework.Section4Framework | - | ACTIVE | - |
-| 4-5 | Section 5 - Document Inventory | section_5_framework.Section5Framework | - | ACTIVE | - |
-| 4-6 | Section 6 - Billing Summary | section_6_framework.Section6Framework | - | ACTIVE | - |
-| 4-7 | Section 7 - Legal Compliance | section_7_framework.Section7Framework | - | ACTIVE | - |
-| 4-8 | Section 8 - Media Documentation | section_8_framework.Section8Framework | - | ACTIVE | - |
-| 4-CP | Cover Page | section_cp_framework.SectionCPFramework | - | ACTIVE | - |
-| 4-TOC | Table of Contents | section_toc_framework.SectionTOCFramework | - | ACTIVE | - |
-| 4-DP | Disclosure Page | section_dp_framework.SectionDPFramework | - | ACTIVE | - |
-
-### **Marshall Complex (5-x)**
-| Address | System Name | Handler | Parent | Status | Last Check |
-|---------|-------------|---------|--------|--------|------------|
-| 5-1 | Gateway | gateway.Gateway | - | ACTIVE | - |
-| 5-2 | Evidence Manager | evidence_manager.EvidenceManager | - | ACTIVE | - |
-| 5-3 | Section Controller | section_controller.SectionController | - | ACTIVE | - |
+| 5 | Mission Debrief Module (CANBUS Connected) | mission_debrief_module.MissionDebriefModule | - | ACTIVE | 2025-10-09 |
+| 5-1 | Debrief Manager (Driven) | mission_debrief_manager.MissionDebriefManager | 5 | ACTIVE | 2025-10-09 |
+| 5-1.1 | Cover Page Framework | section_cp_framework.SectionCPFramework | 5-1 | ACTIVE | 2025-10-09 |
+| 5-1.2 | Disclosure Page Framework | section_dp_framework.SectionDPFramework | 5-1 | ACTIVE | 2025-10-09 |
+| 5.1 | Report Generator (Utility Tool) | report_generator.ReportGenerator | 5 | ACTIVE | - |
+| 5.2 | Digital Signing Tool (Utility) | digital_signature_system.DigitalSignatureSystem | 5 | ACTIVE | - |
+| 5.3 | Template Engine Tool (Utility) | template_system.TemplateSystem | 5 | ACTIVE | - |
+| 5.4 | Watermark Tool (Utility) | watermark_system.WatermarkSystem | 5 | ACTIVE | - |
+| 5-2 | The Librarian (Driven) | narrative_assembler.NarrativeAssembler | 5 | ACTIVE | 2025-10-09 |
+| 5-2.1 | Template Cache | template_cache.TemplateCache | 5-2 | ACTIVE | - |
+| 5-2.2 | Document Processor | document_processor.DocumentProcessor | 5-2 | ACTIVE | - |
+| 5-2.3 | OSINT Engine | osint_engine.OSINTEngine | 5-2 | ACTIVE | - |
+| 5-2.4 | Table of Contents Framework | section_toc_framework.SectionTOCFramework | 5-2 | ACTIVE | 2025-10-09 |
 
 ### **War Room Complex (6-x)**
 | Address | System Name | Handler | Parent | Status | Last Check |
@@ -89,31 +91,156 @@ This document serves as the **definitive reference** for all diagnostic protocol
 | 6-1 | Dev Environment | dev_environment.DevEnvironment | - | ACTIVE | - |
 | 6-2 | Tool Dependencies | tool_dependencies.ToolDependencies | - | ACTIVE | - |
 
-### **Enhanced Functional GUI (7-x)**
+### **Enhanced Functional GUI (GUI-1)**
 | Address | System Name | Handler | Parent | Status | Last Check |
 |---------|-------------|---------|--------|--------|------------|
-| 7-1 | Enhanced Functional GUI | enhanced_functional_gui.EnhancedFunctionalGUI | - | ACTIVE | - |
-| 7-1.1 | User Interface Controller | ui_controller.UIController | 7-1 | ACTIVE | - |
-| 7-1.2 | Case Management Interface | case_management_interface.CaseManagementInterface | 7-1 | ACTIVE | - |
-| 7-1.3 | Evidence Display Interface | evidence_display_interface.EvidenceDisplayInterface | 7-1 | ACTIVE | - |
-| 7-1.4 | Section Review Interface | section_review_interface.SectionReviewInterface | 7-1 | ACTIVE | - |
-| 7-1.5 | Report Generation Interface | report_generation_interface.ReportGenerationInterface | 7-1 | ACTIVE | - |
-| 7-1.6 | System Status Interface | system_status_interface.SystemStatusInterface | 7-1 | ACTIVE | - |
-| 7-1.7 | Error Display Interface | error_display_interface.ErrorDisplayInterface | 7-1 | ACTIVE | - |
-| 7-1.8 | Progress Monitoring Interface | progress_monitoring_interface.ProgressMonitoringInterface | 7-1 | ACTIVE | - |
-| 7-1.9 | Health Monitor | health_monitor.HealthMonitor | 7-1 | ACTIVE | - |
+| GUI-1 | Enhanced Functional GUI (CANBUS Connected) | enhanced_functional_gui.EnhancedDKIGUI | - | ACTIVE | 2025-10-10 |
+| 7-1 | Enhanced Functional GUI (Legacy) | enhanced_functional_gui.EnhancedFunctionalGUI | - | DEPRECATED | - |
+| GUI-1.1 | User Interface Controller | ui_controller.UIController | GUI-1 | ACTIVE | 2025-10-10 |
+| GUI-1.2 | Case Management Interface | case_management_interface.CaseManagementInterface | GUI-1 | ACTIVE | 2025-10-10 |
+| GUI-1.3 | Evidence Display Interface | evidence_display_interface.EvidenceDisplayInterface | GUI-1 | ACTIVE | 2025-10-10 |
+| GUI-1.4 | Section Review Interface | section_review_interface.SectionReviewInterface | GUI-1 | ACTIVE | 2025-10-10 |
+| GUI-1.5 | Report Generation Interface | report_generation_interface.ReportGenerationInterface | GUI-1 | ACTIVE | 2025-10-10 |
+| GUI-1.6 | System Status Interface | system_status_interface.SystemStatusInterface | GUI-1 | ACTIVE | 2025-10-10 |
+| GUI-1.7 | Error Display Interface | error_display_interface.ErrorDisplayInterface | GUI-1 | ACTIVE | 2025-10-10 |
+| GUI-1.8 | Progress Monitoring Interface | progress_monitoring_interface.ProgressMonitoringInterface | GUI-1 | ACTIVE | 2025-10-10 |
+| GUI-1.9 | Health Monitor | health_monitor.HealthMonitor | GUI-1 | ACTIVE | 2025-10-10 |
 
 ### **General Systems**
 | Address | System Name | Handler | Parent | Status | Last Check |
 |---------|-------------|---------|--------|--------|------------|
-| GEN-2.924 | Case Management Panel | F:\The Central Command\Command Center\Plug-ins\case_management_panel.py | - | ACTIVE | - |
-| GEN-2.249 | Case Management Panel | F:\The Central Command\Command Center\Plug-ins\case_management_panel.py | - | ACTIVE | - |
-| GEN-2.367 | Case Management Panel | F:\The Central Command\Command Center\Plug-ins\case_management_panel.py | - | ACTIVE | - |
-| GEN-2.381 | Case Management Panel | F:\The Central Command\Command Center\Plug-ins\case_management_panel.py | - | ACTIVE | - |
-| GEN-2.908 | Case Management Panel | F:\The Central Command\Command Center\Plug-ins\case_management_panel.py | - | ACTIVE | - |
-| GEN-2.973 | Case Management Panel | F:\The Central Command\Command Center\Plug-ins\case_management_panel.py | - | ACTIVE | - |
-| GEN-2.798 | Case Management Panel | F:\The Central Command\Command Center\Plug-ins\case_management_panel.py | None | ACTIVE | - |
-| GEN-2.97 | Case Management Panel | F:\The Central Command\Command Center\Plug-ins\case_management_panel.py | None | ACTIVE | - |
+
+---
+
+## **UNIVERSAL SIGNAL TRANSLATION PROTOCOL**
+
+**Updated:** October 10, 2025  
+**Architect:** DEESCALATION Agent
+
+### **Communication Architecture**
+
+All parent modules (Evidence Locker, Warden, Marshall, Mission Debrief, GUI) implement a **universal translation layer** that converts internal child broadcasts to standardized CANBUS signals.
+
+**Pattern:**
+```
+Child Component → Parent Wildcard (*.child.broadcast)
+                ↓
+Parent Module Translation Layer
+                ↓
+Universal CANBUS Signal + Radio Code
+                ↓
+All Systems (UDS, GUI, Other Modules)
+```
+
+### **Parent Module Signal Translations**
+
+#### **Evidence Locker Module (Address 1)**
+
+**Wildcard Signal:** `locker.child.broadcast`
+
+| Child Message Type | Universal Signal Emitted | Radio Code | Description |
+|--------------------|--------------------------|------------|-------------|
+| `ingest_evidence` | `evidence.new` | 10-6 | Evidence file received and processing |
+| `ingest_evidence` | `evidence.classified` | 10-4 | Evidence classified and ready |
+| `start_new_case` | `case.created` | - | New case initialized |
+| `clear_evidence_pool` | `locker.cleared` | - | Evidence pool cleared |
+
+**Translation Handler:** `_handle_child_broadcast()`
+
+#### **Warden Module (Address 2)**
+
+**Wildcard Signal:** `warden.child.broadcast`
+
+| Child Message Type | Universal Signal Emitted | Radio Code | Description |
+|--------------------|--------------------------|------------|-------------|
+| `gateway_ready` | `gateway.ready` | 10-4 | Gateway initialization complete |
+| `ecosystem_ready` | `ecosystem.ready` | - | ECC initialization complete |
+| `section_routed` | `section.routed` | 10-4 | Section routing approved |
+| `handoff_complete` | `handoff.completed` | - | Module handoff successful |
+
+**Translation Handler:** `_handle_child_broadcast()`
+
+#### **Marshall Module (Address 3)**
+
+**Wildcard Signal:** `marshall.child.broadcast`
+
+| Child Message Type | Universal Signal Emitted | Radio Code | Description |
+|--------------------|--------------------------|------------|-------------|
+| `evidence_processed` | `evidence.processed` | 10-6 | Evidence processing active |
+| `evidence_distributed` | `evidence.distributed` | - | Evidence distributed to section |
+| `evidence_ready_for_debrief` | `evidence.ready_for_debrief` | 10-8 | Evidence processing complete |
+
+**Translation Handler:** `_handle_child_broadcast()`
+
+#### **Mission Debrief Module (Address 5)**
+
+**Wildcard Signal:** `mission.child.broadcast`
+
+| Child Message Type | Universal Signal Emitted | Radio Code | Description |
+|--------------------|--------------------------|------------|-------------|
+| `report_assembled` | `mission.report.assembled` | 10-8 | Report assembly complete |
+| `narrative_assembled` | `narrative.assembled` | - | Narrative assembly complete |
+| `artifacts_generated` | `artifacts.generated` | - | Artifacts (CP, TOC, DP) generated |
+| `final_report_ready` | `report.ready` | - | Final report ready for delivery |
+
+**Translation Handler:** `_handle_child_broadcast()`
+
+#### **GUI Module (Address GUI-1)**
+
+**Wildcard Signal:** `gui.child.broadcast`
+
+| Child Message Type | Universal Signal Emitted | Radio Code | Description |
+|--------------------|--------------------------|------------|-------------|
+| `user_action` | `gui.user.action` | - | User initiated action |
+| `view_changed` | `gui.view.changed` | - | GUI view/tab changed |
+| `error_displayed` | `gui.error.displayed` | - | Error shown to user |
+| `progress_updated` | `gui.progress.updated` | - | Progress indicator updated |
+
+**Translation Handler:** `_handle_child_broadcast()` (pending implementation)
+
+### **Radio Code Callout Protocol**
+
+Based on UniversalCommunicator RadioCode enum and gateway callbox logic:
+
+| Radio Code | Meaning | Parent Module Usage | Gateway Action | UDS Monitoring |
+|------------|---------|---------------------|----------------|----------------|
+| **10-4** | ACKNOWLEDGED | Message received and understood / Section approved / Ready signals | Unlock next section | System operational |
+| **10-6** | EVIDENCE_RECEIVED | Evidence received and being processed / Toolkit initialized | Broadcast toolkit context | Processing started |
+| **10-8** | EVIDENCE_COMPLETE | Evidence processing complete / Section finished / Output ready | Collect output payload | Processing complete |
+| **10-9** | REPEAT | Please repeat last message / Manual review requested / Communication retry | Trigger manual review | Communication issue |
+| **10-10** | STANDBY | Processing in progress / System waiting / Emergency halt | Freeze gateway, notify lead | System waiting |
+| **SOS** | EMERGENCY | System failure detected / Critical error | Escalate to diagnostics | Fault detected |
+| **MAYDAY** | CRITICAL_FAILURE | System down / Complete failure / Unrecoverable error | Emergency shutdown protocol | System down |
+| **STATUS** | STATUS_REQUEST | Request system status / Health check | Return status payload | Health monitoring |
+| **ROLLCALL** | ROLLCALL | All systems respond / System discovery | Registry update | System registration |
+| **RADIO_CHECK** | COMMUNICATION_TEST | Communication test / Connectivity validation | Acknowledge receipt | Connectivity test |
+
+### **Implementation Requirements**
+
+**All parent modules MUST:**
+1. Register `[module_name].child.broadcast` signal handler
+2. Implement `_handle_child_broadcast(payload)` method
+3. Translate child `message_type` to universal signals
+4. Emit appropriate radio codes via `communicator.send_signal()`
+5. Log translation events for debugging
+
+**All child components MUST:**
+1. Emit to parent wildcard only (`locker.child.broadcast`, etc.)
+2. Include `message_type` in payload
+3. NOT directly emit to universal CANBUS signals
+4. Let parent handle all external communication
+
+### **Validation Method**
+
+Per UDS observation protocol: **Absence of fault = translation successful**
+
+Test with real evidence flow:
+```bash
+cd diagnostic_manager/test_plans
+python run_real_flow_test.py
+```
+
+Expected: Exit code 0, signals captured, zero UDS faults.
 
 ---
 
@@ -238,169 +365,495 @@ This document serves as the **definitive reference** for all diagnostic protocol
 
 ## **SYSTEM-SPECIFIC FAULT CODES**
 
+### **Bus-1 (CANBUS Network)**
+
+**System Type:** Communication Backbone  
+**Address:** Bus-1  
+**Parent:** None (root infrastructure)  
+**Critical:** YES - Single point of failure  
+**Health Monitoring:** `get_health_metrics()`
+
+#### **Bus-1 Fault Codes**
+| Fault Code | Symptom | Description | Resolution |
+|------------|---------|-------------|------------|
+| Bus-1-10 | Bus connection failure | Bus failed to initialize | Restart system |
+| Bus-1-11 | Signal registration failure | Handler registration failed | Check handler path |
+| Bus-1-12 | Initialization dependency missing | Required component missing | Check dependencies |
+| Bus-1-20 | Signal routing error | Message routing failed | Check signal registry |
+| Bus-1-21 | Handler execution error | Signal handler crashed | Fix handler logic |
+| Bus-1-30 | Performance degradation | Processing time >100ms avg | Reduce traffic load |
+| Bus-1-31 | High traffic warning | Messages >1000/sec | Throttle message rate |
+| Bus-1-40 | Memory warning | Event log >10,000 entries | Clear event log |
+| Bus-1-50 | Unresponsive | No heartbeat >30 seconds | Restart bus |
+
 ### **Evidence Locker Complex (1-x)**
 
-#### **1-1 (Evidence Locker Main)**
+#### **1 (Evidence Locker Main)**
 | Fault Code | Symptom | Description | Resolution |
 |------------|---------|-------------|------------|
-| 1-1-01 | Evidence manifest syntax error | Invalid JSON in evidence manifest | Fix JSON syntax |
-| 1-1-02 | Evidence manifest missing required fields | Required fields missing from manifest | Add missing fields |
-| 1-1-10 | Evidence locker initialization failed | Failed to initialize evidence locker | Check dependencies |
-| 1-1-11 | Evidence locker initialization timeout | Initialization exceeded timeout | Increase timeout |
-| 1-1-20 | Evidence locker communication timeout | Communication timeout with other systems | Check network |
-| 1-1-30 | Evidence processing error | Error during evidence processing | Fix processing logic |
-| 1-1-31 | Evidence validation failed | Evidence failed validation checks | Fix evidence format |
-| 1-1-40 | Evidence storage resource unavailable | Storage resource not available | Free up storage |
-| 1-1-70 | Evidence file not found | Evidence file missing | Restore evidence file |
-| 1-1-71 | Evidence file access denied | Insufficient permissions for evidence file | Grant file permissions |
+| 1-01 | Evidence manifest syntax error | Invalid JSON in evidence manifest | Fix JSON syntax |
+| 1-02 | Evidence manifest missing required fields | Required fields missing from manifest | Add missing fields |
+| 1-10 | Evidence locker initialization failed | Failed to initialize evidence locker | Check dependencies |
+| 1-11 | Evidence locker initialization timeout | Initialization exceeded timeout | Increase timeout |
+| 1-20 | Evidence locker communication timeout | Communication timeout with other systems | Check network |
+| 1-30 | Evidence processing error | Error during evidence processing | Fix processing logic |
+| 1-31 | Evidence validation failed | Evidence failed validation checks | Fix evidence format |
+| 1-40 | Evidence storage resource unavailable | Storage resource not available | Free up storage |
+| 1-70 | Evidence file not found | Evidence file missing | Restore evidence file |
+| 1-71 | Evidence file access denied | Insufficient permissions for evidence file | Grant file permissions |
 
-#### **1-1.1 (Evidence Classifier)**
+#### **1.1 (Evidence Classifier)**
 | Fault Code | Symptom | Description | Resolution |
 |------------|---------|-------------|------------|
-| 1-1.1-01 | Classification rule syntax error | Invalid syntax in classification rules | Fix rule syntax |
-| 1-1.1-02 | Classification rule missing required fields | Required fields missing from rules | Add missing fields |
-| 1-1.1-10 | Classifier initialization failed | Failed to initialize classifier | Check dependencies |
-| 1-1.1-30 | Classification processing error | Error during classification | Fix classification logic |
-| 1-1.1-31 | Classification validation failed | Classification failed validation | Fix validation rules |
-| 1-1.1-50 | Classification business rule failed | Business rule validation failed | Fix business logic |
+| 1.1-01 | Classification rule syntax error | Invalid syntax in classification rules | Fix rule syntax |
+| 1.1-02 | Classification rule missing required fields | Required fields missing from rules | Add missing fields |
+| 1.1-10 | Classifier initialization failed | Failed to initialize classifier | Check dependencies |
+| 1.1-30 | Classification processing error | Error during classification | Fix classification logic |
+| 1.1-31 | Classification validation failed | Classification failed validation | Fix validation rules |
+| 1.1-50 | Classification business rule failed | Business rule validation failed | Fix business logic |
 
-#### **1-1.2 (Evidence Identifier)**
+#### **1.2 (Evidence Identifier)**
 | Fault Code | Symptom | Description | Resolution |
 |------------|---------|-------------|------------|
-| 1-1.2-01 | Identification rule syntax error | Invalid syntax in identification rules | Fix rule syntax |
-| 1-1.2-10 | Identifier initialization failed | Failed to initialize identifier | Check dependencies |
-| 1-1.2-30 | Evidence identification error | Error during identification | Fix identification logic |
-| 1-1.2-31 | Evidence identification validation failed | Identification failed validation | Fix validation rules |
-| 1-1.2-50 | Identification business rule failed | Business rule validation failed | Fix business logic |
+| 1.2-01 | Identification rule syntax error | Invalid syntax in identification rules | Fix rule syntax |
+| 1.2-10 | Identifier initialization failed | Failed to initialize identifier | Check dependencies |
+| 1.2-30 | Evidence identification error | Error during identification | Fix identification logic |
+| 1.2-31 | Evidence identification validation failed | Identification failed validation | Fix validation rules |
+| 1.2-50 | Identification business rule failed | Business rule validation failed | Fix business logic |
 
-#### **1-1.3 (Static Data Flow)**
+#### **1.3 (Static Data Flow)**
 | Fault Code | Symptom | Description | Resolution |
 |------------|---------|-------------|------------|
-| 1-1.3-01 | Data flow configuration syntax error | Invalid syntax in data flow config | Fix config syntax |
-| 1-1.3-10 | Data flow initialization failed | Failed to initialize data flow | Check dependencies |
-| 1-1.3-30 | Data flow processing error | Error during data flow processing | Fix processing logic |
-| 1-1.3-31 | Data flow validation failed | Data flow failed validation | Fix validation rules |
-| 1-1.3-50 | Data flow business rule failed | Business rule validation failed | Fix business logic |
+| 1.3-01 | Data flow configuration syntax error | Invalid syntax in data flow config | Fix config syntax |
+| 1.3-10 | Data flow initialization failed | Failed to initialize data flow | Check dependencies |
+| 1.3-30 | Data flow processing error | Error during data flow processing | Fix processing logic |
+| 1.3-31 | Data flow validation failed | Data flow failed validation | Fix validation rules |
+| 1.3-50 | Data flow business rule failed | Business rule validation failed | Fix business logic |
 
-#### **1-1.4 (Evidence Index)**
+#### **1.4 (Evidence Index)**
 | Fault Code | Symptom | Description | Resolution |
 |------------|---------|-------------|------------|
-| 1-1.4-01 | Index configuration syntax error | Invalid syntax in index config | Fix config syntax |
-| 1-1.4-10 | Index initialization failed | Failed to initialize index | Check dependencies |
-| 1-1.4-30 | Index processing error | Error during indexing | Fix indexing logic |
-| 1-1.4-31 | Index validation failed | Index failed validation | Fix validation rules |
-| 1-1.4-80 | Index database connection failed | Cannot connect to index database | Check database service |
+| 1.4-01 | Index configuration syntax error | Invalid syntax in index config | Fix config syntax |
+| 1.4-10 | Index initialization failed | Failed to initialize index | Check dependencies |
+| 1.4-30 | Index processing error | Error during indexing | Fix indexing logic |
+| 1.4-31 | Index validation failed | Index failed validation | Fix validation rules |
+| 1.4-80 | Index database connection failed | Cannot connect to index database | Check database service |
 
-#### **1-1.5 (Evidence Manifest)**
+#### **1.5 (Evidence Manifest)**
 | Fault Code | Symptom | Description | Resolution |
 |------------|---------|-------------|------------|
-| 1-1.5-01 | Manifest syntax error | Invalid syntax in manifest | Fix manifest syntax |
-| 1-1.5-02 | Manifest missing required fields | Required fields missing from manifest | Add missing fields |
-| 1-1.5-10 | Manifest initialization failed | Failed to initialize manifest | Check dependencies |
-| 1-1.5-30 | Manifest processing error | Error during manifest processing | Fix processing logic |
-| 1-1.5-31 | Manifest validation failed | Manifest failed validation | Fix validation rules |
-| 1-1.5-70 | Manifest file not found | Manifest file missing | Restore manifest file |
+| 1.5-01 | Manifest syntax error | Invalid syntax in manifest | Fix manifest syntax |
+| 1.5-02 | Manifest missing required fields | Required fields missing from manifest | Add missing fields |
+| 1.5-10 | Manifest initialization failed | Failed to initialize manifest | Check dependencies |
+| 1.5-30 | Manifest processing error | Error during manifest processing | Fix processing logic |
+| 1.5-31 | Manifest validation failed | Manifest failed validation | Fix validation rules |
+| 1.5-70 | Manifest file not found | Manifest file missing | Restore manifest file |
 
-#### **1-1.6 (Evidence Class Builder)**
+#### **1.6 (Evidence Class Builder)**
 | Fault Code | Symptom | Description | Resolution |
 |------------|---------|-------------|------------|
-| 1-1.6-01 | Class builder configuration syntax error | Invalid syntax in class builder config | Fix config syntax |
-| 1-1.6-10 | Class builder initialization failed | Failed to initialize class builder | Check dependencies |
-| 1-1.6-30 | Class building error | Error during class building | Fix building logic |
-| 1-1.6-31 | Class validation failed | Class failed validation | Fix validation rules |
-| 1-1.6-50 | Class building business rule failed | Business rule validation failed | Fix business logic |
+| 1.6-01 | Class builder configuration syntax error | Invalid syntax in class builder config | Fix config syntax |
+| 1.6-10 | Class builder initialization failed | Failed to initialize class builder | Check dependencies |
+| 1.6-30 | Class building error | Error during class building | Fix building logic |
+| 1.6-31 | Class validation failed | Class failed validation | Fix validation rules |
+| 1.6-50 | Class building business rule failed | Business rule validation failed | Fix business logic |
+
+#### **1.7 (Case Manifest Builder)**
+| Fault Code | Symptom | Description | Resolution |
+|------------|---------|-------------|------------|
+| 1.7-01 | Manifest builder configuration error | Invalid syntax in manifest config | Fix config syntax |
+| 1.7-10 | Manifest builder initialization failed | Failed to initialize | Check dependencies |
+| 1.7-30 | Manifest building error | Error during manifest building | Fix building logic |
+| 1.7-31 | Manifest validation failed | Manifest validation failed | Fix validation rules |
+| 1.7-70 | Manifest file creation failed | Cannot create manifest file | Check file permissions |
+
+#### **1.8 (OCR Processor)**
+| Fault Code | Symptom | Description | Resolution |
+|------------|---------|-------------|------------|
+| 1.8-01 | OCR configuration error | Invalid syntax in OCR config | Fix config syntax |
+| 1.8-10 | OCR processor initialization failed | Failed to initialize OCR | Check dependencies |
+| 1.8-30 | OCR processing error | Error during OCR processing | Fix OCR logic |
+| 1.8-31 | OCR validation failed | OCR output validation failed | Improve OCR quality |
+| 1.8-40 | OCR engine unavailable | OCR engine not available | Install OCR engine |
+| 1.8-70 | OCR input file not found | Input file missing | Check file path |
 
 ### **Warden Complex (2-x)**
 
-#### **2-1 (Ecosystem Controller)**
+#### **2 (Warden Module)**
 | Fault Code | Symptom | Description | Resolution |
 |------------|---------|-------------|------------|
-| 2-1-01 | ECC configuration syntax error | Invalid syntax in ECC config | Fix config syntax |
-| 2-1-02 | ECC configuration missing required fields | Required fields missing from ECC config | Add missing fields |
-| 2-1-10 | ECC initialization failed | Failed to initialize ECC | Check dependencies |
-| 2-1-11 | ECC initialization timeout | ECC initialization exceeded timeout | Increase timeout |
-| 2-1-20 | ECC communication timeout | Communication timeout with other systems | Check network |
-| 2-1-30 | ECC processing error | Error during ECC processing | Fix processing logic |
-| 2-1-50 | ECC business rule failed | Business rule validation failed | Fix business logic |
-| 2-1-80 | ECC database connection failed | Cannot connect to ECC database | Check database service |
-| 2-1-90 | ECC system crash | ECC crashed unexpectedly | Restart ECC |
+| 2-1-01 | Warden configuration syntax error | Invalid syntax in Warden config | Fix config syntax |
+| 2-1-02 | Warden configuration missing required fields | Required fields missing from Warden config | Add missing fields |
+| 2-1-10 | Warden initialization failed | Failed to initialize Warden | Check dependencies |
+| 2-1-11 | Warden initialization timeout | Warden initialization exceeded timeout | Increase timeout |
+| 2-1-20 | Warden communication timeout | Communication timeout with other systems | Check network |
+| 2-1-30 | Warden processing error | Error during Warden processing | Fix processing logic |
+| 2-1-50 | Warden business rule failed | Business rule validation failed | Fix business logic |
+| 2-1-90 | Warden system crash | Warden crashed unexpectedly | Restart Warden |
 
-#### **2-1.1 (ECC State Manager)**
+#### **2-2 (Ecosystem Controller)**
 | Fault Code | Symptom | Description | Resolution |
 |------------|---------|-------------|------------|
-| 2-1.1-01 | State configuration syntax error | Invalid syntax in state config | Fix config syntax |
-| 2-1.1-10 | State manager initialization failed | Failed to initialize state manager | Check dependencies |
-| 2-1.1-30 | State processing error | Error during state processing | Fix processing logic |
-| 2-1.1-50 | State transition business rule failed | Business rule validation failed | Fix business logic |
+| 2-2-01 | ECC configuration syntax error | Invalid syntax in ECC config | Fix config syntax |
+| 2-2-02 | ECC configuration missing required fields | Required fields missing from ECC config | Add missing fields |
+| 2-2-10 | ECC initialization failed | Failed to initialize ECC | Check dependencies |
+| 2-2-11 | ECC initialization timeout | ECC initialization exceeded timeout | Increase timeout |
+| 2-2-20 | ECC communication timeout | Communication timeout with other systems | Check network |
+| 2-2-30 | ECC processing error | Error during ECC processing | Fix processing logic |
+| 2-2-50 | ECC business rule failed | Business rule validation failed | Fix business logic |
+| 2-2-80 | ECC database connection failed | Cannot connect to ECC database | Check database service |
+| 2-2-90 | ECC system crash | ECC crashed unexpectedly | Restart ECC |
 
-#### **2-1.2 (ECC Dependency Tracker)**
+#### **2-2.1 (ECC State Manager)**
 | Fault Code | Symptom | Description | Resolution |
 |------------|---------|-------------|------------|
-| 2-1.2-01 | Dependency configuration syntax error | Invalid syntax in dependency config | Fix config syntax |
-| 2-1.2-10 | Dependency tracker initialization failed | Failed to initialize dependency tracker | Check dependencies |
-| 2-1.2-30 | Dependency tracking error | Error during dependency tracking | Fix tracking logic |
-| 2-1.2-50 | Dependency validation business rule failed | Business rule validation failed | Fix business logic |
+| 2-2.1-01 | State configuration syntax error | Invalid syntax in state config | Fix config syntax |
+| 2-2.1-10 | State manager initialization failed | Failed to initialize state manager | Check dependencies |
+| 2-2.1-30 | State processing error | Error during state processing | Fix processing logic |
+| 2-2.1-50 | State transition business rule failed | Business rule validation failed | Fix business logic |
 
-#### **2-1.3 (ECC Execution Order)**
+#### **2-2.2 (ECC Dependency Tracker)**
 | Fault Code | Symptom | Description | Resolution |
 |------------|---------|-------------|------------|
-| 2-1.3-01 | Execution order configuration syntax error | Invalid syntax in execution order config | Fix config syntax |
-| 2-1.3-10 | Execution order initialization failed | Failed to initialize execution order | Check dependencies |
-| 2-1.3-30 | Execution order processing error | Error during execution order processing | Fix processing logic |
-| 2-1.3-50 | Execution order business rule failed | Business rule validation failed | Fix business logic |
+| 2-2.2-01 | Dependency configuration syntax error | Invalid syntax in dependency config | Fix config syntax |
+| 2-2.2-10 | Dependency tracker initialization failed | Failed to initialize dependency tracker | Check dependencies |
+| 2-2.2-30 | Dependency tracking error | Error during dependency tracking | Fix tracking logic |
+| 2-2.2-50 | Dependency validation business rule failed | Business rule validation failed | Fix business logic |
 
-#### **2-1.4 (ECC Permission Controller)**
+#### **2-2.3 (ECC Execution Order)**
 | Fault Code | Symptom | Description | Resolution |
 |------------|---------|-------------|------------|
-| 2-1.4-01 | Permission configuration syntax error | Invalid syntax in permission config | Fix config syntax |
-| 2-1.4-10 | Permission controller initialization failed | Failed to initialize permission controller | Check dependencies |
-| 2-1.4-30 | Permission processing error | Error during permission processing | Fix processing logic |
-| 2-1.4-50 | Permission validation business rule failed | Business rule validation failed | Fix business logic |
+| 2-2.3-01 | Execution order configuration syntax error | Invalid syntax in execution order config | Fix config syntax |
+| 2-2.3-10 | Execution order initialization failed | Failed to initialize execution order | Check dependencies |
+| 2-2.3-30 | Execution order processing error | Error during execution order processing | Fix processing logic |
+| 2-2.3-50 | Execution order business rule failed | Business rule validation failed | Fix business logic |
 
-#### **2-2 (Gateway Controller)**
+#### **2-2.4 (ECC Permission Controller)**
 | Fault Code | Symptom | Description | Resolution |
 |------------|---------|-------------|------------|
-| 2-2-01 | Gateway configuration syntax error | Invalid syntax in gateway config | Fix config syntax |
-| 2-2-02 | Gateway configuration missing required fields | Required fields missing from gateway config | Add missing fields |
-| 2-2-10 | Gateway initialization failed | Failed to initialize gateway | Check dependencies |
-| 2-2-11 | Gateway initialization timeout | Gateway initialization exceeded timeout | Increase timeout |
-| 2-2-20 | Gateway communication timeout | Communication timeout with other systems | Check network |
-| 2-2-30 | Gateway processing error | Error during gateway processing | Fix processing logic |
-| 2-2-50 | Gateway business rule failed | Business rule validation failed | Fix business logic |
-| 2-2-80 | Gateway database connection failed | Cannot connect to gateway database | Check database service |
-| 2-2-90 | Gateway system crash | Gateway crashed unexpectedly | Restart gateway |
+| 2-2.4-01 | Permission configuration syntax error | Invalid syntax in permission config | Fix config syntax |
+| 2-2.4-10 | Permission controller initialization failed | Failed to initialize permission controller | Check dependencies |
+| 2-2.4-30 | Permission processing error | Error during permission processing | Fix processing logic |
+| 2-2.4-50 | Permission validation business rule failed | Business rule validation failed | Fix business logic |
 
-#### **2-2.1 (Gateway Signal Dispatcher)**
+#### **2-3 (Gateway Controller)**
 | Fault Code | Symptom | Description | Resolution |
 |------------|---------|-------------|------------|
-| 2-2.1-01 | Signal dispatcher configuration syntax error | Invalid syntax in signal dispatcher config | Fix config syntax |
-| 2-2.1-10 | Signal dispatcher initialization failed | Failed to initialize signal dispatcher | Check dependencies |
-| 2-2.1-20 | Signal dispatch communication error | Error during signal dispatch | Fix communication logic |
-| 2-2.1-30 | Signal dispatch processing error | Error during signal dispatch processing | Fix processing logic |
+| 2-3-01 | Gateway configuration syntax error | Invalid syntax in gateway config | Fix config syntax |
+| 2-3-02 | Gateway configuration missing required fields | Required fields missing from gateway config | Add missing fields |
+| 2-3-10 | Gateway initialization failed | Failed to initialize gateway | Check dependencies |
+| 2-3-11 | Gateway initialization timeout | Gateway initialization exceeded timeout | Increase timeout |
+| 2-3-20 | Gateway communication timeout | Communication timeout with other systems | Check network |
+| 2-3-30 | Gateway processing error | Error during gateway processing | Fix processing logic |
+| 2-3-50 | Gateway business rule failed | Business rule validation failed | Fix business logic |
+| 2-3-80 | Gateway database connection failed | Cannot connect to gateway database | Check database service |
+| 2-3-90 | Gateway system crash | Gateway crashed unexpectedly | Restart gateway |
 
-#### **2-2.2 (Gateway Section Router)**
+#### **2-3.1 (Gateway Signal Dispatcher)**
 | Fault Code | Symptom | Description | Resolution |
 |------------|---------|-------------|------------|
-| 2-2.2-01 | Section router configuration syntax error | Invalid syntax in section router config | Fix config syntax |
-| 2-2.2-10 | Section router initialization failed | Failed to initialize section router | Check dependencies |
-| 2-2.2-30 | Section routing error | Error during section routing | Fix routing logic |
-| 2-2.2-50 | Section routing business rule failed | Business rule validation failed | Fix business logic |
+| 2-3.1-01 | Signal dispatcher configuration syntax error | Invalid syntax in signal dispatcher config | Fix config syntax |
+| 2-3.1-10 | Signal dispatcher initialization failed | Failed to initialize signal dispatcher | Check dependencies |
+| 2-3.1-20 | Signal dispatch communication error | Error during signal dispatch | Fix communication logic |
+| 2-3.1-30 | Signal dispatch processing error | Error during signal dispatch processing | Fix processing logic |
 
-#### **2-2.3 (Gateway Evidence Pipeline)**
+#### **2-3.2 (Gateway Section Router)**
 | Fault Code | Symptom | Description | Resolution |
 |------------|---------|-------------|------------|
-| 2-2.3-01 | Evidence pipeline configuration syntax error | Invalid syntax in evidence pipeline config | Fix config syntax |
-| 2-2.3-10 | Evidence pipeline initialization failed | Failed to initialize evidence pipeline | Check dependencies |
-| 2-2.3-30 | Evidence pipeline processing error | Error during evidence pipeline processing | Fix processing logic |
-| 2-2.3-50 | Evidence pipeline business rule failed | Business rule validation failed | Fix business logic |
+| 2-3.2-01 | Section router configuration syntax error | Invalid syntax in section router config | Fix config syntax |
+| 2-3.2-10 | Section router initialization failed | Failed to initialize section router | Check dependencies |
+| 2-3.2-30 | Section routing error | Error during section routing | Fix routing logic |
+| 2-3.2-50 | Section routing business rule failed | Business rule validation failed | Fix business logic |
 
-#### **2-2.4 (Gateway Bottleneck Monitor)**
+#### **2-3.3 (Gateway Evidence Pipeline)**
 | Fault Code | Symptom | Description | Resolution |
 |------------|---------|-------------|------------|
-| 2-2.4-01 | Bottleneck monitor configuration syntax error | Invalid syntax in bottleneck monitor config | Fix config syntax |
-| 2-2.4-10 | Bottleneck monitor initialization failed | Failed to initialize bottleneck monitor | Check dependencies |
-| 2-2.4-30 | Bottleneck monitoring error | Error during bottleneck monitoring | Fix monitoring logic |
-| 2-2.4-50 | Bottleneck detection business rule failed | Business rule validation failed | Fix business logic |
+| 2-3.3-01 | Evidence pipeline configuration syntax error | Invalid syntax in evidence pipeline config | Fix config syntax |
+| 2-3.3-10 | Evidence pipeline initialization failed | Failed to initialize evidence pipeline | Check dependencies |
+| 2-3.3-30 | Evidence pipeline processing error | Error during evidence pipeline processing | Fix processing logic |
+| 2-3.3-50 | Evidence pipeline business rule failed | Business rule validation failed | Fix business logic |
+
+#### **2-3.4 (Gateway Bottleneck Monitor)**
+| Fault Code | Symptom | Description | Resolution |
+|------------|---------|-------------|------------|
+| 2-3.4-01 | Bottleneck monitor configuration syntax error | Invalid syntax in bottleneck monitor config | Fix config syntax |
+| 2-3.4-10 | Bottleneck monitor initialization failed | Failed to initialize bottleneck monitor | Check dependencies |
+| 2-3.4-30 | Bottleneck monitoring error | Error during bottleneck monitoring | Fix monitoring logic |
+| 2-3.4-50 | Bottleneck detection business rule failed | Business rule validation failed | Fix business logic |
+
+### **Marshall Complex (3-x)**
+
+#### **3 (Marshall Module)**
+| Fault Code | Symptom | Description | Resolution |
+|------------|---------|-------------|------------|
+| 3-01 | Marshall configuration syntax error | Invalid syntax in Marshall config | Fix config syntax |
+| 3-02 | Marshall configuration missing required fields | Required fields missing from Marshall config | Add missing fields |
+| 3-10 | Marshall initialization failed | Failed to initialize Marshall | Check dependencies |
+| 3-11 | Marshall initialization timeout | Marshall initialization exceeded timeout | Increase timeout |
+| 3-20 | Marshall communication timeout | Communication timeout with other systems | Check network |
+| 3-30 | Marshall processing error | Error during Marshall processing | Fix processing logic |
+| 3-50 | Marshall business rule failed | Business rule validation failed | Fix business logic |
+| 3-90 | Marshall system crash | Marshall crashed unexpectedly | Restart Marshall |
+
+#### **3-1 (Evidence Manager)**
+| Fault Code | Symptom | Description | Resolution |
+|------------|---------|-------------|------------|
+| 3-1-01 | Evidence Manager configuration syntax error | Invalid syntax in Evidence Manager config | Fix config syntax |
+| 3-1-02 | Evidence Manager missing required fields | Required fields missing from config | Add missing fields |
+| 3-1-10 | Evidence Manager initialization failed | Failed to initialize Evidence Manager | Check dependencies |
+| 3-1-20 | Evidence Manager communication timeout | Communication timeout | Check network |
+| 3-1-30 | Evidence processing error | Error during evidence processing | Fix processing logic |
+| 3-1-40 | Evidence resource unavailable | Resource not available | Free up resources |
+| 3-1-70 | Evidence file not found | Evidence file missing | Restore evidence file |
+
+#### **3-2 (Evidence Checkout)**
+| Fault Code | Symptom | Description | Resolution |
+|------------|---------|-------------|------------|
+| 3-2-01 | Checkout configuration error | Invalid syntax in checkout config | Fix config syntax |
+| 3-2-10 | Checkout initialization failed | Failed to initialize checkout | Check dependencies |
+| 3-2-20 | Checkout communication timeout | Communication timeout | Check network |
+| 3-2-30 | Evidence delivery error | Error during evidence delivery | Fix delivery logic |
+| 3-2-31 | Section routing failed | Section routing failed | Check section addresses |
+| 3-2-50 | Checkout business rule failed | Business rule failed | Fix business logic |
+
+#### **3-3 (Gateway - Marshall)**
+| Fault Code | Symptom | Description | Resolution |
+|------------|---------|-------------|------------|
+| 3-3-01 | Gateway configuration error | Invalid syntax in gateway config | Fix config syntax |
+| 3-3-10 | Gateway initialization failed | Failed to initialize gateway | Check dependencies |
+| 3-3-20 | Gateway communication timeout | Communication timeout | Check network |
+| 3-3-30 | File processing error | Error during file processing | Fix processing logic |
+| 3-3-31 | Report generation failed | Report generation failed | Check report generator |
+| 3-3-50 | Gateway business rule failed | Business rule failed | Fix business logic |
+
+### **Section Engines (4-x)**
+
+#### **4-1 (Section 1 - Case Profile)**
+| Fault Code | Symptom | Description | Resolution |
+|------------|---------|-------------|------------|
+| 4-1-01 | Section 1 configuration error | Invalid syntax in section config | Fix config syntax |
+| 4-1-10 | Section 1 initialization failed | Failed to initialize section | Check dependencies |
+| 4-1-20 | Section 1 communication timeout | Communication timeout | Check network |
+| 4-1-30 | Section 1 processing error | Error during section processing | Fix processing logic |
+| 4-1-31 | Section 1 validation failed | Section validation failed | Fix validation rules |
+| 4-1-50 | Section 1 business rule failed | Business rule failed | Fix business logic |
+
+#### **4-2 (Section 2 - Investigation Planning)**
+| Fault Code | Symptom | Description | Resolution |
+|------------|---------|-------------|------------|
+| 4-2-01 | Section 2 configuration error | Invalid syntax in section config | Fix config syntax |
+| 4-2-10 | Section 2 initialization failed | Failed to initialize section | Check dependencies |
+| 4-2-20 | Section 2 communication timeout | Communication timeout | Check network |
+| 4-2-30 | Section 2 processing error | Error during section processing | Fix processing logic |
+| 4-2-50 | Section 2 business rule failed | Business rule failed | Fix business logic |
+
+#### **4-3 (Section 3 - Surveillance Operations)**
+| Fault Code | Symptom | Description | Resolution |
+|------------|---------|-------------|------------|
+| 4-3-01 | Section 3 configuration error | Invalid syntax in section config | Fix config syntax |
+| 4-3-10 | Section 3 initialization failed | Failed to initialize section | Check dependencies |
+| 4-3-20 | Section 3 communication timeout | Communication timeout | Check network |
+| 4-3-30 | Section 3 processing error | Error during section processing | Fix processing logic |
+| 4-3-50 | Section 3 business rule failed | Business rule failed | Fix business logic |
+
+#### **4-4 (Section 4 - Session Review)**
+| Fault Code | Symptom | Description | Resolution |
+|------------|---------|-------------|------------|
+| 4-4-01 | Section 4 configuration error | Invalid syntax in section config | Fix config syntax |
+| 4-4-10 | Section 4 initialization failed | Failed to initialize section | Check dependencies |
+| 4-4-20 | Section 4 communication timeout | Communication timeout | Check network |
+| 4-4-30 | Section 4 processing error | Error during section processing | Fix processing logic |
+| 4-4-50 | Section 4 business rule failed | Business rule failed | Fix business logic |
+
+#### **4-5 (Section 5 - Document Inventory)**
+| Fault Code | Symptom | Description | Resolution |
+|------------|---------|-------------|------------|
+| 4-5-01 | Section 5 configuration error | Invalid syntax in section config | Fix config syntax |
+| 4-5-10 | Section 5 initialization failed | Failed to initialize section | Check dependencies |
+| 4-5-20 | Section 5 communication timeout | Communication timeout | Check network |
+| 4-5-30 | Section 5 processing error | Error during section processing | Fix processing logic |
+| 4-5-50 | Section 5 business rule failed | Business rule failed | Fix business logic |
+
+#### **4-6 (Section 6 - Billing Summary)**
+| Fault Code | Symptom | Description | Resolution |
+|------------|---------|-------------|------------|
+| 4-6-01 | Section 6 configuration error | Invalid syntax in section config | Fix config syntax |
+| 4-6-10 | Section 6 initialization failed | Failed to initialize section | Check dependencies |
+| 4-6-20 | Section 6 communication timeout | Communication timeout | Check network |
+| 4-6-30 | Section 6 processing error | Error during section processing | Fix processing logic |
+| 4-6-50 | Section 6 business rule failed | Business rule failed | Fix business logic |
+
+#### **4-7 (Section 7 - Conclusion)**
+| Fault Code | Symptom | Description | Resolution |
+|------------|---------|-------------|------------|
+| 4-7-01 | Section 7 configuration error | Invalid syntax in section config | Fix config syntax |
+| 4-7-10 | Section 7 initialization failed | Failed to initialize section | Check dependencies |
+| 4-7-20 | Section 7 communication timeout | Communication timeout | Check network |
+| 4-7-30 | Section 7 processing error | Error during section processing | Fix processing logic |
+| 4-7-50 | Section 7 business rule failed | Business rule failed | Fix business logic |
+
+#### **4-8 (Section 8 - Media Documentation)**
+| Fault Code | Symptom | Description | Resolution |
+|------------|---------|-------------|------------|
+| 4-8-01 | Section 8 configuration error | Invalid syntax in section config | Fix config syntax |
+| 4-8-10 | Section 8 initialization failed | Failed to initialize section | Check dependencies |
+| 4-8-20 | Section 8 communication timeout | Communication timeout | Check network |
+| 4-8-30 | Section 8 processing error | Error during section processing | Fix processing logic |
+| 4-8-50 | Section 8 business rule failed | Business rule failed | Fix business logic |
+
+### **Mission Debrief Complex (5-x)**
+
+#### **5 (Mission Debrief Module)**
+| Fault Code | Symptom | Description | Resolution |
+|------------|---------|-------------|------------|
+| 5-01 | Mission Debrief configuration syntax error | Invalid syntax in config | Fix config syntax |
+| 5-02 | Mission Debrief missing required fields | Required fields missing | Add missing fields |
+| 5-10 | Mission Debrief initialization failed | Failed to initialize | Check dependencies |
+| 5-20 | Mission Debrief communication timeout | Communication timeout | Check network |
+| 5-30 | Mission Debrief processing error | Error during processing | Fix processing logic |
+| 5-50 | Mission Debrief business rule failed | Business rule failed | Fix business logic |
+| 5-90 | Mission Debrief system crash | System crashed | Restart system |
+
+#### **5-1 (Debrief Manager)**
+| Fault Code | Symptom | Description | Resolution |
+|------------|---------|-------------|------------|
+| 5-1-01 | Debrief Manager configuration error | Invalid syntax in config | Fix config syntax |
+| 5-1-10 | Debrief Manager initialization failed | Failed to initialize | Check dependencies |
+| 5-1-20 | Debrief Manager communication timeout | Communication timeout | Check network |
+| 5-1-30 | Artifact generation error | Error during artifact generation | Fix generation logic |
+| 5-1-31 | Framework execution failed | Framework execution failed | Check framework dependencies |
+| 5-1-40 | Resource unavailable | Resource not available | Free up resources |
+| 5-1-50 | Business rule failed | Business rule failed | Fix business logic |
+
+#### **5-1.1 (Cover Page Framework)**
+| Fault Code | Symptom | Description | Resolution |
+|------------|---------|-------------|------------|
+| 5-1.1-01 | Cover Page configuration error | Invalid syntax in CP config | Fix config syntax |
+| 5-1.1-10 | Cover Page initialization failed | Failed to initialize CP framework | Check dependencies |
+| 5-1.1-20 | Cover Page communication timeout | Communication timeout | Check network |
+| 5-1.1-30 | Cover Page generation error | Error during CP generation | Fix generation logic |
+| 5-1.1-31 | Branding asset validation failed | Branding assets failed validation | Check asset files |
+| 5-1.1-50 | Cover Page business rule failed | Business rule failed | Fix business logic |
+
+#### **5-1.2 (Disclosure Page Framework)**
+| Fault Code | Symptom | Description | Resolution |
+|------------|---------|-------------|------------|
+| 5-1.2-01 | Disclosure Page configuration error | Invalid syntax in DP config | Fix config syntax |
+| 5-1.2-10 | Disclosure Page initialization failed | Failed to initialize DP framework | Check dependencies |
+| 5-1.2-20 | Disclosure Page communication timeout | Communication timeout | Check network |
+| 5-1.2-30 | Disclosure generation error | Error during DP generation | Fix generation logic |
+| 5-1.2-31 | Disclaimer validation failed | Disclaimer validation failed | Check legal disclaimers |
+| 5-1.2-50 | Disclosure business rule failed | Business rule failed | Fix business logic |
+
+#### **5.1 (Report Generator Tool)**
+| Fault Code | Symptom | Description | Resolution |
+|------------|---------|-------------|------------|
+| 5.1-01 | Report Generator import failed | Cannot import report generator | Check dependencies |
+| 5.1-10 | Report Generator initialization failed | Failed to initialize | Check configuration |
+| 5.1-30 | PDF assembly error | Error during PDF assembly | Fix assembly logic |
+| 5.1-31 | Report formatting failed | Report formatting failed | Check template files |
+| 5.1-70 | Output file creation failed | Cannot create output file | Check file permissions |
+
+#### **5.2 (Digital Signing Tool)**
+| Fault Code | Symptom | Description | Resolution |
+|------------|---------|-------------|------------|
+| 5.2-01 | Digital signature import failed | Cannot import signature system | Check dependencies |
+| 5.2-10 | Signature system initialization failed | Failed to initialize | Check certificate files |
+| 5.2-30 | Signature generation error | Error during signature generation | Check private key |
+| 5.2-31 | Signature verification failed | Signature verification failed | Check certificate validity |
+| 5.2-70 | Certificate file not found | Certificate file missing | Restore certificate |
+
+#### **5.3 (Template Engine Tool)**
+| Fault Code | Symptom | Description | Resolution |
+|------------|---------|-------------|------------|
+| 5.3-01 | Template engine import failed | Cannot import template system | Check dependencies |
+| 5.3-10 | Template engine initialization failed | Failed to initialize | Check template directory |
+| 5.3-30 | Template rendering error | Error during template rendering | Fix template syntax |
+| 5.3-31 | Variable substitution failed | Variable substitution failed | Check variable mapping |
+| 5.3-70 | Template file not found | Template file missing | Restore template file |
+
+#### **5.4 (Watermark Tool)**
+| Fault Code | Symptom | Description | Resolution |
+|------------|---------|-------------|------------|
+| 5.4-01 | Watermark tool import failed | Cannot import watermark system | Check dependencies |
+| 5.4-10 | Watermark initialization failed | Failed to initialize | Check watermark assets |
+| 5.4-30 | Watermark generation error | Error during watermark generation | Fix watermark logic |
+| 5.4-31 | Watermark application failed | Watermark application failed | Check document format |
+| 5.4-70 | Watermark asset not found | Watermark asset missing | Restore asset file |
+
+#### **5-2 (The Librarian)**
+| Fault Code | Symptom | Description | Resolution |
+|------------|---------|-------------|------------|
+| 5-2-01 | Librarian configuration error | Invalid syntax in config | Fix config syntax |
+| 5-2-10 | Librarian initialization failed | Failed to initialize | Check dependencies |
+| 5-2-20 | Librarian communication timeout | Communication timeout | Check network |
+| 5-2-30 | Narrative assembly error | Error during narrative assembly | Fix assembly logic |
+| 5-2-31 | Template processing failed | Template processing failed | Check template dependencies |
+| 5-2-50 | Court-safe language rule failed | Language validation failed | Fix language rules |
+
+#### **5-2.1 (Template Cache)**
+| Fault Code | Symptom | Description | Resolution |
+|------------|---------|-------------|------------|
+| 5-2.1-01 | Template cache configuration error | Invalid syntax in cache config | Fix config syntax |
+| 5-2.1-10 | Template cache initialization failed | Failed to initialize cache | Check dependencies |
+| 5-2.1-30 | Template cache error | Error accessing template cache | Fix cache logic |
+| 5-2.1-70 | Template file not found | Template file missing from cache | Restore template file |
+
+#### **5-2.2 (Document Processor)**
+| Fault Code | Symptom | Description | Resolution |
+|------------|---------|-------------|------------|
+| 5-2.2-01 | Document processor configuration error | Invalid syntax in processor config | Fix config syntax |
+| 5-2.2-10 | Document processor initialization failed | Failed to initialize processor | Check dependencies |
+| 5-2.2-30 | Document processing error | Error during document processing | Fix processing logic |
+| 5-2.2-70 | Document file not found | Document file missing | Check file path |
+
+#### **5-2.3 (OSINT Engine)**
+| Fault Code | Symptom | Description | Resolution |
+|------------|---------|-------------|------------|
+| 5-2.3-01 | OSINT configuration error | Invalid syntax in OSINT config | Fix config syntax |
+| 5-2.3-10 | OSINT engine initialization failed | Failed to initialize OSINT | Check dependencies |
+| 5-2.3-20 | OSINT communication timeout | OSINT API timeout | Check API connectivity |
+| 5-2.3-30 | OSINT processing error | Error during OSINT processing | Fix processing logic |
+| 5-2.3-60 | OSINT API connection failed | Cannot connect to OSINT API | Check API credentials |
+
+#### **5-2.4 (Table of Contents Framework)**
+| Fault Code | Symptom | Description | Resolution |
+|------------|---------|-------------|------------|
+| 5-2.4-01 | TOC configuration error | Invalid syntax in TOC config | Fix config syntax |
+| 5-2.4-10 | TOC initialization failed | Failed to initialize TOC framework | Check dependencies |
+| 5-2.4-20 | TOC communication timeout | Communication timeout | Check network |
+| 5-2.4-30 | TOC generation error | Error during TOC generation | Fix generation logic |
+| 5-2.4-31 | Section indexing failed | Section indexing failed | Check section data |
+| 5-2.4-50 | TOC business rule failed | Business rule failed | Fix business logic |
+
+### **War Room Complex (6-x)**
+
+#### **6-1 (Dev Environment)**
+| Fault Code | Symptom | Description | Resolution |
+|------------|---------|-------------|------------|
+| 6-1-01 | Dev environment configuration error | Invalid syntax in dev config | Fix config syntax |
+| 6-1-10 | Dev environment initialization failed | Failed to initialize dev environment | Check dependencies |
+| 6-1-30 | Development tool error | Error using development tool | Fix tool configuration |
+| 6-1-40 | Dev resource unavailable | Development resource not available | Install required tools |
+
+#### **6-2 (Tool Dependencies)**
+| Fault Code | Symptom | Description | Resolution |
+|------------|---------|-------------|------------|
+| 6-2-01 | Dependency configuration error | Invalid syntax in dependency config | Fix config syntax |
+| 6-2-10 | Dependency initialization failed | Failed to initialize dependencies | Check dependency availability |
+| 6-2-30 | Dependency resolution error | Error resolving dependencies | Fix dependency conflicts |
+| 6-2-40 | Missing dependency | Required dependency not found | Install missing dependency |
+
+### **GUI Complex (GUI-1, 7-x)**
+
+#### **GUI-1 (Enhanced Functional GUI)**
+| Fault Code | Symptom | Description | Resolution |
+|------------|---------|-------------|------------|
+| GUI-1-01 | GUI configuration error | Invalid syntax in GUI config | Fix config syntax |
+| GUI-1-10 | GUI initialization failed | Failed to initialize GUI | Check dependencies |
+| GUI-1-20 | GUI communication timeout | Communication timeout | Check network |
+| GUI-1-30 | GUI rendering error | Error rendering interface | Fix rendering logic |
+| GUI-1-40 | Display resource unavailable | Display resource not available | Check display settings |
 
 ---
 

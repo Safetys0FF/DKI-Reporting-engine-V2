@@ -1,4 +1,4 @@
-﻿"""Framework template for Section 8 (Photo / Evidence Index)."""
+"""Framework template for Section 8 (Photo / Evidence Index)."""
 
 from __future__ import annotations
 
@@ -6,8 +6,11 @@ import json
 import logging
 import os
 import re
+import sys
+import time
 import zipfile
 import hashlib
+from pathlib import Path
 from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple
@@ -23,6 +26,23 @@ except ImportError:
     OCR_AVAILABLE = False
 
 LOGGER = logging.getLogger(__name__)
+_CURRENT_DIR = Path(__file__).resolve().parent
+_ANALYST_ROOT = _CURRENT_DIR.parent
+_BASE_PATH = _ANALYST_ROOT / "section revisions templates"
+if str(_BASE_PATH) not in sys.path:
+    sys.path.insert(0, str(_BASE_PATH))
+
+from section_framework_base import (
+    LifecycleState,
+    SectionFramework as LifecycleSectionFramework,
+)
+
+from _init_section8_media_orchestrator import init_section8_media_orchestrator
+from _init_section8_captioner import init_section8_captioner
+from _init_section8_audio_transcriber import init_section8_audio_transcriber
+from _init_section8_metadata_extractor import init_section8_metadata_extractor
+from _init_section8_cv_detector import init_section8_cv_detector
+from _init_section8_renderer import init_section8_renderer
 
 
 @dataclass(frozen=True)
@@ -62,7 +82,7 @@ class OrderContract:
     export_priority: int = 0
 
 
-class SectionFramework:
+class LegacySectionFramework:
     SECTION_ID: str = ""
     BUS_SECTION_ID: Optional[str] = None
     MAX_RERUNS: int = 3
@@ -78,15 +98,240 @@ class SectionFramework:
         gateway: Any,
         ecc: Optional[Any] = None,
         logger: Optional[logging.Logger] = None,
+        bus: Optional[Any] = None,
+        communicator: Optional[Any] = None
     ) -> None:
+        # CRITICAL: Initialize logger FIRST so initialization errors can be logged
+        self.logger = logger or logging.getLogger(self.__class__.__name__)
+        self.MODULE_ADDRESS = "4-8"
+        
+        # ------------------------------------------------------------------ #
+        # CANBUS CONNECTION (SECTION MODULE - INLINE)
+        # ------------------------------------------------------------------ #
+        self.bus = bus
+        self.communicator = communicator
+        self.bus_connected = False
+        
         self.gateway = gateway
         self.ecc = ecc
-        self.logger = logger or logging.getLogger(self.__class__.__name__)
         self.queue_client: Optional[Any] = None
         self.storage: Optional[Any] = None
         self.fact_graph_client: Optional[Any] = None
         self.revision_depth: int = 0
         self.signed_payload_id: Optional[str] = None
+        
+        # Initialize CANBUS after logger is ready
+        if self.bus:
+            # MODULE INITIALIZATION PROTOCOL - Wait for bus ready and module turn
+            self.logger.info("[%s] Waiting for bus stabilization...", self.MODULE_ADDRESS)
+            if not self.bus.wait_for_ready(timeout=15.0):
+                self.logger.warning("[%s] Bus stabilization timeout - initializing in degraded mode", self.MODULE_ADDRESS)
+                self.bus_connected = False
+            else:
+                self.logger.info("[%s] Bus ready - waiting for module turn in sequence...", self.MODULE_ADDRESS)
+                if not self.bus.wait_for_module_turn('4-8', timeout=30.0):
+                    self.logger.warning("[%s] Module turn timeout - initializing in degraded mode", self.MODULE_ADDRESS)
+                    self.bus_connected = False
+                else:
+                    self._initialize_canbus(self.bus, communicator=self.communicator)
+        else:
+            self.logger.warning("[%s] CANBUS initialization skipped - no bus provided", self.MODULE_ADDRESS)
+            self.bus_connected = False
+        
+        # Run mandatory self-test per UDS protocol
+        self._run_startup_self_test()
+    
+    # ------------------------------------------------------------------ #
+    # CANBUS initialization
+    # ------------------------------------------------------------------ #
+    def _initialize_canbus(self, bus: Any, *, communicator: Optional[Any] = None) -> None:
+        """Set up CANBUS connectivity and register signal handlers."""
+        try:
+            import sys
+            sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..', 'Command Center', 'Data Bus', 'Bus Core Design'))
+            from universal_communicator import UniversalCommunicator
+        except ImportError:
+            UniversalCommunicator = None
+        
+        self.bus = bus
+        try:
+            if communicator:
+                self.communicator = communicator
+            elif UniversalCommunicator:
+                self.communicator = UniversalCommunicator(self.MODULE_ADDRESS, bus_connection=bus)
+                self.logger.info("[%s] UniversalCommunicator created", self.MODULE_ADDRESS)
+
+            bus.register_system_address(self.MODULE_ADDRESS, {
+                "system_type": "section_engine",
+                "capabilities": ["evidence_request", "evidence_processing", "section_rendering", "fault_reporting"],
+                "status": "active",
+                "mode": "primary",
+                "registered_at": datetime.now().isoformat(),
+                "section_name": "Media Documentation",
+                "tools": ["media_cataloger", "photo_processor", "video_processor",
+                         "audio_processor", "metadata_extractor", "section_renderer"]
+            })
+            self.logger.info("[%s] Section 8 registered with CANBUS", self.MODULE_ADDRESS)
+
+            self._register_signal_handlers()
+            self.bus_connected = True
+            self.logger.info("[%s] CANBUS CONNECTION ESTABLISHED", self.MODULE_ADDRESS)
+            
+            # MODULE INITIALIZATION PROTOCOL - Register with bus
+            if self.bus.register_module_init('4-8', {
+                'version': '1.0',
+                'type': 'analyst_section',
+                'capabilities': ['multimedia_processing', 'media_orchestration', 'caption_generation']
+            }):
+                self.logger.info("[%s] [OK] Module registered with bus (Address 4-8)", self.MODULE_ADDRESS)
+            else:
+                self.logger.warning("[%s] Module registration failed - continuing anyway", self.MODULE_ADDRESS)
+        except Exception as exc:
+            self.logger.critical("[%s] CANBUS connection failed: %s", self.MODULE_ADDRESS, exc)
+            self.bus_connected = False
+
+    def _register_signal_handlers(self) -> None:
+        """Register section signal handlers with the CANBUS."""
+        if not self.bus:
+            self.logger.warning("[%s] Cannot register signals - no CANBUS connection", self.MODULE_ADDRESS)
+            return
+        try:
+            self.bus.register_signal("section_8.evidence_request", self._handle_evidence_request)
+            self.bus.register_signal("section_8.wake", self._handle_wake_signal)
+            self.bus.register_signal("section_8.sleep", self._handle_sleep_signal)
+            self.bus.register_signal("section_8.status", self._handle_status_signal)
+            self.bus.register_signal("diagnostic.rollcall", self._handle_rollcall)
+            self.bus.register_signal("diagnostic.radio_check", self._handle_radio_check)
+            self.bus.register_signal("auto_registration", self._handle_auto_registration)
+            self.logger.info("[%s] Section signal handlers registered (including UDS bidirectional protocol)", self.MODULE_ADDRESS)
+        except Exception as exc:
+            self.logger.error("[%s] Failed to register signal handlers: %s", self.MODULE_ADDRESS, exc)
+
+    def _handle_evidence_request(self, payload: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+        """Handle evidence request signal."""
+        return {"status": "evidence_request_received", "section": self.MODULE_ADDRESS}
+
+    def _handle_wake_signal(self, payload: Optional[Dict[str, Any]] = None) -> None:
+        """Handle wake signal from Marshall."""
+        self.logger.info("[%s] Wake signal received", self.MODULE_ADDRESS)
+
+    def _handle_sleep_signal(self, payload: Optional[Dict[str, Any]] = None) -> None:
+        """Handle sleep signal from Marshall."""
+        self.logger.info("[%s] Sleep signal received", self.MODULE_ADDRESS)
+
+    def _handle_status_signal(self, payload: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+        """Handle status signal."""
+        return {
+            "module_address": self.MODULE_ADDRESS,
+            "status": "active",
+            "bus_connected": self.bus_connected
+        }
+    
+    def _handle_rollcall(self, payload: Dict[str, Any]) -> None:
+        """Handle UDS rollcall request (PHASE 2C FIX)"""
+        if self.communicator:
+            try: self.communicator.send_rollcall_response("DIAG-1", {"system_address": self.MODULE_ADDRESS, "system_name": "Section 8", "status": "OPERATIONAL" if self.bus_connected else "INITIALIZING", "compliance_status": "COMPLIANT", "timestamp": datetime.now().isoformat()})
+            except: pass
+    
+    def _handle_radio_check(self, payload: Dict[str, Any]) -> None:
+        """Handle UDS radio check request (PHASE 2C FIX)"""
+        if self.communicator:
+            try: self.communicator.send_radio_check_response("DIAG-1", {"system_address": self.MODULE_ADDRESS, "latency_ms": 0, "signal_strength": "STRONG", "bus_connected": self.bus_connected, "timestamp": datetime.now().isoformat()})
+            except: pass
+    
+    def _handle_auto_registration(self, payload: Dict[str, Any]) -> None:
+        """Handle UDS auto-registration request (PHASE 2C FIX)"""
+        # Check if this signal is addressed to us (or is a broadcast)
+        target_address = payload.get('target_address', '')
+        if target_address and target_address not in [self.MODULE_ADDRESS, "BROADCAST", "*"]:
+            return  # Not for us - ignore
+        
+        if self.communicator:
+            try: self.communicator.send_auto_registration_response("DIAG-1", {"system_address": self.MODULE_ADDRESS, "system_name": "Section 8", "system_type": "analyst_section", "parent_address": "3", "status": "OPERATIONAL" if self.bus_connected else "INITIALIZING", "compliance_status": "COMPLIANT", "protocol_version": "1.0.0", "timestamp": datetime.now().isoformat()})
+            except: pass
+    
+    # ------------------------------------------------------------------ #
+    # Self-Test Protocol (UDS Compliance)
+    # ------------------------------------------------------------------ #
+    def _run_startup_self_test(self) -> bool:
+        """Validate all tool dependencies per UDS self-test protocol."""
+        self.logger.info("[%s] Running mandatory startup self-test per UDS protocol", self.MODULE_ADDRESS)
+        operational = True
+        
+        tools_to_validate = [
+            ('4-8.1', 'Media Cataloger', lambda: getattr(self, 'media_cataloger', None)),
+            ('4-8.2', 'Photo Processor', lambda: getattr(self, 'photo_processor', None)),
+            ('4-8.3', 'Video Processor', lambda: getattr(self, 'video_processor', None)),
+            ('4-8.4', 'Audio Processor', lambda: getattr(self, 'audio_processor', None)),
+            ('4-8.5', 'Metadata Extractor', lambda: getattr(self, 'metadata_extractor', None)),
+            ('4-8.6', 'Section Renderer', lambda: getattr(self, 'renderer_factory', None)),
+        ]
+        
+        for tool_addr, tool_name, get_tool_ref in tools_to_validate:
+            try:
+                tool_ref = get_tool_ref()
+                
+                if tool_ref is None:
+                    self.logger.error(
+                        "[%s] Self-test FAILED: %s (%s) not initialized",
+                        self.MODULE_ADDRESS, tool_name, tool_addr
+                    )
+                    
+                    # Emit fault code to Marshall via LINBUS (primary path)
+                    fault_payload = {
+                        "fault_code": f"[{tool_addr}-12-INIT]",
+                        "description": f"{tool_name} failed to initialize",
+                        "component": tool_name,
+                        "reporting_address": tool_addr,
+                        "parent_address": self.MODULE_ADDRESS,
+                        "severity": "CRITICAL",
+                        "timestamp": datetime.now().isoformat(),
+                        "fault_type": "12",
+                        "fault_type_description": "Missing initialization dependency",
+                        "message_type": "initialization_failure"
+                    }
+                    
+                    linbus_success = False
+                    if self.bus and self.bus_connected:
+                        try:
+                            # Primary: LINBUS emission to Marshall
+                            self.bus.emit('section.fault', fault_payload)
+                            self.logger.warning("[%s] Fault code emitted via LINBUS: [%s-12-INIT]",
+                                               self.MODULE_ADDRESS, tool_addr)
+                            linbus_success = True
+                        except Exception as linbus_exc:
+                            self.logger.error("[%s] LINBUS fault emission failed: %s - attempting CANBUS fallback",
+                                            self.MODULE_ADDRESS, linbus_exc)
+                    
+                    # Fallback: CANBUS direct emission to UDS if LINBUS fails
+                    if not linbus_success:
+                        if hasattr(self, 'communicator') and self.communicator:
+                            try:
+                                self.communicator.send_signal(
+                                    target_address="DIAG-1",
+                                    radio_code="SOS",
+                                    message=f"{tool_name} initialization failed (CANBUS fallback)",
+                                    payload=fault_payload
+                                )
+                                self.logger.warning("[%s] Fault code emitted via CANBUS fallback: [%s-12-INIT]",
+                                                   self.MODULE_ADDRESS, tool_addr)
+                            except Exception as canbus_exc:
+                                self.logger.error("[%s] CANBUS fallback also failed: %s",
+                                                self.MODULE_ADDRESS, canbus_exc)
+                        else:
+                            self.logger.error("[%s] Cannot emit fault code - no bus connection available",
+                                            self.MODULE_ADDRESS)
+                    operational = False
+            except Exception as exc:
+                self.logger.exception("[%s] Exception during self-test for %s: %s", self.MODULE_ADDRESS, tool_name, exc)
+                operational = False
+        
+        if operational:
+            self.logger.info("[%s] All tool dependencies operational", self.MODULE_ADDRESS)
+        else:
+            self.logger.warning("[%s] One or more tool dependencies failed - check fault codes", self.MODULE_ADDRESS)
+        
+        return operational
 
     def load_inputs(self) -> Dict[str, Any]:
         raise NotImplementedError
@@ -651,6 +896,19 @@ class Section8Renderer:
     SECTION_KEY = "section_8"
     TITLE = "8. Photo / Evidence Index"
 
+    def __init__(
+        self,
+        *,
+        captioner: Optional[Any] = None,
+        cv_detector: Optional[Any] = None,
+        audio_transcriber: Optional[Any] = None,
+        metadata_extractor: Optional[Any] = None,
+    ) -> None:
+        self.captioner = captioner
+        self.cv_detector = cv_detector
+        self.audio_transcriber = audio_transcriber
+        self.metadata_extractor = metadata_extractor
+
     STYLE_RULES = {
         "font": "Times New Roman",
         "section_title": {"size_pt": 16, "bold": True, "all_caps": True, "align": "center", "shaded_background": True},
@@ -794,6 +1052,17 @@ class Section8Renderer:
                     'metadata': metadata,
                 }
 
+                if self.metadata_extractor:
+                    try:
+                        enriched = self.metadata_extractor.extract(mid, data or {}, kind=kind)
+                        if enriched:
+                            item.setdefault('enriched_metadata', enriched)
+                            for key, value in enriched.items():
+                                if key not in item or item[key] in (None, "", []):
+                                    item[key] = value
+                    except Exception as exc:
+                        LOGGER.warning("Metadata extraction during render failed for %s: %s", mid, exc)
+
                 if kind == 'audio':
                     transcription_payload = data.get('transcription') if isinstance(data.get('transcription'), dict) else {}
                     item['transcript'] = data.get('summary') or data.get('transcript') or transcription_payload.get('summary') or transcription_payload.get('text')
@@ -804,6 +1073,29 @@ class Section8Renderer:
                     generated = data.get('transcription_generated_at') or transcription_payload.get('generated_at')
                     if generated and not item.get('captured_at'):
                         item['captured_at'] = generated
+                    if self.audio_transcriber and not item.get('transcript'):
+                        try:
+                            transcript_payload = self.audio_transcriber.transcribe(item)
+                            if transcript_payload:
+                                item['transcript'] = transcript_payload.get('text', item.get('transcript'))
+                                item['language'] = transcript_payload.get('language', item.get('language'))
+                                if transcript_payload.get('duration') and not item.get('duration'):
+                                    item['duration'] = transcript_payload.get('duration')
+                        except Exception as exc:
+                            LOGGER.warning("Audio transcription during render failed for %s: %s", mid, exc)
+                else:
+                    if self.cv_detector:
+                        try:
+                            item.setdefault('analysis', self.cv_detector.analyze(item))
+                        except Exception as exc:
+                            LOGGER.warning("CV analysis during render failed for %s: %s", mid, exc)
+                    if self.captioner and not item.get('caption'):
+                        try:
+                            caption_text = self.captioner.generate_caption(item)
+                            if caption_text:
+                                item['caption'] = caption_text
+                        except Exception as exc:
+                            LOGGER.warning("Caption generation during render failed for %s: %s", mid, exc)
                 # Compute video thumbnail lazily in exporters; we keep placeholder
                 items.append(item)
             except Exception:
@@ -874,6 +1166,14 @@ class Section8Renderer:
         if user_note:
             user_note = user_note.strip()[:150]
 
+        generated_caption = it.get('caption')
+        if not generated_caption and getattr(self, "captioner", None):
+            try:
+                generated_caption = self.captioner.generate_caption(it)
+            except Exception as exc:
+                LOGGER.warning("Captioner failed while rendering item %s: %s", it.get('id'), exc)
+        caption_text = caption if not generated_caption else f"{caption}: {generated_caption}"
+
         # Emit an image block for exporters, plus a text fallback paragraph
         img_path = it.get('path')
         if is_video and img_path:
@@ -884,18 +1184,26 @@ class Section8Renderer:
             "type": "image",
             "path": img_path,
             "is_video": is_video,
-            "label": caption,
+            "label": caption_text,
             "timestamp": ts_str,
             "address": address_line,
             "note": f"* {user_note}" if user_note else None,
         })
 
         # Fallback text in content rendering
-        lines = [f"{caption}"]
+        lines = [f"{caption_text}"]
         if ts_str:
             lines.append(f"  Time: {ts_str}")
         if address_line:
             lines.append(f"  {address_line}")
+        analysis = it.get("analysis")
+        tags: List[str] = []
+        if isinstance(analysis, dict):
+            tags = analysis.get("tags") or analysis.get("objects") or []
+        elif isinstance(analysis, (list, tuple)):
+            tags = list(analysis)
+        if tags:
+            lines.append(f"  Detected: {', '.join(map(str, tags))}")
         if user_note:
             lines.append(f"  * {user_note}")
         blocks.append({
@@ -905,9 +1213,22 @@ class Section8Renderer:
         })
         return blocks
 
-    # -------------------- Utilities -------------------- #    def _audio_block(self, it: Dict[str, Any], caption: str) -> List[Dict[str, Any]]:
+    # -------------------- Utilities -------------------- #
+    def _audio_block(self, it: Dict[str, Any], caption: str) -> List[Dict[str, Any]]:
         blocks: List[Dict[str, Any]] = []
         transcript = it.get('transcript') or it.get('summary')
+        if not transcript and getattr(self, "audio_transcriber", None):
+            try:
+                transcript_payload = self.audio_transcriber.transcribe(it)
+                if transcript_payload:
+                    transcript = transcript_payload.get("text") or transcript
+                    it.setdefault("language", transcript_payload.get("language"))
+                    if transcript_payload.get("duration") and not it.get("duration"):
+                        it["duration"] = transcript_payload.get("duration")
+                    if transcript:
+                        it["transcript"] = transcript
+            except Exception as exc:
+                LOGGER.warning("Renderer audio transcription failed for %s: %s", it.get('id'), exc)
         if transcript:
             blocks.append({
                 "type": "paragraph",
@@ -1152,10 +1473,11 @@ FIELD_HEADING = "SECTION 8 - PHOTO / EVIDENCE INDEX (FIELD OPERATIONS)"
 HYBRID_HEADING = "SECTION 8 - PHOTO / EVIDENCE INDEX (HYBRID)"
 
 
-class Section8Framework(SectionFramework):
+class LegacySection8Framework(LegacySectionFramework):
     SECTION_ID = "section_8_evidence"
     BUS_SECTION_ID = "section_8"
     MAX_RERUNS = 2
+    MODULE_ADDRESS = "4-8"
     STAGES = (
         StageDefinition(
             name="intake",
@@ -1220,9 +1542,19 @@ class Section8Framework(SectionFramework):
         export_priority=80,
     )
 
-    def __init__(self, gateway: Any, ecc: Optional[Any] = None) -> None:
-        super().__init__(gateway=gateway, ecc=ecc)
+    def __init__(self, gateway: Any, ecc: Optional[Any] = None,
+                 logger: Optional[logging.Logger] = None,
+                 bus: Optional[Any] = None,
+                 communicator: Optional[Any] = None) -> None:
+        super().__init__(gateway=gateway, ecc=ecc, logger=logger,
+                         bus=bus, communicator=communicator)
         self._last_context: Dict[str, Any] = {}
+        self.media_orchestrator: Optional[Any] = None
+        self.captioner: Optional[Any] = None
+        self.audio_transcriber: Optional[Any] = None
+        self.metadata_extractor: Optional[Any] = None
+        self.cv_detector: Optional[Any] = None
+        self.renderer_factory = Section8Renderer
 
     def load_inputs(self) -> Dict[str, Any]:
         try:
@@ -1287,6 +1619,7 @@ class Section8Framework(SectionFramework):
                 "data_policies": context.get("toolkit_results", {}).get("data_policies"),
                 "manual_notes": meta.get("manual_notes", {}),
                 "api_keys": context.get("api_keys", {}),
+                "tool_results": self._run_inline_tools(context),
             }
             if context.get("bus_state") is not None:
                 payload.setdefault("bus_state", context.get("bus_state"))
@@ -1301,6 +1634,11 @@ class Section8Framework(SectionFramework):
             case_id = context.get("case_id") or context.get("bus_state", {}).get("case_id")
             if case_id:
                 payload.setdefault("case_id", case_id)
+            tool_results = payload.get("tool_results", {})
+            catalog_summary = payload.get("catalog_summary")
+            if catalog_summary is not None:
+                tool_results.setdefault("media_catalog_summary", catalog_summary)
+            payload["tool_results"] = tool_results
             return payload
         except Exception as exc:
             self.logger.exception("Failed to build payload for %s: %s", self.SECTION_ID, exc)
@@ -1310,7 +1648,17 @@ class Section8Framework(SectionFramework):
         try:
             self._guard_execution("publishing")
 
-            renderer = Section8Renderer()
+            renderer_factory = getattr(self, "renderer_factory", Section8Renderer)
+            renderer = renderer_factory() if callable(renderer_factory) else renderer_factory
+            for attr, value in (
+                ("captioner", getattr(self, "captioner", None)),
+                ("cv_detector", getattr(self, "cv_detector", None)),
+                ("audio_transcriber", getattr(self, "audio_transcriber", None)),
+                ("metadata_extractor", getattr(self, "metadata_extractor", None)),
+            ):
+                if value is not None and hasattr(renderer, attr):
+                    setattr(renderer, attr, value)
+
             case_sources = self._build_renderer_sources(self._last_context)
             model = renderer.render_model(payload, case_sources)
             narrative_lines: List[str] = []
@@ -1396,10 +1744,121 @@ class Section8Framework(SectionFramework):
         normalized_images = {mid: self._normalize_media_record(mid, record, 'image') for mid, record in images.items()}
         normalized_videos = {mid: self._normalize_media_record(mid, record, 'video') for mid, record in videos.items()}
         normalized_audio = {mid: self._normalize_media_record(mid, record, 'audio') for mid, record in audio.items()}
+
+        metadata_extractor = getattr(self, "metadata_extractor", None)
+        captioner = getattr(self, "captioner", None)
+        audio_transcriber = getattr(self, "audio_transcriber", None)
+        cv_detector = getattr(self, "cv_detector", None)
+        media_orchestrator = getattr(self, "media_orchestrator", None)
+
+        # Enrich media records with injected dependencies
+        if metadata_extractor or captioner or audio_transcriber or cv_detector:
+            for mid, normalized in normalized_images.items():
+                source = images.get(mid, {}) or {}
+                if metadata_extractor:
+                    try:
+                        extra = metadata_extractor.extract(mid, source, kind="image")
+                        if extra:
+                            normalized.update(extra)
+                    except Exception as exc:
+                        self.logger.warning("Metadata extractor failed for image %s: %s", mid, exc)
+                if cv_detector:
+                    try:
+                        analysis = cv_detector.analyze(normalized)
+                        if analysis:
+                            normalized.setdefault("analysis", analysis)
+                    except Exception as exc:
+                        self.logger.warning("CV detector failed for image %s: %s", mid, exc)
+                if captioner and not normalized.get("caption"):
+                    try:
+                        caption_text = captioner.generate_caption(normalized)
+                        if caption_text:
+                            normalized["caption"] = caption_text
+                    except Exception as exc:
+                        self.logger.warning("Captioner failed for image %s: %s", mid, exc)
+
+            for mid, normalized in normalized_videos.items():
+                source = videos.get(mid, {}) or {}
+                if metadata_extractor:
+                    try:
+                        extra = metadata_extractor.extract(mid, source, kind="video")
+                        if extra:
+                            normalized.update(extra)
+                    except Exception as exc:
+                        self.logger.warning("Metadata extractor failed for video %s: %s", mid, exc)
+                if cv_detector:
+                    try:
+                        analysis = cv_detector.analyze(normalized)
+                        if analysis:
+                            normalized.setdefault("analysis", analysis)
+                    except Exception as exc:
+                        self.logger.warning("CV detector failed for video %s: %s", mid, exc)
+                if captioner and not normalized.get("caption"):
+                    try:
+                        caption_text = captioner.generate_caption(normalized)
+                        if caption_text:
+                            normalized["caption"] = caption_text
+                    except Exception as exc:
+                        self.logger.warning("Captioner failed for video %s: %s", mid, exc)
+
+            for mid, normalized in normalized_audio.items():
+                source = audio.get(mid, {}) or {}
+                if metadata_extractor:
+                    try:
+                        extra = metadata_extractor.extract(mid, source, kind="audio")
+                        if extra:
+                            normalized.update(extra)
+                    except Exception as exc:
+                        self.logger.warning("Metadata extractor failed for audio %s: %s", mid, exc)
+                if audio_transcriber and not normalized.get("transcript"):
+                    try:
+                        transcript_payload = audio_transcriber.transcribe(normalized)
+                        if transcript_payload:
+                            normalized.setdefault("transcript", transcript_payload.get("text"))
+                            normalized.setdefault("language", transcript_payload.get("language"))
+                            if transcript_payload.get("duration") and not normalized.get("duration"):
+                                normalized["duration"] = transcript_payload.get("duration")
+                    except Exception as exc:
+                        self.logger.warning("Audio transcriber failed for audio %s: %s", mid, exc)
+
+        orchestrated_summary: Optional[Dict[str, Any]] = None
+        if media_orchestrator:
+            try:
+                orchestrated = media_orchestrator.catalog_media(
+                    media_index=media_index,
+                    manifests=manifests,
+                    normalized={
+                        "images": normalized_images,
+                        "videos": normalized_videos,
+                        "audio": normalized_audio,
+                    },
+                )
+                if isinstance(orchestrated, dict):
+                    normalized_images = orchestrated.get("images", normalized_images)
+                    normalized_videos = orchestrated.get("videos", normalized_videos)
+                    normalized_audio = orchestrated.get("audio", normalized_audio)
+                    orchestrated_summary = orchestrated.get("summary")
+            except Exception as exc:
+                self.logger.warning("Media orchestrator failed: %s", exc)
+
+        if orchestrated_summary is None:
+            orchestrated_summary = {
+                "counts": {
+                    "images": len(normalized_images),
+                    "videos": len(normalized_videos),
+                    "audio": len(normalized_audio),
+                },
+                "warnings": [],
+            }
+
         qa_flags: List[str] = []
         manual_notes = {f"note_{i}": ann for i, ann in enumerate(manual_annotations, start=1)}
         if not normalized_images and not normalized_videos:
             qa_flags.append("no_media_available")
+        if audio_transcriber and any(not item.get("transcript") for item in normalized_audio.values()):
+            qa_flags.append("audio_transcription_pending")
+        if cv_detector and any("analysis" not in item for item in {**normalized_images, **normalized_videos}.values()):
+            qa_flags.append("media_analysis_required")
         previous_sections = {
             'section_3': manifests.get('section_3'),
             'section_4': manifests.get('section_4'),
@@ -1412,10 +1871,14 @@ class Section8Framework(SectionFramework):
             "toolkit_results": toolkit,
             "manual_notes": manual_notes,
         }
+        if orchestrated_summary:
+            media_payload.setdefault("catalog_summary", orchestrated_summary)
         meta = {
-            "qa_flags": qa_flags,
+            "qa_flags": sorted(dict.fromkeys(qa_flags)),
             "manual_notes": manual_notes,
         }
+        if orchestrated_summary:
+            meta["catalog_summary"] = orchestrated_summary
         return media_payload, meta
 
     def _normalize_media_record(self, media_id: str, record: Dict[str, Any], kind: str) -> Dict[str, Any]:
@@ -1538,19 +2001,37 @@ class Section8Framework(SectionFramework):
             except Exception as e:
                 self.logger.warning(f"OCR processing failed: {e}")
                 toolkit_results["ocr_processing_issues"] = str(e)
+
+        media_orchestrator = getattr(self, "media_orchestrator", None)
+        if media_orchestrator:
+            try:
+                toolkit_results["media_catalog_summary"] = media_orchestrator.summarize(
+                    context.get("media_index", {})
+                )
+            except Exception as e:
+                self.logger.warning(f"Media catalog summary failed: {e}")
+                toolkit_results["media_catalog_summary"] = {"error": str(e)}
+
+        captioner = getattr(self, "captioner", None)
+        if captioner:
+            toolkit_results.setdefault("captioner", {"status": "initialized"})
+        cv_detector = getattr(self, "cv_detector", None)
+        if cv_detector:
+            toolkit_results.setdefault("cv_detector", {"status": "initialized"})
+        metadata_extractor = getattr(self, "metadata_extractor", None)
+        if metadata_extractor:
+            toolkit_results.setdefault("metadata_extractor", {"status": "initialized"})
+        if getattr(self, "audio_transcriber", None):
+            toolkit_results.setdefault("audio_transcriber", {"status": "initialized"})
         
         return toolkit_results
     
     def _process_ocr_documents(self, context: Dict[str, Any]) -> Dict[str, Any]:
         """Process documents using OCR for Section 8."""
         ocr_results = {}
-        
-        # Get media from case bundle
+
         media_index = context.get("media_index", {})
         images = media_index.get("images", {})
-        videos = media_index.get("videos", {})
-        
-        # Process images
         for img_id, img_data in images.items():
             try:
                 img_path = img_data.get("file_info", {}).get("path")
@@ -1560,19 +2041,186 @@ class Section8Framework(SectionFramework):
                         ocr_results[img_id] = {
                             "type": "image",
                             "text": text[:1000] + "..." if len(text) > 1000 else text,
-                            "status": "success"
+                            "status": "success",
                         }
-            except Exception as e:
+            except Exception as exc:
                 ocr_results[img_id] = {
                     "type": "image",
-                    "error": str(e),
-                    "status": "failed"
+                    "error": str(exc),
+                    "status": "failed",
                 }
-        
+
         return ocr_results
 
 
+class Section8Framework(LifecycleSectionFramework):
+    SECTION_ID = LegacySection8Framework.SECTION_ID
+    MODULE_ADDRESS = LegacySection8Framework.MODULE_ADDRESS
+    BUS_SECTION_ID = LegacySection8Framework.BUS_SECTION_ID
+    MAX_RERUNS = LegacySection8Framework.MAX_RERUNS
+    STAGES = LegacySection8Framework.STAGES
+    COMMUNICATION = LegacySection8Framework.COMMUNICATION
+    PERSISTENCE = getattr(LegacySection8Framework, "PERSISTENCE", None)
+    FACT_GRAPH = getattr(LegacySection8Framework, "FACT_GRAPH", None)
+    ORDER = LegacySection8Framework.ORDER
+
+    def __init__(
+        self,
+        gateway: Any,
+        *,
+        communicator_initializer: Optional[Callable[..., Any]] = None,
+        marshal_client: Optional[Any] = None,
+        marshal_address: Optional[str] = None,
+        warden_client: Optional[Any] = None,
+        dependency_initializers: Optional[Dict[str, Callable[..., Any]]] = None,
+        queue_client: Optional[Any] = None,
+        storage: Optional[Any] = None,
+        fact_graph: Optional[Any] = None,
+    ) -> None:
+        dependencies: Dict[str, Callable[..., Any]] = {
+            "media_orchestrator": init_section8_media_orchestrator,
+            "captioner": init_section8_captioner,
+            "audio_transcriber": init_section8_audio_transcriber,
+            "metadata_extractor": init_section8_metadata_extractor,
+            "cv_detector": init_section8_cv_detector,
+            "renderer_factory": init_section8_renderer,
+        }
+        if dependency_initializers:
+            dependencies.update(dependency_initializers)
+
+        super().__init__(
+            gateway,
+            module_address=self.MODULE_ADDRESS,
+            communicator_initializer=communicator_initializer,
+            marshal_client=marshal_client,
+            marshal_address=marshal_address,
+            warden_client=warden_client,
+            dependency_initializers=dependencies,
+            queue_client=queue_client,
+            storage=storage,
+            fact_graph=fact_graph,
+        )
+
+        self.legacy = LegacySection8Framework(gateway=gateway, ecc=self.ecc)
+
+        orchestrator = self.get_dependency("media_orchestrator")
+        if orchestrator is not None:
+            self.legacy.media_orchestrator = orchestrator
+
+        captioner = self.get_dependency("captioner")
+        if captioner is not None:
+            self.legacy.captioner = captioner
+
+        audio_transcriber = self.get_dependency("audio_transcriber")
+        if audio_transcriber is not None:
+            self.legacy.audio_transcriber = audio_transcriber
+
+        metadata_extractor = self.get_dependency("metadata_extractor")
+        if metadata_extractor is not None:
+            self.legacy.metadata_extractor = metadata_extractor
+
+        cv_detector = self.get_dependency("cv_detector")
+        if cv_detector is not None:
+            self.legacy.cv_detector = cv_detector
+
+        renderer_factory = self.get_dependency("renderer_factory")
+        if renderer_factory is not None:
+            def _factory() -> Any:
+                return renderer_factory(
+                    captioner=self.legacy.captioner,
+                    cv_detector=self.legacy.cv_detector,
+                    audio_transcriber=self.legacy.audio_transcriber,
+                    metadata_extractor=self.legacy.metadata_extractor,
+                )
+
+            self.legacy.renderer_factory = _factory
+
+        self.baseline_report = self.run_baseline_initialization()
+        
+        # Run mandatory self-test per UDS protocol
+        self._run_startup_self_test()
+
+    # ------------------------------------------------------------------
+    # Self-Test Protocol (UDS Compliance)
+    # ------------------------------------------------------------------
+    def _run_startup_self_test(self) -> bool:
+        """Validate all tool dependencies per UDS self-test protocol."""
+        self.logger.info("[%s] Running mandatory startup self-test per UDS protocol", self.MODULE_ADDRESS)
+        operational = True
+        
+        tools_to_validate = [
+            ('4-8.1', 'Media Orchestrator', lambda: self.get_dependency('media_orchestrator')),
+            ('4-8.2', 'Captioner', lambda: self.get_dependency('captioner')),
+            ('4-8.3', 'Audio Transcriber', lambda: self.get_dependency('audio_transcriber')),
+            ('4-8.4', 'Metadata Extractor', lambda: self.get_dependency('metadata_extractor')),
+            ('4-8.5', 'CV Detector', lambda: self.get_dependency('cv_detector')),
+            ('4-8.6', 'Section Renderer', lambda: self.get_dependency('renderer_factory')),
+        ]
+        
+        for tool_addr, tool_name, get_tool_ref in tools_to_validate:
+            try:
+                tool_ref = get_tool_ref()
+                
+                if tool_ref is None:
+                    self.logger.error("[%s] Self-test FAILED: %s (%s) not initialized", 
+                                      self.MODULE_ADDRESS, tool_name, tool_addr)
+                    
+                    if hasattr(self, 'communicator') and self.communicator:
+                        self.communicator.send_signal(
+                            target_address="3",
+                            radio_code="SOS",
+                            message=f"{tool_name} initialization failed",
+                            payload={
+                                "fault_code": f"[{tool_addr}-12-INIT]",
+                                "description": f"{tool_name} not initialized - missing dependency or initialization failure",
+                                "component": tool_name,
+                                "reporting_address": tool_addr,
+                                "parent_address": self.MODULE_ADDRESS,
+                                "severity": "CRITICAL",
+                                "timestamp": datetime.now().isoformat(),
+                                "fault_type": "12",
+                                "fault_type_description": "Missing initialization dependency"
+                            }
+                        )
+                        self.logger.warning("[%s] Fault code emitted: [%s-12-INIT]", 
+                                           self.MODULE_ADDRESS, tool_addr)
+                    
+                    operational = False
+                else:
+                    self.logger.info("[%s] Self-test PASSED: %s (%s) operational", 
+                                    self.MODULE_ADDRESS, tool_name, tool_addr)
+            
+            except Exception as exc:
+                self.logger.error("[%s] Self-test ERROR: %s (%s): %s", 
+                                 self.MODULE_ADDRESS, tool_name, tool_addr, exc)
+                operational = False
+        
+        if operational:
+            self.logger.info("[%s] PASS - Self-test COMPLETE - All tool dependencies operational", self.MODULE_ADDRESS)
+        else:
+            self.logger.warning("[%s] FAIL - Self-test COMPLETE - One or more tool dependencies FAILED", self.MODULE_ADDRESS)
+        
+        return operational
+
+    def load_inputs(self) -> Dict[str, Any]:
+        if self.lifecycle_state() == LifecycleState.RESTING:
+            self.resume_from_rest()
+        return self.legacy.load_inputs()
+
+    def build_payload(self, context: Dict[str, Any]) -> Dict[str, Any]:
+        if self.lifecycle_state() == LifecycleState.RESTING:
+            self.resume_from_rest()
+        return self.legacy.build_payload(context)
+
+    def publish(self, payload: Dict[str, Any]) -> Dict[str, Any]:
+        return self.legacy.publish(payload)
+
+    def handle_revision(self, reason: str, context: Dict[str, Any]) -> None:
+        self.legacy.handle_revision(reason, context)
+
+
 __all__ = [
+"LegacySection8Framework",
 "Section8Framework",
 "Section8Renderer",
 "StageDefinition",
